@@ -1,1 +1,12 @@
-/.env
+# Ignore folder
+__pycache__/
+.env/
+.tox/
+.vscode/
+htmlcov/
+
+# Ignore file
+*.pyc
+.coverage
+.coveragerc
+tox.ini
