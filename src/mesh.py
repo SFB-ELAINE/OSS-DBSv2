@@ -8,19 +8,19 @@ class Mesh:
                 geometry: SimpleGeometry, 
                 order: int, 
                 boundaries: dict) -> None:
-        self.__mesh = ngsolve.Mesh(geometry.generate_mesh())
-        self.__mesh.Curve(order)
+        self.__mesh = ngsolve.Mesh(ngmesh=geometry.generate_mesh())
+        self.__mesh.Curve(order=order)
         self.__order = order
         self.__boundaries = boundaries
 
     def boundaries(self, name: str) -> ngsolve.comp.Region:
-        return self.__mesh.Boundaries(name)
+        return self.__mesh.Boundaries(pattern=name)
 
     def boundary_coefficients(self) -> ngsolve.fem.CoefficientFunction:
-        return self.__mesh.BoundaryCF(self.__boundaries)
+        return self.__mesh.BoundaryCF(values=self.__boundaries)
 
     def curve(self, order: int) -> None:
-        self.__mesh.Curve(order)
+        self.__mesh.Curve(order=order)
 
     def flux_space(self) -> ngsolve.comp.HDiv:
         return ngsolve.HDiv(mesh=self.__mesh, 
@@ -37,11 +37,13 @@ class Mesh:
         errors = ngsolve.Integrate(cf=error,
                                     mesh=self.__mesh, 
                                     VOL_or_BND=ngsolve.VOL,
-                                    element_wise=True).real
+                                    element_wise=True
+                                    ).real
         limit = 0.5 * max(errors)
         for element in self.__mesh.Elements():
             self.__mesh.SetRefinementFlag(ei=element, 
                                             refine=errors[element.nr] > limit)
+        
         self.__mesh.Refine()
         self.__mesh.Curve(order=self.__order)
 
@@ -52,6 +54,4 @@ class Mesh:
                             dirichlet=dirichlet, 
                             complex=False, 
                             wb_withedges=False)
-
-
-
+                            

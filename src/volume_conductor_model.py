@@ -5,37 +5,69 @@ import ngsolve
 
 
 class VolumeConductor:
+    """Model for representing a volume conductor.
+
+    Attributes
+    ----------
+    mesh : Mesh
+    
+    conductivity : dict
+
+    Methods
+    -------
+    evaluate_potential(mesh: Mesh, conductivity: dict)
+        Evaluate the electric potential of volume conductor.
+
+    """
     
     def __init__(self, mesh: Mesh, conductivity: dict) -> None:
         self.__mesh = mesh
-        self.__sigma = ngsolve.CoefficientFunction([conductivity[mat] 
-                                             for mat in mesh.materials()]) 
+        conductivities = [conductivity[mat] for mat in mesh.materials()]
+        self.__sigma = ngsolve.CoefficientFunction(coef=conductivities) 
         
     def evaluate_potential(self, 
-                            ndof_limit : int = 1e6, 
+                            n_dof_limit : int = 1e6, 
                             n_refinements: int  = 1) -> tuple:
+        """Evaluate electrical potential of volume conductor.
+        
+        Parameters
+        ----------
+        n_dof_limit : int
+            Maximal number of Demensions of Freedom of FEM space.
+
+        n_refinements: int
+            Number of mesh refinements.
+
+        Returns
+        -------
+
+        return : tuple
+            Postprocessed data: lectric_field, V_contact, Power, potential
+        
+        """
         potential = self.__solve_bvp()
         iterations = 0
-        while (self.__mesh.space().ndof < ndof_limit and 
+        while (self.__mesh.space().ndof < n_dof_limit and 
                                                 iterations < n_refinements):
-            self.__mesh.refine(self.__error(potential))
+            self.__mesh.refine(error=self.__error(potential))
             potential = self.__solve_bvp()
             iterations = iterations + 1
-        return self.__postprocess(potential)
+        return self.__postprocess(potential=potential)
 
     def __solve_bvp(self) -> ngsolve.comp.GridFunction:
-        boundaries = self.__mesh.boundary_coefficients()
-        potential = ngsolve.GridFunction(self.__mesh.space())
-        potential.Set(boundaries, ngsolve.BND)
-        equation = LaplaceEquation(self.__mesh.space(),  self.__sigma)
-        potential.vec.data = equation.solve_bvp(potential)
+        potential = ngsolve.GridFunction(space=self.__mesh.space())
+        potential.Set(coefficient=self.__mesh.boundary_coefficients(),
+                      VOL_or_BND=ngsolve.BND)
+        equation = LaplaceEquation(space=self.__mesh.space(), 
+                                   coefficient=self.__sigma)
+        potential.vec.data = equation.solve_bvp(input=potential)
         return potential
 
     def __error(self, potential: ngsolve.comp.GridFunction) \
                                             -> ngsolve.fem.CoefficientFunction:
         flux = ngsolve.grad(potential)
-        flux_potential = ngsolve.GridFunction(self.__mesh.flux_space())
-        flux_potential.Set(flux)
+        flux_potential = ngsolve.GridFunction(space=self.__mesh.flux_space())
+        flux_potential.Set(coefficient=flux)
         difference = flux - flux_potential
         return difference * ngsolve.Conj(difference)
 
@@ -53,5 +85,3 @@ class VolumeConductor:
                         ngsolve.Conj(self.__sigma * ngsolve.grad(potential)), 
                         self.__mesh.ngsolvemesh())
         return electric_field, V_contact, P, potential
-
-   

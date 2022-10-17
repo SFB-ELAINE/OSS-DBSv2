@@ -19,7 +19,6 @@ class Electrode:
         self.solid = occ.Glue([contact, shaft])
 
 
-
 class Wire:
 
     def __init__(self) -> None:

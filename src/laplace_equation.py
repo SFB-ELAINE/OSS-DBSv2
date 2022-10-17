@@ -5,19 +5,20 @@ class LaplaceEquation:
 
     def __init__(self, 
                  space: ngsolve.comp.H1, 
-                 factor: ngsolve.fem.CoefficientFunction) -> None:
+                 coefficient: ngsolve.fem.CoefficientFunction) -> None:
 
         u = space.TrialFunction()
         v = space.TestFunction()
-        self.__a = ngsolve.BilinearForm(space, symmetric=True)
-        self.__a += factor * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
-        self.__f = ngsolve.LinearForm(space)
-        self.__preconditioner = ngsolve.Preconditioner(self.__a, 
+        self.__a = ngsolve.BilinearForm(space=space, symmetric=True)
+        self.__a += coefficient * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
+        self.__f = ngsolve.LinearForm(space=space)
+        self.__preconditioner = ngsolve.Preconditioner(bf=self.__a, 
                                                         type="bddc",
                                                         coarsetype="h1amg")
 
     def solve_bvp(self, input: ngsolve.comp.GridFunction) \
                                          -> ngsolve.la.DynamicVectorExpression:
+        """Solve boundary value problem."""
         self.__a.Assemble()
         self.__f.Assemble()
         inverse = ngsolve.CGSolver(mat=self.__a.mat,
