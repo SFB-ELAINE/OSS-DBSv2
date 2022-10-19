@@ -21,12 +21,12 @@ class Mesh:
     def boundary_coefficients(self) -> ngsolve.fem.CoefficientFunction:
         return self.__mesh.BoundaryCF(values=self.__boundaries)
 
-    def centroids_of_elements(self):
+    def centroids_of_elements(self) -> list:
         shape = (self.__mesh.ne, 4, 3)
         vertices = np.array([self.__mesh[v].point 
                              for element in self.__mesh.Elements()
                              for v in element.vertices]).reshape(shape)
-        return np.sum(vertices, axis=1) / 4
+        return [list(c) for c in np.sum(vertices, axis=1) / 4]
 
     def flux_space(self) -> ngsolve.comp.HDiv:
         return ngsolve.HDiv(mesh=self.__mesh, 
@@ -39,12 +39,17 @@ class Mesh:
     def ngsolvemesh(self) -> ngsolve.comp.Mesh:
         return self.__mesh
 
-    def refine(self, error: ngsolve.fem.CoefficientFunction) -> None:
+    def refine(self) -> None:
+        self.__mesh.Refine()
+        self.__mesh.Curve(order=self.__order)
+
+    def refine_by_error(self, error: ngsolve.fem.CoefficientFunction) -> None:
         self.mark_elements_by_error(error)
         self.__mesh.Refine()
         self.__mesh.Curve(order=self.__order)
 
-    def mark_elements_by_error(self, error):
+    def mark_elements_by_error(self, 
+                               error: ngsolve.fem.CoefficientFunction) -> None:
         errors = ngsolve.Integrate(cf=error,
                                     mesh=self.__mesh, 
                                     VOL_or_BND=ngsolve.VOL,
@@ -54,11 +59,11 @@ class Mesh:
         for index, element in enumerate(self.__mesh.Elements()):
             self.__mesh.SetRefinementFlag(ei=element, refine=flags[index])
 
-    def element_sizes(self) -> np.ndarray:
+    def element_sizes(self) -> list:
         volumes = ngsolve.Integrate(cf=ngsolve.CoefficientFunction(1), 
                                     mesh=self.__mesh,
                                     element_wise=True).NumPy()
-        return (6 * volumes) ** 1 / 3
+        return list((6 * volumes) ** 1 / 3)
         
     def space(self) -> ngsolve.comp.H1:
         dirichlet = '|'.join(str(key) for key in self.__boundaries.keys())
@@ -68,7 +73,7 @@ class Mesh:
                           complex=False, 
                           wb_withedges=False)
 
-    def elements_in_region(self, point, r):
+    def elements_in_region(self, point: tuple, r: int) -> np.ndarray:
         shape = (self.__mesh.ne, 4, 3)
         vertices = np.array([self.__mesh[v].point 
                              for element in self.__mesh.Elements()

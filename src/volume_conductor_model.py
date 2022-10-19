@@ -49,7 +49,7 @@ class VolumeConductor:
         iterations = 0
         while (self.__mesh.space().ndof < n_dof_limit and 
                                                 iterations < n_refinements):
-            self.__mesh.refine(error=self.__error(potential))
+            self.__mesh.refine_by_error(error=self.__error(potential))
             potential = self.__solve_bvp()
             iterations = iterations + 1
         return self.__postprocess(potential=potential)
