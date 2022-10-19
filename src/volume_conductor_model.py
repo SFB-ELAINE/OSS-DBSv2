@@ -72,6 +72,7 @@ class VolumeConductor:
         return difference * ngsolve.Conj(difference)
 
     def __postprocess(self, potential: ngsolve.comp.GridFunction) -> tuple:
+        # MappedIntegrationPoint
         electric_field = ngsolve.sqrt(ngsolve.grad(potential) * \
                                                         ngsolve.grad(potential))
         electric_field = electric_field(

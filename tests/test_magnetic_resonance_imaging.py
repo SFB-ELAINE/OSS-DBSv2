@@ -38,10 +38,10 @@ class TestMagneticResonanceImage:
         material_map = MaterialMap(csf_index=3, wm_index=2, gm_index=1)
         mri = MagneticResonanceImage(file_path=mri_path,
                                      material_map=material_map)
-        positions = np.array([(0, 0, 0.5, ), 
-                              (0, 0, 0),
-                              (0.5, 0.4, 0), 
-                              (0.2, 0.6, 0.4)])
+        positions = [(0, 0, 0.5),
+                     (0, 0, 0),
+                     (0.5, 0.4, 0), 
+                     (0.2, 0.6, 0.4)]
         expected = [BrainSubstance.UNKNOWN,
                     BrainSubstance.GRAY_MATTER,
                     BrainSubstance.WHITE_MATTER,
