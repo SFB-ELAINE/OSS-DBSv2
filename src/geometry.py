@@ -48,5 +48,5 @@ class SimpleGeometry:
         model = brain.solid - electrode.solid - wire.solid
         self.__geometry = occ.OCCGeometry(model)
 
-    def generate_mesh(self):
+    def ng_mesh(self):
         return self.__geometry.GenerateMesh()

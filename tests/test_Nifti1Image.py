@@ -41,7 +41,7 @@ class TestNifti1Image:
         assert np.all(nifti1_image_3d.data_file() == expected)
 
     def test_value_at(self, nifti1_image_3d):
-        positions = np.array([[0, 0.9, 0], [0.5, 0.5, 0.5]])
+        positions = [[0, 0.9, 0], [0.5, 0.5, 0.5]]
         assert nifti1_image_3d.values_at(positions) == [3.0, 8.0]
 
 
@@ -69,3 +69,4 @@ class TestNifti1Image_BoundingBox:
     def test_boundingbox_4d_shape(self, nifti1_image_4d):
         expected = np.array([[2, 2, 2], [3, 3, 3]])
         assert np.all(nifti1_image_4d.bounding_box() == expected)
+
