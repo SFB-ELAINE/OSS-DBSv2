@@ -5,16 +5,19 @@
 
 Welcome to OSS_DBS's documentation!
 ===================================
-Test
+Here we'll start the documentation!
 
-Here we start the documentation
+**Headline** Further text is following
+
+.. note::
+   This is just a frist draft of documentation.
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-   :Next title
-
-
+   
+   usage
+   
 Indices and tables
 ==================
 
