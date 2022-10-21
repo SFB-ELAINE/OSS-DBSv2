@@ -1,0 +1,7 @@
+volume_conductor_model module
+==================
+
+.. automodule:: volume_conductor_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
