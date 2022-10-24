@@ -1,5 +1,5 @@
 import ngsolve
-
+import numpy as np
 
 class LaplaceEquation:
 
@@ -10,6 +10,10 @@ class LaplaceEquation:
         u = space.TrialFunction()
         v = space.TestFunction()
         self.__a = ngsolve.BilinearForm(space=space, symmetric=True)
+
+        data = np.array([np.eye(3)]*8).reshape(2,2,2,3,3)
+        # coefficient = ngsolve.VoxelCoefficient(start=(0,0,0), end=(1,1,1), values=data, linear=False)
+
         self.__a += coefficient * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
         self.__f = ngsolve.LinearForm(space=space)
         self.__preconditioner = ngsolve.Preconditioner(bf=self.__a, 

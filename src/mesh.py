@@ -1,7 +1,8 @@
-from xml.dom.minidom import Element
 from src.geometry import SimpleGeometry
 import ngsolve
 import numpy as np
+from ngsolve import Draw
+
 
 
 class Mesh:
@@ -78,10 +79,26 @@ class Mesh:
         vertices = np.array([self.__mesh[v].point 
                              for element in self.__mesh.Elements()
                              for v in element.vertices]).reshape(shape)
+
         distance = np.sum((vertices - point) ** 2, axis=2)
-        return np.any(np.sum(distance, axis=2) <= r ** 2, axis=1)
+        return list(np.any(distance <= r ** 2, axis=1))
+
+    def foo(self):
+
+        # help( ngsolve.VoxelCoefficient)
+        data = np.array([1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0]).reshape(2,2,2)
+        #data = np.array([np.eye(3)]*8).reshape(2,2,2,3,3)
         
-                            
+        cf = ngsolve.VoxelCoefficient(start=(0,0,0), end=(1,1,1), values=data, linear=False)
+
+        Draw(cf, self.__mesh, 'foo')
+
+
+        volumes = ngsolve.Integrate(cf=cf, 
+                                    mesh=self.__mesh,
+                                    element_wise=True).NumPy()
+        print(volumes)
+ 
 
                     
 
