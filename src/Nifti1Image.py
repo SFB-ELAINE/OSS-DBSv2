@@ -16,7 +16,7 @@ class Nifti1Image:
         starts = np.array([self.__image.header['qoffset_x'],
                            self.__image.header['qoffset_y'],
                            self.__image.header['qoffset_z']])
-        ends = starts + np.multiply(self.__xyz_shape(), self.__xyz_dimension())
+        ends = starts + np.multiply(self._xyz_shape(), self._xyz_dimension())
         return tuple(np.array([starts, ends]) * self.__scaling())
 
     def header(self) -> nibabel.nifti1.Nifti1Header:
