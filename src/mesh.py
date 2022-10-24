@@ -1,8 +1,7 @@
+from xml.dom.minidom import Element
 from src.geometry import SimpleGeometry
 import ngsolve
 import numpy as np
-from ngsolve import Draw
-
 
 
 class Mesh:
@@ -91,14 +90,9 @@ class Mesh:
         
         cf = ngsolve.VoxelCoefficient(start=(0,0,0), end=(1,1,1), values=data, linear=False)
 
-        Draw(cf, self.__mesh, 'foo')
-
-
         volumes = ngsolve.Integrate(cf=cf, 
                                     mesh=self.__mesh,
                                     element_wise=True).NumPy()
         print(volumes)
  
-
-                    
 

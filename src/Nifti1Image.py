@@ -24,6 +24,7 @@ class Nifti1Image:
         return self.__image.header
 
     def values_at(self, positions: list) -> list[Any]:
+
         shape = (len(positions), 1, 1, 1, self.__VOXEL_DIMENSION)
         positions_reshaped = np.array(positions).reshape(shape) 
         lower_limits = self.__voxel_positions()
@@ -57,7 +58,7 @@ class Nifti1Image:
                                         for z in range(z_max)]).reshape(shape)
         return coordinates * self.__xyz_dimension()
 
-    def __xyz_dimension(self) -> tuple[int]:
+    def __xyz_dimension(self) -> tuple:
         return self.__image.header.get_zooms()[:self.__VOXEL_DIMENSION]
 
     def __xyz_shape(self):

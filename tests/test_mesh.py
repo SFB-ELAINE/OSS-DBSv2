@@ -8,6 +8,7 @@ class GeometryDummy:
         model = occ.Box(p1=occ.Pnt(0,0,0), p2=occ.Pnt(1,1,1))
         model.bc('contact')
         model.mat('saline')
+
         self.__geometry = occ.OCCGeometry(model)
 
     def ng_mesh(self):
@@ -16,7 +17,7 @@ class GeometryDummy:
 def test_element_sizes():
     geo = GeometryDummy()
     mesh = Mesh(geometry=geo, order=2, boundaries={})
-    np.testing.assert_allclose(mesh.element_sizes(), [1/6] * 12, atol=0.001)
+    np.testing.assert_allclose(mesh.element_sizes(), [1/6]* 12, atol=0.001)
 
 def test_centroids_of_elements():
     geo = GeometryDummy()
@@ -59,3 +60,4 @@ def test_foo():
     print('field: ', field)
     print('voltage_contact: ', contact)
     print('impedance: ', 1 / P)
+

@@ -39,5 +39,6 @@ class MagneticResonanceImage(Nifti1Image):
         self.__map = material_map
 
     def material_at(self, positions: list) -> list[BrainSubstance]:
+
         return [self.__map.material(value) 
                 for value in self.values_at(positions)]

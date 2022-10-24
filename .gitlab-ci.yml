@@ -1,0 +1,75 @@
+# OSS-DBS is tested for Python >= 3.8
+
+stages:
+    - "test"
+    - "run"
+
+before_script:
+  - python --version  # For debugging
+  - pip install virtualenv
+  - virtualenv venv
+  - source venv/bin/activate
+
+.test:
+  script:
+    - pip install tox
+    - tox -e $PYTHONVERSION
+
+.run:
+  script:
+    - python setup.py bdist_wheel
+    - pip install dist/*
+    # TODO: add meaningful test run
+    - pytest
+  artifacts:
+    paths:
+      - dist/*.whl
+
+test-3.8:
+   extends: ".test"
+   stage: "test"
+   variables:
+           PYTHONVERSION: "py38"
+   image: "python:3.8"
+
+run-3.8:
+   extends: ".run"
+   stage: "run"
+   image: "python:3.8"
+
+test-3.9:
+   extends: ".test"
+   stage: "test"
+   variables:
+           PYTHONVERSION: "py39"
+   image: "python:3.9"
+
+run-3.9:
+   extends: ".run"
+   stage: "run"
+   image: "python:3.9"
+
+test-3.10:
+   extends: ".test"
+   stage: "test"
+   variables:
+           PYTHONVERSION: "py310"
+   image: "python:3.10"
+
+run-3.10:
+   extends: ".run"
+   stage: "run"
+   image: "python:3.10"
+
+# For documentation (TODO)
+#pages:
+#  script:
+#    - pip install sphinx sphinx-rtd-theme
+#    - cd doc
+#    - make html
+#    - mv build/html/ ../public/
+#  artifacts:
+#    paths:
+#      - public
+#  rules:
+#    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

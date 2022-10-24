@@ -4,9 +4,11 @@ __pycache__/
 .tox/
 .vscode/
 htmlcov/
+build/
+dist/
+*.egg-info/
 
 # Ignore file
 *.pyc
 .coverage
 .coveragerc
-tox.ini
