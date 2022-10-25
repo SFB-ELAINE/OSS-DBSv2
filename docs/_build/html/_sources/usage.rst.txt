@@ -1,5 +1,5 @@
-Usage
-=====
+Getting Started
+================
 
 Installation
 ------------

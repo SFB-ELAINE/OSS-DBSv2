@@ -7,16 +7,36 @@ Welcome to OSS_DBS's documentation!
 ===================================
 Here we'll start the documentation!
 
-**Headline** Further text is following
-
 .. note::
    This is just a frist draft of documentation.
+   
+=========
+Overview
+=========
+Gerneral Overview about the  software OSS-DBS and the us use cases.
+Also links to important publications.
+Test paper [Butenko2019]_ from xy.
+
+.. [Butenko2019] K. Butenko et al., OSS-DBS
+
+==============
+Installation
+==============
+You can install OSS-DBS unsing pip
+
+.. code-block:: console
+    
+    $ pip install oss_dbs
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+
+   start
+   examples
+   volume_conductor_model
    
-   usage
    
 Indices and tables
 ==================
