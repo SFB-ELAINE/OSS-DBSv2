@@ -10,7 +10,6 @@ class LaplaceEquation:
         u = space.TrialFunction()
         v = space.TestFunction()
         self.__a = ngsolve.BilinearForm(space=space, symmetric=True)
-
         self.__a += (coefficient * ngsolve.grad(u) * ngsolve.grad(v) *
                      ngsolve.dx)
         self.__f = ngsolve.LinearForm(space=space)
