@@ -1,15 +1,14 @@
-from src.dielectric_model.dielectric_model_var2 import DielectricModelVariant2
+from src.dielectric_model import DielectricModel2
 from src.brainsubstance import BrainSubstance
 import numpy as np
 import pytest
 
 
-class TestWhiteMatterVariant1:
+class TestWhiteMatterModel2:
 
     @pytest.fixture
     def model(self):
-        return DielectricModelVariant2.create_model(
-                                                BrainSubstance.WHITE_MATTER)
+        return DielectricModel2.create_model(BrainSubstance.WHITE_MATTER)
 
     def test_permitivity_0Hz(self, model):
         result = model.permitivity(frequency=0)
@@ -36,12 +35,11 @@ class TestWhiteMatterVariant1:
         np.testing.assert_allclose(result, 35839.099752, atol=0.001)
 
 
-class TestGrayMatterVariant1:
+class TestGrayMatterModel2:
 
     @pytest.fixture
     def model(self):
-        return DielectricModelVariant2.create_model(
-                                                BrainSubstance.GRAY_MATTER)
+        return DielectricModel2.create_model(BrainSubstance.GRAY_MATTER)
 
     def test_permitivity_0Hz(self, model):
         result = model.permitivity(frequency=0)
@@ -66,3 +64,35 @@ class TestGrayMatterVariant1:
     def test_conductivity_400GHz(self, model):
         result = model.conductivity(frequency=400e9**2*np.pi)
         np.testing.assert_allclose(result, 1872.869183, atol=0.001)
+
+
+class TestCerebrospinalFluidModel2:
+
+    @pytest.fixture
+    def model(self):
+        return DielectricModel2.create_model(
+                                            BrainSubstance.CEREBROSPINAL_FLUID)
+
+    def test_permitivity_0Hz(self, model):
+        result = model.permitivity(frequency=0)
+        np.testing.assert_allclose(result, 80, atol=1)
+
+    def test_permitivity_1Hz(self, model):
+        result = model.permitivity(frequency=1*2*np.pi)
+        np.testing.assert_allclose(result, 80, atol=1)
+
+    def test_permitivity_1kHz(self, model):
+        result = model.permitivity(frequency=1000*2*np.pi)
+        np.testing.assert_allclose(result, 80, atol=1)
+
+    def test_conductivity_0Hz(self, model):
+        result = model.conductivity(frequency=0)
+        np.testing.assert_allclose(result, 1.79, atol=0.001)
+
+    def test_conductivity_1Hz(self, model):
+        result = model.conductivity(frequency=1*2*np.pi)
+        np.testing.assert_allclose(result, 1.79, atol=0.001)
+
+    def test_conductivity_1kHz(self, model):
+        result = model.conductivity(frequency=1000*2*np.pi)
+        np.testing.assert_allclose(result, 1.79, atol=0.001)

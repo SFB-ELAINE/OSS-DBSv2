@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from src.brainsubstance import BrainSubstance
-from src.dielectric_model.dielectric_model import DielectricModel
+from src.dielectric_model.dielectric_model import DielectricModel as Model
 import numpy as np
 
 
@@ -44,7 +44,28 @@ class GrayMatterParameters(Paramters):
     tau_4: float = 5.305e-3
 
 
-class DielectricModelVariant1(DielectricModel):
+class DielectricModelCSF(Model):
+
+    def permitivity(self, frequency: float) -> float:
+        return 80
+
+    def conductivity(self, frequency: float) -> float:
+        return 1.79
+
+    @classmethod
+    def create_model(cls, material: BrainSubstance) -> 'DielectricModel':
+
+        if material is not BrainSubstance.CEREBROSPINAL_FLUID:
+            material_parameters = {
+                            BrainSubstance.WHITE_MATTER: WhiteMatterParameters,
+                            BrainSubstance.GRAY_MATTER: GrayMatterParameters}
+
+            return cls(material_parameters[material])
+
+        return cls()
+
+
+class DielectricModel(Model):
     """Model variant 1 for the dielectric spectrum of a tissue using the
     Cole-Cole equation"""
 
@@ -89,6 +110,10 @@ class DielectricModelVariant1(DielectricModel):
     @classmethod
     def create_model(cls, material: BrainSubstance = BrainSubstance(1)) \
             -> 'DielectricModel':
+
+        if material is BrainSubstance.CEREBROSPINAL_FLUID:
+            return DielectricModelCSF()
+
         material_parameters = {
                             BrainSubstance.WHITE_MATTER: WhiteMatterParameters,
                             BrainSubstance.GRAY_MATTER: GrayMatterParameters}
