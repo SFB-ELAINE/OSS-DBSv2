@@ -10,16 +10,16 @@ class TestWhiteMatterModel2:
     def model(self):
         return DielectricModel2.create_model(BrainSubstance.WHITE_MATTER)
 
-    def test_permitivity_0Hz(self, model):
-        result = model.permitivity(frequency=0)
+    def test_relative_permitivity_0Hz(self, model):
+        result = model.relative_permitivity(frequency=0)
         np.testing.assert_allclose(result, 36.999965, atol=0.1)
 
-    def test_permitivity_400MHz(self, model):
-        result = model.permitivity(frequency=400e6*2*np.pi)
+    def test_relative_permitivity_400MHz(self, model):
+        result = model.relative_permitivity(frequency=400e6*2*np.pi)
         np.testing.assert_allclose(result, 36.314021, atol=0.1)
 
-    def test_permitivity_4GHz(self, model):
-        result = model.permitivity(frequency=400e9*np.pi)
+    def test_relative_permitivity_4GHz(self, model):
+        result = model.relative_permitivity(frequency=400e9*np.pi)
         np.testing.assert_allclose(result, 6.659155, atol=0.1)
 
     def test_conductivity_0Hz(self, model):
@@ -41,16 +41,16 @@ class TestGrayMatterModel2:
     def model(self):
         return DielectricModel2.create_model(BrainSubstance.GRAY_MATTER)
 
-    def test_permitivity_0Hz(self, model):
-        result = model.permitivity(frequency=0)
+    def test_relative_permitivity_0Hz(self, model):
+        result = model.relative_permitivity(frequency=0)
         np.testing.assert_allclose(result, 55.5, atol=0.1)
 
-    def test_permitivity_400MHz(self, model):
-        result = model.permitivity(frequency=400e6*2*np.pi)
+    def test_relative_permitivity_400MHz(self, model):
+        result = model.relative_permitivity(frequency=400e6*2*np.pi)
         np.testing.assert_allclose(result, 55.152151, atol=0.1)
 
-    def test_permitivity_400GHz(self, model):
-        result = model.permitivity(frequency=400e9*np.pi)
+    def test_relative_permitivity_400GHz(self, model):
+        result = model.relative_permitivity(frequency=400e9*np.pi)
         np.testing.assert_allclose(result, 6.092419, atol=0.1)
 
     def test_conductivity_0Hz(self, model):
@@ -73,16 +73,16 @@ class TestCerebrospinalFluidModel2:
         return DielectricModel2.create_model(
                                             BrainSubstance.CEREBROSPINAL_FLUID)
 
-    def test_permitivity_0Hz(self, model):
-        result = model.permitivity(frequency=0)
+    def test_relative_permitivity_0Hz(self, model):
+        result = model.relative_permitivity(frequency=0)
         np.testing.assert_allclose(result, 80, atol=1)
 
-    def test_permitivity_1Hz(self, model):
-        result = model.permitivity(frequency=1*2*np.pi)
+    def test_relative_permitivity_1Hz(self, model):
+        result = model.relative_permitivity(frequency=1*2*np.pi)
         np.testing.assert_allclose(result, 80, atol=1)
 
-    def test_permitivity_1kHz(self, model):
-        result = model.permitivity(frequency=1000*2*np.pi)
+    def test_relative_permitivity_1kHz(self, model):
+        result = model.relative_permitivity(frequency=1000*2*np.pi)
         np.testing.assert_allclose(result, 80, atol=1)
 
     def test_conductivity_0Hz(self, model):

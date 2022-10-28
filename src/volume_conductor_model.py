@@ -35,7 +35,7 @@ class VolumeConductor:
         n_dof_limit : int
             Maximal number of Demensions of Freedom of FEM space.
 
-        n_refinements: int
+        n_refinements : int
             Number of mesh refinements.
 
         Returns
