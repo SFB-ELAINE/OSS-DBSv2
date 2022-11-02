@@ -1,5 +1,5 @@
 
-from src.Nifti1Image import Nifti1Image
+from src.brain_imaging.Nifti1Image import Nifti1Image
 import numpy as np
 import pytest
 import nibabel

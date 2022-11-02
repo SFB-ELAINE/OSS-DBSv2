@@ -1,6 +1,6 @@
 from src.geometry import SimpleGeometry
 from src.brainsubstance import BrainSubstance
-from src.magnetic_resonance_imaging import MagneticResonanceImage
+from src.brain_imaging.magnetic_resonance_imaging import MagneticResonanceImage
 import ngsolve
 import numpy as np
 
@@ -22,10 +22,10 @@ class Mesh:
     def boundary_coefficients(self) -> ngsolve.fem.CoefficientFunction:
         return self.__mesh.BoundaryCF(values=self.__boundaries)
 
-    def flux_space(self) -> ngsolve.comp.HDiv:
+    def flux_space(self, complex: bool = True) -> ngsolve.comp.HDiv:
         return ngsolve.HDiv(mesh=self.__mesh,
                             order=self.__order-1,
-                            complex=True)
+                            complex=complex)
 
     def materials(self) -> tuple:
         return self.__mesh.GetMaterials()
@@ -71,12 +71,12 @@ class Mesh:
                                     element_wise=True).NumPy()
         return list((6 * volumes) ** 1 / 3)
 
-    def sobolev_space(self) -> ngsolve.comp.H1:
+    def sobolev_space(self, complex: bool = False) -> ngsolve.comp.H1:
         dirichlet = '|'.join(str(key) for key in self.__boundaries.keys())
         return ngsolve.H1(mesh=self.__mesh,
                           order=self.__order,
                           dirichlet=dirichlet,
-                          complex=False,
+                          complex=complex,
                           wb_withedges=False)
 
     def __set_refinement_flag(self, flags):

@@ -55,10 +55,11 @@ class VolumeConductor:
         return self.__postprocess(potential=potential)
 
     def __solve_bvp(self) -> ngsolve.comp.GridFunction:
-        potential = ngsolve.GridFunction(space=self.__mesh.sobolev_space())
+        space = self.__mesh.sobolev_space()
+        potential = ngsolve.GridFunction(space=space)
         potential.Set(coefficient=self.__mesh.boundary_coefficients(),
                       VOL_or_BND=ngsolve.BND)
-        equation = LaplaceEquation(space=self.__mesh.sobolev_space(),
+        equation = LaplaceEquation(space=space,
                                    coefficient=self.__sigma)
         potential.vec.data = equation.solve_bvp(input=potential)
         return potential
