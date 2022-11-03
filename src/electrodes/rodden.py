@@ -27,9 +27,9 @@ class Rodden(Electrode):
     TIP_LENGTH = 0.1125
     CONTACT_LENGTH = 13
     LEAD_DIAMETER = 0.225
-    TOTAL_LENGHTH = 50.0
+    TOTAL_LENGHTH = 100.0
     TUBE_THICKNESS = 0.0
-    TUBE_FREE_LENGTH = 0.0
+    TUBE_FREE_LENGTH = 100.0
 
     def __init__(self,
                  rotation: float = 0.0,

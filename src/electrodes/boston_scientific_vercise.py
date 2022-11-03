@@ -29,9 +29,9 @@ class BostonScientificVercise(Electrode):
     CONTACT_LENGTH = 1.5
     CONTACT_SPACING = 0.5
     LEAD_DIAMETER = 1.3
-    TOTAL_LENGHTH = 50.0
+    TOTAL_LENGHTH = 100.0
     TUBE_THICKNESS = 0.0
-    TUBE_FREE_LENGTH = 0.0
+    TUBE_FREE_LENGTH = 100.0
     N_CONTACTS = 8
 
     def __init__(self,

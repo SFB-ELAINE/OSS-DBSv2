@@ -29,9 +29,9 @@ class PINSMedicalL303(Electrode):
     CONTACT_LENGTH = 3.0
     CONTACT_SPACING = 3.0
     LEAD_DIAMETER = 1.3
-    TOTAL_LENGHTH = 50.0
+    TOTAL_LENGHTH = 100.0
     TUBE_THICKNESS = 0.0
-    TUBE_FREE_LENGTH = 0.0
+    TUBE_FREE_LENGTH = 100.0
     N_CONTACTS = 4
 
     def __init__(self,

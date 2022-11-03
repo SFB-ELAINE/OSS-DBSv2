@@ -29,9 +29,9 @@ class AbbottStjudeActiveTip6142_6145(Electrode):
     CONTACT_LENGTH = 1.5
     CONTACT_SPACING = 0.5
     LEAD_DIAMETER = 1.3
-    TOTAL_LENGHTH = 10.0
+    TOTAL_LENGHTH = 100.0
     TUBE_THICKNESS = 0.0
-    TUBE_FREE_LENGTH = 0.0
+    TUBE_FREE_LENGTH = 100.0
     N_CONTACTS = 4
 
     def __init__(self,

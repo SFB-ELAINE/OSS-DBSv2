@@ -29,9 +29,9 @@ class AbbottStjudeActiveTip6146_6149(Electrode):
     CONTACT_LENGTH = 1.5
     CONTACT_SPACING = 1.5
     LEAD_DIAMETER = 1.3
-    TOTAL_LENGHTH = 10.0
+    TOTAL_LENGHTH = 100.0
     TUBE_THICKNESS = 0.0
-    TUBE_FREE_LENGTH = 0.0
+    TUBE_FREE_LENGTH = 100.0
     N_CONTACTS = 4
 
     def __init__(self,
@@ -100,6 +100,8 @@ class AbbottStjudeActiveTip6146_6149(Electrode):
         contacts = [contact.Move(tuple(np.array(self.__direction) * distance))
                     for distance
                     in np.arange(self.N_CONTACTS) * length + self.TIP_LENGTH]
+
+        contacts = [active_tip] + contacts
 
         for index, contact in enumerate(contacts, 1):
             contact.bc("Contact_{}".format(index))
