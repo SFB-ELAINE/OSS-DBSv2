@@ -1,22 +1,25 @@
-from src.geometry import SimpleGeometry
-from src.mesh import Mesh
+
+from src.brain_model import BrainModel
 from src.volume_conductor_model import VolumeConductor
-from src.brain_imaging.magnetic_resonance_imaging import MagneticResonanceImage
-from src.brain_imaging.diffusion_tensor_imaging import DiffusionTensorImage
+from src.brain_imaging.magnetic_resonance_imaging \
+    import DefaultNMagneticResonanceImage
+from src.electrode_creator import ElectrodeCreator, ElectrodeParameters
 import ngsolve
 
 
 def main():
 
-    # mri = MagneticResonanceImage(file_path='')
-    # dti = DiffusionTensorImage(file_path='')
-    # electrode = factory(electrode_information)
-
-    geometry = SimpleGeometry()
     boundaries = {"contact": 1.0, "wire": 0.0}
     conductivities = {"saline": 1278*1e-6/1e-2}
 
-    mesh = Mesh(geometry=geometry, order=2, boundaries=boundaries)
+    electrode_parameters = ElectrodeParameters()
+    electrode = ElectrodeCreator(parameters=electrode_parameters)
+
+    mri = DefaultNMagneticResonanceImage(file_path='')
+
+    brain_model = BrainModel(mri=mri, electrode=electrode)
+    mesh = brain_model.generate_mesh(order=2, boundaries=boundaries)
+
     model = VolumeConductor(mesh=mesh, conductivity=conductivities)
 
     with ngsolve.TaskManager():

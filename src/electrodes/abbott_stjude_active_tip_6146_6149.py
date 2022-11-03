@@ -1,10 +1,10 @@
 # Abbott/St Jude Active Tip 6146-6149
-from src.electrodes.electrode import Electrode
+from src.electrodes.abstract_electrode import AbstractElectrode
 import netgen
 import numpy as np
 
 
-class AbbottStjudeActiveTip6146_6149(Electrode):
+class AbbottStjudeActiveTip6146_6149(AbstractElectrode):
     """Abbott/St Jude Active Tip 6146-6149 electrode.
 
     Attributes
@@ -42,7 +42,7 @@ class AbbottStjudeActiveTip6146_6149(Electrode):
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
 
-    def generate_geometry(self) -> netgen.libngpy._meshing.Mesh:
+    def generate_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of electrode.
 
         Returns

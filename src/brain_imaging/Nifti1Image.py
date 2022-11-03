@@ -6,7 +6,7 @@ class Nifti1Image:
 
     __VOXEL_DIMENSION = 3
 
-    def __init__(self, file_path) -> None:
+    def __init__(self, file_path: str) -> None:
         self.__image = self.__load_image(file_path)
 
     def data_map(self) -> np.memmap:
@@ -23,7 +23,7 @@ class Nifti1Image:
         return self.__image.header
 
     @staticmethod
-    def __load_image(file_path):
+    def __load_image(file_path: str):
         try:
             return nibabel.load(file_path)
         except FileNotFoundError:

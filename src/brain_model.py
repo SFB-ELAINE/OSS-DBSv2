@@ -1,4 +1,4 @@
-from src.electrodes import Electrode
+from src.electrodes import AbstractElectrode
 from src.brain_imaging.magnetic_resonance_imaging import MagneticResonanceImage
 from src.brain_imaging.diffusion_tensor_imaging import DiffusionTensorImage
 from src.mesh import Mesh
@@ -10,7 +10,7 @@ class BrainModel:
     def __init__(self,
                  mri: MagneticResonanceImage,
                  dti: DiffusionTensorImage = None,
-                 electrode: Electrode = None) -> None:
+                 electrode: AbstractElectrode = None) -> None:
         self.__mri = mri
         self.__dti = dti
         self.__electrode = electrode

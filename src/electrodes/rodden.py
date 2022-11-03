@@ -1,9 +1,9 @@
-from src.electrodes.electrode import Electrode
+from src.electrodes.abstract_electrode import AbstractElectrode
 import netgen
 import numpy as np
 
 
-class Rodden(Electrode):
+class Rodden(AbstractElectrode):
     """Rodden electrode.
 
     Attributes
@@ -39,7 +39,7 @@ class Rodden(Electrode):
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
 
-    def generate_geometry(self) -> netgen.libngpy._meshing.Mesh:
+    def generate_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of electrode.
 
         Returns
@@ -78,7 +78,7 @@ class Rodden(Electrode):
         return body
 
     def __contacts(self, diameter: float) \
-            -> netgen.libngpy._NgOCC.TopoDS_Shape:      
+            -> netgen.libngpy._NgOCC.TopoDS_Shape:
         point = tuple(np.array(self.__direction) * self.TIP_LENGTH)
         contact = netgen.occ.Cylinder(p=point,
                                       d=self.__direction,

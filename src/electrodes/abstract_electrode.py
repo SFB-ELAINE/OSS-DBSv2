@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
+import netgen
 
 
-class Electrode(ABC):
+class AbstractElectrode(ABC):
     """Deep Brain Simulation electrode.
 
     Attributes
@@ -13,7 +14,7 @@ class Electrode(ABC):
         Direction vector (x,y,z) of electrode.
 
     translation : tuple
-        Translation vector (x,y,z) of electrode.
+        Translation vector (x,y,z) of electrode.f
 
     Methods
     -------
@@ -28,7 +29,7 @@ class Electrode(ABC):
         pass
 
     @abstractmethod
-    def generate_geometry():
+    def generate_geometry() -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of electrode.
 
         Returns

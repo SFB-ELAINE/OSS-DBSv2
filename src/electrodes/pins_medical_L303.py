@@ -1,10 +1,10 @@
 # PINS Medical L303
-from src.electrodes.electrode import Electrode
+from src.electrodes.abstract_electrode import AbstractElectrode
 import netgen
 import numpy as np
 
 
-class PINSMedicalL303(Electrode):
+class PINSMedicalL303(AbstractElectrode):
     """PINS Medical L302 electrode.
 
     Attributes
@@ -42,7 +42,7 @@ class PINSMedicalL303(Electrode):
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
 
-    def generate_geometry(self) -> netgen.libngpy._meshing.Mesh:
+    def generate_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of electrode.
 
         Returns
@@ -115,4 +115,3 @@ class PINSMedicalL303(Electrode):
             tube.bc('Contact_{}'.format(np.argmax(intersection) + 1))
 
         return tube
-

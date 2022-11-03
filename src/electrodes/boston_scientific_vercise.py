@@ -1,10 +1,10 @@
 # Boston Scientific (Marlborough, Massachusetts, USA) vercise
-from src.electrodes.electrode import Electrode
+from src.electrodes.abstract_electrode import AbstractElectrode
 import netgen
 import numpy as np
 
 
-class BostonScientificVercise(Electrode):
+class BostonScientificVercise(AbstractElectrode):
     """Boston Scientific (Marlborough, Massachusetts, USA) vercise electrode.
 
     Attributes
@@ -42,7 +42,7 @@ class BostonScientificVercise(Electrode):
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
 
-    def generate_geometry(self) -> netgen.libngpy._meshing.Mesh:
+    def generate_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of electrode.
 
         Returns
@@ -80,7 +80,8 @@ class BostonScientificVercise(Electrode):
         body.bc("Body")
         return body
 
-    def __contacts(self, diameter: float) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def __contacts(self, diameter: float) \
+            -> netgen.libngpy._NgOCC.TopoDS_Shape:
         contact = netgen.occ.Cylinder(p=(0, 0, 0),
                                       d=self.__direction,
                                       r=diameter * 0.5,
