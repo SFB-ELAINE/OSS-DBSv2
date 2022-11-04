@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to OSS_DBS’s documentation! &mdash; OSS-DBS  documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <title>Welcome to OSS-DBS’s documentation! &mdash; OSS-DBS  documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
@@ -16,7 +16,7 @@
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Examples" href="examples.html" /> 
+    <link rel="next" title="Getting Started" href="start.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -35,9 +35,9 @@
 </div>
         </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
               <ul>
+<li class="toctree-l1"><a class="reference internal" href="start.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="src.html">src package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="start.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="volume_conductor_model.html">Volum Conductor Model</a></li>
 </ul>
 
@@ -55,7 +55,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="#" class="icon icon-home"></a> &raquo;</li>
-      <li>Welcome to OSS_DBS’s documentation!</li>
+      <li>Welcome to OSS-DBS’s documentation!</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -66,38 +66,40 @@
            <div itemprop="articleBody">
              
   <div class="section" id="welcome-to-oss-dbs-s-documentation">
-<h1>Welcome to OSS_DBS’s documentation!<a class="headerlink" href="#welcome-to-oss-dbs-s-documentation" title="Permalink to this headline">¶</a></h1>
-<p>Here we’ll start the documentation!</p>
+<h1>Welcome to OSS-DBS’s documentation!<a class="headerlink" href="#welcome-to-oss-dbs-s-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">This is just a frist draft of documentation.</p>
+<p class="last">This page is still under construction.</p>
 </div>
 <div class="section" id="overview">
 <h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
-<p>Gerneral Overview about the  software OSS-DBS and the us use cases.
-Also links to important publications.
-Test paper <a class="reference internal" href="#butenko2019" id="id1">[Butenko2019]</a> from xy.</p>
-<table class="docutils citation" frame="void" id="butenko2019" rules="none">
-<colgroup><col class="label" /><col /></colgroup>
-<tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id1">[Butenko2019]</a></td><td><ol class="first last upperalpha simple" start="11">
-<li>Butenko et al., OSS-DBS</li>
-</ol>
-</td></tr>
-</tbody>
-</table>
+<p>Deep Brain Stimulation} (DBS) is a widely used treatment for several motor and non-motor disorders.
+Since the mechanism of action are not fully understood, computational models help us to predict the outcome of different treatments and optimize them.</p>
+<p>OSS-DBS is a comprehensive tool to performe several DBS specific studies for humans, but also for animal studies in a highly automated workflow.
+Therefore, the user can provide data like MRI and DTI data or selcet predefined datasets from the libary.
+Also, the DBS electrodes can be selected from a predefined database which contains the most common electrode types, but could also be added manually.</p>
+<p>The software performs calculations of the electric field within the inhomogenius and anisotropic brain tissue based on the given inputs.
+Further, the activation of automaticly generated axons is clculated to estimate a volume of activated tissue (VAT) or specific realistic fiber tracts can be loaded to performe detailed pathway activation modeling (PAM).</p>
+<p>A detailed overview over the implemented concepts can be find in the specific sections of this documentation.
+For more details about the first veriosn of OSS-DBS you can also refer to <a class="reference internal" href="#butenko2019" id="id1">[Butenko2019]</a>.</p>
 </div>
 <div class="section" id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
-<p>You can install OSS-DBS unsing pip</p>
+<p>The software OSS-DBS can be easily installed using pip:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>pip install oss_dbs
 </pre></div>
 </div>
+<p>For first steps with OSS-DBS see the next section of this documentation.</p>
 <div class="toctree-wrapper compound">
 <ul>
+<li class="toctree-l1"><a class="reference internal" href="start.html">Getting Started</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="start.html#run-input-from-directory">Run input from directory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="start.html#import-as-libary">Import as libary</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#example-1">Example 1</a></li>
-<li class="toctree-l2"><a class="reference internal" href="examples.html#example-2">Example 2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example1.html">Example1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="example2.html">Examples2</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="src.html">src package</a><ul>
@@ -114,11 +116,6 @@ Test paper <a class="reference internal" href="#butenko2019" id="id1">[Butenko20
 <li class="toctree-l2"><a class="reference internal" href="src.html#module-src">Module contents</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="start.html">Getting Started</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="start.html#run-input-from-directory">Run input from directory</a></li>
-<li class="toctree-l2"><a class="reference internal" href="start.html#import-as-libary">Import as libary</a></li>
-</ul>
-</li>
 <li class="toctree-l1"><a class="reference internal" href="volume_conductor_model.html">Volum Conductor Model</a></li>
 </ul>
 </div>
@@ -131,13 +128,22 @@ Test paper <a class="reference internal" href="#butenko2019" id="id1">[Butenko20
 <li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
 <li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
 </ul>
+<table class="docutils citation" frame="void" id="butenko2019" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[Butenko2019]</a></td><td><ol class="first last upperalpha simple" start="11">
+<li>Butenko, C. Bahls, M. Schröder, R. Köhling and U. van Rienen, OSS-DBS: Open-source simulation platform for deep brain stimulation with a comprehensive automated modeling, PLoS Comput Biol 16(7): e1008023. <a class="reference external" href="https://doi.org/10.1371/journal.pcbi.1008023">https://doi.org/10.1371/journal.pcbi.1008023</a>.</li>
+</ol>
+</td></tr>
+</tbody>
+</table>
 </div>
 
 
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="examples.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="start.html" class="btn btn-neutral float-right" title="Getting Started" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>

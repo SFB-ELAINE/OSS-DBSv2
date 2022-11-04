@@ -3,37 +3,45 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to OSS_DBS's documentation!
+Welcome to OSS-DBS's documentation!
 ===================================
-Here we'll start the documentation!
-
 .. note::
-   This is just a frist draft of documentation.
+   This page is still under construction.
 
 =========
 Overview
 =========
-Gerneral Overview about the  software OSS-DBS and the us use cases.
-Also links to important publications.
-Test paper [Butenko2019]_ from xy.
+Deep Brain Stimulation} (DBS) is a widely used treatment for several motor and non-motor disorders.
+Since the mechanism of action are not fully understood, computational models help us to predict the outcome of different treatments and optimize them.
 
-.. [Butenko2019] K. Butenko et al., OSS-DBS
+
+OSS-DBS is a comprehensive tool to performe several DBS specific studies for humans, but also for animal studies in a highly automated workflow.
+Therefore, the user can provide data like MRI and DTI data or selcet predefined datasets from the libary.
+Also, the DBS electrodes can be selected from a predefined database which contains the most common electrode types, but could also be added manually.
+
+The software performs calculations of the electric field within the inhomogenius and anisotropic brain tissue based on the given inputs.
+Further, the activation of automaticly generated axons is clculated to estimate a volume of activated tissue (VAT) or specific realistic fiber tracts can be loaded to performe detailed pathway activation modeling (PAM).
+
+A detailed overview over the implemented concepts can be find in the specific sections of this documentation.
+For more details about the first veriosn of OSS-DBS you can also refer to [Butenko2019]_.
 
 ==============
 Installation
 ==============
-You can install OSS-DBS unsing pip
+The software OSS-DBS can be easily installed using pip:
 
 .. code-block:: console
 
     $ pip install oss_dbs
 
-.. toctree::
-   :maxdepth: 2
+For first steps with OSS-DBS see the next section of this documentation.
 
+.. toctree::
+   :maxdepth: 3
+
+   start
    examples
    src
-   start
    volume_conductor_model
 
 
@@ -43,3 +51,5 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
+
+.. [Butenko2019] K. Butenko, C. Bahls, M. Schröder, R. Köhling and U. van Rienen, OSS-DBS: Open-source simulation platform for deep brain stimulation with a comprehensive automated modeling, PLoS Comput Biol 16(7): e1008023. https://doi.org/10.1371/journal.pcbi.1008023.

@@ -1,20 +1,11 @@
 Examples
 ================
+See different examples
 
-Here we will list a few examples
+.. toctree::
+   :maxdepth: 3
 
-Example 1
-----------------
+   example1
+   example2
 
-Example to run from input directory.
 
-Example 2
------------------
-
-Thats how you can use from command line. First import OSS-DBS by typing
-
-.. code-block:: bash
-
-    $ import oss-dbs
-    
-than you can run...
