@@ -36,6 +36,9 @@ The software OSS-DBS can be easily installed using pip:
 
 For first steps with OSS-DBS see the next section of this documentation.
 
+=================
+Table of contents
+=================
 .. toctree::
    :maxdepth: 3
 

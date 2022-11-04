@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>src package &mdash; OSS-DBS /beta documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <title>Numpy style documentation &mdash; OSS-DBS /beta documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
@@ -41,18 +41,8 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="start.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">src package</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#src-nifti1image-module">src.Nifti1Image module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#src-diffusion-tensor-imaging-module">src.diffusion_tensor_imaging module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-src.example_numpy">src.example_numpy module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-src.geometry">src.geometry module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-src.laplace_equation">src.laplace_equation module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#src-magnetic-resonance-imaging-module">src.magnetic_resonance_imaging module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-src.mesh">src.mesh module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#src-tetrahedron-module">src.tetrahedron module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-src.volume_conductor_model">src.volume_conductor_model module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#module-src">Module contents</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Numpy style documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.example_numpy">Example Numpy Style documentation</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="volume_conductor_model.html">Volum Conductor Model</a></li>
@@ -72,7 +62,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>src package</li>
+      <li>Numpy style documentation</li>
       <li class="wy-breadcrumbs-aside">
             <a href="_sources/src.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -82,19 +72,19 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="src-package">
-<h1>src package<a class="headerlink" href="#src-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+  <div class="section" id="numpy-style-documentation">
+<h1>Numpy style documentation<a class="headerlink" href="#numpy-style-documentation" title="Permalink to this headline">¶</a></h1>
+<p>Use</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>sphinx-apidoc -f -o docs/ ../src
+</pre></div>
 </div>
-<div class="section" id="src-nifti1image-module">
-<h2>src.Nifti1Image module<a class="headerlink" href="#src-nifti1image-module" title="Permalink to this headline">¶</a></h2>
+<p>to generate new docstrings automaticly. Next step type</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make html
+</pre></div>
 </div>
-<div class="section" id="src-diffusion-tensor-imaging-module">
-<h2>src.diffusion_tensor_imaging module<a class="headerlink" href="#src-diffusion-tensor-imaging-module" title="Permalink to this headline">¶</a></h2>
-</div>
+<p>in the docs folder.</p>
 <div class="section" id="module-src.example_numpy">
-<span id="src-example-numpy-module"></span><h2>src.example_numpy module<a class="headerlink" href="#module-src.example_numpy" title="Permalink to this headline">¶</a></h2>
+<span id="example-numpy-style-documentation"></span><h2>Example Numpy Style documentation<a class="headerlink" href="#module-src.example_numpy" title="Permalink to this headline">¶</a></h2>
 <p>Example NumPy style docstrings.</p>
 <p>This module demonstrates documentation as specified by the <a class="reference external" href="https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt">NumPy
 Documentation HOWTO</a>. Docstrings may extend over multiple lines. Sections
@@ -477,178 +467,6 @@ on the first line, separated by a colon.</p>
 </table>
 </dd></dl>
 
-</div>
-<div class="section" id="module-src.geometry">
-<span id="src-geometry-module"></span><h2>src.geometry module<a class="headerlink" href="#module-src.geometry" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="src.geometry.Brain">
-<em class="property">class </em><code class="descclassname">src.geometry.</code><code class="descname">Brain</code><a class="reference internal" href="_modules/src/geometry.html#Brain"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.geometry.Brain" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-</dd></dl>
-
-<dl class="class">
-<dt id="src.geometry.Electrode">
-<em class="property">class </em><code class="descclassname">src.geometry.</code><code class="descname">Electrode</code><a class="reference internal" href="_modules/src/geometry.html#Electrode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.geometry.Electrode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-</dd></dl>
-
-<dl class="class">
-<dt id="src.geometry.SimpleGeometry">
-<em class="property">class </em><code class="descclassname">src.geometry.</code><code class="descname">SimpleGeometry</code><a class="reference internal" href="_modules/src/geometry.html#SimpleGeometry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.geometry.SimpleGeometry" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="method">
-<dt id="src.geometry.SimpleGeometry.generate_mesh">
-<code class="descname">generate_mesh</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/geometry.html#SimpleGeometry.generate_mesh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.geometry.SimpleGeometry.generate_mesh" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="src.geometry.Wire">
-<em class="property">class </em><code class="descclassname">src.geometry.</code><code class="descname">Wire</code><a class="reference internal" href="_modules/src/geometry.html#Wire"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.geometry.Wire" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-</dd></dl>
-
-</div>
-<div class="section" id="module-src.laplace_equation">
-<span id="src-laplace-equation-module"></span><h2>src.laplace_equation module<a class="headerlink" href="#module-src.laplace_equation" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="src.laplace_equation.LaplaceEquation">
-<em class="property">class </em><code class="descclassname">src.laplace_equation.</code><code class="descname">LaplaceEquation</code><span class="sig-paren">(</span><em>space: ngsolve.comp.H1</em>, <em>coefficient: ngsolve.fem.CoefficientFunction</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/laplace_equation.html#LaplaceEquation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.laplace_equation.LaplaceEquation" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="method">
-<dt id="src.laplace_equation.LaplaceEquation.solve_bvp">
-<code class="descname">solve_bvp</code><span class="sig-paren">(</span><em>input: ngsolve.comp.GridFunction</em><span class="sig-paren">)</span> &#x2192; ngsolve.la.DynamicVectorExpression<a class="reference internal" href="_modules/src/laplace_equation.html#LaplaceEquation.solve_bvp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.laplace_equation.LaplaceEquation.solve_bvp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Solve boundary value problem.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="src-magnetic-resonance-imaging-module">
-<h2>src.magnetic_resonance_imaging module<a class="headerlink" href="#src-magnetic-resonance-imaging-module" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="module-src.mesh">
-<span id="src-mesh-module"></span><h2>src.mesh module<a class="headerlink" href="#module-src.mesh" title="Permalink to this headline">¶</a></h2>
-<dl class="class">
-<dt id="src.mesh.Mesh">
-<em class="property">class </em><code class="descclassname">src.mesh.</code><code class="descname">Mesh</code><span class="sig-paren">(</span><em>geometry: src.geometry.SimpleGeometry</em>, <em>order: int</em>, <em>boundaries: dict</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/mesh.html#Mesh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.mesh.Mesh" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<dl class="method">
-<dt id="src.mesh.Mesh.boundaries">
-<code class="descname">boundaries</code><span class="sig-paren">(</span><em>name: str</em><span class="sig-paren">)</span> &#x2192; ngsolve.comp.Region<a class="reference internal" href="_modules/src/mesh.html#Mesh.boundaries"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.mesh.Mesh.boundaries" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="src.mesh.Mesh.boundary_coefficients">
-<code class="descname">boundary_coefficients</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; ngsolve.fem.CoefficientFunction<a class="reference internal" href="_modules/src/mesh.html#Mesh.boundary_coefficients"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.mesh.Mesh.boundary_coefficients" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="src.mesh.Mesh.curve">
-<code class="descname">curve</code><span class="sig-paren">(</span><em>order: int</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="_modules/src/mesh.html#Mesh.curve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.mesh.Mesh.curve" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="src.mesh.Mesh.flux_space">
-<code class="descname">flux_space</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; ngsolve.comp.HDiv<a class="reference internal" href="_modules/src/mesh.html#Mesh.flux_space"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.mesh.Mesh.flux_space" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="src.mesh.Mesh.materials">
-<code class="descname">materials</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; tuple<a class="reference internal" href="_modules/src/mesh.html#Mesh.materials"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.mesh.Mesh.materials" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="src.mesh.Mesh.ngsolvemesh">
-<code class="descname">ngsolvemesh</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; ngsolve.comp.Mesh<a class="reference internal" href="_modules/src/mesh.html#Mesh.ngsolvemesh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.mesh.Mesh.ngsolvemesh" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="src.mesh.Mesh.refine">
-<code class="descname">refine</code><span class="sig-paren">(</span><em>error: ngsolve.fem.CoefficientFunction</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="_modules/src/mesh.html#Mesh.refine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.mesh.Mesh.refine" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="src.mesh.Mesh.space">
-<code class="descname">space</code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; ngsolve.comp.H1<a class="reference internal" href="_modules/src/mesh.html#Mesh.space"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.mesh.Mesh.space" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="src-tetrahedron-module">
-<h2>src.tetrahedron module<a class="headerlink" href="#src-tetrahedron-module" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="module-src.volume_conductor_model">
-<span id="src-volume-conductor-model-module"></span><h2>src.volume_conductor_model module<a class="headerlink" href="#module-src.volume_conductor_model" title="Permalink to this headline">¶</a></h2>
-<p>TestString</p>
-<dl class="class">
-<dt id="src.volume_conductor_model.VolumeConductor">
-<em class="property">class </em><code class="descclassname">src.volume_conductor_model.</code><code class="descname">VolumeConductor</code><span class="sig-paren">(</span><em>mesh: src.mesh.Mesh</em>, <em>conductivity: dict</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/volume_conductor_model.html#VolumeConductor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.volume_conductor_model.VolumeConductor" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>Model for representing a volume conductor.</p>
-<dl class="attribute">
-<dt id="src.volume_conductor_model.VolumeConductor.mesh">
-<code class="descname">mesh</code><a class="headerlink" href="#src.volume_conductor_model.VolumeConductor.mesh" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body"><a class="reference internal" href="#src.mesh.Mesh" title="src.mesh.Mesh">Mesh</a></td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="src.volume_conductor_model.VolumeConductor.conductivity">
-<code class="descname">conductivity</code><a class="headerlink" href="#src.volume_conductor_model.VolumeConductor.conductivity" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">dict</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="src.volume_conductor_model.VolumeConductor.evaluate_potential">
-<code class="descname">evaluate_potential</code><span class="sig-paren">(</span><em>mesh: Mesh</em>, <em>conductivity: dict</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/volume_conductor_model.html#VolumeConductor.evaluate_potential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.volume_conductor_model.VolumeConductor.evaluate_potential" title="Permalink to this definition">¶</a></dt>
-<dd><p>Evaluate the electric potential of volume conductor.</p>
-</dd></dl>
-
-<dl class="method">
-<dt>
-<code class="descname">evaluate_potential</code><span class="sig-paren">(</span><em>n_dof_limit: int = 1000000.0</em>, <em>n_refinements: int = 1</em><span class="sig-paren">)</span> &#x2192; tuple<a class="reference internal" href="_modules/src/volume_conductor_model.html#VolumeConductor.evaluate_potential"><span class="viewcode-link">[source]</span></a></dt>
-<dd><p>Evaluate electrical potential of volume conductor.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>n_dof_limit</strong> (<em>int</em>) – Maximal number of Demensions of Freedom of FEM space.</li>
-<li><strong>n_refinements</strong> (<em>int</em>) – Number of mesh refinements.</li>
-</ul>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>return</strong> – Postprocessed data: lectric_field, V_contact, Power, potential</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple</p>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="module-src">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-src" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
