@@ -4,7 +4,6 @@ __pycache__/
 .tox/
 .vscode/
 htmlcov/
-docs/_build/
 
 # Ignore file
 *.pyc

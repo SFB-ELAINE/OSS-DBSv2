@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html class="writer-html4" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.volume_conductor_model &mdash; OSS-DBS  documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> OSS-DBS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../src.html">src package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">src</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../start.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../volume_conductor_model.html">Volum Conductor Model</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">OSS-DBS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>src.volume_conductor_model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.volume_conductor_model</h1><div class="highlight"><pre>
+<span></span>
+<span class="kn">from</span> <span class="nn">src.mesh</span> <span class="kn">import</span> <span class="n">Mesh</span>
+<span class="kn">from</span> <span class="nn">src.laplace_equation</span> <span class="kn">import</span> <span class="n">LaplaceEquation</span>
+<span class="kn">import</span> <span class="nn">ngsolve</span>
+
+
+<div class="viewcode-block" id="VolumeConductor"><a class="viewcode-back" href="../../src.html#src.volume_conductor_model.VolumeConductor">[docs]</a><span class="k">class</span> <span class="nc">VolumeConductor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Model for representing a volume conductor.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mesh : Mesh</span>
+<span class="sd">    </span>
+<span class="sd">    conductivity : dict</span>
+
+<span class="sd">    Methods</span>
+<span class="sd">    -------</span>
+<span class="sd">    evaluate_potential(mesh: Mesh, conductivity: dict)</span>
+<span class="sd">        Evaluate the electric potential of volume conductor.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">:</span> <span class="n">Mesh</span><span class="p">,</span> <span class="n">conductivity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span> <span class="o">=</span> <span class="n">mesh</span>
+        <span class="n">conductivities</span> <span class="o">=</span> <span class="p">[</span><span class="n">conductivity</span><span class="p">[</span><span class="n">mat</span><span class="p">]</span> <span class="k">for</span> <span class="n">mat</span> <span class="ow">in</span> <span class="n">mesh</span><span class="o">.</span><span class="n">materials</span><span class="p">()]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__sigma</span> <span class="o">=</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">CoefficientFunction</span><span class="p">(</span><span class="n">coef</span><span class="o">=</span><span class="n">conductivities</span><span class="p">)</span> 
+        
+<div class="viewcode-block" id="VolumeConductor.evaluate_potential"><a class="viewcode-back" href="../../src.html#src.volume_conductor_model.VolumeConductor.evaluate_potential">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_potential</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                            <span class="n">n_dof_limit</span> <span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">1e6</span><span class="p">,</span> 
+                            <span class="n">n_refinements</span><span class="p">:</span> <span class="nb">int</span>  <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Evaluate electrical potential of volume conductor.</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n_dof_limit : int</span>
+<span class="sd">            Maximal number of Demensions of Freedom of FEM space.</span>
+
+<span class="sd">        n_refinements: int</span>
+<span class="sd">            Number of mesh refinements.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+
+<span class="sd">        return : tuple</span>
+<span class="sd">            Postprocessed data: lectric_field, V_contact, Power, potential</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">potential</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__solve_bvp</span><span class="p">()</span>
+        <span class="n">iterations</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">space</span><span class="p">()</span><span class="o">.</span><span class="n">ndof</span> <span class="o">&lt;</span> <span class="n">n_dof_limit</span> <span class="ow">and</span> 
+                                                <span class="n">iterations</span> <span class="o">&lt;</span> <span class="n">n_refinements</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">refine</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__error</span><span class="p">(</span><span class="n">potential</span><span class="p">))</span>
+            <span class="n">potential</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__solve_bvp</span><span class="p">()</span>
+            <span class="n">iterations</span> <span class="o">=</span> <span class="n">iterations</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__postprocess</span><span class="p">(</span><span class="n">potential</span><span class="o">=</span><span class="n">potential</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__solve_bvp</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">GridFunction</span><span class="p">:</span>
+        <span class="n">potential</span> <span class="o">=</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">GridFunction</span><span class="p">(</span><span class="n">space</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">space</span><span class="p">())</span>
+        <span class="n">potential</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="n">coefficient</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">boundary_coefficients</span><span class="p">(),</span>
+                      <span class="n">VOL_or_BND</span><span class="o">=</span><span class="n">ngsolve</span><span class="o">.</span><span class="n">BND</span><span class="p">)</span>
+        <span class="n">equation</span> <span class="o">=</span> <span class="n">LaplaceEquation</span><span class="p">(</span><span class="n">space</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">space</span><span class="p">(),</span> 
+                                   <span class="n">coefficient</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__sigma</span><span class="p">)</span>
+        <span class="n">potential</span><span class="o">.</span><span class="n">vec</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">equation</span><span class="o">.</span><span class="n">solve_bvp</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">potential</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">potential</span>
+
+    <span class="k">def</span> <span class="nf">__error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">potential</span><span class="p">:</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">GridFunction</span><span class="p">)</span> \
+                                            <span class="o">-&gt;</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">fem</span><span class="o">.</span><span class="n">CoefficientFunction</span><span class="p">:</span>
+        <span class="n">flux</span> <span class="o">=</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">potential</span><span class="p">)</span>
+        <span class="n">flux_potential</span> <span class="o">=</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">GridFunction</span><span class="p">(</span><span class="n">space</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">flux_space</span><span class="p">())</span>
+        <span class="n">flux_potential</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="n">coefficient</span><span class="o">=</span><span class="n">flux</span><span class="p">)</span>
+        <span class="n">difference</span> <span class="o">=</span> <span class="n">flux</span> <span class="o">-</span> <span class="n">flux_potential</span>
+        <span class="k">return</span> <span class="n">difference</span> <span class="o">*</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">Conj</span><span class="p">(</span><span class="n">difference</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__postprocess</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">potential</span><span class="p">:</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">GridFunction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+        <span class="n">electric_field</span> <span class="o">=</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">ngsolve</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">potential</span><span class="p">)</span> <span class="o">*</span> \
+                                                        <span class="n">ngsolve</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">potential</span><span class="p">))</span>
+        <span class="n">electric_field</span> <span class="o">=</span> <span class="n">electric_field</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">ngsolvemesh</span><span class="p">()(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.02</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="mf">1e3</span>  
+        <span class="n">V_contact</span> <span class="o">=</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">Integrate</span><span class="p">(</span><span class="n">potential</span><span class="p">,</span>
+                                      <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">ngsolvemesh</span><span class="p">(),</span> 
+                                      <span class="n">definedon</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">boundaries</span>
+                                                                    <span class="p">(</span><span class="s2">&quot;contact&quot;</span><span class="p">))</span>
+
+        <span class="n">P</span> <span class="o">=</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">Integrate</span><span class="p">(</span><span class="n">ngsolve</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">potential</span><span class="p">)</span> <span class="o">*</span> \
+                        <span class="n">ngsolve</span><span class="o">.</span><span class="n">Conj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__sigma</span> <span class="o">*</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">potential</span><span class="p">)),</span> 
+                        <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">ngsolvemesh</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">electric_field</span><span class="p">,</span> <span class="n">V_contact</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">potential</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, ELAINE.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

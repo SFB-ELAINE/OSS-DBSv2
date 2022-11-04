@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html class="writer-html4" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.mesh &mdash; OSS-DBS  documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> OSS-DBS
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../src.html">src package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">src</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../start.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../volume_conductor_model.html">Volum Conductor Model</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">OSS-DBS</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>src.mesh</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.mesh</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">src.geometry</span> <span class="kn">import</span> <span class="n">SimpleGeometry</span>
+<span class="kn">import</span> <span class="nn">ngsolve</span>
+
+
+<div class="viewcode-block" id="Mesh"><a class="viewcode-back" href="../../src.html#src.mesh.Mesh">[docs]</a><span class="k">class</span> <span class="nc">Mesh</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                <span class="n">geometry</span><span class="p">:</span> <span class="n">SimpleGeometry</span><span class="p">,</span> 
+                <span class="n">order</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> 
+                <span class="n">boundaries</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span> <span class="o">=</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">Mesh</span><span class="p">(</span><span class="n">ngmesh</span><span class="o">=</span><span class="n">geometry</span><span class="o">.</span><span class="n">generate_mesh</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">Curve</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__order</span> <span class="o">=</span> <span class="n">order</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__boundaries</span> <span class="o">=</span> <span class="n">boundaries</span>
+
+<div class="viewcode-block" id="Mesh.boundaries"><a class="viewcode-back" href="../../src.html#src.mesh.Mesh.boundaries">[docs]</a>    <span class="k">def</span> <span class="nf">boundaries</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">Region</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">Boundaries</span><span class="p">(</span><span class="n">pattern</span><span class="o">=</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Mesh.boundary_coefficients"><a class="viewcode-back" href="../../src.html#src.mesh.Mesh.boundary_coefficients">[docs]</a>    <span class="k">def</span> <span class="nf">boundary_coefficients</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">fem</span><span class="o">.</span><span class="n">CoefficientFunction</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">BoundaryCF</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__boundaries</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Mesh.curve"><a class="viewcode-back" href="../../src.html#src.mesh.Mesh.curve">[docs]</a>    <span class="k">def</span> <span class="nf">curve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">Curve</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Mesh.flux_space"><a class="viewcode-back" href="../../src.html#src.mesh.Mesh.flux_space">[docs]</a>    <span class="k">def</span> <span class="nf">flux_space</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">HDiv</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">HDiv</span><span class="p">(</span><span class="n">mesh</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="p">,</span> 
+                            <span class="n">order</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__order</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+                            <span class="nb">complex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>    </div>
+
+<div class="viewcode-block" id="Mesh.materials"><a class="viewcode-back" href="../../src.html#src.mesh.Mesh.materials">[docs]</a>    <span class="k">def</span> <span class="nf">materials</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">GetMaterials</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Mesh.ngsolvemesh"><a class="viewcode-back" href="../../src.html#src.mesh.Mesh.ngsolvemesh">[docs]</a>    <span class="k">def</span> <span class="nf">ngsolvemesh</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">Mesh</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span></div>
+
+<div class="viewcode-block" id="Mesh.refine"><a class="viewcode-back" href="../../src.html#src.mesh.Mesh.refine">[docs]</a>    <span class="k">def</span> <span class="nf">refine</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">:</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">fem</span><span class="o">.</span><span class="n">CoefficientFunction</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">Integrate</span><span class="p">(</span><span class="n">cf</span><span class="o">=</span><span class="n">error</span><span class="p">,</span>
+                                    <span class="n">mesh</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="p">,</span> 
+                                    <span class="n">VOL_or_BND</span><span class="o">=</span><span class="n">ngsolve</span><span class="o">.</span><span class="n">VOL</span><span class="p">,</span>
+                                    <span class="n">element_wise</span><span class="o">=</span><span class="kc">True</span>
+                                    <span class="p">)</span><span class="o">.</span><span class="n">real</span>
+        <span class="n">limit</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">Elements</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">SetRefinementFlag</span><span class="p">(</span><span class="n">ei</span><span class="o">=</span><span class="n">element</span><span class="p">,</span> 
+                                            <span class="n">refine</span><span class="o">=</span><span class="n">errors</span><span class="p">[</span><span class="n">element</span><span class="o">.</span><span class="n">nr</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">limit</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">Refine</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">Curve</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__order</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Mesh.space"><a class="viewcode-back" href="../../src.html#src.mesh.Mesh.space">[docs]</a>    <span class="k">def</span> <span class="nf">space</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">H1</span><span class="p">:</span>
+        <span class="n">dirichlet</span> <span class="o">=</span> <span class="s1">&#39;|&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">__boundaries</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">H1</span><span class="p">(</span><span class="n">mesh</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="p">,</span> 
+                            <span class="n">order</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__order</span><span class="p">,</span> 
+                            <span class="n">dirichlet</span><span class="o">=</span><span class="n">dirichlet</span><span class="p">,</span> 
+                            <span class="nb">complex</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> 
+                            <span class="n">wb_withedges</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div></div>
+                            
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, ELAINE.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

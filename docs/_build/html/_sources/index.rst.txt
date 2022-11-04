@@ -28,6 +28,14 @@ You can install OSS-DBS unsing pip
 
     $ pip install oss_dbs
 
+.. toctree::
+
+   examples
+   src
+   modules
+   start
+   volume_conductor_model
+
 
 Indices and tables
 ==================
