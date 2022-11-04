@@ -9,7 +9,7 @@ Here we'll start the documentation!
 
 .. note::
    This is just a frist draft of documentation.
-   
+
 =========
 Overview
 =========
@@ -25,19 +25,10 @@ Installation
 You can install OSS-DBS unsing pip
 
 .. code-block:: console
-    
+
     $ pip install oss_dbs
 
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-   start
-   examples
-   volume_conductor_model
-   
-   
 Indices and tables
 ==================
 
