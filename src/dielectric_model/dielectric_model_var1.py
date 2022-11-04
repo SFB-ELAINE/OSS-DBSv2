@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from src.brainsubstance import BrainSubstance
-from src.dielectric_model.dielectric_model import DielectricModel as Model
+from src.brainsubstance import Material
+from src.dielectric_model import AbstractDielectricModel
 import numpy as np
 
 
@@ -20,16 +20,16 @@ class WhiteMatterParameters(Paramters):
     eps_delta_4: float = 3.5e7
     eps_inf: float = 4.0
     sigma: float = 0.02
-    tau_1: float = 7.96e-12
-    tau_2: float = 7.96e-9
-    tau_3: float = 53.05e-6
+    tau_1: float = 7.958e-12
+    tau_2: float = 7.958-9
+    tau_3: float = 53.052e-6
     tau_4: float = 7.958e-3
 
 
 @dataclass
 class GrayMatterParameters(Paramters):
     alpha_1: float = 0.1
-    alpha_2: float = 0.1
+    alpha_2: float = 0.15
     alpha_3: float = 0.22
     alpha_4: float = 0.0
     eps_delta_1: float = 45.0
@@ -38,34 +38,31 @@ class GrayMatterParameters(Paramters):
     eps_delta_4: float = 4.5e7
     eps_inf: float = 4.0
     sigma: float = 0.02
-    tau_1: float = 7.96e-12
-    tau_2: float = 15.92e-9
-    tau_3: float = 106.1e-6
+    tau_1: float = 7.958e-12
+    tau_2: float = 15.915e-9
+    tau_3: float = 106.103e-6
     tau_4: float = 5.305e-3
 
 
-class DielectricModelCSF(Model):
-
-    def relative_permitivity(self, frequency: float) -> float:
-        return 80
-
-    def conductivity(self, frequency: float) -> float:
-        return 1.79
-
-    @classmethod
-    def create_model(cls, material: BrainSubstance) -> 'DielectricModel':
-
-        if material is not BrainSubstance.CEREBROSPINAL_FLUID:
-            material_parameters = {
-                            BrainSubstance.WHITE_MATTER: WhiteMatterParameters,
-                            BrainSubstance.GRAY_MATTER: GrayMatterParameters}
-
-            return cls(material_parameters[material])
-
-        return cls()
+@dataclass
+class CerebroSpinalFluidParameters(Paramters):
+    alpha_1: float = 0.1
+    alpha_2: float = 0.0
+    alpha_3: float = 0.0
+    alpha_4: float = 0.0
+    eps_delta_1: float = 65.0
+    eps_delta_2: float = 40.0
+    eps_delta_3: float = 0.0
+    eps_delta_4: float = 0.0
+    eps_inf: float = 4.0
+    sigma: float = 2.0
+    tau_1: float = 7.96e-12
+    tau_2: float = 1.592e-9
+    tau_3: float = 159.155e-6
+    tau_4: float = 5.305e-3
 
 
-class DielectricModel(Model):
+class DielectricModel(AbstractDielectricModel):
     """Model variant 1 for the dielectric spectrum of a tissue using the
     Cole-Cole equation"""
 
@@ -108,14 +105,13 @@ class DielectricModel(Model):
         return -1 * frequency * self.e0 * permitivity_imaginary
 
     @classmethod
-    def create_model(cls, material: BrainSubstance = BrainSubstance(1)) \
+    def create_model(cls, material: Material = Material(1)) \
             -> 'DielectricModel':
 
-        if material is BrainSubstance.CEREBROSPINAL_FLUID:
-            return DielectricModelCSF()
-
         material_parameters = {
-                            BrainSubstance.WHITE_MATTER: WhiteMatterParameters,
-                            BrainSubstance.GRAY_MATTER: GrayMatterParameters}
+                            Material.CEREBRO_SPINAL_FLUID:
+                            CerebroSpinalFluidParameters,
+                            Material.WHITE_MATTER: WhiteMatterParameters,
+                            Material.GRAY_MATTER: GrayMatterParameters}
 
         return cls(material_parameters[material])

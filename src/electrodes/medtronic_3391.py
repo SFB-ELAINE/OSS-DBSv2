@@ -42,7 +42,7 @@ class Medtronic3391(AbstractElectrode):
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
 
-    def generate_geometry(self) -> netgen.libngpy._meshing.Mesh:
+    def generate_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of electrode.
 
         Returns

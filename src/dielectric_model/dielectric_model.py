@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
-from src.brainsubstance import BrainSubstance
+from src.brainsubstance import Material
 
 
-class DielectricModel(ABC):
+class AbstractDielectricModel(ABC):
 
     @abstractmethod
     def relative_permitivity(self, frequency: float) -> float:
@@ -13,5 +13,6 @@ class DielectricModel(ABC):
         pass
 
     @abstractmethod
-    def create_model(cls, material: BrainSubstance) -> 'DielectricModel':
+    def create_model(cls, material: Material) \
+            -> 'AbstractDielectricModel':
         pass

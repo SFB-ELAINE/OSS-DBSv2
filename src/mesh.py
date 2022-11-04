@@ -1,5 +1,5 @@
-from src.geometry import SimpleGeometry
-from src.brainsubstance import BrainSubstance
+from src.geometry import Geometry
+from src.brainsubstance import Material
 from src.brain_imaging.magnetic_resonance_imaging import MagneticResonanceImage
 import ngsolve
 import numpy as np
@@ -8,10 +8,10 @@ import numpy as np
 class Mesh:
 
     def __init__(self,
-                 geometry: SimpleGeometry,
+                 geometry: Geometry,
                  order: int,
                  boundaries: dict) -> None:
-        self.__mesh = ngsolve.Mesh(ngmesh=geometry.ng_mesh())
+        self.__mesh = ngsolve.Mesh(ngmesh=geometry.generate_mesh())
         self.__mesh.Curve(order=order)
         self.__order = order
         self.__boundaries = boundaries
@@ -37,10 +37,6 @@ class Mesh:
         self.__mesh.Refine()
         self.__mesh.Curve(order=self.__order)
 
-    def refine_by_error(self, error: ngsolve.fem.CoefficientFunction) -> None:
-        self.mark_elements_by_error(error)
-        self.refine()
-
     def mark_elements_by_error(self,
                                error: ngsolve.fem.CoefficientFunction) -> None:
         errors = ngsolve.Integrate(cf=error,
@@ -53,7 +49,7 @@ class Mesh:
 
     def mark_elements_by_material(self,
                                   mri: MagneticResonanceImage,
-                                  material: BrainSubstance) -> None:
+                                  material: Material) -> None:
         space = ngsolve.L2(self.__mesh, order=0)
         grid_function = ngsolve.GridFunction(space=space)
         start, end = mri.bounding_box()
@@ -64,12 +60,6 @@ class Mesh:
         grid_function.set(cf)
         flags = np.isclose(grid_function.vec.FV().NumPy(), material)
         self.__set_refinement_flag(flags)
-
-    def element_sizes(self) -> list:
-        volumes = ngsolve.Integrate(cf=ngsolve.CoefficientFunction(1),
-                                    mesh=self.__mesh,
-                                    element_wise=True).NumPy()
-        return list((6 * volumes) ** 1 / 3)
 
     def sobolev_space(self, complex: bool = False) -> ngsolve.comp.H1:
         dirichlet = '|'.join(str(key) for key in self.__boundaries.keys())
@@ -89,3 +79,9 @@ class Mesh:
                              for element in self.__mesh.Elements()
                              for v in element.vertices]).reshape(shape)
         return [list(c) for c in np.sum(vertices, axis=1) / 4]
+
+    def element_sizes(self) -> list:
+        volumes = ngsolve.Integrate(cf=ngsolve.CoefficientFunction(1),
+                                    mesh=self.__mesh,
+                                    element_wise=True).NumPy()
+        return list((6 * volumes) ** 1 / 3)

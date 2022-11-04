@@ -6,7 +6,7 @@ class MagneticResonanceImage(Nifti1Image):
     pass
 
 
-class DefaultNMagneticResonanceImage(Nifti1Image):
+class DefaultMagneticResonanceImage(Nifti1Image):
 
     def __init__(self, file_path: str) -> None:
         self.__x = 50

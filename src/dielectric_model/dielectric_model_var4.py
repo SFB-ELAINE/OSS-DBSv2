@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from src.brainsubstance import BrainSubstance
-from src.dielectric_model.dielectric_model import DielectricModel as Model
+from src.brainsubstance import Material
+from src.dielectric_model.dielectric_model import AbstractDielectricModel as Model
 import numpy as np
 
 
@@ -35,12 +35,12 @@ class DielectricModelCSF(Model):
         return 1.79
 
     @classmethod
-    def create_model(cls, material: BrainSubstance) -> 'DielectricModel':
+    def create_model(cls, material: Material) -> 'DielectricModel':
 
-        if material is not BrainSubstance.CEREBROSPINAL_FLUID:
+        if material is not Material.CEREBRO_SPINAL_FLUID:
             material_parameters = {
-                            BrainSubstance.WHITE_MATTER: WhiteMatterParameters,
-                            BrainSubstance.GRAY_MATTER: GrayMatterParameters}
+                            Material.WHITE_MATTER: WhiteMatterParameters,
+                            Material.GRAY_MATTER: GrayMatterParameters}
 
             return cls(material_parameters[material])
 
@@ -80,14 +80,14 @@ class DielectricModel(Model):
         return -1 * frequency * self.e0 * permitivity_imaginary
 
     @classmethod
-    def create_model(cls, material: BrainSubstance = BrainSubstance(1)) \
+    def create_model(cls, material: Material = Material(1)) \
             -> 'DielectricModel':
 
-        if material is BrainSubstance.CEREBROSPINAL_FLUID:
+        if material is Material.CEREBRO_SPINAL_FLUID:
             return DielectricModelCSF()
 
         material_parameters = {
-                            BrainSubstance.WHITE_MATTER: WhiteMatterParameters,
-                            BrainSubstance.GRAY_MATTER: GrayMatterParameters}
+                            Material.WHITE_MATTER: WhiteMatterParameters,
+                            Material.GRAY_MATTER: GrayMatterParameters}
 
         return cls(material_parameters[material])

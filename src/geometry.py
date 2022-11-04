@@ -1,7 +1,14 @@
 
+from abc import ABC, abstractmethod
 import netgen.occ as occ
 
 
+class Geometry(ABC):
+    @abstractmethod
+    def generate_mesh(self):
+        return self.__geometry.GenerateMesh()
+
+ 
 class Electrode:
 
     def __init__(self) -> None:
@@ -40,7 +47,7 @@ class Brain:
         self.solid = sphere
 
 
-class SimpleGeometry:
+class SimpleGeometry(Geometry):
 
     def __init__(self) -> None:
         electrode = Electrode()
@@ -49,5 +56,5 @@ class SimpleGeometry:
         model = brain.solid - electrode.solid - wire.solid
         self.__geometry = occ.OCCGeometry(model)
 
-    def ng_mesh(self):
+    def generate_mesh(self):
         return self.__geometry.GenerateMesh()
