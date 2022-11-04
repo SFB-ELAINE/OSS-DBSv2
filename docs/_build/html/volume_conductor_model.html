@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Volum Conductor Model &mdash; OSS-DBS  documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <title>Volum Conductor Model &mdash; OSS-DBS /beta documentation</title><link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
@@ -26,6 +26,9 @@
         <div class="wy-side-nav-search" >
             <a href="index.html" class="icon icon-home"> OSS-DBS
           </a>
+              <div class="version">
+                1.0
+              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -38,7 +41,10 @@
 <li class="toctree-l1"><a class="reference internal" href="start.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="src.html">src package</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Volum Conductor Model</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Volum Conductor Model</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-src.volume_conductor_model">src.volume_conductor_model module</a></li>
+</ul>
+</li>
 </ul>
 
         </div>
@@ -68,6 +74,73 @@
   <div class="section" id="volum-conductor-model">
 <h1>Volum Conductor Model<a class="headerlink" href="#volum-conductor-model" title="Permalink to this headline">¶</a></h1>
 <p>Read Docstrings from the code automaticly!</p>
+<div class="section" id="module-src.volume_conductor_model">
+<span id="src-volume-conductor-model-module"></span><h2>src.volume_conductor_model module<a class="headerlink" href="#module-src.volume_conductor_model" title="Permalink to this headline">¶</a></h2>
+<p>TestString</p>
+<dl class="class">
+<dt id="src.volume_conductor_model.VolumeConductor">
+<em class="property">class </em><code class="descclassname">src.volume_conductor_model.</code><code class="descname">VolumeConductor</code><span class="sig-paren">(</span><em>mesh: src.mesh.Mesh</em>, <em>conductivity: dict</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/volume_conductor_model.html#VolumeConductor"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.volume_conductor_model.VolumeConductor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Model for representing a volume conductor.</p>
+<dl class="attribute">
+<dt id="src.volume_conductor_model.VolumeConductor.mesh">
+<code class="descname">mesh</code><a class="headerlink" href="#src.volume_conductor_model.VolumeConductor.mesh" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body"><a class="reference internal" href="src.html#src.mesh.Mesh" title="src.mesh.Mesh">Mesh</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="src.volume_conductor_model.VolumeConductor.conductivity">
+<code class="descname">conductivity</code><a class="headerlink" href="#src.volume_conductor_model.VolumeConductor.conductivity" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Type:</th><td class="field-body">dict</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="src.volume_conductor_model.VolumeConductor.evaluate_potential">
+<code class="descname">evaluate_potential</code><span class="sig-paren">(</span><em>mesh: Mesh</em>, <em>conductivity: dict</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/src/volume_conductor_model.html#VolumeConductor.evaluate_potential"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#src.volume_conductor_model.VolumeConductor.evaluate_potential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the electric potential of volume conductor.</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">evaluate_potential</code><span class="sig-paren">(</span><em>n_dof_limit: int = 1000000.0</em>, <em>n_refinements: int = 1</em><span class="sig-paren">)</span> &#x2192; tuple<a class="reference internal" href="_modules/src/volume_conductor_model.html#VolumeConductor.evaluate_potential"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Evaluate electrical potential of volume conductor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>n_dof_limit</strong> (<em>int</em>) – Maximal number of Demensions of Freedom of FEM space.</li>
+<li><strong>n_refinements</strong> (<em>int</em>) – Number of mesh refinements.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>return</strong> – Postprocessed data: lectric_field, V_contact, Power, potential</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tuple</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -80,7 +153,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, ELAINE.</p>
+    <p>&#169; Copyright 2022, SFB 1270 ELAINE.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

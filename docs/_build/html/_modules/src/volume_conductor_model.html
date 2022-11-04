@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>src.volume_conductor_model &mdash; OSS-DBS  documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <title>src.volume_conductor_model &mdash; OSS-DBS /beta documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
   <!--[if lt IE 9]>
     <script src="../../_static/js/html5shiv.min.js"></script>
@@ -25,6 +25,9 @@
         <div class="wy-side-nav-search" >
             <a href="../../index.html" class="icon icon-home"> OSS-DBS
           </a>
+              <div class="version">
+                1.0
+              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" />
@@ -65,19 +68,25 @@
            <div itemprop="articleBody">
              
   <h1>Source code for src.volume_conductor_model</h1><div class="highlight"><pre>
-<span></span>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;TestString</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
 <span class="kn">from</span> <span class="nn">src.mesh</span> <span class="kn">import</span> <span class="n">Mesh</span>
 <span class="kn">from</span> <span class="nn">src.laplace_equation</span> <span class="kn">import</span> <span class="n">LaplaceEquation</span>
 <span class="kn">import</span> <span class="nn">ngsolve</span>
 
 
-<div class="viewcode-block" id="VolumeConductor"><a class="viewcode-back" href="../../src.html#src.volume_conductor_model.VolumeConductor">[docs]</a><span class="k">class</span> <span class="nc">VolumeConductor</span><span class="p">:</span>
+
+
+<div class="viewcode-block" id="VolumeConductor"><a class="viewcode-back" href="../../volume_conductor_model.html#src.volume_conductor_model.VolumeConductor">[docs]</a><span class="k">class</span> <span class="nc">VolumeConductor</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Model for representing a volume conductor.</span>
 
 <span class="sd">    Attributes</span>
 <span class="sd">    ----------</span>
 <span class="sd">    mesh : Mesh</span>
-<span class="sd">    </span>
+
 <span class="sd">    conductivity : dict</span>
 
 <span class="sd">    Methods</span>
@@ -86,17 +95,17 @@
 <span class="sd">        Evaluate the electric potential of volume conductor.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
-    
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mesh</span><span class="p">:</span> <span class="n">Mesh</span><span class="p">,</span> <span class="n">conductivity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span> <span class="o">=</span> <span class="n">mesh</span>
         <span class="n">conductivities</span> <span class="o">=</span> <span class="p">[</span><span class="n">conductivity</span><span class="p">[</span><span class="n">mat</span><span class="p">]</span> <span class="k">for</span> <span class="n">mat</span> <span class="ow">in</span> <span class="n">mesh</span><span class="o">.</span><span class="n">materials</span><span class="p">()]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">__sigma</span> <span class="o">=</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">CoefficientFunction</span><span class="p">(</span><span class="n">coef</span><span class="o">=</span><span class="n">conductivities</span><span class="p">)</span> 
-        
-<div class="viewcode-block" id="VolumeConductor.evaluate_potential"><a class="viewcode-back" href="../../src.html#src.volume_conductor_model.VolumeConductor.evaluate_potential">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_potential</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
-                            <span class="n">n_dof_limit</span> <span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">1e6</span><span class="p">,</span> 
+        <span class="bp">self</span><span class="o">.</span><span class="n">__sigma</span> <span class="o">=</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">CoefficientFunction</span><span class="p">(</span><span class="n">coef</span><span class="o">=</span><span class="n">conductivities</span><span class="p">)</span>
+
+<div class="viewcode-block" id="VolumeConductor.evaluate_potential"><a class="viewcode-back" href="../../volume_conductor_model.html#src.volume_conductor_model.VolumeConductor.evaluate_potential">[docs]</a>    <span class="k">def</span> <span class="nf">evaluate_potential</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                            <span class="n">n_dof_limit</span> <span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mf">1e6</span><span class="p">,</span>
                             <span class="n">n_refinements</span><span class="p">:</span> <span class="nb">int</span>  <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Evaluate electrical potential of volume conductor.</span>
-<span class="sd">        </span>
+
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        n_dof_limit : int</span>
@@ -110,11 +119,11 @@
 
 <span class="sd">        return : tuple</span>
 <span class="sd">            Postprocessed data: lectric_field, V_contact, Power, potential</span>
-<span class="sd">        </span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">potential</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__solve_bvp</span><span class="p">()</span>
         <span class="n">iterations</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">while</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">space</span><span class="p">()</span><span class="o">.</span><span class="n">ndof</span> <span class="o">&lt;</span> <span class="n">n_dof_limit</span> <span class="ow">and</span> 
+        <span class="k">while</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">space</span><span class="p">()</span><span class="o">.</span><span class="n">ndof</span> <span class="o">&lt;</span> <span class="n">n_dof_limit</span> <span class="ow">and</span>
                                                 <span class="n">iterations</span> <span class="o">&lt;</span> <span class="n">n_refinements</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">refine</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__error</span><span class="p">(</span><span class="n">potential</span><span class="p">))</span>
             <span class="n">potential</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__solve_bvp</span><span class="p">()</span>
@@ -125,7 +134,7 @@
         <span class="n">potential</span> <span class="o">=</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">GridFunction</span><span class="p">(</span><span class="n">space</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">space</span><span class="p">())</span>
         <span class="n">potential</span><span class="o">.</span><span class="n">Set</span><span class="p">(</span><span class="n">coefficient</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">boundary_coefficients</span><span class="p">(),</span>
                       <span class="n">VOL_or_BND</span><span class="o">=</span><span class="n">ngsolve</span><span class="o">.</span><span class="n">BND</span><span class="p">)</span>
-        <span class="n">equation</span> <span class="o">=</span> <span class="n">LaplaceEquation</span><span class="p">(</span><span class="n">space</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">space</span><span class="p">(),</span> 
+        <span class="n">equation</span> <span class="o">=</span> <span class="n">LaplaceEquation</span><span class="p">(</span><span class="n">space</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">space</span><span class="p">(),</span>
                                    <span class="n">coefficient</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__sigma</span><span class="p">)</span>
         <span class="n">potential</span><span class="o">.</span><span class="n">vec</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">equation</span><span class="o">.</span><span class="n">solve_bvp</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">potential</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">potential</span>
@@ -142,14 +151,14 @@
         <span class="n">electric_field</span> <span class="o">=</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">ngsolve</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">potential</span><span class="p">)</span> <span class="o">*</span> \
                                                         <span class="n">ngsolve</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">potential</span><span class="p">))</span>
         <span class="n">electric_field</span> <span class="o">=</span> <span class="n">electric_field</span><span class="p">(</span>
-                            <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">ngsolvemesh</span><span class="p">()(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.02</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="mf">1e3</span>  
+                            <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">ngsolvemesh</span><span class="p">()(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.02</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span> <span class="o">*</span> <span class="mf">1e3</span>
         <span class="n">V_contact</span> <span class="o">=</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">Integrate</span><span class="p">(</span><span class="n">potential</span><span class="p">,</span>
-                                      <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">ngsolvemesh</span><span class="p">(),</span> 
+                                      <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">ngsolvemesh</span><span class="p">(),</span>
                                       <span class="n">definedon</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">boundaries</span>
                                                                     <span class="p">(</span><span class="s2">&quot;contact&quot;</span><span class="p">))</span>
 
         <span class="n">P</span> <span class="o">=</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">Integrate</span><span class="p">(</span><span class="n">ngsolve</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">potential</span><span class="p">)</span> <span class="o">*</span> \
-                        <span class="n">ngsolve</span><span class="o">.</span><span class="n">Conj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__sigma</span> <span class="o">*</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">potential</span><span class="p">)),</span> 
+                        <span class="n">ngsolve</span><span class="o">.</span><span class="n">Conj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">__sigma</span> <span class="o">*</span> <span class="n">ngsolve</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">potential</span><span class="p">)),</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">__mesh</span><span class="o">.</span><span class="n">ngsolvemesh</span><span class="p">())</span>
         <span class="k">return</span> <span class="n">electric_field</span><span class="p">,</span> <span class="n">V_contact</span><span class="p">,</span> <span class="n">P</span><span class="p">,</span> <span class="n">potential</span></div>
 </pre></div>
@@ -161,7 +170,7 @@
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2022, ELAINE.</p>
+    <p>&#169; Copyright 2022, SFB 1270 ELAINE.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

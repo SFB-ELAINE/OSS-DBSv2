@@ -20,13 +20,13 @@ sys.path.insert(0, os.path.abspath('../src'))
 # -- Project information -----------------------------------------------------
 
 project = 'OSS-DBS'
-copyright = '2022, ELAINE'
-author = 'SFB ELAINE'
+copyright = '2022, SFB 1270 ELAINE'
+author = 'SFB 1270 ELAINE'
 
 # The short X.Y version
-version = ''
+version = '1.0'
 # The full version, including alpha/beta/rc tags
-release = ''
+release = '/beta'
 
 
 # -- General configuration ---------------------------------------------------
