@@ -29,10 +29,10 @@ You can install OSS-DBS unsing pip
     $ pip install oss_dbs
 
 .. toctree::
+   :maxdepth: 2
 
    examples
    src
-   modules
    start
    volume_conductor_model
 
