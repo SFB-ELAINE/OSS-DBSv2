@@ -2,6 +2,7 @@ from src.geometry import SimpleGeometry
 from src.mesh import Mesh
 from src.volume_conductor_model import VolumeConductor
 import ngsolve
+import numpy as np
 
 
 def test_ngsolve_model():
@@ -23,4 +24,4 @@ def test_ngsolve_model():
                               ngsolve.Conj(sigma * ngsolve.grad(potential)),
                               mesh.ngsolvemesh())
 
-    assert round(1/P, 3) == 5676.935
+    np.testing.assert_allclose(1/P, 5676, atol=1)

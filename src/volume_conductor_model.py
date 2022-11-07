@@ -43,7 +43,7 @@ class VolumeConductor:
         potential.Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
         equation = LaplaceEquation(space=space, coefficient=self.__sigma)
         potential.vec.data = equation.solve_bvp(input=potential)
-        return potential, self.__error(potential)
+        return potential, self.__error(potential, mesh)
 
     def __error(self, potential: ngsolve.comp.GridFunction, mesh: Mesh) \
             -> ngsolve.fem.CoefficientFunction:
