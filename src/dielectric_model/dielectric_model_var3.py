@@ -43,7 +43,7 @@ class DielectricModelCSF(AbstractDielectricModel):
     @classmethod
     def create_model(cls, material: Material) -> 'DielectricModel':
 
-        if material is not Material.CEREBRO_SPINAL_FLUID:
+        if material is not Material.CSF:
             material_parameters = {
                             Material.WHITE_MATTER: WhiteMatterParameters,
                             Material.GRAY_MATTER: GrayMatterParameters}
@@ -92,7 +92,7 @@ class DielectricModel(AbstractDielectricModel):
     def create_model(cls, material: Material = Material(1)) \
             -> 'DielectricModel':
 
-        if material is Material.CEREBRO_SPINAL_FLUID:
+        if material is Material.CSF:
             return DielectricModelCSF()
 
         material_parameters = {

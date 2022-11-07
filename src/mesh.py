@@ -1,6 +1,4 @@
 from src.geometry import Geometry
-from src.brainsubstance import Material
-from src.brain_imaging.magnetic_resonance_imaging import MagneticResonanceImage
 import ngsolve
 import numpy as np
 
@@ -47,18 +45,18 @@ class Mesh:
         flags = [errors[el.nr] > limit for el in self.__mesh.Elements()]
         self.__set_refinement_flag(flags)
 
-    def mark_elements_by_material(self,
-                                  mri: MagneticResonanceImage,
-                                  material: Material) -> None:
+    def mark_elements_by_position(self,
+                                  position: np.array,
+                                  start: tuple,
+                                  end: tuple) -> None:
         space = ngsolve.L2(self.__mesh, order=0)
         grid_function = ngsolve.GridFunction(space=space)
-        start, end = mri.bounding_box()
         cf = ngsolve.VoxelCoefficient(start=start,
                                       end=end,
-                                      values=mri.data_map().astype(float),
+                                      values=position.astype(float),
                                       linear=False)
         grid_function.set(cf)
-        flags = np.isclose(grid_function.vec.FV().NumPy(), material)
+        flags = grid_function.vec.FV().NumPy()
         self.__set_refinement_flag(flags)
 
     def sobolev_space(self, complex: bool = False) -> ngsolve.comp.H1:

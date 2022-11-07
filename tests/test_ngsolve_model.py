@@ -17,6 +17,10 @@ def test_ngsolve_model():
         conduct = [conductivities[mat] for mat in mesh.materials()]
         sigma = ngsolve.CoefficientFunction(coef=conduct)
         model = VolumeConductor(conductivity=sigma)
-        field, contact, P, potential = model.evaluate_potential2(mesh=mesh)
+        potential, error = model.evaluate_potential(mesh=mesh)
 
-    assert round(1/P, 3) == 5678.110
+        P = ngsolve.Integrate(ngsolve.grad(potential) *
+                              ngsolve.Conj(sigma * ngsolve.grad(potential)),
+                              mesh.ngsolvemesh())
+
+    assert round(1/P, 3) == 5676.935

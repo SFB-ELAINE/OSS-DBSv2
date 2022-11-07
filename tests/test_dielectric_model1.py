@@ -71,7 +71,7 @@ class TestCerebrospinalFluidModel1:
     @pytest.fixture
     def model(self):
         return DielectricModel1.create_model(
-                                        Material.CEREBRO_SPINAL_FLUID)
+                                        Material.CSF)
 
     def test_relative_permitivity_0Hz(self, model):
         result = model.relative_permitivity(frequency=0)

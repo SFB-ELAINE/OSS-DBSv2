@@ -4,9 +4,7 @@ from src.volume_conductor_model import VolumeConductor
 from src.brain_imaging import DefaultMagneticResonanceImage
 from src.electrodes import ElectrodeCreator, ElectrodeParameters
 from src.brainsubstance import Material
-from src.dielectric_model import DielectricModel1
 import ngsolve
-import numpy as np
 
 
 def main():
@@ -22,22 +20,12 @@ def main():
     brain_model = BrainModel(mri=mri, electrode=electrode)
     mesh = brain_model.generate_mesh(order=2, boundaries=boundaries)
 
-    mesh.mark_elements_by_material(mri=mri,
-                                   material=Material.CEREBRO_SPINAL_FLUID)
+    position = brain_model.material_distribution(Material.CEREBRO_SPINAL_FLUID)
+    start, end = brain_model.bounding_box()
+    mesh.mark_elements_by_position(position=position, start=start, end=end)
     mesh.refine()
 
-
-    dielectric_csf = DielectricModel1.create_model(material=Material.CEREBRO_SPINAL_FLUID)
-    dielectric_gm = DielectricModel1.create_model(material=Material.GRAY_MATTER)
-    dielectric_wm = DielectricModel1.create_model(material=Material.WHITE_MATTER)
-
-    conductivity = np.zeros(mri.data_map.shape)
-    conductivity[mri.data_map == Material.CEREBRO_SPINAL_FLUID] = dielectric_csf.conductivity(frequency=0)
-    conductivity[mri.data_map == Material.GRAY_MATTER] = dielectric_gm.conductivity(frequency=0)
-    conductivity[mri.data_map == Material.WHITE_MATTER] = dielectric_gm.conductivity(frequency=0)
-    conductivity[mri.data_map == Material.UNKNOWN] = dielectric_wm.conductivity(frequency=0)
-
-    start, end = mri.bounding_box()
+    conductivity = brain_model.conductivity(frequency=0)
     conductivities = ngsolve.VoxelCoefficient(start=start,
                                               end=end,
                                               values=conductivity,
@@ -49,10 +37,13 @@ def main():
     model = VolumeConductor(conductivity=conductivities)
 
     with ngsolve.TaskManager():
-        field, contact, P, potential = model.evaluate_potential(mesh)
+        potential, error = model.evaluate_potential(mesh)
 
-    print('field: ', field)
-    print('voltage_contact: ', contact)
+    P = ngsolve.Integrate(ngsolve.grad(potential) *
+                          ngsolve.Conj(conductivities *
+                                       ngsolve.grad(potential)),
+                          mesh.ngsolvemesh())
+
     print('impedance: ', 1 / P)
 
 

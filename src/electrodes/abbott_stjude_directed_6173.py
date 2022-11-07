@@ -1,11 +1,11 @@
-# Abbott/St Jude Directed 6172
+# Abbott/St Jude Directed 6173
 from src.electrodes.abstract_electrode import AbstractElectrode
 import netgen
 import numpy as np
 
 
-class AbbottStjudeDirected6172(AbstractElectrode):
-    """Abbott/St Jude Directed 6172 electrode.
+class AbbottStjudeDirected6173(AbstractElectrode):
+    """Abbott/St Jude Directed 6173 electrode.
 
     Attributes
     ----------
@@ -27,7 +27,7 @@ class AbbottStjudeDirected6172(AbstractElectrode):
     # dimensions [mm]
     TIP_LENGTH = 1.1
     CONTACT_LENGTH = 1.5
-    CONTACT_SPACING = 0.5
+    CONTACT_SPACING = 1.5
     LEAD_DIAMETER = 1.3
     TOTAL_LENGTH = 20.0
     TUBE_THICKNESS = 0.0
