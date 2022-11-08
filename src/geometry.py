@@ -4,9 +4,10 @@ import netgen.occ as occ
 
 
 class Geometry(ABC):
+
     @abstractmethod
     def generate_mesh(self):
-        return self.__geometry.GenerateMesh()
+        pass
 
  
 class Electrode:

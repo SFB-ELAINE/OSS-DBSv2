@@ -22,38 +22,37 @@ class ElectrodeParameters:
 
 class ElectrodeCreator:
 
-    ELECTRODE = {'AbbottStjudeActiveTip6142_6145':
-                 AbbottStjudeActiveTip6142_6145,
-                 'AbbottStjudeActiveTip6146_6149':
-                 AbbottStjudeActiveTip6146_6149,
-                 'AbbottStjudeDirected6172':
-                 AbbottStjudeDirected6172,
-                 'BostonScientificVercise':
-                 BostonScientificVercise,
-                 'Medtronic3387':
-                 Medtronic3387,
-                 'Medtronic3389':
-                 Medtronic3389,
-                 'Medtronic3391':
-                 Medtronic3391,
-                 'MicroProbesSNEX_100':
-                 MicroProbesSNEX_100,
-                 'PINSMedicalL301':
-                 PINSMedicalL301,
-                 'PINSMedicalL302':
-                 PINSMedicalL302,
-                 'PINSMedicalL303':
-                 PINSMedicalL303,
-                 'Rodden':
-                 Rodden
-                 }
+    ELECTRODES = {'AbbottStjudeActiveTip6142_6145':
+                  AbbottStjudeActiveTip6142_6145,
+                  'AbbottStjudeActiveTip6146_6149':
+                  AbbottStjudeActiveTip6146_6149,
+                  'AbbottStjudeDirected6172':
+                  AbbottStjudeDirected6172,
+                  'BostonScientificVercise':
+                  BostonScientificVercise,
+                  'Medtronic3387':
+                  Medtronic3387,
+                  'Medtronic3389':
+                  Medtronic3389,
+                  'Medtronic3391':
+                  Medtronic3391,
+                  'MicroProbesSNEX_100':
+                  MicroProbesSNEX_100,
+                  'PINSMedicalL301':
+                  PINSMedicalL301,
+                  'PINSMedicalL302':
+                  PINSMedicalL302,
+                  'PINSMedicalL303':
+                  PINSMedicalL303,
+                  'Rodden':
+                  Rodden
+                  }
 
     @classmethod
     def create(cls, parameters: ElectrodeParameters) -> AbstractElectrode:
         trans = parameters.translation
         rot = parameters.rotation
         dir = parameters.direction
-
-        return cls.ELECTODE[parameters.name](direction=dir,
-                                             translation=trans,
-                                             rotation=rot)
+        return cls.ELECTRODES[parameters.name](direction=dir,
+                                               translation=trans,
+                                               rotation=rot)

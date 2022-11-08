@@ -15,9 +15,13 @@ class Mesh:
         self.__boundaries = boundaries
 
     def boundaries(self, name: str) -> ngsolve.comp.Region:
+        # set(self.__mesh.GetBoundaries())
         return self.__mesh.Boundaries(pattern=name)
 
     def boundary_coefficients(self) -> ngsolve.fem.CoefficientFunction:
+        # this dictionary prevents entry memory access error
+        # TODO: Check Boundaries with  mesh.ngmesh().GetBoundaries()
+        self.__boundaries['default'] = 0.0
         return self.__mesh.BoundaryCF(values=self.__boundaries)
 
     def flux_space(self, complex: bool = True) -> ngsolve.comp.HDiv:
@@ -51,11 +55,11 @@ class Mesh:
                                   end: tuple) -> None:
         space = ngsolve.L2(self.__mesh, order=0)
         grid_function = ngsolve.GridFunction(space=space)
-        cf = ngsolve.VoxelCoefficient(start=start,
-                                      end=end,
+        cf = ngsolve.VoxelCoefficient(start=tuple(start),
+                                      end=tuple(end),
                                       values=position.astype(float),
                                       linear=False)
-        grid_function.set(cf)
+        grid_function.Set(cf)
         flags = grid_function.vec.FV().NumPy()
         self.__set_refinement_flag(flags)
 

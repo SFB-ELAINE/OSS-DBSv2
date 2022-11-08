@@ -1,35 +1,20 @@
-from src.electrodes.abstract_electrode import AbstractElectrode
+# Boston Scientific (Marlborough, Massachusetts, USA) vercise
+# from .electrode import Electrode
 import netgen
 import numpy as np
 
 
-class Rodden(AbstractElectrode):
-    """Rodden electrode.
-
-    Attributes
-    ----------
-    rotation : float
-        Rotation angle in degree of electrode.
-
-    direction : tuple
-        Direction vector (x,y,z) of electrode.
-
-    translation : tuple
-        Translation vector (x,y,z) of electrode.
-
-    Methods
-    -------
-    generate_geometry()
-        Generate mesh of electrode.
-    """
+class TestElectrode():
 
     # dimensions [mm]
+ 
+    # dimensions [mm]
     TIP_LENGTH = 0.1125
-    CONTACT_LENGTH = 13
+    CONTACT_LENGTH = 1.3
     LEAD_DIAMETER = 0.225
-    TOTAL_LENGHTH = 100.0
-    TUBE_THICKNESS = 0.0
-    TUBE_FREE_LENGTH = 100.0
+    TOTAL_LENGHTH = 50.0
+    TUBE_THICKNESS = 1.0
+    TUBE_FREE_LENGTH = 50.0
 
     def __init__(self,
                  rotation: float = 0.0,
@@ -84,7 +69,7 @@ class Rodden(AbstractElectrode):
                                       d=self.__direction,
                                       r=diameter * 0.5,
                                       h=self.CONTACT_LENGTH)
-        contact.bc('Contact')
+        contact.bc('Contact_1')
 
         return contact
 
@@ -101,6 +86,45 @@ class Rodden(AbstractElectrode):
         upper_limit = lower_limit + self.CONTACT_LENGTH
 
         if lower_limit < self.TUBE_FREE_LENGTH < upper_limit:
-            tube.bc('Contact')
+            tube.bc('Contact_1')
 
         return tube
+
+
+class Ellipsoid:
+
+    def __init__(self, start: tuple, end: tuple) -> None:
+        self.__start = start
+        self.__end = end
+
+    def create(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        x, y, z = (np.array(self.__end) - np.array(self.__start)) / 2
+        trasformator = netgen.occ.gp_GTrsf(mat=[x, 0, 0, 0, y, 0, 0, 0, z])
+        sphere = netgen.occ.Sphere(c=netgen.occ.Pnt(1, 1, 1), r=1)
+        return trasformator(sphere).Move(tuple(self.__start))
+
+
+
+import ngsolve
+
+x = 50
+y = 50
+z = 50
+#electrode = AbbottStjudeDirected6172(direction=(0, 0, 1))
+electrode = TestElectrode(translation=(x/2, y/2, z/2))
+
+#brain = netgen.occ.Sphere((x, y, z), 3) 
+box = netgen.occ.Box((0,0,0),(x,y,z))
+brain = Ellipsoid(start=(0, 0, 0), end=(x, y, z)).create()
+geometry = brain - electrode.generate_geometry()
+#geometry = box - brain
+
+
+with ngsolve.TaskManager():
+    mesh = ngsolve.Mesh(netgen.occ.OCCGeometry(geometry).GenerateMesh())
+print('Boundaries:', set(mesh.GetBoundaries()))
+print()
+print('Materials:', mesh.GetMaterials())
+bnd_dict = {"Contact_{}".format(i): float(i) for i in range(1, 9)}
+bndcf = mesh.BoundaryCF(bnd_dict, default=-1)
+ngsolve.Draw(bndcf, mesh, "BND")

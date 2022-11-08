@@ -55,6 +55,7 @@ class AbbottStjudeActiveTip6142_6145(AbstractElectrode):
         tube = self.__tube()
 
         contacts = self.__contacts(diameter=self.LEAD_DIAMETER)
+
         body = self.__body(diameter=self.LEAD_DIAMETER) - contacts
         electrode = netgen.occ.Glue([body, contacts]) - tube
 
@@ -81,15 +82,21 @@ class AbbottStjudeActiveTip6142_6145(AbstractElectrode):
     def __contacts(self, diameter: float)\
             -> netgen.libngpy._NgOCC.TopoDS_Shape:
 
+        point = tuple(np.array(self.__direction) * self.TIP_LENGTH)
+        space = netgen.occ.HalfSpace(p=point, n=self.__direction)
         center = tuple(np.array(self.__direction) * self.LEAD_DIAMETER * 0.5)
-        tip = netgen.occ.Sphere(c=center, r=diameter * 0.5)
-        height = self.TIP_LENGTH + self.LEAD_DIAMETER * 0.5
-        contact_1 = netgen.occ.Cylinder(p=center,
-                                        d=self.__direction,
-                                        r=diameter * 0.5,
-                                        h=height)
+        tip = netgen.occ.Sphere(c=center, r=diameter * 0.5) * space
+        height = max(self.TIP_LENGTH - self.LEAD_DIAMETER * 0.5, 0)
 
-        active_tip = tip + contact_1
+        if height > 0:
+            contact_1 = netgen.occ.Cylinder(p=center,
+                                            d=self.__direction,
+                                            r=diameter * 0.5,
+                                            h=height)
+            active_tip = netgen.occ.Fuse([tip, contact_1])
+        else:
+            active_tip = tip
+
         active_tip.bc('Contact_1')
 
         contact = netgen.occ.Cylinder(p=(0, 0, 0),
@@ -97,14 +104,15 @@ class AbbottStjudeActiveTip6142_6145(AbstractElectrode):
                                       r=diameter * 0.5,
                                       h=self.CONTACT_LENGTH)
         length = (self.CONTACT_LENGTH + self.CONTACT_SPACING)
+        offset = self.TIP_LENGTH + self.CONTACT_SPACING
         contacts = [contact.Move(tuple(np.array(self.__direction) * distance))
                     for distance
-                    in np.arange(self.N_CONTACTS) * length + self.TIP_LENGTH]
+                    in np.arange(self.N_CONTACTS - 1) * length + offset]
 
-        for index, contact in enumerate(contacts, 1):
+        for index, contact in enumerate(contacts, 2):
             contact.bc("Contact_{}".format(index))
 
-        return netgen.occ.Fuse(contacts + [active_tip])
+        return netgen.occ.Fuse([active_tip] + contacts)
 
     def __tube(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self.LEAD_DIAMETER * 0.5 + self.TUBE_THICKNESS
@@ -116,9 +124,12 @@ class AbbottStjudeActiveTip6142_6145(AbstractElectrode):
                                    h=height)
         tube.bc('Body')
 
+        offset = self.TIP_LENGTH + self.CONTACT_SPACING
         distance = self.CONTACT_LENGTH + self.CONTACT_SPACING
-        lower_limit = self.TIP_LENGTH + np.arange(self.N_CONTACTS) * distance
-        upper_limit = lower_limit + self.CONTACT_LENGTH
+        distances = offset + np.arange(self.N_CONTACTS - 1) * distance
+        lower_limit = np.append(0, distances)
+        upper_limit = np.append(self.TIP_LENGTH,
+                                distances + self.CONTACT_LENGTH)
         intersection = np.logical_and(lower_limit < self.TUBE_FREE_LENGTH,
                                       upper_limit > self.TUBE_FREE_LENGTH)
         if np.any(intersection):

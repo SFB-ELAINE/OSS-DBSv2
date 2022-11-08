@@ -32,7 +32,7 @@ class DefaultMagneticResonanceImage(Nifti1Image):
         return tuple(np.array([starts, ends]))
 
     def _xyz_dimension(self) -> tuple:
-        return (1, 1, 1)
+        return (0.1, 0.1, 0.1)
 
     def _xyz_shape(self):
         return (2 * self.__x, 2 * self.__y, 2 * self.__z)

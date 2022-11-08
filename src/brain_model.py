@@ -3,6 +3,7 @@ from src.brainsubstance import Material
 from src.electrodes import AbstractElectrode
 from src.brain_imaging import MagneticResonanceImage
 from src.brain_imaging import DiffusionTensorImage
+from src.geometry import Geometry
 from src.mesh import Mesh
 import netgen
 import numpy as np
@@ -21,8 +22,8 @@ class BrainModel:
     def bounding_box(self) -> tuple:
         return self.__mri.bounding_box()
 
-    def material_distribution(self, material: Material) -> np.ndrray:
-        return self.__mri.data_map == material
+    def material_distribution(self, material: Material) -> np.ndarray:
+        return self.__mri.data_map() == material
 
     def conductivity(self, frequency: float) -> None:
         csf_position = self.material_distribution(Material.CSF)
@@ -34,7 +35,7 @@ class BrainModel:
         gm_model = DielectricModel1.create_model(Material.GRAY_MATTER)
         wm_model = DielectricModel1.create_model(Material.WHITE_MATTER)
 
-        conductivity = np.zeros(self.__mri.data_map.shape)
+        conductivity = np.zeros(self.__mri.data_map().shape)
         conductivity[csf_position] = csf_model.conductivity(frequency)
         conductivity[gm_position] = gm_model.conductivity(frequency)
         conductivity[wm_positiom] = wm_model.conductivity(frequency)
@@ -47,21 +48,30 @@ class BrainModel:
                     boundaries=boundary_values)
 
     def generate_geometry(self, electrode: AbstractElectrode = None):
-        x, y, z = self.__mri.bounding_box()[1]
-        brain = BrainGeometry(x=x, y=y, z=z)
+        start, end = self.__mri.bounding_box()
+        brain = Ellipsoid(start=start, end=end).create()
         if not electrode:
-            return brain
-        return brain - electrode.generate_geometry()
+            return BrainGeometry(brain)
+        return BrainGeometry(brain - electrode.generate_geometry())
 
 
-class BrainGeometry:
+class Ellipsoid:
 
-    def __init__(self, x: int, y: int, z: int) -> None:
-        self.__x = x
-        self.__y = y
-        self.__z = z
+    def __init__(self, start: tuple, end: tuple) -> None:
+        self.__start = start
+        self.__end = end
 
     def create(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        matrix = [self.__x, 0, 0, 0, self.__y, 0, 0, 0, self.__z]
-        trasformator = netgen.occ.gp_GTrsf(mat=matrix)
-        return trasformator(netgen.occ.Sphere(c=netgen.occ.Pnt(1, 1, 1), r=1))
+        x, y, z = (np.array(self.__end) - np.array(self.__start)) / 2
+        trasformator = netgen.occ.gp_GTrsf(mat=[x, 0, 0, 0, y, 0, 0, 0, z])
+        sphere = netgen.occ.Sphere(c=netgen.occ.Pnt(1, 1, 1), r=1)
+        return trasformator(sphere).Move(tuple(self.__start))
+
+
+class BrainGeometry(Geometry):
+
+    def __init__(self, geometry) -> None:
+        self.__geometry = geometry
+
+    def generate_mesh(self):
+        return netgen.occ.OCCGeometry(self.__geometry).GenerateMesh()

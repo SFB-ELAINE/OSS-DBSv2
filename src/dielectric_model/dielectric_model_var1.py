@@ -109,8 +109,7 @@ class DielectricModel(AbstractDielectricModel):
             -> 'DielectricModel':
 
         material_parameters = {
-                            Material.CSF:
-                            CerebroSpinalFluidParameters,
+                            Material.CSF: CerebroSpinalFluidParameters,
                             Material.WHITE_MATTER: WhiteMatterParameters,
                             Material.GRAY_MATTER: GrayMatterParameters}
 
