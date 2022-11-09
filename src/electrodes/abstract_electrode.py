@@ -22,10 +22,12 @@ class AbstractElectrode(ABC):
         Generate mesh of electrode.
     """
     @abstractmethod
-    def __init__(elf,
+    def __init__(self,
                  rotation: float = 0,
                  direction: tuple = (0, 0, 1),
-                 translation: tuple = (0, 0, 0)) -> None:
+                 translation: tuple = (0, 0, 0),
+                 # contact_values: list = None
+                 ) -> None:
         pass
 
     @abstractmethod

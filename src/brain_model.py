@@ -8,6 +8,8 @@ from src.mesh import Mesh
 import netgen
 import numpy as np
 
+from src.voxel_space import VoxelSpace
+
 
 class BrainModel:
 
@@ -22,14 +24,19 @@ class BrainModel:
     def bounding_box(self) -> tuple:
         return self.__mri.bounding_box()
 
-    def material_distribution(self, material: Material) -> np.ndarray:
+    def material_distribution(self, material: Material) -> VoxelSpace:
+        start, end = self.__mri.bounding_box()
+        data = self.__material_distribution(material)
+        return VoxelSpace(data=data, start=tuple(start), end=tuple(end))
+
+    def __material_distribution(self, material: Material) -> np.ndarray:
         return self.__mri.data_map() == material
 
     def conductivity(self, frequency: float) -> None:
-        csf_position = self.material_distribution(Material.CSF)
-        gm_position = self.material_distribution(Material.GRAY_MATTER)
-        wm_positiom = self.material_distribution(Material.WHITE_MATTER)
-        unknown_position = self.material_distribution(Material.UNKNOWN)
+        csf_position = self.__material_distribution(Material.CSF)
+        gm_position = self.__material_distribution(Material.GRAY_MATTER)
+        wm_positiom = self.__material_distribution(Material.WHITE_MATTER)
+        unknown_position = self.__material_distribution(Material.UNKNOWN)
 
         csf_model = DielectricModel1.create_model(Material.CSF)
         gm_model = DielectricModel1.create_model(Material.GRAY_MATTER)

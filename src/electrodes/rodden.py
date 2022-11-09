@@ -24,12 +24,10 @@ class Rodden(AbstractElectrode):
     """
 
     # dimensions [mm]
-    TIP_LENGTH = 0.1125
-    CONTACT_LENGTH = 13
+    CONTACT_LENGTH = 0.01125
     LEAD_DIAMETER = 0.225
-    TOTAL_LENGHTH = 100.0
-    TUBE_THICKNESS = 0.0
-    TUBE_FREE_LENGTH = 100.0
+    TOTAL_LENGHTH = 1.3
+    TUBE_THICKNESS = .01
 
     def __init__(self,
                  rotation: float = 0.0,
@@ -46,61 +44,39 @@ class Rodden(AbstractElectrode):
         -------
         geometry : netgen.libngpy._NgOCC.TopoDS_Shape
         """
-        return self.__construct_geometry()
-
-    def __construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        tube = self.__tube()
-
-        contacts = self.__contacts(diameter=self.LEAD_DIAMETER)
-        body = self.__body(diameter=self.LEAD_DIAMETER) - contacts
-        electrode = netgen.occ.Glue([body, contacts]) - tube
-
-        diameter = self.LEAD_DIAMETER + 2 * self.TUBE_THICKNESS
-        contacts_tube = self.__contacts(diameter=diameter)
-        body_tube = self.__body(diameter=diameter) - contacts_tube
-        electrode_tube = netgen.occ.Glue([body_tube, contacts_tube]) * tube
-
-        electrode = netgen.occ.Glue([electrode, electrode_tube])
+        electrode = netgen.occ.Glue([self.__contact(), self.__body()])
         moved_electrode = electrode.Move(self.__translation)
-
         return moved_electrode
 
-    def __body(self, diameter: float) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        center = tuple(np.array(self.__direction) * self.LEAD_DIAMETER * 0.5)
-        tip = netgen.occ.Sphere(c=center, r=diameter * 0.5)
-        height = self.TOTAL_LENGHTH - self.TIP_LENGTH
+    def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        radius = self.LEAD_DIAMETER * 0.5
+        tube_radius = radius + self.TUBE_THICKNESS
+        center = tuple(np.array(self.__direction) * radius)
+        tip = netgen.occ.Sphere(c=center, r=tube_radius)
         lead = netgen.occ.Cylinder(p=center,
                                    d=self.__direction,
-                                   r=diameter * 0.5,
-                                   h=height)
-        body = tip + lead
+                                   r=tube_radius,
+                                   h=self.TOTAL_LENGHTH - radius)
+        point = tuple(np.array(self.__direction) * self.CONTACT_LENGTH)
+        space = netgen.occ.HalfSpace(p=point, n=self.__direction)
+        body = tip + lead - space
         body.bc("Body")
         return body
 
-    def __contacts(self, diameter: float) \
-            -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        point = tuple(np.array(self.__direction) * self.TIP_LENGTH)
-        contact = netgen.occ.Cylinder(p=point,
-                                      d=self.__direction,
-                                      r=diameter * 0.5,
-                                      h=self.CONTACT_LENGTH)
-        contact.bc('Contact')
-
-        return contact
-
-    def __tube(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        radius = self.LEAD_DIAMETER * 0.5 + self.TUBE_THICKNESS
-        height = self.TOTAL_LENGHTH - self.TUBE_FREE_LENGTH
-        point = tuple(np.array(self.__direction) * self.TUBE_FREE_LENGTH)
-        tube = netgen.occ.Cylinder(p=point,
+    def __contact(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        radius = self.LEAD_DIAMETER * 0.5
+        point = tuple(np.array(self.__direction) * self.CONTACT_LENGTH)
+        space = netgen.occ.HalfSpace(p=point, n=self.__direction)
+        center = tuple(np.array(self.__direction) * radius)
+        tip = netgen.occ.Sphere(c=center, r=radius) * space
+        lead = netgen.occ.Cylinder(p=center,
                                    d=self.__direction,
                                    r=radius,
-                                   h=height)
-        tube.bc('Body')
-        lower_limit = self.TIP_LENGTH
-        upper_limit = lower_limit + self.CONTACT_LENGTH
+                                   h=self.CONTACT_LENGTH - radius)
 
-        if lower_limit < self.TUBE_FREE_LENGTH < upper_limit:
-            tube.bc('Contact')
-
-        return tube
+        if self.CONTACT_LENGTH <= radius:
+            contact = tip
+        else:
+            contact = tip + lead
+        contact.bc("Contact")
+        return contact

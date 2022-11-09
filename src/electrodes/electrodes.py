@@ -18,6 +18,7 @@ class ElectrodeParameters:
     translation: tuple = (0., 0., 0.)
     direction: tuple = (0., 0., 0.)
     rotation: float = 0.0
+    contact_values: list = None
 
 
 class ElectrodeCreator:

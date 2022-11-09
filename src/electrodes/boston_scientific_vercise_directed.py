@@ -29,8 +29,6 @@ class BostonScientificVercise(AbstractElectrode):
     CONTACT_SPACING = 0.5
     LEAD_DIAMETER = 1.3
     TOTAL_LENGHTH = 50.0
-    TUBE_THICKNESS = 0.0
-    TUBE_FREE_LENGTH = 50.0
     CONTACT_SPACING_RADIAL = 0.25
 
     def __init__(self,
@@ -48,75 +46,48 @@ class BostonScientificVercise(AbstractElectrode):
         -------
         geometry : netgen.libngpy._NgOCC.TopoDS_Shape
         """
-        return self.__construct_geometry()
+        contacts = self.__contacts()
+        body = self.__body() - contacts
+        electrode = netgen.occ.Glue([body, contacts])
+        axis = netgen.occ.Axis(p=(0, 0, 0), d=self.__direction)
+        rotated_electrode = electrode.Rotate(axis=axis, ang=self.__rotation)
+        return rotated_electrode.Move(self.__translation)
 
-    def __construct_geometry(self) \
-            -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        tube = self.__tube()
-
-        contacts = self.__contacts(diameter=self.LEAD_DIAMETER)
-        body = self.__body(diameter=self.LEAD_DIAMETER) - contacts
-        electrode = netgen.occ.Glue([body, contacts]) - tube
-
-        diameter = self.LEAD_DIAMETER + 2 * self.TUBE_THICKNESS
-        contacts_tube = self.__contacts(diameter=diameter)
-        body_tube = self.__body(diameter=diameter) - contacts_tube
-        electrode_tube = netgen.occ.Glue([body_tube, contacts_tube]) * tube
-
-        electrode = netgen.occ.Glue([electrode, electrode_tube])
-        moved_electrode = electrode.Move(self.__translation)
-
-        return moved_electrode
-
-    def __body(self, diameter: float) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         center = tuple(np.array(self.__direction) * self.LEAD_DIAMETER * 0.5)
-        height = self.TOTAL_LENGHTH - self.TIP_LENGTH
         body = netgen.occ.Cylinder(p=center,
                                    d=self.__direction,
-                                   r=diameter * 0.5,
-                                   h=height)
+                                   r=self.LEAD_DIAMETER * 0.5,
+                                   h=self.TOTAL_LENGHTH - self.TIP_LENGTH)
         body.bc("Body")
         return body
 
-    def __contacts(self, diameter: float) \
-            -> netgen.libngpy._NgOCC.TopoDS_Shape:
-
-        point = tuple(np.array(self.__direction) * self.TIP_LENGTH)
-        space = netgen.occ.HalfSpace(p=point, n=self.__direction)
-        center = tuple(np.array(self.__direction) * self.LEAD_DIAMETER * 0.5)
-        active_tip_pt1 = netgen.occ.Sphere(c=center, r=diameter * 0.5) * space
-        height = self.TIP_LENGTH - self.LEAD_DIAMETER * 0.5
-        active_tip_pt2 = netgen.occ.Cylinder(p=center,
-                                             d=self.__direction,
-                                             r=diameter * 0.5,
-                                             h=height)
-        active_tip = netgen.occ.Fuse([active_tip_pt1, active_tip_pt2])
-        contact_8 = netgen.occ.Cylinder(p=(0, 0, 0),
-                                        d=self.__direction,
-                                        r=diameter * 0.5,
-                                        h=self.CONTACT_LENGTH)
-
-        distance = (self.TIP_LENGTH +
-                    3 * self.CONTACT_SPACING +
-                    2 * self.CONTACT_LENGTH)
-
-        contact_8 = contact_8.Move(tuple(np.array(self.__direction) *
-                                         distance))
-
+    def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         axis = netgen.occ.Axis((0, 0, 0), self.__direction)
-        distance = self.TIP_LENGTH + self.CONTACT_SPACING
-        point = tuple(np.array(self.__direction) * distance)
-        contact = self.__contact(diameter, self.CONTACT_LENGTH).Move(point)
-        distance = self.CONTACT_LENGTH + self.CONTACT_SPACING
-        point = tuple(np.array(self.__direction) * distance)
-        contacts = [active_tip,
-                    contact,
-                    contact.Rotate(axis, 120),
-                    contact.Rotate(axis, 240),
-                    contact.Move(point),
-                    contact.Rotate(axis, 120).Move(point),
-                    contact.Rotate(axis, 240).Move(point),
-                    contact_8
+
+        distance_1 = self.TIP_LENGTH + self.CONTACT_SPACING
+        distance_2 = distance_1 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+        distance_3 = distance_2 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+
+        vector_1 = tuple(np.array(self.__direction) * distance_1)
+        vector_2 = tuple(np.array(self.__direction) * distance_2)
+        vector_3 = tuple(np.array(self.__direction) * distance_3)
+
+        contact = netgen.occ.Cylinder(p=(0, 0, 0),
+                                      d=self.__direction,
+                                      r=self.LEAD_DIAMETER * 0.5,
+                                      h=self.CONTACT_LENGTH)
+
+        contact_directed = self.__contact_directed()
+
+        contacts = [self.__active_tip(),
+                    contact_directed.Move(vector_1),
+                    contact_directed.Rotate(axis, 120).Move(vector_1),
+                    contact_directed.Rotate(axis, 240).Move(vector_1),
+                    contact_directed.Move(vector_2),
+                    contact_directed.Rotate(axis, 120).Move(vector_2),
+                    contact_directed.Rotate(axis, 240).Move(vector_2),
+                    contact.Move(vector_3)
                     ]
 
         for index, contact in enumerate(contacts, 1):
@@ -124,23 +95,32 @@ class BostonScientificVercise(AbstractElectrode):
 
         return netgen.occ.Fuse(contacts)
 
-    def __contact(self, diameter: float, height: float) \
-            -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        radius = diameter * 0.5
+    def __active_tip(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        radius = self.LEAD_DIAMETER * 0.5
+        point = tuple(np.array(self.__direction) * self.TIP_LENGTH)
+        space = netgen.occ.HalfSpace(p=point, n=self.__direction)
+        center = tuple(np.array(self.__direction) * radius)
+        active_tip_pt1 = netgen.occ.Sphere(c=center, r=radius) * space
+        active_tip_pt2 = netgen.occ.Cylinder(p=center,
+                                             d=self.__direction,
+                                             r=radius,
+                                             h=self.TIP_LENGTH - radius)
+        active_tip = netgen.occ.Fuse([active_tip_pt1, active_tip_pt2])
+        return active_tip
+
+    def __contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         body = netgen.occ.Cylinder(p=(0, 0, 0),
                                    d=self.__direction,
-                                   r=radius,
-                                   h=height)
-
-        direction2 = self.__secound_direction()
-        new_direction = tuple(np.cross(direction2, self.__direction))
+                                   r=self.LEAD_DIAMETER * 0.5,
+                                   h=self.CONTACT_LENGTH)
+        new_direction = tuple(np.cross(self.__direction_2(), self.__direction))
         eraser = netgen.occ.HalfSpace(p=(0, 0, 0), n=new_direction)
         delta = self.CONTACT_SPACING_RADIAL / self.LEAD_DIAMETER * 180 / np.pi
         angle = 30 + delta
         axis = netgen.occ.Axis((0, 0, 0), self.__direction)
         return body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
 
-    def __secound_direction(self):
+    def __direction_2(self):
         x, y, z = self.__direction
 
         if not x and not y:
@@ -153,70 +133,3 @@ class BostonScientificVercise(AbstractElectrode):
             return (0, 1, 0)
 
         return (x, y, not z)
-
-    def __tube(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-
-        radius = self.LEAD_DIAMETER * 0.5 + self.TUBE_THICKNESS
-        height = self.TOTAL_LENGHTH - self.TUBE_FREE_LENGTH
-        point = tuple(np.array(self.__direction) * self.TUBE_FREE_LENGTH)
-        tube = netgen.occ.Cylinder(p=point,
-                                   d=self.__direction,
-                                   r=radius,
-                                   h=height)
-
-        offset = self.TIP_LENGTH + self.CONTACT_SPACING
-        distance = self.CONTACT_LENGTH + self.CONTACT_SPACING
-        distances = offset + np.arange(3) * distance
-        lower_limit = np.append(0, distances)
-        upper_limit = np.append(self.TIP_LENGTH,
-                                distances + self.CONTACT_LENGTH)
-        intersection = np.logical_and(lower_limit < self.TUBE_FREE_LENGTH,
-                                      upper_limit > self.TUBE_FREE_LENGTH)
-        index = np.argmax(intersection)
-
-        if not np.any(intersection):
-            index = -1
-
-        if index == 0:
-            tube.bc('Contact_1')
-
-        elif index == 1:
-            tube = self.tube_with_multiple_contacts(first_contact=2)
-
-        elif index == 2:
-            tube = self.tube_with_multiple_contacts(first_contact=5)
-
-        elif index == 3:
-            tube.bc('Contact_8')
-        else:
-            tube.bc('Body')
-
-        return tube
-
-    def tube_with_multiple_contacts(self, first_contact: int):
-        axis = netgen.occ.Axis((0, 0, 0), self.__direction)
-        diameter = self.LEAD_DIAMETER + 2 * self.TUBE_THICKNESS
-        height = self.TOTAL_LENGHTH - self.TUBE_FREE_LENGTH
-        point = tuple(np.array(self.__direction) * self.TUBE_FREE_LENGTH)
-        contact = self.__contact(diameter, height).Move(point)
-        contacts = [contact,
-                    contact.Rotate(axis, 120),
-                    contact.Rotate(axis, 240),
-                    ]
-
-        for index, contact in enumerate(contacts, first_contact):
-            contact.bc("Contact_{}".format(index))
-
-        tube = netgen.occ.Glue(contacts)
-        radius = self.LEAD_DIAMETER * 0.5 + self.TUBE_THICKNESS
-        height = self.TOTAL_LENGHTH - self.TUBE_FREE_LENGTH
-        point = tuple(np.array(self.__direction) * self.TUBE_FREE_LENGTH)
-        body = netgen.occ.Cylinder(p=point,
-                                   d=self.__direction,
-                                   r=radius,
-                                   h=height)
-
-        body.bc('Body')
-        tube = netgen.occ.Glue(contacts)
-        body = body - tube
-        return netgen.occ.Glue([tube, body])
