@@ -8,7 +8,7 @@ class MagneticResonanceImage(Nifti1Image):
 
 class DefaultMagneticResonanceImage(Nifti1Image):
 
-    def __init__(self, file_path: str) -> None:
+    def __init__(self) -> None:
         self.__x = 50
         self.__y = 50
         self.__z = 50

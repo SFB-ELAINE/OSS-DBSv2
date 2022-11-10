@@ -9,7 +9,7 @@ from src.electrodes import MicroProbesSNEX_100
 from src.electrodes import PINSMedicalL301
 from src.electrodes import PINSMedicalL302
 from src.electrodes import PINSMedicalL303
-from src.electrodes import Rodden
+from src.electrodes import MicroProbesCustomRodent
 
 
 @dataclass
@@ -45,8 +45,8 @@ class ElectrodeCreator:
                   PINSMedicalL302,
                   'PINSMedicalL303':
                   PINSMedicalL303,
-                  'Rodden':
-                  Rodden
+                  'MicroProbesCustomRodent':
+                  MicroProbesCustomRodent
                   }
 
     @classmethod
@@ -54,6 +54,8 @@ class ElectrodeCreator:
         trans = parameters.translation
         rot = parameters.rotation
         dir = parameters.direction
+        contacts = parameters.contact_values
         return cls.ELECTRODES[parameters.name](direction=dir,
                                                translation=trans,
-                                               rotation=rot)
+                                               rotation=rot,
+                                               boundaries=contacts)

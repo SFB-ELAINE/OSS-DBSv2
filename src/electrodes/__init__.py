@@ -12,7 +12,7 @@ from src.electrodes.medtronic_3391 import Medtronic3391
 from src.electrodes.pins_medical_L301 import PINSMedicalL301
 from src.electrodes.pins_medical_L302 import PINSMedicalL302
 from src.electrodes.pins_medical_L303 import PINSMedicalL303
-from src.electrodes.rodden import Rodden
+from src.electrodes.micro_probes_custom_rodent import MicroProbesCustomRodent
 from src.electrodes.micro_probes_SNEX100 import MicroProbesSNEX_100
 from src.electrodes.electrodes import ElectrodeCreator, ElectrodeParameters
 
@@ -29,6 +29,6 @@ __all__ = ('AbstractElectrode',
            'PINSMedicalL301',
            'PINSMedicalL302',
            'PINSMedicalL303',
-           'Rodden',
+           'MicroProbesCustomRodent',
            'ElectrodeCreator',
            'ElectrodeParameters')

@@ -23,6 +23,7 @@ class VolumeConductor:
     def __init__(self,
                  conductivity: ngsolve.CoefficientFunction,
                  ) -> None:
+
         self.__sigma = conductivity
 
     def evaluate_potential(self, mesh: Mesh = None) \

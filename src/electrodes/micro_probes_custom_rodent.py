@@ -3,8 +3,8 @@ import netgen
 import numpy as np
 
 
-class Rodden(AbstractElectrode):
-    """Rodden electrode.
+class MicroProbesCustomRodent(AbstractElectrode):
+    """MicroProbes Custom Rodent electrode.
 
     Attributes
     ----------
@@ -32,7 +32,9 @@ class Rodden(AbstractElectrode):
     def __init__(self,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
-                 translation: tuple = (0, 0, 0)) -> None:
+                 translation: tuple = (0, 0, 0),
+                 boundaries: list = None) -> None:
+        self.__boundaries = boundaries
         self.__translation = translation
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
@@ -78,5 +80,10 @@ class Rodden(AbstractElectrode):
             contact = tip
         else:
             contact = tip + lead
-        contact.bc("Contact")
+        contact.bc(self.__boundaries[0][0])
         return contact
+
+    def boundary_values(self):
+        values = {key: value for key, value in self.__boundaries}
+        values['Body'] = 0.0
+        return values
