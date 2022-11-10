@@ -1,5 +1,7 @@
-from src.brain_imaging.diffusion_tensor_imaging import DefaultDiffusionTensorImage, DiffusionTensorImage
-from src.brain_imaging.magnetic_resonance_imaging import DefaultMagneticResonanceImage, MagneticResonanceImage
+from src.brain_imaging.diffusion_tensor_imaging \
+    import DefaultDiffusionTensorImage, DiffusionTensorImage
+from src.brain_imaging.magnetic_resonance_imaging \
+    import DefaultMagneticResonanceImage, MagneticResonanceImage
 from src.electrodes.electrodes import ElectrodeCreator, ElectrodeParameters
 
 

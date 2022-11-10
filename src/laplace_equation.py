@@ -1,5 +1,5 @@
 import ngsolve
-import numpy as np
+
 
 class LaplaceEquation:
 
