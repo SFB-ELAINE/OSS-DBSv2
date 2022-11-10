@@ -42,14 +42,18 @@ class BrainModel:
         gm_model = DielectricModel1.create_model(Material.GRAY_MATTER)
         wm_model = DielectricModel1.create_model(Material.WHITE_MATTER)
 
-        conductivity = np.zeros(self.__mri.data_map().shape)
-        conductivity[csf_position] = csf_model.conductivity(frequency)
-        conductivity[gm_position] = gm_model.conductivity(frequency)
-        conductivity[wm_positiom] = wm_model.conductivity(frequency)
-        conductivity[unknown_position] = gm_model.conductivity(frequency)
-        return conductivity
+        data = np.zeros(self.__mri.data_map().shape)
+        data[csf_position] = csf_model.conductivity(frequency)
+        data[gm_position] = gm_model.conductivity(frequency)
+        data[wm_positiom] = wm_model.conductivity(frequency)
+        data[unknown_position] = gm_model.conductivity(frequency)
+        start, end = self.__mri.bounding_box()
+        return VoxelSpace(data=data, start=tuple(start), end=tuple(end))
 
-    def generate_mesh(self, order: int = 2, boundary_values: list = None):
+    def generate_mesh(self, order: int = 2):
+
+        boundary_values = self.__electrode.boundary_values()
+
         return Mesh(self.generate_geometry(self.__electrode),
                     order=order,
                     boundaries=boundary_values)

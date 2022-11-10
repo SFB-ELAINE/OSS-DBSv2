@@ -1,75 +1,62 @@
 
 from src.brain_model import BrainModel
+from src.configuration import Configuration
 from src.volume_conductor_model import VolumeConductor
-from src.brain_imaging import DefaultMagneticResonanceImage
-from src.electrodes import ElectrodeCreator, ElectrodeParameters
 from src.brainsubstance import Material
 import ngsolve
+import os
 
 
 INPUT = {
     'Electrodes': [
         {
-            'Name': 'Rodden',
+            'Name': 'MicroProbesCustomRodent',
             'Rotation': 0.0,
-            'Direction': [0.0, 0.0, 0.0],
+            'Direction': [0.0, 0.0, 1.0],
             'Translation': [5.0, 5.0, 5.0],
-            'Contact_values': [1.0, ]
-        }
+            'Contact_values': [1.0, ],
+            'Body_value': 0.0,
+        },
     ],
     'MagneticResonanceImage':
         {
-            'Path': 'path'
+            'Path': ''
         },
     'DiffusionTensorImage':
         {
-            'Path': 'path'
-        }
+            'Path': ''
+        },
+    'Output_directoy': 'result'
 }
 
 
-class Configuration:
-
-    def __init__(self, input: dict) -> None:
-        self.__input = input
-
-    def electrodes(self) -> list:
-        electrodes = []
-        for index, electrode in enumerate(self.__input['Electrodes'], 1):
-            par = ElectrodeParameters()
-            par.name = electrode['Name']
-            par.rotation = electrode['Rotation']
-            par.direction = electrode['Direction']
-            par.translation = tuple(electrode['Translation'])
-
-            contact_values = electrode['Contact_values']
-            par.contact_values = [("E{}C{}".format(index, i), v)
-                                  for i, v in enumerate(contact_values, 1)]
-            electrodes.append(ElectrodeCreator.create(parameters=par))
-        return electrodes
-
-
 def main():
-    # Boundary names & values in geometry and Electrode Parameters
-    boundaries = {"Contact": 1.0, "Body": 0.0}
 
-    electrode = Configuration(input=INPUT).electrodes()[0]
-    mri = DefaultMagneticResonanceImage(file_path='')
+    configuration = Configuration(input=INPUT)
+    electrode = configuration.electrodes()[0]
+    mri = configuration.magnetic_resonance_image()
+    dti = configuration.diffusion_tensor_image()
 
     with ngsolve.TaskManager():
         brain_model = BrainModel(mri=mri, electrode=electrode)
-        mesh = brain_model.generate_mesh(order=2, boundary_values=boundaries)
+        print('MRI_DIMENSION', brain_model.bounding_box())
+        mesh = brain_model.generate_mesh(order=2)
 
-        position = brain_model.material_distribution(Material.CSF)
-        mesh.mark_elements_by_position(position=position)
+        csf_position = brain_model.material_distribution(Material.CSF)
+        mesh.mark_elements_by_position(position=csf_position)
         mesh.refine()
 
-        start, end = brain_model.bounding_box()
         conductivity = brain_model.conductivity(frequency=0)
-        conductivities = ngsolve.VoxelCoefficient(start=tuple(start),
-                                                  end=tuple(end),
-                                                  values=conductivity,
+        conductivities = ngsolve.VoxelCoefficient(start=conductivity.start,
+                                                  end=conductivity.end,
+                                                  values=conductivity.data,
                                                   linear=False)
+        diffusion = ngsolve.VoxelCoefficient(start=conductivity.start,
+                                             end=conductivity.end,
+                                             values=dti.diffusion(),
+                                             linear=False)
+      #  with diffusion the computation burden explodes 
+      #  conductivities = diffusion * conductivities
 
         model = VolumeConductor(conductivity=conductivities)
         potential, error = model.evaluate_potential(mesh)
@@ -83,6 +70,21 @@ def main():
         print('impedance: ', 1 / P)
     else:
         print('impedance: ', 'inf')
+
+    # directory = os.path.dirname(os.path.realpath(__file__))
+    # output_path = configuration.output_path()
+    # file_dir = os.path.join(directory, os.path.dirname(output_path))
+    # if not os.path.exists(file_dir):
+    #     os.mkdir(file_dir)
+
+    # file_name = os.path.join(file_dir, os.path.basename(output_path))
+
+    output = ngsolve.VTKOutput(ma=mesh.ngsolvemesh(),
+                               coefs=[potential, -ngsolve.grad(potential)*1e3],
+                               names=["potential", "field"],
+                               filename=configuration.output_path(),
+                               subdivision=0)
+    output.Do()
 
 
 if __name__ == '__main__':

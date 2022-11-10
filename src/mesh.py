@@ -21,9 +21,8 @@ class Mesh:
         return self.__mesh.Boundaries(pattern=name)
 
     def boundary_coefficients(self) -> ngsolve.fem.CoefficientFunction:
-        # this dictionary prevents entry memory access error
-        # TODO: Check Boundaries with  mesh.ngmesh().GetBoundaries()
-        self.__boundaries['default'] = 0.0
+        if len(np.unique(self.ngsolvemesh().GetBoundaries())) == 1:
+            raise Exception("No contacts in geometry")
         return self.__mesh.BoundaryCF(values=self.__boundaries)
 
     def flux_space(self, complex: bool = True) -> ngsolve.comp.HDiv:
