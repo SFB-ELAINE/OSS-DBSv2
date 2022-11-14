@@ -19,8 +19,7 @@ before_script:
   script:
     - python setup.py bdist_wheel
     - pip install dist/*
-    # TODO: add meaningful test run
-    - pytest
+    - python3 -m main
   artifacts:
     paths:
       - dist/*.whl
