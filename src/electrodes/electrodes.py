@@ -18,7 +18,6 @@ class ElectrodeParameters:
     translation: tuple = (0., 0., 0.)
     direction: tuple = (0., 0., 0.)
     rotation: float = 0.0
-    contact_values: list = None
 
 
 class ElectrodeCreator:
@@ -54,8 +53,6 @@ class ElectrodeCreator:
         trans = parameters.translation
         rot = parameters.rotation
         dir = parameters.direction
-        contacts = parameters.contact_values
         return cls.ELECTRODES[parameters.name](direction=dir,
                                                translation=trans,
-                                               rotation=rot,
-                                               boundaries=contacts)
+                                               rotation=rot)

@@ -17,13 +17,13 @@ class GeometryDummy(Geometry):
 
 def test_element_sizes():
     geo = GeometryDummy()
-    mesh = Mesh(geometry=geo, order=2, boundaries={})
+    mesh = Mesh(geometry=geo, order=2)
     np.testing.assert_allclose(mesh.element_sizes(), [1/6] * 12, atol=0.001)
 
 
 def test_centroids_of_elements():
     geo = GeometryDummy()
-    mesh = Mesh(geometry=geo, order=2, boundaries={})
+    mesh = Mesh(geometry=geo, order=2)
     expected = [(0.125, 0.625, 0.375),
                 (0.875, 0.375, 0.375),
                 (0.125, 0.375, 0.625),

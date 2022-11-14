@@ -26,18 +26,17 @@ class MicroProbesCustomRodent(AbstractElectrode):
     # dimensions [mm]
     CONTACT_LENGTH = 0.01125
     LEAD_DIAMETER = 0.225
-    TOTAL_LENGHTH = 1.3
+    TOTAL_LENGHTH = 13.3
     TUBE_THICKNESS = .01
 
     def __init__(self,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
-                 translation: tuple = (0, 0, 0),
-                 boundaries: list = None) -> None:
-        self.__boundaries = boundaries
+                 translation: tuple = (0, 0, 0)) -> None:
         self.__translation = translation
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
+        self.__boundaries = {'Body': 'Body', 'Contact_1': 'Contact_1'}
 
     def generate_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of electrode.
@@ -62,7 +61,7 @@ class MicroProbesCustomRodent(AbstractElectrode):
         point = tuple(np.array(self.__direction) * self.CONTACT_LENGTH)
         space = netgen.occ.HalfSpace(p=point, n=self.__direction)
         body = tip + lead - space
-        body.bc("Body")
+        body.bc(self.__boundaries['Body'])
         return body
 
     def __contact(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
@@ -80,10 +79,11 @@ class MicroProbesCustomRodent(AbstractElectrode):
             contact = tip
         else:
             contact = tip + lead
-        contact.bc(self.__boundaries[0][0])
+        contact.bc(self.__boundaries['Contact_1'])
         return contact
 
-    def boundary_values(self):
-        values = {key: value for key, value in self.__boundaries}
-        values['Body'] = 0.0
-        return values
+    def rename_boundaries(self, boundaries: dict) -> None:
+        self.__boundaries.update(boundaries)
+
+    def boundaries(self) -> dict:
+        return self.__boundaries

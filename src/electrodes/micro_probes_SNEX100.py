@@ -40,6 +40,18 @@ class MicroProbesSNEX_100(AbstractElectrode):
         self.__translation = translation
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
+        self.__boundaries = {'Body': 'Body',
+                             'Contact_1': 'Contact_1',
+                             'Contact_2': 'Contact_2',
+                             'Contact_3': 'Contact_3',
+                             'Contact_4': 'Contact_4',
+                             'Contact_5': 'Contact_5',
+                             'Contact_6': 'Contact_6',
+                             'Contact_7': 'Contact_7',
+                             'Contact_8': 'Contact_8'}
+
+    def rename_boundaries(self, boundaries: dict) -> None:
+        self.__boundaries.update(boundaries)
 
     def generate_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of electrode.
@@ -76,7 +88,7 @@ class MicroProbesSNEX_100(AbstractElectrode):
                                      h=self.TOTAL_LENGTH - distance_2)
 
         body = netgen.occ.Fuse([body_1, body_2])
-        body.bc("Body")
+        body.bc(self.__boundaries['Body'])
         return body
 
     def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
@@ -98,7 +110,7 @@ class MicroProbesSNEX_100(AbstractElectrode):
                                             h=self.OUTER_ELECTRODE_LENGTH)
 
         inner_contact = inner_contatct_tip + inner_contatct_pt2
-        inner_contact.bc('Contact_1')
-        outer_contact.bc('Contact_2')
+        inner_contact.bc(self.__boundaries['Contact_1'])
+        outer_contact.bc(self.__boundaries['Contact_2'])
 
         return netgen.occ.Glue([inner_contact, outer_contact])
