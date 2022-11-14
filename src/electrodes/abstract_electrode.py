@@ -39,3 +39,16 @@ class AbstractElectrode(ABC):
         geometry : netgen.libngpy._NgOCC.TopoDS_Shape
         """
         pass
+
+    @abstractmethod
+    def rename_boundaries(self, boundary_names: dict) -> None:
+        """Rename boundary names of electrode.
+
+        Prameters
+        ---------
+        boundary_names : dict
+            {'Body': 'body_name',
+             'Contact_1': 'contact_name',
+             'Contact_2': ...}
+        """
+        pass

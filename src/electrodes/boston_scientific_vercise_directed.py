@@ -38,6 +38,18 @@ class BostonScientificVercise(AbstractElectrode):
         self.__translation = translation
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
+        self.__boundaries = {'Body': 'Body',
+                             'Contact_1': 'Contact_1',
+                             'Contact_2': 'Contact_2',
+                             'Contact_3': 'Contact_3',
+                             'Contact_4': 'Contact_4',
+                             'Contact_5': 'Contact_5',
+                             'Contact_6': 'Contact_6',
+                             'Contact_7': 'Contact_7',
+                             'Contact_8': 'Contact_8'}
+
+    def rename_boundaries(self, boundaries: dict) -> None:
+        self.__boundaries.update(boundaries)
 
     def generate_geometry(self) -> netgen.libngpy._meshing.Mesh:
         """Generate geometry of electrode.
@@ -59,7 +71,7 @@ class BostonScientificVercise(AbstractElectrode):
                                    d=self.__direction,
                                    r=self.LEAD_DIAMETER * 0.5,
                                    h=self.TOTAL_LENGHTH - self.TIP_LENGTH)
-        body.bc("Body")
+        body.bc(self.__boundaries['Body'])
         return body
 
     def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
@@ -91,7 +103,7 @@ class BostonScientificVercise(AbstractElectrode):
                     ]
 
         for index, contact in enumerate(contacts, 1):
-            contact.bc("Contact_{}".format(index))
+            contact.bc(self.__boundaries['Contact_{}'.format(index)])
 
         return netgen.occ.Fuse(contacts)
 

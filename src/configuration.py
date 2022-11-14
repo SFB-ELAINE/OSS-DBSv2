@@ -18,12 +18,30 @@ class Configuration:
             par.rotation = electrode['Rotation']
             par.direction = electrode['Direction']
             par.translation = tuple(electrode['Translation'])
-
-            values = electrode['Contact_values']
-            par.contact_values = [("E{}C{}".format(index, i), value)
-                                  for i, value in enumerate(values, 1)]
-            electrodes.append(ElectrodeCreator.create(parameters=par))
+            names = {'Contact_{}'.format(i): "E{}C{}".format(index, i)
+                     for i in range(1, len(electrode['Contact_values']) + 1)}
+            names['Body'] = 'E{}B'.format(index)
+            electrode = ElectrodeCreator.create(parameters=par)
+            electrode.rename_boundaries(names)
+            electrodes.append(electrode)
         return electrodes
+
+    def boundary_values(self):
+        boundary_values = {}
+        for index, electrode in enumerate(self.__input['Electrodes'], 1):
+            body_value = electrode['Body_value']
+            body = {}
+            if body_value is not None:
+                body.update({'E{}B'.format(index): body_value})
+            contact_values = electrode['Contact_values']
+            contacts = {'E{}C{}'.format(index, i): value
+                        for i, value in enumerate(contact_values, 1)
+                        if value is not None}
+            boundary_values.update(body | contacts)
+        if self.__input['BrainSurface_value'] is not None:
+            boundary_values.update({'Brain':
+                                    self.__input['BrainSurface_value']})
+        return boundary_values
 
     def magnetic_resonance_image(self):
         path = self.__input['MagneticResonanceImage']['Path']

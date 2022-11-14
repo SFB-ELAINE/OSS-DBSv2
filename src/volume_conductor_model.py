@@ -26,7 +26,9 @@ class VolumeConductor:
 
         self.__sigma = conductivity
 
-    def evaluate_potential(self, mesh: Mesh = None) \
+    def evaluate_potential(self,
+                           mesh: Mesh = None,
+                           boundaries: dict = None) \
             -> ngsolve.comp.GridFunction:
         """Evaluate electrical potential of volume conductor.
 
@@ -37,10 +39,9 @@ class VolumeConductor:
             Postprocessed data: lectric_field, V_contact, Power, potential
 
         """
-
         space = mesh.sobolev_space()
         potential = ngsolve.GridFunction(space=space)
-        coefficient = mesh.boundary_coefficients()
+        coefficient = mesh.boundary_coefficients(boundaries=boundaries)
         potential.Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
         equation = LaplaceEquation(space=space, coefficient=self.__sigma)
         potential.vec.data = equation.solve_bvp(input=potential)

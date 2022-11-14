@@ -9,21 +9,20 @@ class Mesh:
 
     def __init__(self,
                  geometry: Geometry,
-                 order: int,
-                 boundaries: dict) -> None:
+                 order: int) -> None:
         self.__mesh = ngsolve.Mesh(ngmesh=geometry.generate_mesh())
         self.__mesh.Curve(order=order)
         self.__order = order
-        self.__boundaries = boundaries
 
     def boundaries(self, name: str) -> ngsolve.comp.Region:
-        # set(self.__mesh.GetBoundaries())
         return self.__mesh.Boundaries(pattern=name)
 
-    def boundary_coefficients(self) -> ngsolve.fem.CoefficientFunction:
-        if len(np.unique(self.ngsolvemesh().GetBoundaries())) == 1:
-            raise Exception("No contacts in geometry")
-        return self.__mesh.BoundaryCF(values=self.__boundaries)
+    def get_boundaries(self):
+        return list(set(self.__mesh.GetBoundaries()) - set(['default']))
+
+    def boundary_coefficients(self, boundaries) \
+            -> ngsolve.fem.CoefficientFunction:
+        return self.__mesh.BoundaryCF(values=boundaries)
 
     def flux_space(self, complex: bool = True) -> ngsolve.comp.HDiv:
         return ngsolve.HDiv(mesh=self.__mesh,
@@ -62,7 +61,7 @@ class Mesh:
         self.__set_refinement_flag(flags)
 
     def sobolev_space(self, complex: bool = False) -> ngsolve.comp.H1:
-        dirichlet = '|'.join(str(key) for key in self.__boundaries.keys())
+        dirichlet = '|'.join(boundary for boundary in self.get_boundaries())
         return ngsolve.H1(mesh=self.__mesh,
                           order=self.__order,
                           dirichlet=dirichlet,
