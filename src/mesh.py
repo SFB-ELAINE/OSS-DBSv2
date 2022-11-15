@@ -84,3 +84,9 @@ class Mesh:
                                     mesh=self.__mesh,
                                     element_wise=True).NumPy()
         return list((6 * volumes) ** 1 / 3)
+
+    def bounding_box(self):
+        points = [vertice.point for vertice in self.__mesh.vertices]
+        start = tuple(np.min(points, axis=0))
+        end = tuple(np.max(points, axis=0))
+        return start, end

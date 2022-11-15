@@ -34,7 +34,7 @@ class GrayMatterParameters(Paramters):
 
 class DielectricModelCSF(AbstractDielectricModel):
 
-    def relative_permitivity(self, frequency: float) -> float:
+    def permitivity(self, frequency: float) -> float:
         return 80
 
     def conductivity(self, frequency: float) -> float:
@@ -78,8 +78,8 @@ class DielectricModel(AbstractDielectricModel):
         conductivity_term = self.__sigma / (1j * frequency * self.e0)
         return eps_dispersion + conductivity_term
 
-    def relative_permitivity(self, frequency: float) -> float:
-        return np.real(self.__complex_permitivity(frequency))
+    def permitivity(self, frequency: float) -> float:
+        return np.real(self.__complex_permitivity(frequency)) * self.__e0
 
     def conductivity(self, frequency: float) -> float:
         if frequency == 0:

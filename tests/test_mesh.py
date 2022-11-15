@@ -40,3 +40,11 @@ def test_centroids_of_elements():
     np.testing.assert_allclose(mesh.centroids_of_elements(),
                                expected,
                                atol=0.001)
+
+
+def test_cbounding_box():
+    geo = GeometryDummy()
+    mesh = Mesh(geometry=geo, order=2)
+    start = (0, 0, 0)
+    end = (1, 1, 1)
+    assert mesh.bounding_box() == (start, end)

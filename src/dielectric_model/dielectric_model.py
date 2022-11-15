@@ -5,7 +5,7 @@ from src.brainsubstance import Material
 class AbstractDielectricModel(ABC):
 
     @abstractmethod
-    def relative_permitivity(self, frequency: float) -> float:
+    def permitivity(self, frequency: float) -> float:
         pass
 
     @abstractmethod
