@@ -19,7 +19,7 @@ before_script:
   script:
     - python setup.py bdist_wheel
     - pip install dist/*
-    - python3 -m main
+    - ossdbs 
   artifacts:
     paths:
       - dist/*.whl
