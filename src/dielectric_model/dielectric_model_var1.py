@@ -21,7 +21,7 @@ class WhiteMatterParameters(Paramters):
     eps_inf: float = 4.0
     sigma: float = 0.02
     tau_1: float = 7.958e-12
-    tau_2: float = 7.958-9
+    tau_2: float = 7.958e-9
     tau_3: float = 53.052e-6
     tau_4: float = 7.958e-3
 
@@ -94,8 +94,8 @@ class DielectricModel(AbstractDielectricModel):
         conductivity_term = self.__sigma / (1j * frequency * self.e0)
         return eps_dispersion + conductivity_term
 
-    def relative_permitivity(self, frequency: float) -> float:
-        return np.real(self.__complex_permitivity(frequency))
+    def permitivity(self, frequency: float) -> float:
+        return np.real(self.__complex_permitivity(frequency)) * self.e0
 
     def conductivity(self, frequency: float) -> float:
         if frequency == 0:

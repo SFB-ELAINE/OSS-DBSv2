@@ -13,12 +13,22 @@ INPUT = {
             'Name': 'MicroProbesCustomRodent',
             'Rotation': 0.0,
             'Direction': [0.0, 0.0, 1.0],
-            'Translation': [5.0, 5.0, 5.0],
-            'Contact_values': [1.0, ],
-            'Body_value': 0.0,
+            'Translation': [5.5, 5.5, 5.5],
+            'Contacts': {
+                'Active': [True],
+                'Value': [1.0],
+            },
+            'Body': {
+                'Active': True,
+                'Value': 0.0,
+            },
         },
     ],
-    'BrainSurface_value': None,
+    'BrainSurface':
+        {
+            'Active': False,
+            'Value': 0,
+        },
     'MagneticResonanceImage':
         {
             'Path': ''
@@ -38,26 +48,29 @@ def main():
     mri = configuration.magnetic_resonance_image()
     dti = configuration.diffusion_tensor_image()
     boundary_values = configuration.boundary_values()
+
     brain_model = BrainModel(mri=mri, electrodes=electrodes)
     csf_position = brain_model.material_distribution(Material.CSF)
 
-   # with ngsolve.TaskManager():
     mesh = brain_model.generate_mesh(order=2)
     mesh.mark_elements_by_position(position=csf_position)
     mesh.refine()
     conductivity = brain_model.conductivity(frequency=0)
-    conductivities = ngsolve.VoxelCoefficient(start=conductivity.start,
-                                              end=conductivity.end,
-                                              values=conductivity.data,
-                                              linear=False)
+    permitivity = brain_model.permitivity(frequency=0)
+
     diffusion = ngsolve.VoxelCoefficient(start=conductivity.start,
                                          end=conductivity.end,
                                          values=dti.diffusion(),
                                          linear=False)
 
-    conductivities = diffusion * conductivities
-    model = VolumeConductor(conductivity=conductivities)
+    model = VolumeConductor(conductivity=conductivity,
+                            permitivity=None)
     potential, error = model.evaluate_potential(mesh, boundary_values)
+
+    conductivities = ngsolve.VoxelCoefficient(start=conductivity.start,
+                                              end=conductivity.end,
+                                              values=conductivity.data,
+                                              linear=False)
 
     P = ngsolve.Integrate(ngsolve.grad(potential) *
                           ngsolve.Conj(conductivities *

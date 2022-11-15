@@ -19,7 +19,7 @@ class Configuration:
             par.direction = electrode['Direction']
             par.translation = tuple(electrode['Translation'])
             names = {'Contact_{}'.format(i): "E{}C{}".format(index, i)
-                     for i in range(1, len(electrode['Contact_values']) + 1)}
+                     for i, _ in enumerate(electrode['Contacts']['Active'], 1)}
             names['Body'] = 'E{}B'.format(index)
             electrode = ElectrodeCreator.create(parameters=par)
             electrode.rename_boundaries(names)
@@ -29,18 +29,20 @@ class Configuration:
     def boundary_values(self):
         boundary_values = {}
         for index, electrode in enumerate(self.__input['Electrodes'], 1):
-            body_value = electrode['Body_value']
-            body = {}
-            if body_value is not None:
-                body.update({'E{}B'.format(index): body_value})
-            contact_values = electrode['Contact_values']
+            if electrode['Body']['Active']:
+                value = electrode['Body']['Value']
+                boundary_values.update({'E{}B'.format(index): value})
+
             contacts = {'E{}C{}'.format(index, i): value
-                        for i, value in enumerate(contact_values, 1)
-                        if value is not None}
-            boundary_values.update(body | contacts)
-        if self.__input['BrainSurface_value'] is not None:
-            boundary_values.update({'Brain':
-                                    self.__input['BrainSurface_value']})
+                        for i, value
+                        in enumerate(electrode['Contacts']['Value'], 1)
+                        if electrode['Contacts']['Active'][i-1]}
+            boundary_values.update(contacts)
+
+        if self.__input['BrainSurface']['Active']:
+            value = self.__input['BrainSurface_value']['Value']
+            boundary_values.update({'Brain': value})
+
         return boundary_values
 
     def magnetic_resonance_image(self):
