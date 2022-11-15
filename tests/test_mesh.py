@@ -1,5 +1,5 @@
-from src.mesh import Mesh
-from src.geometry import Geometry
+from ossdbs.mesh import Mesh
+from ossdbs.geometry import Geometry
 import netgen.occ as occ
 import numpy as np
 

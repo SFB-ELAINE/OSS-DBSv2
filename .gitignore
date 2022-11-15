@@ -1,6 +1,7 @@
 # Ignore folder
 __pycache__/
 .env/
+venv/
 .tox/
 .vscode/
 htmlcov/
@@ -12,3 +13,4 @@ dist/
 *.pyc
 .coverage
 .coveragerc
+*.vtu

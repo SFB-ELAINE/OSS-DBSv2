@@ -1,5 +1,5 @@
-from src.dielectric_model import DielectricModel1
-from src.brainsubstance import Material
+from ossdbs.dielectric_model import DielectricModel1
+from ossdbs.brainsubstance import Material
 import numpy as np
 import pytest
 
