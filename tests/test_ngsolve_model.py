@@ -1,6 +1,6 @@
-from src.geometry import SimpleGeometry
-from src.mesh import Mesh
-from src.volume_conductor_model import VolumeConductor
+from ossdbs.geometry import SimpleGeometry
+from ossdbs.mesh import Mesh
+from ossdbs.volume_conductor_model import VolumeConductor
 import ngsolve
 import numpy as np
 
