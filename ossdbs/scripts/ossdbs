@@ -1,4 +1,9 @@
 #! /usr/bin/python3
+
+try:
+    import ossdbs
+except ImportError:
+    print("ossdbs has not been properly installed")
 from ossdbs.brain_model import BrainModel
 from ossdbs.configuration import Configuration
 from ossdbs.volume_conductor_model import VolumeConductor
