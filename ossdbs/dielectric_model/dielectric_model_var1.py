@@ -1,6 +1,6 @@
 from dataclasses import dataclass
-from ..brainsubstance import Material
-from .dielectric_model import AbstractDielectricModel
+from ossdbs.brainsubstance import Material
+from ossdbs.dielectric_model.dielectric_model import AbstractDielectricModel
 import numpy as np
 
 

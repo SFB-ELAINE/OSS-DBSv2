@@ -1,5 +1,5 @@
 # PINS Medical L303
-from .abstract_electrode import AbstractElectrode
+from ossdbs.electrodes.abstract_electrode import AbstractElectrode
 import netgen
 import numpy as np
 

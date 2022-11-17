@@ -1,6 +1,6 @@
 
-from .mesh import Mesh
-from .laplace_equation import LaplaceEquation
+from ossdbs.mesh import Mesh
+from ossdbs.laplace_equation import LaplaceEquation
 import ngsolve
 
 

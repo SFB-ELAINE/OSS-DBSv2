@@ -1,8 +1,8 @@
-from .brain_imaging.diffusion_tensor_imaging \
+from ossdbs.brain_imaging.diffusion_tensor_imaging \
     import DefaultDiffusionTensorImage, DiffusionTensorImage
-from .brain_imaging.magnetic_resonance_imaging \
+from ossdbs.brain_imaging.magnetic_resonance_imaging \
     import DefaultMagneticResonanceImage, MagneticResonanceImage
-from .electrodes.electrodes import ElectrodeCreator, ElectrodeParameters
+from ossdbs.electrodes.electrodes import ElectrodeCreator, ElectrodeParameters
 
 
 class Configuration:
@@ -37,7 +37,8 @@ class Configuration:
             contacts = {'E{}C{}'.format(index, i): value
                         for i, value in enumerate(contact_values, 1)
                         if value is not None}
-            boundary_values.update(body | contacts)
+            boundary_values.update(body)
+            boundary_values.update(contacts)
         if self.__input['BrainSurface_value'] is not None:
             boundary_values.update({'Brain':
                                     self.__input['BrainSurface_value']})

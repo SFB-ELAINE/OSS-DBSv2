@@ -1,15 +1,15 @@
 from dataclasses import dataclass
-from . import AbstractElectrode
-from . import AbbottStjudeActiveTip6142_6145
-from . import AbbottStjudeActiveTip6146_6149
-from . import AbbottStjudeDirected6172
-from . import BostonScientificVercise
-from . import Medtronic3387, Medtronic3389, Medtronic3391
-from . import MicroProbesSNEX_100
-from . import PINSMedicalL301
-from . import PINSMedicalL302
-from . import PINSMedicalL303
-from . import MicroProbesCustomRodent
+from ossdbs.electrodes import AbstractElectrode
+from ossdbs.electrodes import AbbottStjudeActiveTip6142_6145
+from ossdbs.electrodes import AbbottStjudeActiveTip6146_6149
+from ossdbs.electrodes import AbbottStjudeDirected6172
+from ossdbs.electrodes import BostonScientificVercise
+from ossdbs.electrodes import Medtronic3387, Medtronic3389, Medtronic3391
+from ossdbs.electrodes import MicroProbesSNEX_100
+from ossdbs.electrodes import PINSMedicalL301
+from ossdbs.electrodes import PINSMedicalL302
+from ossdbs.electrodes import PINSMedicalL303
+from ossdbs.electrodes import MicroProbesCustomRodent
 
 
 @dataclass

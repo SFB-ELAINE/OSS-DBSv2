@@ -8,7 +8,7 @@ from ossdbs.mesh import Mesh
 import netgen
 import numpy as np
 
-from .voxel_space import VoxelSpace
+from ossdbs.voxel_space import VoxelSpace
 
 
 class BrainModel:
