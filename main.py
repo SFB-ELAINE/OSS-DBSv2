@@ -13,7 +13,7 @@ INPUT = {
             'Name': 'MicroProbesCustomRodent',
             'Rotation': 0.0,
             'Direction': [0.0, 0.0, 1.0],
-            'Translation': [5.5, 5.5, 5.5],
+            'Translation': [5, 5, 5],
             'Contacts': {
                 'Active': [True],
                 'Value': [1.0],
@@ -37,7 +37,14 @@ INPUT = {
         {
             'Path': ''
         },
-    'Output_directoy': 'result'
+    'Output_directoy': 'result',
+    'Stimulation_signal':
+        {
+            'Type': 'Rectangle',
+            'Frequency': 0.0,
+            'Pulse_width': 0.0,
+            'Ramp_width': 0.0,
+        }
 }
 
 
@@ -56,6 +63,8 @@ def main():
     mesh.mark_elements_by_position(position=csf_position)
     mesh.refine()
     conductivity = brain_model.conductivity(frequency=0)
+
+
     permitivity = brain_model.permitivity(frequency=0)
 
     diffusion = ngsolve.VoxelCoefficient(start=conductivity.start,
