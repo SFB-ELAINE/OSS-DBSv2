@@ -17,12 +17,8 @@ before_script:
 
 .run:
   script:
-    - python setup.py bdist_wheel
-    - pip install dist/*
+    - pip install . 
     - ossdbs 
-  artifacts:
-    paths:
-      - dist/*.whl
 
 test-3.8:
    extends: ".test"
