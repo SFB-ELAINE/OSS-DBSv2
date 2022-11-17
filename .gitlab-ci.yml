@@ -21,7 +21,8 @@ before_script:
    - python3 -c "import ossdbs"
    - python3 -c "import ossdbs.dielectric_model"
    - python3 -c "from ossdbs.brain_model import BrainModel"
-   - ossdbs 
+   - cd ossdbs/scripts/ossdbs
+   - python3 ossdbs 
 
 
 test-3.8:
