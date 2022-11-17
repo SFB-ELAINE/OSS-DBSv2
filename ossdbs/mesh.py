@@ -1,8 +1,8 @@
-from .geometry import Geometry
+from ossdbs.geometry import Geometry
 import ngsolve
 import numpy as np
 
-from .voxel_space import VoxelSpace
+from ossdbs.voxel_space import VoxelSpace
 
 
 class Mesh:

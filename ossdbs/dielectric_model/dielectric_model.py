@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from ..brainsubstance import Material
+from ossdbs.brainsubstance import Material
 
 
 class AbstractDielectricModel(ABC):

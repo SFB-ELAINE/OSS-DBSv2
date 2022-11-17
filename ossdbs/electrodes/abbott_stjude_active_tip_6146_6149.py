@@ -1,5 +1,5 @@
 # Abbott/St Jude Active Tip 6146-6149
-from .abstract_electrode import AbstractElectrode
+from ossdbs.electrodes.abstract_electrode import AbstractElectrode
 import netgen
 import numpy as np
 
