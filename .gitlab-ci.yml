@@ -20,7 +20,7 @@ before_script:
    - python setup.py bdist_wheel
    - pip install dist/*
    - python3 -c "import ossdbs"
-   - ossdbs 
+   - python3 ossdbs/scripts/ossdbs 
   artifacts:
     paths:
       - dist/*.whl
