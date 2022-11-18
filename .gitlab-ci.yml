@@ -17,12 +17,13 @@ before_script:
 
 .run:
   script:
-    - python setup.py bdist_wheel
-    - pip install dist/*
-    - python3 -m main
-  artifacts:
-    paths:
-      - dist/*.whl
+   - pip install .
+   - python3 -c "import ossdbs"
+   - python3 -c "import ossdbs.dielectric_model"
+   - python3 -c "from ossdbs.brain_model import BrainModel"
+   #- cd ossdbs/scripts
+   #- python3 ossdbs 
+
 
 test-3.8:
    extends: ".test"
