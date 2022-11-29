@@ -62,8 +62,8 @@ run-3.10:
    stage: "run"
    image: "python:3.10"
 
-# For documentation (TODO)
 pages:
+  stage: "pages"
   script:
     - pip install sphinx sphinx-rtd-theme
     - cd docs
