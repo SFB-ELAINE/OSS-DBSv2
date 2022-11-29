@@ -64,6 +64,7 @@ run-3.10:
 
 pages:
   stage: "pages"
+  image: "python:3.10"
   script:
     - pip install sphinx sphinx-rtd-theme
     - cd docs
