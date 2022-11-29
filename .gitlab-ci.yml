@@ -3,6 +3,7 @@
 stages:
     - "test"
     - "run"
+    - "pages"
 
 before_script:
   - python --version  # For debugging
