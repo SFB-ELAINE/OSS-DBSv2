@@ -1,98 +1,48 @@
-from src.dielectric_model import DielectricModel1
+from src.dielectric_model import ModelCreator
 from src.brainsubstance import Material
 import numpy as np
 import pytest
 
 
-class TestWhiteMatterModel1:
+class TestModel1Permitivity:
 
-    @pytest.fixture
-    def model(self):
-        return DielectricModel1.create_model(Material.WHITE_MATTER)
+    TESTDATA = [
+        (Material.WHITE_MATTER, 0, 0.00031, 1e-5),
+        (Material.WHITE_MATTER, 1, 0.000309 - 0.003199j, 1e-5),
+        (Material.WHITE_MATTER, 1000, 6.18117e-07 - 9.959125e-06j, 1e-8),
+        (Material.GRAY_MATTER, 0, 0.0004, 1e-5),
+        (Material.GRAY_MATTER, 1, 0.0004 - 0.003196j, 1e-5),
+        (Material.GRAY_MATTER, 1000, 1.452645e-06 - 1.572557e-05j, 1e-7),
+        (Material.CSF, 0, 9.651065e-10, 1e-11),
+        (Material.CSF, 1, 9.651065e-10 - 0.31831j, 1e-5),
+        (Material.CSF, 1000, 9.651064e-10 - 0.000318j, 1e-5)
+    ]
 
-    def test_permitivity_0Hz(self, model):
-        result = model.permitivity(frequency=0)
-        np.testing.assert_allclose(result, 0.00031, atol=1e-5)
-
-    def test_permitivity_1Hz(self, model):
-        result = model.permitivity(frequency=1*2*np.pi)
-        np.testing.assert_allclose(result, 0.000309, atol=1e-5)
-
-    def test_permitivity_1kHz(self, model):
-        result = model.permitivity(frequency=1000*2*np.pi)
-        np.testing.assert_allclose(result, 6.172316e-07, atol=1e-8)
-
-    def test_conductivity_0Hz(self, model):
-        result = model.conductivity(frequency=0)
-        np.testing.assert_allclose(result, 0.02, atol=0.001)
-
-    def test_conductivity_1Hz(self, model):
-        result = model.conductivity(frequency=1*2*np.pi)
-        np.testing.assert_allclose(result, 0.020103, atol=0.001)
-
-    def test_conductivity_1kHz(self, model):
-        result = model.conductivity(frequency=1000*2*np.pi)
-        np.testing.assert_allclose(result, 0.062575, atol=0.001)
+    @pytest.mark.parametrize('material, frequency, permitivity, tolerance',
+                             TESTDATA)
+    def test_permitivity(self, material, frequency, permitivity, tolerance):
+        model = ModelCreator.create(material)
+        actual = model.permitivity(omega=2*np.pi*frequency)
+        np.testing.assert_allclose(actual, permitivity, atol=tolerance)
 
 
-class TestGrayMatterModel1:
+class TestModel1Conductivity:
 
-    @pytest.fixture
-    def model(self):
-        return DielectricModel1.create_model(Material.GRAY_MATTER)
+    TESTDATA = [
+        (Material.WHITE_MATTER, 0, 0.02, 1e-5),
+        (Material.WHITE_MATTER, 1, 0.020103 - 0.001941j, 1e-5),
+        (Material.WHITE_MATTER, 1000, 0.062575 - 0.003884j, 1e-5),
+        (Material.GRAY_MATTER, 0, 0.02, 1e-5),
+        (Material.GRAY_MATTER, 1, 0.020083 - 0.002512j, 1e-5),
+        (Material.GRAY_MATTER, 1000, 0.098807-0.009127j, 1e-5),
+        (Material.CSF, 0, 2.0, 1e-5),
+        (Material.CSF, 1, 2.0 - 6.063943e-09j, 1e-10),
+        (Material.CSF, 1000, 2.0 - 6.063943e-06j, 1e-7)
+    ]
 
-    def test_permitivity_0Hz(self, model):
-        result = model.permitivity(frequency=0)
-        np.testing.assert_allclose(result, 0.0004, atol=1e-5)
-
-    def test_permitivity_1Hz(self, model):
-        result = model.permitivity(frequency=1*2*np.pi)
-        np.testing.assert_allclose(result, 0.0004, atol=1e-5)
-
-    def test_permitivity_1kHz(self, model):
-        result = model.permitivity(frequency=1000*2*np.pi)
-        np.testing.assert_allclose(result, 1.452645e-06, atol=1e-7)
-
-    def test_conductivity_0Hz(self, model):
-        result = model.conductivity(frequency=0)
-        np.testing.assert_allclose(result, 0.02, atol=0.001)
-
-    def test_conductivity_1Hz(self, model):
-        result = model.conductivity(frequency=1*2*np.pi)
-        np.testing.assert_allclose(result, 0.020103, atol=0.001)
-
-    def test_conductivity_1kHz(self, model):
-        result = model.conductivity(frequency=1000*2*np.pi)
-        np.testing.assert_allclose(result, 0.098807, atol=0.001)
-
-
-class TestCerebrospinalFluidModel1:
-
-    @pytest.fixture
-    def model(self):
-        return DielectricModel1.create_model(
-                                        Material.CSF)
-
-    def test_permitivity_0Hz(self, model):
-        result = model.permitivity(frequency=0)
-        np.testing.assert_allclose(result, 9.651065e-10, atol=1e-11)
-
-    def test_permitivity_1Hz(self, model):
-        result = model.permitivity(frequency=1*2*np.pi)
-        np.testing.assert_allclose(result, 9.651065e-10, atol=1e-11)
-
-    def test_permitivity_1kHz(self, model):
-        result = model.permitivity(frequency=1000*2*np.pi)
-        np.testing.assert_allclose(result, 9.651065e-10, atol=1e-11)
-
-    def test_conductivity_0Hz(self, model):
-        result = model.conductivity(frequency=0)
-        np.testing.assert_allclose(result, 2.00, atol=0.001)
-
-    def test_conductivity_1Hz(self, model):
-        result = model.conductivity(frequency=1*2*np.pi)
-        np.testing.assert_allclose(result, 2.00, atol=0.001)
-
-    def test_conductivity_1kHz(self, model):
-        result = model.conductivity(frequency=1000*2*np.pi)
-        np.testing.assert_allclose(result, 2.00, atol=0.001)
+    @pytest.mark.parametrize('material, frequency, conductivity, tolerance',
+                             TESTDATA)
+    def test_permitivity(self, material, frequency, conductivity, tolerance):
+        model = ModelCreator.create(material)
+        actual = model.conductivity(omega=2*np.pi*frequency)
+        np.testing.assert_allclose(actual, conductivity, atol=tolerance)

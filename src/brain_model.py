@@ -1,14 +1,12 @@
-from dataclasses import dataclass
-from src.dielectric_model import DielectricModel1
+from src.dielectric_model import ModelCreator
 from src.brainsubstance import Material
 from src.brain_imaging import MagneticResonanceImage
 from src.brain_imaging import DiffusionTensorImage
 from src.geometry import Geometry
+from src.voxels import Voxels
 from src.mesh import Mesh
 import netgen
 import numpy as np
-import ngsolve
-from src.voxel_space import VoxelSpace
 
 
 class BrainModel:
@@ -23,49 +21,33 @@ class BrainModel:
     def bounding_box(self) -> tuple:
         return self.__mri.bounding_box()
 
-    def material_distribution(self, material: Material) -> VoxelSpace:
+    def material_distribution(self, material: Material) -> Voxels:
         start, end = self.__mri.bounding_box()
         data = self.__material_distribution(material)
-        return VoxelSpace(data=data, start=tuple(start), end=tuple(end))
+        return Voxels(data=data, start=tuple(start), end=tuple(end))
 
     def __material_distribution(self, material: Material) -> np.ndarray:
         return self.__mri.data_map() == material
 
-    def conductivity(self, frequency: float) -> VoxelSpace:
+    def complex_conductivity(self, frequency: float) -> Voxels:
+
         csf_position = self.__material_distribution(Material.CSF)
         gm_position = self.__material_distribution(Material.GRAY_MATTER)
         wm_position = self.__material_distribution(Material.WHITE_MATTER)
 
-        csf_model = DielectricModel1.create_model(Material.CSF)
-        gm_model = DielectricModel1.create_model(Material.GRAY_MATTER)
-        wm_model = DielectricModel1.create_model(Material.WHITE_MATTER)
+        csf_model = ModelCreator.create(Material.CSF)
+        gm_model = ModelCreator.create(Material.GRAY_MATTER)
+        wm_model = ModelCreator.create(Material.WHITE_MATTER)
 
-        default = gm_model.conductivity(frequency)
+        omega = 2 * np.pi * frequency
+        default = gm_model.conductivity(omega)
         data = np.full(self.__mri.data_map().shape, default)
-        data[csf_position] = csf_model.conductivity(frequency)
-        data[gm_position] = gm_model.conductivity(frequency)
-        data[wm_position] = wm_model.conductivity(frequency)
+        data[csf_position] = csf_model.conductivity(omega)
+        data[gm_position] = gm_model.conductivity(omega)
+        data[wm_position] = wm_model.conductivity(omega)
 
         start, end = self.__mri.bounding_box()
-        return VoxelSpace(data=data, start=tuple(start), end=tuple(end))
-
-    def permitivity(self, frequency: float) -> VoxelSpace:
-        csf_position = self.__material_distribution(Material.CSF)
-        gm_position = self.__material_distribution(Material.GRAY_MATTER)
-        wm_position = self.__material_distribution(Material.WHITE_MATTER)
-
-        csf_model = DielectricModel1.create_model(Material.CSF)
-        gm_model = DielectricModel1.create_model(Material.GRAY_MATTER)
-        wm_model = DielectricModel1.create_model(Material.WHITE_MATTER)
-
-        default = gm_model.permitivity(frequency)
-        data = np.full(self.__mri.data_map().shape, default)
-        data[csf_position] = csf_model.permitivity(frequency)
-        data[gm_position] = gm_model.permitivity(frequency)
-        data[wm_position] = wm_model.permitivity(frequency)
-
-        start, end = self.__mri.bounding_box()
-        return VoxelSpace(data=data, start=tuple(start), end=tuple(end))
+        return Voxels(data=data, start=tuple(start), end=tuple(end))
 
     def generate_mesh(self, order: int = 2):
         return Mesh(self.generate_geometry(), order=order)
@@ -103,25 +85,3 @@ class BrainGeometry(Geometry):
 
     def generate_mesh(self):
         return netgen.occ.OCCGeometry(self.__geometry).GenerateMesh()
-
-
-@dataclass
-class DielectricValues:
-    start: tuple
-    ent: tuple
-    permitivity: np.ndarray
-    conductivity: np.ndarray
-
-    def cf_conductivity(self, complex: bool = False):
-        type = 'complex' if complex else 'float'
-        return ngsolve.VoxelCoefficient(start=self.start,
-                                        end=self.end,
-                                        values=self.conductivity.astype(type),
-                                        linear=False)
-
-    def cf_permitivity(self, complex: bool = False):
-        type = 'complex' if complex else 'float'
-        return ngsolve.VoxelCoefficient(start=self.start,
-                                        end=self.end,
-                                        values=self.permitivity.astype(type),
-                                        linear=False)

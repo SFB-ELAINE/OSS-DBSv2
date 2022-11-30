@@ -15,15 +15,18 @@ class Nifti1Image:
     def bounding_box(self) -> np.ndarray:
         starts = np.array([self.__image.header['qoffset_x'],
                            self.__image.header['qoffset_y'],
-                           self.__image.header['qoffset_z']])
-        ends = starts + np.multiply(self._xyz_shape(), self._xyz_dimension())
+                           self.__image.header['qoffset_z']
+                           ], dtype=np.float64)
+
+        shape = np.array(self._xyz_shape(), dtype=np.float32)
+        ends = starts + shape * self._xyz_dimension()
         return tuple(np.array([starts, ends]) * self.__scaling())
 
     def header(self) -> nibabel.nifti1.Nifti1Header:
         return self.__image.header
 
     @staticmethod
-    def __load_image(file_path: str):
+    def __load_image(file_path: str) -> nibabel.nifti1.Nifti1Image:
         try:
             return nibabel.load(file_path)
         except FileNotFoundError:
@@ -39,5 +42,5 @@ class Nifti1Image:
     def _xyz_dimension(self) -> tuple:
         return self.__image.header.get_zooms()[:self.__VOXEL_DIMENSION]
 
-    def _xyz_shape(self):
+    def _xyz_shape(self) -> tuple:
         return self.__image.header.get_data_shape()[:self.__VOXEL_DIMENSION]

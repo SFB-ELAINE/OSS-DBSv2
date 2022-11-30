@@ -1,9 +1,8 @@
 
 from src.mesh import Mesh
-from src.laplace_equation import LaplaceEquation
 import ngsolve
-
-from src.voxel_space import VoxelSpace
+import numpy as np
+from src.voxels import Voxels
 
 
 class VolumeConductor:
@@ -23,17 +22,16 @@ class VolumeConductor:
     """
 
     def __init__(self,
-                 conductivity: VoxelSpace,
-                 permitivity: VoxelSpace = None,
+                 mesh: Mesh,
+                 conductivity: Voxels,
+                 complex: bool = False,
                  ) -> None:
 
         self.__conductivity = conductivity
-        self.__permitivity = permitivity
-        self.__complex = True if self.__permitivity else False
+        self.__mesh = mesh
+        self.__complex = complex
 
-    def evaluate_potential(self,
-                           mesh: Mesh = None,
-                           boundaries: dict = None) \
+    def evaluate_potential(self, boundaries: dict) \
             -> ngsolve.comp.GridFunction:
         """Evaluate electrical potential of volume conductor.
 
@@ -44,36 +42,62 @@ class VolumeConductor:
             Postprocessed data: lectric_field, V_contact, Power, potential
 
         """
-        start, end = mesh.bounding_box()
-        type = 'complex' if self.__permitivity else 'float'
-        conductivity = self.__conductivity.data.astype(type)
+
+        if not self.__complex:
+            conductivity = np.real(self.__conductivity.data)
+        else:
+            conductivity = self.__conductivity.data
+
+        start, end = self.__conductivity.start, self.__conductivity.end
         sigma = ngsolve.VoxelCoefficient(start=start,
                                          end=end,
                                          values=conductivity,
                                          linear=False)
-
-        if self.__permitivity:
-            permitivity = self.__permitivity.data.astype(type)
-            permitivities = ngsolve.VoxelCoefficient(start=start,
-                                                     end=end,
-                                                     values=permitivity,
-                                                     linear=False)
-            sigma += permitivities
-
-        space = mesh.sobolev_space(complex=self.__complex)
+        space = self.__mesh.sobolev_space(complex=self.__complex)
         potential = ngsolve.GridFunction(space=space)
-        coefficient = mesh.boundary_coefficients(boundaries=boundaries)
+        coefficient = self.__mesh.boundary_coefficients(boundaries=boundaries)
 
         potential.Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
         equation = LaplaceEquation(space=space, coefficient=sigma)
         potential.vec.data = equation.solve_bvp(input=potential)
-        return potential, self.__error(potential, mesh)
+        return potential, self.__error(potential)
 
-    def __error(self, potential: ngsolve.comp.GridFunction, mesh: Mesh) \
+    def __error(self, potential: ngsolve.comp.GridFunction) \
             -> ngsolve.fem.CoefficientFunction:
         flux = ngsolve.grad(potential)
-        space = mesh.flux_space(complex=self.__complex)
+        space = self.__mesh.flux_space(complex=self.__complex)
         flux_potential = ngsolve.GridFunction(space=space)
         flux_potential.Set(coefficient=flux)
         difference = flux - flux_potential
         return difference * ngsolve.Conj(difference)
+
+
+class LaplaceEquation:
+
+    def __init__(self,
+                 space: ngsolve.comp.H1,
+                 coefficient: ngsolve.fem.CoefficientFunction) -> None:
+
+        u = space.TrialFunction()
+        v = space.TestFunction()
+        self.__a = ngsolve.BilinearForm(space=space, symmetric=True)
+        equation = coefficient * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
+        self.__a += equation
+        self.__f = ngsolve.LinearForm(space=space)
+        self.__preconditioner = ngsolve.Preconditioner(bf=self.__a,
+                                                       type="bddc",
+                                                       coarsetype="local")
+
+    def solve_bvp(self, input: ngsolve.comp.GridFunction) \
+            -> ngsolve.la.DynamicVectorExpression:
+        """Solve boundary value problem."""
+        self.__a.Assemble()
+        self.__f.Assemble()
+        inverse = ngsolve.CGSolver(mat=self.__a.mat,
+                                   pre=self.__preconditioner.mat,
+                                   printrates=True,
+                                   maxsteps=10000,
+                                   precision=1e-12)
+        r = self.__f.vec.CreateVector()
+        r.data = self.__f.vec - self.__a.mat * input.vec
+        return input.vec.data + inverse * r

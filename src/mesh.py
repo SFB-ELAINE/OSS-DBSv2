@@ -2,7 +2,7 @@ from src.geometry import Geometry
 import ngsolve
 import numpy as np
 
-from src.voxel_space import VoxelSpace
+from src.voxels import Voxels
 
 
 class Mesh:
@@ -49,7 +49,7 @@ class Mesh:
         flags = [errors[el.nr] > limit for el in self.__mesh.Elements()]
         self.__set_refinement_flag(flags)
 
-    def mark_elements_by_position(self, position: VoxelSpace) -> None:
+    def mark_elements_by_position(self, position: Voxels) -> None:
         space = ngsolve.L2(self.__mesh, order=0)
         grid_function = ngsolve.GridFunction(space=space)
         cf = ngsolve.VoxelCoefficient(start=tuple(position.start),
