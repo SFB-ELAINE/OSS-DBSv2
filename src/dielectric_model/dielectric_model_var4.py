@@ -1,93 +1,41 @@
 from dataclasses import dataclass
 from src.brainsubstance import Material
-from src.dielectric_model.dielectric_model import AbstractDielectricModel as Model
+from src.dielectric_model.dielectric_model \
+    import DielectricParamters, DielectricModel
 import numpy as np
 
 
-class Paramters:
-    pass
-
-
 @dataclass
-class WhiteMatterParameters(Paramters):
-    alpha: float = 0.02
-    eps_delta: float = 49.03e3
+class WhiteMatterParameters(DielectricParamters):
+    alpha: np.ndarray = np.array([0.02])
+    eps_delta: np.ndarray = np.array([49.03e3])
     eps_inf: float = 7.77
     sigma: float = 0.0611
-    tau: float = 159.77e-6
+    tau: np.ndarray = np.array([159.77e-6])
 
 
 @dataclass
-class GrayMatterParameters(Paramters):
-    alpha: float = 0.0
-    eps_delta: float = 95.55e3
+class GrayMatterParameters(DielectricParamters):
+    alpha: np.ndarray = np.array([0.0])
+    eps_delta: np.ndarray = np.array([95.55e3])
     eps_inf: float = 11.92
     sigma: float = 0.107
-    tau: float = 170.91e-6
+    tau: np.ndarray = np.array([170.91e-6])
 
 
-class DielectricModelCSF(Model):
+@dataclass
+class CerebroSpinalFluidParameters(DielectricParamters):
+    alpha: np.ndarray = np.array([0.1, 0.0, 0.0, 0.0])
+    eps_delta: np.ndarray = np.array([65.0, 40.0, 0.0, 0.0])
+    eps_inf: float = 4.0
+    sigma: float = 2.0
+    tau: np.ndarray = np.array([7.96e-12, 1.592e-9, 159.155e-6, 5.305e-3])
 
-    def permitivity(self, frequency: float) -> float:
-        return 80
 
-    def conductivity(self, frequency: float) -> float:
-        return 1.79
-
+class ModelCreator():
     @classmethod
-    def create_model(cls, material: Material) -> 'DielectricModel':
-
-        if material is not Material.CSF:
-            material_parameters = {
-                            Material.WHITE_MATTER: WhiteMatterParameters,
-                            Material.GRAY_MATTER: GrayMatterParameters}
-
-            return cls(material_parameters[material])
-
-        return cls()
-
-
-class DielectricModel(Model):
-    """"""
-
-    e0 = 8.8541878128e-12
-
-    def __init__(self, parameters: Paramters) -> None:
-        self.__eps_inf = parameters.eps_inf
-        self.__sigma = parameters.sigma
-        self.__alpha = parameters.alpha
-        self.__eps_delta = parameters.eps_delta
-        self.__tau = parameters.tau
-
-    def __complex_permitivity(self, frequency: float) -> complex:
-        divisor = 1 + (1j * frequency * self.__tau) ** (1 - self.__alpha)
-        eps_dispersion = self.__eps_inf + np.sum(self.__eps_delta / divisor)
-
-        if frequency == 0:
-            return eps_dispersion
-
-        conductivity_term = self.__sigma / (1j * frequency * self.e0)
-        return eps_dispersion + conductivity_term
-
-    def permitivity(self, frequency: float) -> float:
-        return np.real(self.__complex_permitivity(frequency)) * self.__e0
-
-    def conductivity(self, frequency: float) -> float:
-        if frequency == 0:
-            return self.__sigma
-
-        permitivity_imaginary = np.imag(self.__complex_permitivity(frequency))
-        return -1 * frequency * self.e0 * permitivity_imaginary
-
-    @classmethod
-    def create_model(cls, material: Material = Material(1)) \
-            -> 'DielectricModel':
-
-        if material is Material.CSF:
-            return DielectricModelCSF()
-
-        material_parameters = {
-                            Material.WHITE_MATTER: WhiteMatterParameters,
-                            Material.GRAY_MATTER: GrayMatterParameters}
-
-        return cls(material_parameters[material])
+    def create(cls, material: Material) -> 'DielectricModel':
+        material_parameters = {Material.CSF: CerebroSpinalFluidParameters,
+                               Material.WHITE_MATTER: WhiteMatterParameters,
+                               Material.GRAY_MATTER: GrayMatterParameters}
+        return DielectricModel(material_parameters[material])

@@ -33,7 +33,7 @@ class MicroProbesCustomRodent(AbstractElectrode):
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
                  translation: tuple = (0, 0, 0)) -> None:
-        self.__translation = translation
+        self.__translation = tuple(translation)
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
         self.__boundaries = {'Body': 'Body', 'Contact_1': 'Contact_1'}

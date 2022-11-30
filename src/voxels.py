@@ -3,7 +3,7 @@ import numpy as np
 
 
 @dataclass
-class VoxelSpace:
+class Voxels:
     data: np.ndarray = np.empty(0)
     start: tuple = (0, 0, 0)
     end: tuple = (0, 0, 0)

@@ -1,65 +1,102 @@
+from abc import ABC, abstractmethod
 import numpy as np
 
 
-class RectangleSignal:
+class Signal(ABC):
+
+    @abstractmethod
+    def generate_samples(self, sample_spacing: float) -> np.ndarray:
+        pass
+
+
+class RectangleSignal(Signal):
 
     def __init__(self, frequency: float, pulse_width: float) -> None:
-        self.__frequency = frequency
-        self.__pulse_width = pulse_width
+        self.frequency = frequency
+        self.pulse_width = pulse_width
 
-    def generate_samples(self, sample_spacing: float):
-        n_samples = int(1 / (sample_spacing * self.__frequency))
-        samples = np.zeros(n_samples)
-        samples[:int(n_samples * self.__pulse_width)] = 1.0
-        return samples
-
-
-class TriangleSignal:
-
-    def __init__(self, frequency: float, pulse_width: float) -> None:
-        self.__frequency = frequency
-        self.__pulse_width = pulse_width
-
-    def generate_samples(self, sample_spacing: float):
-        n_samples = int(1 / (sample_spacing * self.__frequency))
+    def generate_samples(self, sample_spacing: float) -> np.ndarray:
+        spacing = sample_spacing * self.frequency
+        n_samples = int(1 / spacing) if 0 < spacing < 1 else 1
         pulse = self.__create_pulse(n_samples)
-        samples = np.zeros(n_samples)
-        samples[:len(pulse)] = pulse
-        return samples
+        padding = np.zeros(n_samples - len(pulse))
+        return np.concatenate((pulse[:n_samples], padding))
 
-    def __create_pulse(self, n_samples):
-        pulse_samples = n_samples * self.__pulse_width
+    def __create_pulse(self, n_samples: int) -> np.ndarray:
+        pulse_samples = int(n_samples * min(self.pulse_width, 1))
+        return np.array([1] * pulse_samples)
+
+
+class TriangleSignal(Signal):
+
+    def __init__(self, frequency: float, pulse_width: float) -> None:
+        self.frequency = frequency
+        self.pulse_width = pulse_width
+
+    def generate_samples(self, sample_spacing: float) -> np.ndarray:
+        spacing = sample_spacing * self.frequency
+        n_samples = int(1 / spacing) if 0 < spacing < 1 else 1
+        pulse = self.__create_pulse(n_samples)
+        padding = np.zeros(n_samples - len(pulse))
+        return np.concatenate((pulse, padding))
+
+    def __create_pulse(self, n_samples: int) -> np.ndarray:
+        pulse_samples = int(n_samples * min(self.pulse_width, 1))
         is_odd = pulse_samples % 2
-        n_ramp_samples = int(pulse_samples - 2 + int(is_odd)) // 2
+        n_ramp_samples = max(0, int(pulse_samples - 2 + is_odd) // 2)
         step_size = 1 / (n_ramp_samples + 1)
-        right_ramp = np.arange(1, 0, -step_size)
-        left_ramp = np.flip(right_ramp)
-        pulse = np.concatenate((left_ramp, right_ramp[1:]))
-        return pulse
+        ramp = np.arange(step_size, 1, step_size)[:n_ramp_samples]
+        peak_sample = pulse_samples > 0
+        return np.concatenate((ramp, [1] * peak_sample, np.flip(ramp)))
 
 
-class TrapzoidSignal:
+class TrapzoidSignal(Signal):
 
     def __init__(self,
                  frequency: float,
                  pulse_width: float,
                  top_width: float) -> None:
-        self.__frequency = frequency
-        self.__pulse_width = pulse_width
-        self.__top_width = top_width
+        self.frequency = frequency
+        self.pulse_width = pulse_width
+        self.top_width = top_width
 
-    def generate_samples(self, sample_spacing: float):
-        n_samples = int(1 / (sample_spacing * self.__frequency))
+    def generate_samples(self, sample_spacing: float) -> np.ndarray:
+        spacing = sample_spacing * self.frequency
+        n_samples = int(1 / spacing) if 0 < spacing < 1 else 1
         pulse = self.__create_pulse(n_samples)
-        samples = np.zeros(n_samples)
-        samples[:len(pulse)] = pulse
-        return samples
+        padding = np.zeros(n_samples - len(pulse))
+        return np.concatenate((pulse, padding))
 
-    def __create_pulse(self, n_samples):
-        ramp_length = (self.__pulse_width - self.__top_width) * 0.5
-        step_size = 1 / int(n_samples * ramp_length + 1)
-        right_ramp = np.arange(1, 0, -step_size)[1:]
-        left_ramp = np.flip(right_ramp)
-        top_samples = int(self.__pulse_width * n_samples) - 2 * len(right_ramp)
-        pulse = np.concatenate((left_ramp, [1] * top_samples, right_ramp))
-        return pulse
+    def __create_pulse(self, n_samples: int) -> np.ndarray:
+        pulse_width = min(self.pulse_width, 1)
+        ramp_length = (pulse_width - self.top_width) * 0.5
+        n_ramp_samples = max(0, int(n_samples * ramp_length))
+        step_size = 1 / int(n_ramp_samples + 1)
+        ramp = np.arange(step_size, 1, step_size)[:n_ramp_samples]
+        top_samples = int(pulse_width * n_samples) - 2 * len(ramp)
+        return np.concatenate((ramp, [1] * top_samples, np.flip(ramp)))
+
+
+class SignalGenerator:
+
+    SIGNALS = {'Rectangle': RectangleSignal,
+               'Triangle': TriangleSignal,
+               'Trapzoid': TrapzoidSignal
+               }
+
+    def __init__(self,
+                 signal_type: str,
+                 frequency: float,
+                 pulse_width: float,
+                 top_width: float = 0.0) -> None:
+
+        self.__type = signal_type
+        self.__freq = frequency
+        self.__pulse = pulse_width
+        self.__top = top_width
+
+    def generate(self) -> Signal:
+        if self.__type == 'Trapzoid':
+            return TrapzoidSignal(self.__freq, self.__pulse, self.__top)
+        signal = self.SIGNALS[self.__type]
+        return signal(self.__freq, self.__pulse)
