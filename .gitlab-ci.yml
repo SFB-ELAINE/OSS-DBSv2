@@ -74,6 +74,6 @@ pages:
     paths:
       - public
   only: 
-      - revision 
+      - main 
   # rules:
     #    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
