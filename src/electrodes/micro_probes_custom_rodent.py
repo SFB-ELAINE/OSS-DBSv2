@@ -38,6 +38,9 @@ class MicroProbesCustomRodent(AbstractElectrode):
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
         self.__boundaries = {'Body': 'Body', 'Contact_1': 'Contact_1'}
 
+    def rename_boundaries(self, boundaries: dict) -> None:
+        self.__boundaries.update(boundaries)
+
     def generate_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of electrode.
 
@@ -81,9 +84,3 @@ class MicroProbesCustomRodent(AbstractElectrode):
             contact = tip + lead
         contact.bc(self.__boundaries['Contact_1'])
         return contact
-
-    def rename_boundaries(self, boundaries: dict) -> None:
-        self.__boundaries.update(boundaries)
-
-    def boundaries(self) -> dict:
-        return self.__boundaries

@@ -1,8 +1,8 @@
 
 from src.mesh import Mesh
+from src.voxels import Voxels
 import ngsolve
 import numpy as np
-from src.voxels import Voxels
 
 
 class VolumeConductor:
@@ -80,8 +80,8 @@ class LaplaceEquation:
 
         u = space.TrialFunction()
         v = space.TestFunction()
-        self.__a = ngsolve.BilinearForm(space=space, symmetric=True)
         equation = coefficient * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
+        self.__a = ngsolve.BilinearForm(space=space, symmetric=True)
         self.__a += equation
         self.__f = ngsolve.LinearForm(space=space)
         self.__preconditioner = ngsolve.Preconditioner(bf=self.__a,

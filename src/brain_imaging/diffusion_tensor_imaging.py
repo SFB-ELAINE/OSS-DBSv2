@@ -5,7 +5,7 @@ import numpy as np
 class DiffusionTensorImage(Nifti1Image):
 
     def diffusion(self) -> np.ndarray:
-        x_max, y_max, z_max = self._xyz_shape()
+        x_max, y_max, z_max = self.xyz_shape()
         diffusion = self.data_map().reshape((x_max * y_max * z_max, 6))
         return np.array([(xx, xy, xz, xy, yy, yz, xz, yz, zz)
                          for xx, xy, xz, yy, yz, zz in diffusion]

@@ -1,86 +1,51 @@
 
+from src.dielectric_distribution import DielectricDistribution
 from src.brain_model import BrainModel
 from src.configuration import Configuration
 from src.volume_conductor_model import VolumeConductor
 from src.brainsubstance import Material
 from src.fastfouriertransform import FFT
-import numpy as np
+import json
 import ngsolve
+import sys
 import os
+import numpy as np
 
 
-INPUT = {
-    'Electrodes': [
-        {
-            'Name': 'MicroProbesCustomRodent',
-            'Rotation': 0.0,
-            'Direction': [0.0, 0.0, 1.0],
-            'Translation': [5, 5, 5],
-            'Contacts': {
-                'Active': [True],
-                'Value': [1.0],
-            },
-            'Body': {
-                'Active': True,
-                'Value': 0.0,
-            },
-        },
-    ],
-    'BrainSurface':
-        {
-            'Active': False,
-            'Value': 0,
-        },
-    'MagneticResonanceImage':
-        {
-            'Path': './input_files/TestMRI.nii'
-        },
-    'DiffusionTensorImage':
-        {
-            'Path': ''
-        },
-    'OutputDirectoy': 'result',
-    'StimulationSignal':
-        {
-            'Type': 'Rectangle',
-            'Frequency': 130.0,
-            'PulseWidthPercentage': 0.0078,
-            'TopWidthPercentage': 0.0,
-        }
-}
+def main(json_path: str) -> None:
 
+    with open(json_path, 'r') as json_file:
+        input = json.load(json_file)
 
-def main():
-
-    configuration = Configuration(input=INPUT)
+    configuration = Configuration(input=input)
     electrodes = configuration.electrodes()
     mri = configuration.magnetic_resonance_image()
     boundary_values = configuration.boundary_values()
     signal = configuration.stimulation_signal()
 
     brain_model = BrainModel(mri=mri, electrodes=electrodes)
-    csf_position = brain_model.material_distribution(Material.CSF)
-
+    csf_position = mri.material_distribution(Material.CSF)
     mesh = brain_model.generate_mesh(order=2)
     mesh.mark_elements_by_position(position=csf_position)
     mesh.refine()
 
+    dielectric = DielectricDistribution(mri=mri)
     waves = FFT(signal).sine_waves()
-    print(len(waves))
-    frequency = waves[0].frequency
-    conductivity = brain_model.complex_conductivity(frequency=frequency)
-    model = VolumeConductor(conductivity=conductivity, mesh=mesh)
-    potential, error = model.evaluate_potential(boundary_values)
-    data = potential.vec.data * np.real(waves[0].amplitude) / 2
-    potential_sum = ngsolve.GridFunction(space=mesh.sobolev_space())
-    potential_sum.vec.data += data
-
-    for wave in waves[1:1]:
-        frequency = wave.frequency
-        conductivity = brain_model.complex_conductivity(frequency=frequency)
+    with ngsolve.TaskManager():
+        frequency = waves[0].frequency
+        conductivity = dielectric.complex_conductivity(frequency=frequency)
         model = VolumeConductor(conductivity=conductivity, mesh=mesh)
         potential, error = model.evaluate_potential(boundary_values)
-        potential_sum.vec.data += potential.vec.data * np.real(wave.amplitude)
+        data = potential.vec.data * np.real(waves[0].amplitude) / 2
+        potential_sum = ngsolve.GridFunction(space=mesh.sobolev_space())
+        potential_sum.vec.data += data
+
+        for wave in waves[1:1]:
+            frequency = wave.frequency
+            conductivity = dielectric.complex_conductivity(frequency)
+            model = VolumeConductor(conductivity=conductivity, mesh=mesh)
+            potential, error = model.evaluate_potential(boundary_values)
+            potential_sum.vec.data += potential.vec.data * np.real(wave.amplitude)
 
     conductivities = ngsolve.VoxelCoefficient(start=conductivity.start,
                                               end=conductivity.end,
@@ -114,4 +79,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1])

@@ -26,7 +26,6 @@ class AbstractElectrode(ABC):
                  rotation: float = 0,
                  direction: tuple = (0, 0, 1),
                  translation: tuple = (0, 0, 0),
-                 # contact_values: list = None
                  ) -> None:
         pass
 

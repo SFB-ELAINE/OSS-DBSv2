@@ -1,0 +1,39 @@
+{
+    "Electrodes": [
+        {
+            "Name": "MicroProbesCustomRodent",
+            "Rotation": 0.0,
+            "Direction": [0.0, 0.0, 1.0],
+            "Translation": [5, 5, 5],
+            "Contacts": {
+                "Active": [true],
+                "Value": [1.0]
+            },
+            "Body": {
+                "Active": true,
+                "Value": 0.0
+            }
+        }
+    ],
+    "BrainSurface":
+        {
+            "Active": false,
+            "Value": 0
+        },
+    "MagneticResonanceImage":
+        {
+            "Path": "./input_files/TestMRI.nii"
+        },
+    "DiffusionTensorImage":
+        {
+            "Path": ""
+        },
+    "OutputDirectoy": "result",
+    "StimulationSignal":
+        {
+            "Type": "Rectangle",
+            "Frequency": 130.0,
+            "PulseWidthPercentage": 0.0078,
+            "TopWidthPercentage": 0.0
+        }
+}

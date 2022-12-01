@@ -7,23 +7,26 @@ class Nifti1Image:
     __VOXEL_DIMENSION = 3
 
     def __init__(self, file_path: str) -> None:
-        self.__image = self.__load_image(file_path)
+        self._image = self.__load_image(file_path)
 
     def data_map(self) -> np.memmap:
-        return self.__image.get_fdata()
+        return self._image.get_fdata()
 
     def bounding_box(self) -> np.ndarray:
-        starts = np.array([self.__image.header['qoffset_x'],
-                           self.__image.header['qoffset_y'],
-                           self.__image.header['qoffset_z']
+        starts = np.array([self._image.header['qoffset_x'],
+                           self._image.header['qoffset_y'],
+                           self._image.header['qoffset_z']
                            ], dtype=np.float64)
 
-        shape = np.array(self._xyz_shape(), dtype=np.float32)
+        shape = np.array(self.xyz_shape(), dtype=np.float32)
         ends = starts + shape * self._xyz_dimension()
-        return tuple(np.array([starts, ends]) * self.__scaling())
+        return tuple(starts * self.__scaling()), tuple(ends * self.__scaling())
 
     def header(self) -> nibabel.nifti1.Nifti1Header:
-        return self.__image.header
+        return self._image.header
+
+    def xyz_shape(self) -> tuple:
+        return self._image.header.get_data_shape()[:self.__VOXEL_DIMENSION]
 
     @staticmethod
     def __load_image(file_path: str) -> nibabel.nifti1.Nifti1Image:
@@ -33,14 +36,11 @@ class Nifti1Image:
             raise IOError('File Not Found.')
 
     def __scaling(self) -> float:
-        xyz_unit = self.__image.header.get_xyzt_units()[0]
+        xyz_unit = self._image.header.get_xyzt_units()[0]
         return {'unknown': 1.0,
                 'meter': 1000.0,
                 'mm': 1.0,
                 'micron': 0.001}[xyz_unit]
 
     def _xyz_dimension(self) -> tuple:
-        return self.__image.header.get_zooms()[:self.__VOXEL_DIMENSION]
-
-    def _xyz_shape(self) -> tuple:
-        return self.__image.header.get_data_shape()[:self.__VOXEL_DIMENSION]
+        return self._image.header.get_zooms()[:self.__VOXEL_DIMENSION]
