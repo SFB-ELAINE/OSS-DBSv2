@@ -1,9 +1,6 @@
-from src.dielectric_model import ModelCreator
-from src.brainsubstance import Material
 from src.brain_imaging import MagneticResonanceImage
 from src.brain_imaging import DiffusionTensorImage
 from src.geometry import Geometry
-from src.voxels import Voxels
 from src.mesh import Mesh
 import netgen
 import numpy as np
@@ -18,37 +15,6 @@ class BrainModel:
         self.__mri = mri
         self.__electrodes = electrodes if electrodes else []
 
-    def bounding_box(self) -> tuple:
-        return self.__mri.bounding_box()
-
-    def material_distribution(self, material: Material) -> Voxels:
-        start, end = self.__mri.bounding_box()
-        data = self.__material_distribution(material)
-        return Voxels(data=data, start=tuple(start), end=tuple(end))
-
-    def __material_distribution(self, material: Material) -> np.ndarray:
-        return self.__mri.data_map() == material
-
-    def complex_conductivity(self, frequency: float) -> Voxels:
-
-        csf_position = self.__material_distribution(Material.CSF)
-        gm_position = self.__material_distribution(Material.GRAY_MATTER)
-        wm_position = self.__material_distribution(Material.WHITE_MATTER)
-
-        csf_model = ModelCreator.create(Material.CSF)
-        gm_model = ModelCreator.create(Material.GRAY_MATTER)
-        wm_model = ModelCreator.create(Material.WHITE_MATTER)
-
-        omega = 2 * np.pi * frequency
-        default = gm_model.conductivity(omega)
-        data = np.full(self.__mri.data_map().shape, default)
-        data[csf_position] = csf_model.conductivity(omega)
-        data[gm_position] = gm_model.conductivity(omega)
-        data[wm_position] = wm_model.conductivity(omega)
-
-        start, end = self.__mri.bounding_box()
-        return Voxels(data=data, start=tuple(start), end=tuple(end))
-
     def generate_mesh(self, order: int = 2):
         return Mesh(self.generate_geometry(), order=order)
 
@@ -60,7 +26,7 @@ class BrainModel:
         for electrode in self.__electrodes:
             geometry = geometry - electrode.generate_geometry()
 
-        return BrainGeometry(geometry)
+        return Geometry(geometry=geometry)
 
 
 class Ellipsoid:
@@ -76,12 +42,3 @@ class Ellipsoid:
         ellipsoid = trasformator(sphere).Move(tuple(self.__start))
         ellipsoid.bc('Brain')
         return ellipsoid
-
-
-class BrainGeometry(Geometry):
-
-    def __init__(self, geometry) -> None:
-        self.__geometry = geometry
-
-    def generate_mesh(self):
-        return netgen.occ.OCCGeometry(self.__geometry).GenerateMesh()

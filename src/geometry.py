@@ -1,9 +1,11 @@
 
-from abc import ABC, abstractmethod
+import netgen
 
 
-class Geometry(ABC):
+class Geometry():
 
-    @abstractmethod
+    def __init__(self, geometry) -> None:
+        self.__geometry = geometry
+
     def generate_mesh(self):
-        pass
+        return netgen.occ.OCCGeometry(self.__geometry).GenerateMesh()

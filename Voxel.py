@@ -3,6 +3,59 @@ import netgen
 import ngsolve
 
 
+# def voxel(x, y, z):
+#     array = np.empty((x*2, y*2, z*2))
+
+#     box = np.full((x, y, z), 1)
+#     box1 = box
+#     box2 = box * 2
+#     box3 = box * 3
+#     box4 = box * 4
+#     box5 = box * 5
+#     box6 = box * 6
+#     box7 = box * 7
+#     box8 = box * 8
+
+#     array[:x, :y, :z] = box1
+#     array[x:, :y, :z] = box2
+#     array[:x, y:, :z] = box3
+#     array[x:, y:, :z] = box4
+#     array[:x, :y, z:] = box5
+#     array[x:, :y, z:] = box6
+#     array[:x, y:, z:] = box7
+#     array[x:, y:, z:] = box8
+
+#     return array
+
+# x = 20
+# y = 30
+# z = 40
+# start = (0, 0, 0)
+# end = (2*x, 2*y, 2*z)
+# model = netgen.occ.Box(p1=start, p2=end)
+# geometry = netgen.occ.OCCGeometry(model)
+# mesh = ngsolve.Mesh(geometry.GenerateMesh())
+# data = voxel(x, y, z)
+# cf = ngsolve.VoxelCoefficient(start=start, end=end, values=data, linear=True)
+# ngsolve.Draw(cf, mesh, 'foo')
+
+# # # Interpolation to zeroth order L2
+# fes = ngsolve.L2(mesh, order=0, autoupdate=True)
+# gfu = ngsolve.GridFunction(fes, autoupdate=True)
+# gfu.Set(cf)
+
+# ngsolve.Draw(gfu)
+
+# refinements = 4
+# for _ in range(refinements):
+#     # mark all elements flagged with 1 for refinement
+#     flags = np.isclose(gfu.vec.FV().NumPy(), 1.0)
+#     for index, element in enumerate(mesh.Elements()):
+#         mesh.SetRefinementFlag(ei=element, refine=flags[index])
+#     mesh.Refine()
+#     gfu.Set(cf)
+#     ngsolve.Redraw()
+
 class DefaultMagneticResonanceImage():
 
     def __init__(self) -> None:
@@ -136,96 +189,64 @@ class Ellipsoid:
         return ellipsoid
 
 
-# Create Geometry and Mesh
-
 mri = DefaultMagneticResonanceImage()
 start = tuple(mri.bounding_box()[0])
 end = tuple(mri.bounding_box()[1])
-
 ellipsoid = Ellipsoid(start=start, end=end)
 electrode = MicroProbesCustomRodent(translation=(5, 5, 5))
-electrode.rename_boundaries({'Body': 'E1B', 'Contact_1': 'E1C1'})
-electrode2 = MicroProbesCustomRodent(translation=(4.5, 4.5, 5))
-electrode.rename_boundaries({'Body': 'E2B', 'Contact_1': 'E2C1'})
 geometry = ellipsoid.create() - electrode.generate_geometry()
-geometry = geometry - electrode2.generate_geometry()
-
-mesh = netgen.occ.OCCGeometry(geometry).GenerateMesh()
-ng_mesh = ngsolve.Mesh(mesh)
-ng_mesh.Curve(order=2)
-
-
-# Create VoxelCoefficient-Function for Conductivity
-
+boundary_values = {'Body': 0, 'Contact_1': 1, }
 mri_data = mri.data_map()
 csf_pos = mri_data == 1
 wm_pos = mri_data == 2
 gm_pos = mri_data == 3
+unknown_pos = mri_data == 0
+data = np.zeros(mri.data_map().shape)
+data[csf_pos] = 2.0
+data[wm_pos] = 0.02
+data[gm_pos] = 0.02
+data[unknown_pos] = 0.02
 
-mri_data = np.full(mri.data_map().shape, 0.02)
-mri_data[csf_pos] = 2.0
-mri_data[wm_pos] = 0.02
-mri_data[gm_pos] = 0.02
-
-shape = (*mri_data.shape, 3, 3)
-
-start = tuple(mri.bounding_box()[0])
-end = tuple(mri.bounding_box()[1])
-sigma = ngsolve.VoxelCoefficient(start=start,
-                                 end=end,
-                                 values=mri_data,
-                                 linear=False)
-
-diff = ngsolve.VoxelCoefficient(start=start,
-                                end=end,
-                                values=np.array([np.eye(3)]),
-                                linear=False)
-sigma = sigma * diff
-
-mri_data = np.array([np.eye(3) * d for d in mri_data.flatten()]).reshape(shape)
-# sigma = ngsolve.VoxelCoefficient(start=start,
-#                                  end=end,
-#                                  values=mri_data,
-#                                  linear=False)
-
-
-# Refine Mesh
-
-grid_function = ngsolve.GridFunction(space=ngsolve.L2(ng_mesh, order=0))
-cf = ngsolve.VoxelCoefficient(start=tuple(start),
-                              end=tuple(end),
-                              values=csf_pos.astype(float),
-                              linear=False)
-grid_function.Set(cf)
-flags = grid_function.vec.FV().NumPy()
-for index, element in enumerate(ng_mesh.Elements()):
-    ng_mesh.SetRefinementFlag(ei=element, refine=flags[index])
-
-ng_mesh.Refine()
-ng_mesh.Curve(2)
-
+mesh = netgen.occ.OCCGeometry(geometry).GenerateMesh()
+ng_mesh = ngsolve.Mesh(mesh)
+ng_mesh.Curve(order=2)
 space = ngsolve.H1(mesh=ng_mesh,
                    order=2,
-                   dirichlet='E1B|E2B|E1C1|E2C1',
+                   dirichlet='Brain|Contact_1|Body',
                    complex=False,
                    wb_withedges=False)
 
-
-# Solve Problem
-
-boundary_values = {'E1B': 0, 'E1C1': 1, 'E2B': 0, 'E2C1': 1, }
 potential = ngsolve.GridFunction(space=space)
 coefficient = ng_mesh.BoundaryCF(values=boundary_values)
 potential.Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
 
-#with ngsolve.TaskManager():
+
+# data = np.full((10, 10, 10), 0.2)
+start = tuple(mri.bounding_box()[0])
+end = tuple(mri.bounding_box()[1])
+sigma = ngsolve.VoxelCoefficient(start=start,
+                                 end=end,
+                                 values=data,
+                                 linear=False)
+
+data = np.array([np.eye(3)]*25**3).reshape((25,25,25,3,3))
+data = np.array([np.eye(3)])
+
+diff = ngsolve.VoxelCoefficient(start=start,
+                                 end=end,
+                                 values=data,
+                                 linear=False)
+
+factor = diff * sigma
 
 u = space.TrialFunction()
 v = space.TestFunction()
 a = ngsolve.BilinearForm(space=space, symmetric=True)
-a += (sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx)
+a += (factor * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx)
 f = ngsolve.LinearForm(space=space)
-preconditioner = ngsolve.Preconditioner(bf=a, type="bddc", coarsetype="local")
+preconditioner = ngsolve.Preconditioner(bf=a, type="bddc", coarsetype="h1amg")
+
+
 a.Assemble()
 f.Assemble()
 inverse = ngsolve.CGSolver(mat=a.mat,
@@ -233,12 +254,12 @@ inverse = ngsolve.CGSolver(mat=a.mat,
                            printrates=True,
                            maxsteps=10000,
                            precision=1e-12)
-
 r = f.vec.CreateVector()
 r.data = f.vec - a.mat * potential.vec
 potential.vec.data = potential.vec.data + inverse * r
 
 P = ngsolve.Integrate(ngsolve.grad(potential) *
                       ngsolve.Conj(sigma *
-                                   ngsolve.grad(potential)), ng_mesh)
+                                   ngsolve.grad(potential)),
+                      ng_mesh)
 print(1/P)

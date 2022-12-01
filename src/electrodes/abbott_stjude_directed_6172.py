@@ -99,7 +99,6 @@ class AbbottStjudeDirected6172(AbstractElectrode):
                                       h=self.CONTACT_LENGTH)
 
         contact_directed = self.__contact_directed()
-
         contacts = [contact.Move(vector_1),
                     contact_directed.Move(vector_2),
                     contact_directed.Rotate(axis, 120).Move(vector_2),
