@@ -75,28 +75,3 @@ class TrapzoidSignal(Signal):
         ramp = np.arange(step_size, 1, step_size)[:n_ramp_samples]
         top_samples = int(pulse_width * n_samples) - 2 * len(ramp)
         return np.concatenate((ramp, [1] * top_samples, np.flip(ramp)))
-
-
-class SignalGenerator:
-
-    SIGNALS = {'Rectangle': RectangleSignal,
-               'Triangle': TriangleSignal,
-               'Trapzoid': TrapzoidSignal
-               }
-
-    def __init__(self,
-                 signal_type: str,
-                 frequency: float,
-                 pulse_width: float,
-                 top_width: float = 0.0) -> None:
-
-        self.__type = signal_type
-        self.__freq = frequency
-        self.__pulse = pulse_width
-        self.__top = top_width
-
-    def generate(self) -> Signal:
-        if self.__type == 'Trapzoid':
-            return TrapzoidSignal(self.__freq, self.__pulse, self.__top)
-        signal = self.SIGNALS[self.__type]
-        return signal(self.__freq, self.__pulse)

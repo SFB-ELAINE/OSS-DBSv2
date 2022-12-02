@@ -1,4 +1,5 @@
-from src.brain_imaging.diffusion_tensor_imaging import DiffusionTensorImage
+
+import json
 from src.brain_imaging.magnetic_resonance_imaging import MagneticResonanceImage
 from src.electrodes import AbbottStjudeActiveTip6142_6145
 from src.electrodes import AbbottStjudeActiveTip6146_6149
@@ -10,10 +11,39 @@ from src.electrodes import PINSMedicalL301
 from src.electrodes import PINSMedicalL302
 from src.electrodes import PINSMedicalL303
 from src.electrodes import MicroProbesCustomRodent
-from src.signals import SignalGenerator
+from src.signals import RectangleSignal, TrapzoidSignal, TriangleSignal, Signal
 
 
-class Configuration:
+class Input:
+
+    def __init__(self, json_path: str) -> None:
+        self.__input = self.__load_json(path=json_path)
+
+    @staticmethod
+    def __load_json(path):
+        with open(path, 'r') as json_file:
+            return json.load(json_file)
+
+    def mri(self):
+        mri_path = self.__input['MagneticResonanceImage']['Path']
+        return MagneticResonanceImage(mri_path)
+
+    def electrodes(self):
+        return ElectrodeGenerator.electrodes(self.__input['Electrodes'])
+
+    def boundary_values(self):
+        boundaries = {
+            'Electrodes': [{'Contacts': electrode['Contacts'],
+                            'Body': electrode['Body']}
+                           for electrode in self.__input['Electrodes']],
+            'BrainSurface': self.__input['BrainSurface']}
+        return BoundaryGenerator.generate(boundaries)
+
+    def stimulation_signal(self):
+        return SignalGenerator.generate(self.__input['StimulationSignal'])
+
+
+class ElectrodeGenerator:
 
     ELECTRODES = {'AbbottStjudeActiveTip6142_6145':
                   AbbottStjudeActiveTip6142_6145,
@@ -41,15 +71,14 @@ class Configuration:
                   MicroProbesCustomRodent
                   }
 
-    def __init__(self, input: dict) -> None:
-        self.input = input
+    @classmethod
+    def electrodes(cls, electrodes) -> list:
+        return [cls.__create_electrode(parameters, idx)
+                for idx, parameters in enumerate(electrodes)]
 
-    def electrodes(self) -> list:
-        return [self.__create_electrode(par, idx)
-                for idx, par in enumerate(self.input['Electrodes'])]
-
-    def __create_electrode(self, parameters, index):
-        electrode_class = self.ELECTRODES[parameters['Name']]
+    @classmethod
+    def __create_electrode(cls, parameters, index):
+        electrode_class = cls.ELECTRODES[parameters['Name']]
         electrode = electrode_class(direction=parameters['Direction'],
                                     translation=parameters['Translation'],
                                     rotation=parameters['Rotation'])
@@ -59,43 +88,47 @@ class Configuration:
         electrode.rename_boundaries(names)
         return electrode
 
-    def stimulation_signal(self):
-        signal_type = self.input['StimulationSignal']['Type']
-        frequency = self.input['StimulationSignal']['Frequency']
-        pulse_width = self.input['StimulationSignal']['PulseWidthPercentage']
-        top_width = self.input['StimulationSignal']['TopWidthPercentage']
-        return SignalGenerator(signal_type=signal_type,
-                               frequency=frequency,
-                               pulse_width=pulse_width,
-                               top_width=top_width).generate()
 
-    def boundary_values(self):
+class BoundaryGenerator:
+
+    @classmethod
+    def generate(cls, boundaries) -> dict:
         boundary_values = {}
-        for index, electrode in enumerate(self.input['Electrodes']):
-            boundary_values.update(self.__electrode_values(index, electrode))
 
-        if self.input['BrainSurface']['Active']:
-            value = self.input['BrainSurface_value']['Value']
+        for index, electrode in enumerate(boundaries['Electrodes']):
+            boundary_values.update(cls.__electrode_values(index, electrode))
+
+        if boundaries['BrainSurface']['Active']:
+            value = boundaries['Brainsurface']['Value']
             boundary_values.update({'Brain': value})
 
         return boundary_values
 
-    def __electrode_values(self, index, electrode):
+    @classmethod
+    def __electrode_values(cls, index, electrode):
         values = {'E{}C{}'.format(index, i): value
                   for i, value in enumerate(electrode['Contacts']['Value'])
                   if electrode['Contacts']['Active'][i]}
-
         if electrode['Body']['Active']:
             values.update({'E{}B'.format(index): electrode['Body']['Value']})
         return values
 
-    def magnetic_resonance_image(self):
-        path = self.input['MagneticResonanceImage']['Path']
-        return MagneticResonanceImage(file_path=path)
 
-    def diffusion_tensor_image(self):
-        path = self.input['DiffusionTensorImage']['Path']
-        return DiffusionTensorImage(file_path=path)
+class SignalGenerator:
 
-    def output_path(self):
-        return self.input['Output_directoy']
+    SIGNALS = {'Rectangle': RectangleSignal,
+               'Triangle': TriangleSignal,
+               'Trapzoid': TrapzoidSignal
+               }
+
+    @classmethod
+    def generate(cls, parameters) -> Signal:
+        signal_type = parameters['Type']
+        frequency = parameters['Frequency']
+        pulse_width = parameters['PulseWidthPercentage']
+        top_width = parameters['TopWidthPercentage']
+
+        if signal_type == 'Trapzoid':
+            return TrapzoidSignal(frequency, pulse_width, top_width)
+        signal = cls.SIGNALS[signal_type]
+        return signal(frequency, pulse_width)
