@@ -22,7 +22,7 @@ class FFTSineWave:
         return True
 
 
-class FFT:
+class FastFourierTransform:
 
     SPACING_FACTOR = 1e5
 

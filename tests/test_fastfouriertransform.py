@@ -1,4 +1,4 @@
-from src.fastfouriertransform import FFTSineWave, Signal, FFT
+from src.fastfouriertransform import FFTSineWave, Signal, FastFourierTransform
 import numpy as np
 
 

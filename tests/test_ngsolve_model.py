@@ -1,6 +1,6 @@
 from src.geometry import Geometry
 from src.mesh import Mesh
-from src.volume_conductor_model import VolumeConductor
+from src.volume_conductor_model import VolumeConductorQS
 import ngsolve
 import numpy as np
 import netgen.occ as occ
