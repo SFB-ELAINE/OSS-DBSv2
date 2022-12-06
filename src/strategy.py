@@ -1,6 +1,7 @@
 
 from src.fastfouriertransform import FastFourierTransform
 from src.volume_conductor_model import VolumeConductorQS, VolumeConductorEQS
+from src.result import Result
 import ngsolve
 import numpy
 
@@ -13,7 +14,7 @@ class QS_Strategy:
         self.__signal = signal
         self.__boundary_values = boundary_values
 
-    def potential(self):
+    def result(self):
         waves = FastFourierTransform(self.__signal).sine_waves()
         potential_sum = ngsolve.GridFunction(space=self.__mesh.sobolev_space())
         potential = self.calculate_potential(waves[0].frequency)
@@ -25,7 +26,7 @@ class QS_Strategy:
             potential = self.calculate_potential(wave.frequency)
             potential_sum.vec.data + potential.vec.data * amplitude
 
-        return potential_sum
+        return Result(mesh=self.__mesh.ngsolvemesh(), potential=potential_sum)
 
     def calculate_potential(self, frequency):
         conductivity = self.__brain_model.complex_conductivity(frequency)
@@ -42,9 +43,10 @@ class EQS_Strategy:
         self.__signal = signal
         self.__boundary_values = boundary_values
 
-    def potential(self):
+    def result(self):
         waves = FastFourierTransform(self.__signal).sine_waves()
-        potential_sum = ngsolve.GridFunction(space=self.__mesh.sobolev_space())
+        space = self.__mesh.sobolev_space(complex=True)
+        potential_sum = ngsolve.GridFunction(space=space)
         potential = self.calculate_potential(waves[0].frequency)
         amplitude = numpy.real(waves[0].amplitude) / 2
         potential_sum.vec.data += potential.vec.data * amplitude
@@ -54,7 +56,7 @@ class EQS_Strategy:
             potential = self.calculate_potential(wave.frequency)
             potential_sum.vec.data + potential.vec.data * amplitude
 
-        return potential_sum
+        return Result(mesh=self.__mesh.ngsolvemesh(), potential=potential_sum)
 
     def calculate_potential(self, frequency):
         conductivity = self.__brain_model.complex_conductivity(frequency)

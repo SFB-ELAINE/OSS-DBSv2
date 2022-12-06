@@ -22,13 +22,19 @@
         },
     "MagneticResonanceImage":
         {
+            "MaterialCoding": {
+                "Unknown": 0,
+                "GrayMatter": 1,
+                "WhiteMatter": 2,
+                "CerebrospinalFluid": 3
+            },
             "Path": "./input_files/TestMRI.nii"
         },
     "DiffusionTensorImage":
         {
             "Path": ""
         },
-    "OutputDirectoy": "result",
+    "OutputPath": "test_result",
     "StimulationSignal":
         {
             "Type": "Rectangle",

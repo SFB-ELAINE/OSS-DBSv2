@@ -12,7 +12,7 @@ class Nifti1Image:
     def data_map(self) -> np.memmap:
         return self._image.get_fdata()
 
-    def bounding_box(self) -> np.ndarray:
+    def bounding_box(self) -> tuple:
         starts = np.array([self._image.header['qoffset_x'],
                            self._image.header['qoffset_y'],
                            self._image.header['qoffset_z']
