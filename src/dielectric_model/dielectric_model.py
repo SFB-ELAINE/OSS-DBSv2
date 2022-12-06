@@ -28,12 +28,12 @@ class DielectricModel():
         eps_dispersion = self.__eps_inf + np.sum(self.__eps_delta / divisor)
 
         if omega == 0:
-            return eps_dispersion * self.e0
+            return eps_dispersion * self.e0 + 0j
 
         conductivity_term = self.__sigma / (1j * omega * self.e0)
         return self.e0 * (eps_dispersion + conductivity_term)
 
     def conductivity(self, omega: float) -> complex:
         if omega == 0:
-            return self.__sigma
+            return self.__sigma + 0j
         return np.conjugate(1j * omega * self.permitivity(omega=omega))

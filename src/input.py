@@ -1,6 +1,7 @@
 
 import json
 from src.brain_imaging.magnetic_resonance_imaging import MagneticResonanceImage
+from src.brainsubstance import Material
 from src.electrodes import AbbottStjudeActiveTip6142_6145
 from src.electrodes import AbbottStjudeActiveTip6146_6149
 from src.electrodes import AbbottStjudeDirected6172
@@ -25,8 +26,13 @@ class Input:
             return json.load(json_file)
 
     def mri(self):
+        coding = self.__input['MagneticResonanceImage']['MaterialCoding']
+        mri_coding = {Material.GRAY_MATTER: coding['GrayMatter'],
+                      Material.WHITE_MATTER: coding['WhiteMatter'],
+                      Material.CSF: coding['CerebrospinalFluid'],
+                      Material.UNKNOWN: coding['Unknown']}
         mri_path = self.__input['MagneticResonanceImage']['Path']
-        return MagneticResonanceImage(mri_path)
+        return MagneticResonanceImage(mri_path, mri_coding)
 
     def electrodes(self):
         return ElectrodeGenerator.electrodes(self.__input['Electrodes'])
@@ -41,6 +47,9 @@ class Input:
 
     def stimulation_signal(self):
         return SignalGenerator.generate(self.__input['StimulationSignal'])
+
+    def output_path(self):
+        return self.__input['OutputPath']
 
 
 class ElectrodeGenerator:
@@ -104,8 +113,8 @@ class BoundaryGenerator:
 
         return boundary_values
 
-    @classmethod
-    def __electrode_values(cls, index, electrode):
+    @staticmethod
+    def __electrode_values(index, electrode):
         values = {'E{}C{}'.format(index, i): value
                   for i, value in enumerate(electrode['Contacts']['Value'])
                   if electrode['Contacts']['Active'][i]}

@@ -1,11 +1,10 @@
 
 from src.brain_model import BrainModel
 from src.input import Input
-from src.strategy import QS_Strategy
+from src.strategy import QS_Strategy, EQS_Strategy
 from src.brainsubstance import Material
 import ngsolve
 import sys
-import os
 
 
 def main(json_path: str) -> None:
@@ -26,35 +25,20 @@ def main(json_path: str) -> None:
                            brain_model=brain_model,
                            signal=input.stimulation_signal())
 
-    potential = strategy.potential()
+    result = strategy.result()
 
     conductivity = brain_model.complex_conductivity(frequency=0)
     conductivities = ngsolve.VoxelCoefficient(start=conductivity.start,
                                               end=conductivity.end,
                                               values=conductivity.data,
                                               linear=False)
-    P = ngsolve.Integrate(ngsolve.grad(potential) *
+    P = ngsolve.Integrate(ngsolve.grad(result.potential) *
                           ngsolve.Conj(conductivities *
-                                       ngsolve.grad(potential)),
+                                       ngsolve.grad(result.potential)),
                           mesh.ngsolvemesh())
-    
+
     print('impedance:', 'inf' if not P else 1 / P)
-
-
-    # # directory = os.path.dirname(os.path.realpath(__file__))
-    # # output_path = configuration.output_path()
-    # # file_dir = os.path.join(directory, os.path.dirname(output_path))
-    # # if not os.path.exists(file_dir):
-    # #     os.mkdir(file_dir)
-
-    # # file_name = os.path.join(file_dir, os.path.basename(output_path))
-
-    # output = ngsolve.VTKOutput(ma=mesh.ngsolvemesh(),
-    #                            coefs=[potential, -ngsolve.grad(potential)*1e3],
-    #                            names=["potential", "field"],
-    #                            filename=configuration.output_path(),
-    #                            subdivision=0)
-    # output.Do()
+    result.save(input.output_path())
 
 
 if __name__ == '__main__':

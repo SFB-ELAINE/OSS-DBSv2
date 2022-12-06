@@ -52,6 +52,6 @@ class BrainModel:
         x, y, z = (np.array(end) - np.array(start)) / 2
         trasformator = netgen.occ.gp_GTrsf(mat=[x, 0, 0, 0, y, 0, 0, 0, z])
         sphere = netgen.occ.Sphere(c=netgen.occ.Pnt(1, 1, 1), r=1)
-        ellipsoid = trasformator(sphere).Move(tuple(start))
+        ellipsoid = trasformator(sphere).Move(start)
         ellipsoid.bc('Brain')
         return ellipsoid
