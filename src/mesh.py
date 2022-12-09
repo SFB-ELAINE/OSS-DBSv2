@@ -39,17 +39,16 @@ class Mesh:
         self.__mesh.Refine()
         self.__mesh.Curve(order=self.__order)
 
-    def mark_elements_by_error(self,
-                               error: ngsolve.fem.CoefficientFunction) -> None:
+    def elements_with_error(self,
+                            error: ngsolve.fem.CoefficientFunction) -> None:
         errors = ngsolve.Integrate(cf=error,
                                    mesh=self.__mesh,
                                    VOL_or_BND=ngsolve.VOL,
                                    element_wise=True).real
         limit = 0.5 * max(errors)
-        flags = [errors[el.nr] > limit for el in self.__mesh.Elements()]
-        self.__set_refinement_flag(flags)
+        return [errors[el.nr] > limit for el in self.__mesh.Elements()]
 
-    def mark_elements_by_position(self, position: Voxels) -> None:
+    def elements_at_position(self, position: Voxels) -> None:
         space = ngsolve.L2(self.__mesh, order=0)
         grid_function = ngsolve.GridFunction(space=space)
         cf = ngsolve.VoxelCoefficient(start=tuple(position.start),
@@ -57,8 +56,14 @@ class Mesh:
                                       values=position.data.astype(float),
                                       linear=False)
         grid_function.Set(cf)
-        flags = grid_function.vec.FV().NumPy()
-        self.__set_refinement_flag(flags)
+        return grid_function.vec.FV().NumPy()
+
+    def elements_grater_than(self, limit: float) -> list:
+        volumes = ngsolve.Integrate(cf=ngsolve.CoefficientFunction(1),
+                                    mesh=self.__mesh,
+                                    element_wise=True).NumPy()
+        heights = (6 * volumes) ** 1 / 3
+        return heights > limit
 
     def sobolev_space(self, complex: bool = False) -> ngsolve.comp.H1:
         dirichlet = '|'.join(boundary for boundary in self.get_boundaries())
@@ -68,7 +73,7 @@ class Mesh:
                           complex=complex,
                           wb_withedges=False)
 
-    def __set_refinement_flag(self, flags):
+    def set_refinement_flag(self, flags):
         for index, element in enumerate(self.__mesh.Elements()):
             self.__mesh.SetRefinementFlag(ei=element, refine=flags[index])
 

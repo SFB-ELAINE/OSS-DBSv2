@@ -1,9 +1,11 @@
+import pytest
 from src.geometry import Geometry
 from src.mesh import Mesh
 from src.volume_conductor_model import VolumeConductorQS
 import ngsolve
 import numpy as np
 import netgen.occ as occ
+
 
 class Electrode:
 
@@ -56,6 +58,7 @@ class SimpleGeometry(Geometry):
         return self.__geometry.GenerateMesh()
 
 
+@pytest.mark.skip
 def test_ngsolve_model():
     geometry = SimpleGeometry()
     boundaries = {"contact": 1.0, "wire": 0.0}
