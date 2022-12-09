@@ -40,24 +40,28 @@ class TestNifti1Image:
         np.testing.assert_equal(nifti1_image_3d.data_map(), desired)
 
     def test_boundingbox_units_default(self, nifti1_image_3d):
-        desired = np.array([[2, 2, 2], [3, 3, 3]])
+        desired = (2, 2, 2), (3, 3, 3)
         np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
+
+    def test_boundingbox_4d_shape(self, nifti1_image_4d):
+        desired = (2, 2, 2), (3, 3, 3)
+        np.testing.assert_equal(nifti1_image_4d.bounding_box(), desired)
 
     def test_boundingbox_units_mm(self, nifti1_image_3d):
         nifti1_image_3d.header()['xyzt_units'] = 2
-        desired = np.array([[2, 2, 2], [3, 3, 3]])
+        desired = (2, 2, 2), (3, 3, 3)
         np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
 
     def test_boundingbox_units_meter(self, nifti1_image_3d):
         nifti1_image_3d.header()['xyzt_units'] = 1
-        desired = np.array([[2000, 2000, 2000], [3000, 3000, 3000]])
+        desired = (2000, 2000, 2000), (3000, 3000, 3000)
         np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
 
     def test_boundingbox_units_micron(self, nifti1_image_3d):
         nifti1_image_3d.header()['xyzt_units'] = 3
-        desired = np.array([[0.002, 0.002, 0.002], [0.003, 0.003, 0.003]])
+        desired = (0.002, 0.002, 0.002), (0.003, 0.003, 0.003)
         np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
 
-    def test_boundingbox_4d_shape(self, nifti1_image_4d):
-        desired = np.array([[2, 2, 2], [3, 3, 3]])
-        np.testing.assert_equal(nifti1_image_4d.bounding_box(), desired)
+    def test_voxel_size(self, nifti1_image_3d):
+        desired = (0.5, 0.5, 0.5)
+        np.testing.assert_equal(nifti1_image_3d.voxel_size(), desired)

@@ -1,8 +1,51 @@
 
+from abc import ABC, abstractmethod
 from src.mesh import Mesh
 from src.voxels import Voxels
 import ngsolve
 import numpy as np
+
+
+class Potential(ABC):
+
+    def __init__(self,
+                 gridfunction: ngsolve.GridFunction,
+                 mesh: ngsolve.Mesh,
+                 ) -> None:
+        self._gridfunction = gridfunction
+        self._mesh = mesh
+
+    @abstractmethod
+    def error(self):
+        pass
+
+    def __add__(self, other) -> 'Potential':
+        self._gridfunction.vec.data += other._gridfunction.vec.data
+
+    def __mul__(self, value) -> 'Potential':
+        self._gridfunction.vec.data *= value
+
+
+class PotentialEQ:
+
+    def error(self):
+        flux = ngsolve.grad(self.__gridfunction)
+        space = self.__mesh.flux_space()
+        flux_potential = ngsolve.GridFunction(space=space)
+        flux_potential.Set(coefficient=flux)
+        difference = flux - flux_potential
+        return difference * ngsolve.Conj(difference)
+
+
+class PotentialEQS:
+
+    def error(self):
+        flux = ngsolve.grad(self.__gridfunction)
+        space = self.__mesh.flux_space(complex=True)
+        flux_potential = ngsolve.GridFunction(space=space)
+        flux_potential.Set(coefficient=flux)
+        difference = flux - flux_potential
+        return difference * ngsolve.Conj(difference)
 
 
 class VolumeConductorQS:
@@ -47,16 +90,7 @@ class VolumeConductorQS:
         potential.Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
         equation = LaplaceEquation(space=space, coefficient=sigma)
         potential.vec.data = equation.solve_bvp(input=potential)
-        return potential, self.__error(potential)
-
-    def __error(self, potential: ngsolve.comp.GridFunction) \
-            -> ngsolve.fem.CoefficientFunction:
-        flux = ngsolve.grad(potential)
-        space = self.__mesh.flux_space()
-        flux_potential = ngsolve.GridFunction(space=space)
-        flux_potential.Set(coefficient=flux)
-        difference = flux - flux_potential
-        return difference * ngsolve.Conj(difference)
+        return potential
 
 
 class VolumeConductorEQS:
@@ -100,16 +134,7 @@ class VolumeConductorEQS:
         potential.Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
         equation = LaplaceEquation(space=space, coefficient=sigma)
         potential.vec.data = equation.solve_bvp(input=potential)
-        return potential, self.__error(potential)
-
-    def __error(self, potential: ngsolve.comp.GridFunction) \
-            -> ngsolve.fem.CoefficientFunction:
-        flux = ngsolve.grad(potential)
-        space = self.__mesh.flux_space(complex=True)
-        flux_potential = ngsolve.GridFunction(space=space)
-        flux_potential.Set(coefficient=flux)
-        difference = flux - flux_potential
-        return difference * ngsolve.Conj(difference)
+        return potential
 
 
 class LaplaceEquation:

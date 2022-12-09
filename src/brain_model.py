@@ -7,6 +7,7 @@ from src.geometry import Geometry
 from src.mesh import Mesh
 import netgen
 import numpy as np
+from src.mesh_refinement import MeshRefinement
 
 from src.voxels import Voxels
 
@@ -32,19 +33,19 @@ class BrainModel:
         start, end = self.__mri.bounding_box()
         return Voxels(data=data, start=start, end=end)
 
-    def add_electrode(self, electrode: AbstractElectrode):
-        self.__electrodes.append(electrode)
+    def add_electrodes(self, electrodes: list[AbstractElectrode]):
+        for electrode in electrodes:
+            self.__electrodes.append(electrode)
 
     def generate_mesh(self, order: int = 2):
-        return Mesh(self.generate_geometry(), order=order)
+        mesh = Mesh(self.__generate_geometry(), order=order)
+        MeshRefinement(mesh).refine_by_mri(self.__mri)
+        return mesh
 
-    def generate_geometry(self):
-        brain = self.__create_ellipsoid()
-
-        geometry = brain
+    def __generate_geometry(self):
+        geometry = self.__create_ellipsoid()
         for electrode in self.__electrodes:
             geometry = geometry - electrode.generate_geometry()
-
         return Geometry(geometry=geometry)
 
     def __create_ellipsoid(self):

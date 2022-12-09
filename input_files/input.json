@@ -1,4 +1,13 @@
 {
+    "BrainSurface":
+        {
+            "Active": false,
+            "Value": 0
+        },
+    "DiffusionTensorImage":
+            {
+                "Path": ""
+            },
     "Electrodes": [
         {
             "Name": "MicroProbesCustomRodent",
@@ -15,11 +24,7 @@
             }
         }
     ],
-    "BrainSurface":
-        {
-            "Active": false,
-            "Value": 0
-        },
+    "FEMMode": "QS",
     "MagneticResonanceImage":
         {
             "MaterialCoding": {
@@ -29,10 +34,6 @@
                 "CerebrospinalFluid": 3
             },
             "Path": "./input_files/TestMRI.nii"
-        },
-    "DiffusionTensorImage":
-        {
-            "Path": ""
         },
     "OutputPath": "test_result",
     "StimulationSignal":
