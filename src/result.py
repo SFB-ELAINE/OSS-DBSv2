@@ -11,5 +11,6 @@ class Result:
 
     def save(self, path: str = '') -> None:
         Output(mesh=self.mesh,
-               potential=self.potential,
+               potential=self.potential.real,
+               field=-ngsolve.grad(self.potential).real * 1e3
                ).save(path)

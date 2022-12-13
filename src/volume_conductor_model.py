@@ -1,5 +1,6 @@
 
 from abc import ABC, abstractmethod
+from src.conductivity import Conductivity
 from src.mesh import Mesh
 from src.voxels import Voxels
 import ngsolve
@@ -48,7 +49,13 @@ class PotentialEQS:
         return difference * ngsolve.Conj(difference)
 
 
-class VolumeConductorQS:
+class VolumeConductor(ABC):
+    @abstractmethod
+    def evaluate_potential(self, boundaries: dict, frequency: float):
+        pass
+
+
+class VolumeConductorQS(VolumeConductor):
     """Model for representing a volume conductor.
 
     Attributes
@@ -64,11 +71,11 @@ class VolumeConductorQS:
 
     """
 
-    def __init__(self, mesh: Mesh, conductivity: Voxels) -> None:
+    def __init__(self, mesh: Mesh, conductivity: Conductivity) -> None:
         self.__conductivity = conductivity
         self.__mesh = mesh
 
-    def evaluate_potential(self, boundaries: dict) \
+    def evaluate_potential(self, boundaries: dict, frequency: float) \
             -> ngsolve.comp.GridFunction:
         """Evaluate electrical potential of volume conductor.
 
@@ -80,8 +87,9 @@ class VolumeConductorQS:
 
         """
 
-        values = np.real(self.__conductivity.data)
-        start, end = self.__conductivity.start, self.__conductivity.end
+        conductivities = self.__conductivity.complex_conductivity(frequency)
+        values = np.real(conductivities.data)
+        start, end = conductivities.start, conductivities.end
         sigma = ngsolve.VoxelCoefficient(start, end, values, linear=False)
         space = self.__mesh.sobolev_space()
         potential = ngsolve.GridFunction(space=space)
@@ -90,10 +98,15 @@ class VolumeConductorQS:
         potential.Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
         equation = LaplaceEquation(space=space, coefficient=sigma)
         potential.vec.data = equation.solve_bvp(input=potential)
-        return potential
+        return potential, self.__force(sigma, potential)
+
+    def __force(self, sigma, potential):
+        return ngsolve.Integrate(ngsolve.grad(potential) *
+                                 ngsolve.Conj(sigma * ngsolve.grad(potential)),
+                                 self.__mesh.ngsolvemesh())
 
 
-class VolumeConductorEQS:
+class VolumeConductorEQS(VolumeConductor):
     """Model for representing a volume conductor.
 
     Attributes
@@ -134,7 +147,12 @@ class VolumeConductorEQS:
         potential.Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
         equation = LaplaceEquation(space=space, coefficient=sigma)
         potential.vec.data = equation.solve_bvp(input=potential)
-        return potential
+        return potential, self.__force(sigma, potential)
+
+    def __force(self, sigma, potential):
+        return ngsolve.Integrate(ngsolve.grad(potential) *
+                                 ngsolve.Conj(sigma * ngsolve.grad(potential)),
+                                 self.__mesh.ngsolvemesh())
 
 
 class LaplaceEquation:
