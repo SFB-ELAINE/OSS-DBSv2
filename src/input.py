@@ -13,6 +13,7 @@ from src.electrodes import PINSMedicalL302
 from src.electrodes import PINSMedicalL303
 from src.electrodes import MicroProbesCustomRodent
 from src.signals import RectangleSignal, TrapzoidSignal, TriangleSignal, Signal
+from src.volume_conductor_model import VolumeConductorQS, VolumeConductorEQS
 
 
 class Input:
@@ -50,6 +51,11 @@ class Input:
 
     def output_path(self):
         return self.__input['OutputPath']
+
+    def volume_conductor_type(self):
+        if self.__input['FEMMode'] == 'EQS':
+            return VolumeConductorEQS
+        return VolumeConductorQS
 
 
 class ElectrodeGenerator:

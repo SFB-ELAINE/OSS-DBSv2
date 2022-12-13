@@ -9,29 +9,12 @@ import netgen
 import numpy as np
 from src.mesh_refinement import MeshRefinement
 
-from src.voxels import Voxels
-
 
 class BrainModel:
 
-    __MATERIALS = [Material.CSF, Material.GRAY_MATTER, Material.WHITE_MATTER]
-
-    def __init__(self, mri: MagneticResonanceImage) -> None:
-        self.__mri = mri
+    def __init__(self, bounding_box) -> None:
+        self.__bounding_box = bounding_box
         self.__electrodes = []
-
-    def complex_conductivity(self, frequency: float) -> Voxels:
-        omega = 2 * np.pi * frequency
-        default = ModelCreator.create(Material.GRAY_MATTER).conductivity(omega)
-        data = np.full(self.__mri.xyz_shape(), default)
-
-        for material in self.__MATERIALS:
-            position = self.__mri.material_distribution(material=material)
-            conductivity = ModelCreator.create(material).conductivity(omega)
-            data[position.data] = conductivity
-
-        start, end = self.__mri.bounding_box()
-        return Voxels(data=data, start=start, end=end)
 
     def add_electrodes(self, electrodes: list[AbstractElectrode]):
         for electrode in electrodes:
@@ -39,7 +22,6 @@ class BrainModel:
 
     def generate_mesh(self, order: int = 2):
         mesh = Mesh(self.__generate_geometry(), order=order)
-        MeshRefinement(mesh).refine_by_mri(self.__mri)
         return mesh
 
     def __generate_geometry(self):
@@ -49,7 +31,7 @@ class BrainModel:
         return Geometry(geometry=geometry)
 
     def __create_ellipsoid(self):
-        start, end = self.__mri.bounding_box()
+        start, end = self.__bounding_box
         x, y, z = (np.array(end) - np.array(start)) / 2
         trasformator = netgen.occ.gp_GTrsf(mat=[x, 0, 0, 0, y, 0, 0, 0, z])
         sphere = netgen.occ.Sphere(c=netgen.occ.Pnt(1, 1, 1), r=1)

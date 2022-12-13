@@ -25,7 +25,7 @@ class TestDielectricDistribution:
 
     def test_complex_conductivity(self):
         model = BrainModel(mri=MockMRI())
-        actual = model.complex_conductivity(frequency=0)
+        actual = model.conductivity(frequency=0)
         data = np.array([[[2.0 + 0j, 0.02 + 0j], [0.02 + 0j, 2.0 + 0j]],
                          [[0.02 + 0j, 0.02 + 0j], [0.02 + 0j, 0.02 + 0j]]])
         desired = Voxels(start=(0, 0, 0), end=(1, 1, 1), data=data)

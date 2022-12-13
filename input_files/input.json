@@ -5,9 +5,9 @@
             "Value": 0
         },
     "DiffusionTensorImage":
-            {
-                "Path": ""
-            },
+        {
+            "Path": ""
+        },
     "Electrodes": [
         {
             "Name": "MicroProbesCustomRodent",
@@ -36,6 +36,13 @@
             "Path": "./input_files/TestMRI.nii"
         },
     "OutputPath": "test_result",
+    "RegionOfInterest":
+        {
+            "Active": false,
+            "Center": [0, 0, 0],
+            "Shape": [0, 0, 0],
+            "Dimmensions": "mm"
+        },
     "StimulationSignal":
         {
             "Type": "Rectangle",
