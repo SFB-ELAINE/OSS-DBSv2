@@ -2,6 +2,8 @@
 from src.fastfouriertransform import FastFourierTransform
 import numpy as np
 
+from src.output import OutputTest
+
 
 class AllFrequenciesStrategy:
 
@@ -12,23 +14,27 @@ class AllFrequenciesStrategy:
 
     def result(self):
         waves = FastFourierTransform(self.__signal).sine_waves()
-        potential, P = self.__volume_conductor.evaluate_potential(
-            self.__boundary_values,
-            waves[0].frequency)
+        frequency = waves[77].frequency
+
+        potential, density = self.__volume_conductor.evaluate_potential(
+                                                        self.__boundary_values,
+                                                        frequency)
+
         amplitude = np.real(waves[0].amplitude) / 2
         potential_sum = potential
-        potential_sum.vec.data = potential.vec.data * amplitude
-
-        print('impedance:', 'inf' if not P else 1 / P)
+        # potential_sum.vec.data = potential.vec.data * amplitude
 
         for wave in waves[1:1]:
             amplitude = np.real(wave.amplitude)
-            potential, _ = self.__volume_conductor.evaluate_potential(
-                self.__boundary_values,
-                wave.frequency)
-            potential_sum.vec.data + potential.vec.data * amplitude
+            potential, density = self.__volume_conductor.evaluate_potential(
+                                                        self.__boundary_values,
+                                                        wave.frequency)
+            potential_sum.vec.data += potential.vec.data * amplitude
 
-        return potential_sum
+        mesh = self.__volume_conductor.mesh
+        return OutputTest(mesh=mesh.ngsolvemesh(),
+                          potential=potential,
+                          density=density)
 
 
 class StrategyOctavevands:
@@ -42,11 +48,10 @@ class StrategyOctavevands:
 
     def result(self):
         waves = FastFourierTransform(self.__signal).sine_waves()
-        n_octave_bands = int(np.log2(len(waves) - 1))
-        indices = 2 ** np.arange(0, n_octave_bands)
+        indices = 2 ** np.arange(0, int(np.log2(len(waves) - 1)))
         octave_freq = [waves[idx].frequency for idx in indices]
 
-        potential, P = self.__volume_conductor.evaluate_potential(
+        potential, density = self.__volume_conductor.evaluate_potential(
                                                         self.__boundary_values,
                                                         waves[0].frequency)
 
@@ -67,4 +72,7 @@ class StrategyOctavevands:
                 total_amplitude = abs(wave.amplitude) * np.real(wave.amplitude)
                 potential_sum.vec.data += potential.vec.data * total_amplitude
 
-        return potential_sum
+        mesh = self.__volume_conductor.mesh
+        return OutputTest(mesh=mesh.ngsolvemesh(),
+                          potential=potential,
+                          density=density)

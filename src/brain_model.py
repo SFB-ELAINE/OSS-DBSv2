@@ -12,8 +12,8 @@ from src.mesh_refinement import MeshRefinement
 
 class BrainModel:
 
-    def __init__(self, bounding_box) -> None:
-        self.__bounding_box = bounding_box
+    def __init__(self, region) -> None:
+        self.__region = region
         self.__electrodes = []
 
     def add_electrodes(self, electrodes: list[AbstractElectrode]):
@@ -31,7 +31,7 @@ class BrainModel:
         return Geometry(geometry=geometry)
 
     def __create_ellipsoid(self):
-        start, end = self.__bounding_box
+        start, end = self.__region.start, self.__region.end
         x, y, z = (np.array(end) - np.array(start)) / 2
         trasformator = netgen.occ.gp_GTrsf(mat=[x, 0, 0, 0, y, 0, 0, 0, z])
         sphere = netgen.occ.Sphere(c=netgen.occ.Pnt(1, 1, 1), r=1)

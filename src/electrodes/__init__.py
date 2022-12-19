@@ -6,6 +6,7 @@ from src.electrodes.abbott_stjude_active_tip_6146_6149 \
 from src.electrodes.abbott_stjude_directed_6172 \
     import AbbottStjudeDirected6172
 from src.electrodes.boston_scientific_vercise import BostonScientificVercise
+from src.electrodes.boston_scientific_vercise_directed import BostonScientificVerciseDirected
 from src.electrodes.medtronic_3387 import Medtronic3387
 from src.electrodes.medtronic_3389 import Medtronic3389
 from src.electrodes.medtronic_3391 import Medtronic3391
@@ -22,6 +23,7 @@ __all__ = ('AbstractElectrode',
            'AbbottStjudeActiveTip6146_6149',
            'AbbottStjudeDirected6172',
            'BostonScientificVercise',
+           'BostonScientificVerciseDirected',
            'Medtronic3387',
            'Medtronic3389',
            'Medtronic3391',

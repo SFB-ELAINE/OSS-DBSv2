@@ -1,11 +1,14 @@
 
+from dataclasses import dataclass
 import json
+import numpy as np
 from src.brain_imaging.magnetic_resonance_imaging import MagneticResonanceImage
 from src.brainsubstance import Material
 from src.electrodes import AbbottStjudeActiveTip6142_6145
 from src.electrodes import AbbottStjudeActiveTip6146_6149
 from src.electrodes import AbbottStjudeDirected6172
 from src.electrodes import BostonScientificVercise
+from src.electrodes import BostonScientificVerciseDirected
 from src.electrodes import Medtronic3387, Medtronic3389, Medtronic3391
 from src.electrodes import MicroProbesSNEX_100
 from src.electrodes import PINSMedicalL301
@@ -14,6 +17,12 @@ from src.electrodes import PINSMedicalL303
 from src.electrodes import MicroProbesCustomRodent
 from src.signals import RectangleSignal, TrapzoidSignal, TriangleSignal, Signal
 from src.volume_conductor_model import VolumeConductorQS, VolumeConductorEQS
+
+
+@dataclass
+class Region:
+    start: tuple = (0, 0, 0)
+    end: tuple = (0, 0, 0)
 
 
 class Input:
@@ -25,6 +34,9 @@ class Input:
     def __load_json(path):
         with open(path, 'r') as json_file:
             return json.load(json_file)
+
+    def mesh_order(self):
+        return self.__input['MeshElementOrder']
 
     def mri(self):
         coding = self.__input['MagneticResonanceImage']['MaterialCoding']
@@ -57,6 +69,20 @@ class Input:
             return VolumeConductorEQS
         return VolumeConductorQS
 
+    def region_of_interest(self):
+
+        if not self.__input['RegionOfInterest']['Active']:
+            start, end = self.mri().bounding_box()
+            return Region(start=start, end=end)
+
+        shape = self.__input['RegionOfInterest']['Shape']
+        center = self.__input['RegionOfInterest']['Center']
+
+        start = center - np.divide(shape, 2)
+        end = start + shape
+        return Region(start=tuple(start.astype(int)),
+                      end=tuple(end.astype(int)))
+
 
 class ElectrodeGenerator:
 
@@ -68,6 +94,8 @@ class ElectrodeGenerator:
                   AbbottStjudeDirected6172,
                   'BostonScientificVercise':
                   BostonScientificVercise,
+                  'BostonScientificVerciseDirected':
+                  BostonScientificVerciseDirected,
                   'Medtronic3387':
                   Medtronic3387,
                   'Medtronic3389':
@@ -94,8 +122,9 @@ class ElectrodeGenerator:
     @classmethod
     def __create_electrode(cls, parameters, index):
         electrode_class = cls.ELECTRODES[parameters['Name']]
-        electrode = electrode_class(direction=parameters['Direction'],
-                                    translation=parameters['Translation'],
+        electrode = electrode_class(direction=tuple(parameters['Direction']),
+                                    translation=tuple(parameters
+                                    ['Translation']),
                                     rotation=parameters['Rotation'])
         names = {'Contact_{}'.format(i+1): "E{}C{}".format(index, i)
                  for i in range(len(parameters['Contacts']['Active']))}
