@@ -35,13 +35,13 @@
             },
             "Path": "./input_files/TestMRI.nii"
         },
+    "MeshElementOrder": 2,
     "OutputPath": "test_result",
     "RegionOfInterest":
         {
             "Active": false,
             "Center": [0, 0, 0],
-            "Shape": [0, 0, 0],
-            "Dimmensions": "mm"
+            "Shape": [1, 1, 1]
         },
     "StimulationSignal":
         {

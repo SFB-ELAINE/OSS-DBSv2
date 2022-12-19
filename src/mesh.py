@@ -77,6 +77,11 @@ class Mesh:
         for index, element in enumerate(self.__mesh.Elements()):
             self.__mesh.SetRefinementFlag(ei=element, refine=flags[index])
 
+    def set_boundary_refinement_flags(self, boundaries: list):
+        for element in self.__mesh.Elements(ngsolve.BND):
+            flag = element.mat in boundaries
+            self.__mesh.SetRefinementFlag(ei=element, refine=flag)
+
     def centroids_of_elements(self) -> list:
         shape = (self.__mesh.ne, 4, 3)
         vertices = np.array([self.__mesh[v].point
