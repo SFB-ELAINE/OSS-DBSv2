@@ -1,5 +1,4 @@
 import pytest
-from src.geometry import Geometry
 from src.mesh import Mesh
 from src.volume_conductor_model import VolumeConductorQS
 import ngsolve
@@ -45,7 +44,7 @@ class Brain:
         self.solid = sphere
 
 
-class SimpleGeometry(Geometry):
+class SimpleGeometry():
 
     def __init__(self) -> None:
         electrode = Electrode()

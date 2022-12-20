@@ -1,13 +1,9 @@
 
-from src.brain_imaging.magnetic_resonance_imaging import MagneticResonanceImage
-from src.brainsubstance import Material
-from src.dielectric_model.dielectric_model_var1 import ModelCreator
-from src.electrodes.abstract_electrode import AbstractElectrode
-from src.geometry import Geometry
+from src.electrodes.abstract_electrode import Electrode
 from src.mesh import Mesh
+from typing import List
 import netgen
 import numpy as np
-from src.mesh_refinement import MeshRefinement
 
 
 class BrainModel:
@@ -16,25 +12,20 @@ class BrainModel:
         self.__region = region
         self.__electrodes = []
 
-    def add_electrodes(self, electrodes: list[AbstractElectrode]):
+    def add_electrodes(self, electrodes: List[Electrode]) -> None:
         for electrode in electrodes:
             self.__electrodes.append(electrode)
 
-    def generate_mesh(self, order: int = 2):
-        mesh = Mesh(self.__generate_geometry(), order=order)
-        return mesh
-
-    def __generate_geometry(self):
+    def generate_mesh(self, order: int = 2) -> Mesh:
         geometry = self.__create_ellipsoid()
         for electrode in self.__electrodes:
             geometry = geometry - electrode.generate_geometry()
-        return Geometry(geometry=geometry)
+        return Mesh(netgen.occ.OCCGeometry(geometry), order=order)
 
-    def __create_ellipsoid(self):
-        start, end = self.__region.start, self.__region.end
-        x, y, z = (np.array(end) - np.array(start)) / 2
+    def __create_ellipsoid(self) -> netgen.libngpy._NgOCC.Solid:
+        x, y, z = np.subtract(self.__region.end, self.__region.start) / 2
         trasformator = netgen.occ.gp_GTrsf(mat=[x, 0, 0, 0, y, 0, 0, 0, z])
         sphere = netgen.occ.Sphere(c=netgen.occ.Pnt(1, 1, 1), r=1)
-        ellipsoid = trasformator(sphere).Move(start)
+        ellipsoid = trasformator(sphere).Move(self.__region.start)
         ellipsoid.bc('Brain')
         return ellipsoid

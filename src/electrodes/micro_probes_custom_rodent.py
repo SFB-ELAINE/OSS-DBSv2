@@ -1,9 +1,9 @@
-from src.electrodes.abstract_electrode import AbstractElectrode
+from src.electrodes.abstract_electrode import Electrode
 import netgen
 import numpy as np
 
 
-class MicroProbesCustomRodent(AbstractElectrode):
+class MicroProbesCustomRodent(Electrode):
     """MicroProbes Custom Rodent electrode.
 
     Attributes

@@ -1,10 +1,10 @@
 # Abbott/St Jude Directed 6172
-from src.electrodes.abstract_electrode import AbstractElectrode
+from src.electrodes.abstract_electrode import Electrode
 import netgen
 import numpy as np
 
 
-class AbbottStjudeDirected6172(AbstractElectrode):
+class AbbottStjudeDirected6172(Electrode):
     """Abbott/St Jude Directed 6172 electrode.
 
     Attributes

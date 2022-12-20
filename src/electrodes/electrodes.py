@@ -1,4 +1,4 @@
-from src.electrodes import AbstractElectrode
+from src.electrodes import Electrode
 from src.electrodes import AbbottStjudeActiveTip6142_6145
 from src.electrodes import AbbottStjudeActiveTip6146_6149
 from src.electrodes import AbbottStjudeDirected6172
@@ -44,7 +44,7 @@ class ElectrodeCreator:
                name: str,
                translation: tuple = (0, 0., 0.),
                direction: tuple = (0, 0., 0.),
-               rotation: float = 0.0) -> AbstractElectrode:
+               rotation: float = 0.0) -> Electrode:
         return cls.ELECTRODES[name](direction=direction,
                                     translation=translation,
                                     rotation=rotation)
