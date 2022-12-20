@@ -1,16 +1,19 @@
-from src.geometry import Geometry
+
+from typing import List
+from src.brain_imaging.magnetic_resonance_imaging import MagneticResonanceImage
+from src.brainsubstance import Material
+from src.voxels import Voxels
 import ngsolve
 import numpy as np
-
-from src.voxels import Voxels
 
 
 class Mesh:
 
     def __init__(self,
-                 geometry: Geometry,
+                 geometry,
                  order: int) -> None:
-        self.__mesh = ngsolve.Mesh(ngmesh=geometry.generate_mesh())
+
+        self.__mesh = ngsolve.Mesh(ngmesh=geometry.GenerateMesh())
         self.__mesh.Curve(order=order)
         self.__order = order
 
@@ -40,7 +43,7 @@ class Mesh:
         self.__mesh.Curve(order=self.__order)
 
     def elements_with_error(self,
-                            error: ngsolve.fem.CoefficientFunction) -> None:
+                            error: ngsolve.fem.CoefficientFunction) -> List:
         errors = ngsolve.Integrate(cf=error,
                                    mesh=self.__mesh,
                                    VOL_or_BND=ngsolve.VOL,
@@ -58,12 +61,10 @@ class Mesh:
         grid_function.Set(cf)
         return grid_function.vec.FV().NumPy()
 
-    def elements_grater_than(self, limit: float) -> list:
-        volumes = ngsolve.Integrate(cf=ngsolve.CoefficientFunction(1),
-                                    mesh=self.__mesh,
-                                    element_wise=True).NumPy()
-        heights = (6 * volumes) ** 1 / 3
-        return heights > limit
+    def element_sizes(self) -> list:
+        cf = ngsolve.CoefficientFunction(1)
+        volumes = ngsolve.Integrate(cf=cf, mesh=self.__mesh, element_wise=True)
+        return (6 * volumes.NumPy()) ** (1 / 3)
 
     def sobolev_space(self, complex: bool = False) -> ngsolve.comp.H1:
         dirichlet = '|'.join(boundary for boundary in self.get_boundaries())
@@ -73,30 +74,25 @@ class Mesh:
                           complex=complex,
                           wb_withedges=False)
 
-    def set_refinement_flag(self, flags):
-        for index, element in enumerate(self.__mesh.Elements()):
-            self.__mesh.SetRefinementFlag(ei=element, refine=flags[index])
-
-    def set_boundary_refinement_flags(self, boundaries: list):
-        for element in self.__mesh.Elements(ngsolve.BND):
-            flag = element.mat in boundaries
+    def set_volume_refinement_flags(self, flags: List[bool]) -> None:
+        for element, flag in zip(self.__mesh.Elements(ngsolve.VOL), flags):
             self.__mesh.SetRefinementFlag(ei=element, refine=flag)
 
-    def centroids_of_elements(self) -> list:
-        shape = (self.__mesh.ne, 4, 3)
-        vertices = np.array([self.__mesh[v].point
-                             for element in self.__mesh.Elements()
-                             for v in element.vertices]).reshape(shape)
-        return [list(c) for c in np.sum(vertices, axis=1) / 4]
+    def refine_by_mri(self, mri: MagneticResonanceImage) -> None:
+        maximum_size = min(mri.voxel_size())
+        csf_voxel = mri.material_distribution(Material.CSF)
+        flags = np.logical_and(self.elements_at_position(csf_voxel),
+                               self.element_sizes() > maximum_size)
+        while np.any(flags) and self.sobolev_space().ndof < 1e5:
+            self.set_volume_refinement_flags(flags)
+            self.refine()
+            csf_voxel = mri.material_distribution(Material.CSF)
+            flags = np.logical_and(self.elements_at_position(csf_voxel),
+                                   self.element_sizes() > maximum_size)
 
-    def element_sizes(self) -> list:
-        volumes = ngsolve.Integrate(cf=ngsolve.CoefficientFunction(1),
-                                    mesh=self.__mesh,
-                                    element_wise=True).NumPy()
-        return list((6 * volumes) ** 1 / 3)
-
-    def bounding_box(self):
-        points = [vertice.point for vertice in self.__mesh.vertices]
-        start = tuple(np.min(points, axis=0))
-        end = tuple(np.max(points, axis=0))
-        return start, end
+    def refine_by_boundaries(self, boundaries: list) -> None:
+        elements = self.__mesh.Elements(ngsolve.BND)
+        flags = [element.mat in boundaries for element in elements]
+        for element, flag in zip(self.__mesh.Elements(ngsolve.BND), flags):
+            self.__mesh.SetRefinementFlag(ei=element, refine=flag)
+        self.refine()

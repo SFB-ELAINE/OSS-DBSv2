@@ -1,4 +1,4 @@
-from src.fastfouriertransform import FFTSineWave, Signal, FastFourierTransform
+from src.fastfouriertransform import FFTWave, Signal, FastFourierTransform
 import numpy as np
 
 
@@ -16,28 +16,28 @@ class MockSignal(Signal):
 class TestFFTSineWave:
 
     def test_greater_than_amplitude(self):
-        sine1 = FFTSineWave(amplitude=1.0, frequency=1.0)
-        sine2 = FFTSineWave(amplitude=2.0, frequency=1.0)
+        sine1 = FFTWave(amplitude=1.0, frequency=1.0)
+        sine2 = FFTWave(amplitude=2.0, frequency=1.0)
         assert sine1 < sine2 and not sine1 > sine2
 
     def test_greater_than_amplitude_cpmplex(self):
-        sine1 = FFTSineWave(amplitude=1.0 + 0.0j, frequency=1.0)
-        sine2 = FFTSineWave(amplitude=3.0 + 4.0j, frequency=1.0)
+        sine1 = FFTWave(amplitude=1.0 + 0.0j, frequency=1.0)
+        sine2 = FFTWave(amplitude=3.0 + 4.0j, frequency=1.0)
         assert sine1 < sine2 and not sine1 > sine2
 
     def test_greater_than_frequency(self):
-        sine1 = FFTSineWave(amplitude=1.0, frequency=2.0)
-        sine2 = FFTSineWave(amplitude=1.0, frequency=1.0)
+        sine1 = FFTWave(amplitude=1.0, frequency=2.0)
+        sine2 = FFTWave(amplitude=1.0, frequency=1.0)
         assert sine1 < sine2 and not sine1 > sine2
 
     def test_greater_than_identical(self):
-        sine1 = FFTSineWave(amplitude=1.0, frequency=1.0)
+        sine1 = FFTWave(amplitude=1.0, frequency=1.0)
         assert not sine1 < sine1 and not sine1 > sine1
 
     def test_sorted(self):
-        sine1 = FFTSineWave(amplitude=1.0, frequency=5.0)
-        sine2 = FFTSineWave(amplitude=2.0, frequency=2.0)
-        sine3 = FFTSineWave(amplitude=1.0, frequency=3.0)
+        sine1 = FFTWave(amplitude=1.0, frequency=5.0)
+        sine2 = FFTWave(amplitude=2.0, frequency=2.0)
+        sine3 = FFTWave(amplitude=1.0, frequency=3.0)
         desired = [sine1, sine3, sine2]
         assert sorted([sine1, sine2, sine3]) == desired
 

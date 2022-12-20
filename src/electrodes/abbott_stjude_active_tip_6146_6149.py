@@ -1,10 +1,10 @@
 # Abbott/St Jude Active Tip 6146-6149
-from src.electrodes.abstract_electrode import AbstractElectrode
+from src.electrodes.abstract_electrode import Electrode
 import netgen
 import numpy as np
 
 
-class AbbottStjudeActiveTip6146_6149(AbstractElectrode):
+class AbbottStjudeActiveTip6146_6149(Electrode):
     """Abbott/St Jude Active Tip 6146-6149 electrode.
 
     Attributes

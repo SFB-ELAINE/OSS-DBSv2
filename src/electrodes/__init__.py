@@ -1,4 +1,4 @@
-from src.electrodes.abstract_electrode import AbstractElectrode
+from src.electrodes.abstract_electrode import Electrode
 from src.electrodes.abbott_stjude_active_tip_6142_6145 \
     import AbbottStjudeActiveTip6142_6145
 from src.electrodes.abbott_stjude_active_tip_6146_6149 \
@@ -18,7 +18,7 @@ from src.electrodes.micro_probes_SNEX100 import MicroProbesSNEX_100
 from src.electrodes.electrodes import ElectrodeCreator
 
 
-__all__ = ('AbstractElectrode',
+__all__ = ('Electrode',
            'AbbottStjudeActiveTip6142_6145',
            'AbbottStjudeActiveTip6146_6149',
            'AbbottStjudeDirected6172',

@@ -1,10 +1,10 @@
 # Boston Scientific (Marlborough, Massachusetts, USA) vercise
-from src.electrodes.abstract_electrode import AbstractElectrode
+from src.electrodes.abstract_electrode import Electrode
 import netgen
 import numpy as np
 
 
-class BostonScientificVercise(AbstractElectrode):
+class BostonScientificVercise(Electrode):
     """Boston Scientific (Marlborough, Massachusetts, USA) vercise electrode.
 
     Attributes

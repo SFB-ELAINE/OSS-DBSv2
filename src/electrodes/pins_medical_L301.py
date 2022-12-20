@@ -1,10 +1,10 @@
 # PINS Medical L301
-from src.electrodes.abstract_electrode import AbstractElectrode
+from src.electrodes.abstract_electrode import Electrode
 import netgen
 import numpy as np
 
 
-class PINSMedicalL301(AbstractElectrode):
+class PINSMedicalL301(Electrode):
     """PINS Medical L301 electrode.
 
     Attributes

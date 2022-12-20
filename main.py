@@ -2,7 +2,6 @@
 from src.brain_model import BrainModel
 from src.conductivity import Conductivity
 from src.input import Input
-from src.mesh_refinement import MeshRefinement
 from src.strategy import AllFrequenciesStrategy, StrategyOctavevands
 import ngsolve
 import sys
@@ -15,8 +14,8 @@ def main(json_path: str) -> None:
     brain_model.add_electrodes(input.electrodes())
     mesh = brain_model.generate_mesh(input.mesh_order())
     boundaries = list(input.boundary_values().keys())
-    MeshRefinement(mesh).refine_by_boundaries(boundaries)
-    # MeshRefinement(mesh).refine_by_mri(mri)
+    mesh.refine_by_boundaries(boundaries)
+    mesh.refine_by_mri(input.mri())
     conductivity = Conductivity(input.mri())
 
     vc_type = input.volume_conductor_type()

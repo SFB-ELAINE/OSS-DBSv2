@@ -1,4 +1,4 @@
-from src.dielectric_model import ModelCreator
+from src.dielectric_model import ColeColeFourModelCreator
 from src.brainsubstance import Material
 import numpy as np
 import pytest
@@ -21,7 +21,7 @@ class TestModel1Permitivity:
     @pytest.mark.parametrize('material, frequency, permitivity, tolerance',
                              TESTDATA)
     def test_permitivity(self, material, frequency, permitivity, tolerance):
-        model = ModelCreator.create(material)
+        model = ColeColeFourModelCreator.create(material)
         actual = model.permitivity(omega=2*np.pi*frequency)
         np.testing.assert_allclose(actual, permitivity, atol=tolerance)
 
@@ -43,6 +43,6 @@ class TestModel1Conductivity:
     @pytest.mark.parametrize('material, frequency, conductivity, tolerance',
                              TESTDATA)
     def test_permitivity(self, material, frequency, conductivity, tolerance):
-        model = ModelCreator.create(material)
+        model = ColeColeFourModelCreator.create(material)
         actual = model.conductivity(omega=2*np.pi*frequency)
         np.testing.assert_allclose(actual, conductivity, atol=tolerance)
