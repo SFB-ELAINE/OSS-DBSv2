@@ -8,6 +8,7 @@ class Nifti1Image:
 
     def __init__(self, file_path: str) -> None:
         self._image = self.__load_image(file_path)
+        self._offset = (0, 0, 0)
 
     def data_map(self) -> np.memmap:
         return self._image.get_fdata()
@@ -16,7 +17,7 @@ class Nifti1Image:
         starts = np.array([self._image.header['qoffset_x'],
                            self._image.header['qoffset_y'],
                            self._image.header['qoffset_z']
-                           ], dtype=np.float64)
+                           ], dtype=np.float64) + self._offset
         shape = np.array(self.xyz_shape(), dtype=np.float32)
         ends = starts + shape * self.voxel_size()
         return tuple(starts * self.__scaling()), tuple(ends * self.__scaling())
@@ -24,7 +25,10 @@ class Nifti1Image:
     def header(self) -> nibabel.nifti1.Nifti1Header:
         return self._image.header
 
-    def voxel_size(self):
+    def set_offset(self, offset: tuple) -> None:
+        self._offset = offset
+
+    def voxel_size(self) -> tuple:
         return self._image.header.get_zooms()[:self.__VOXEL_DIMENSION]
 
     def xyz_shape(self) -> tuple:

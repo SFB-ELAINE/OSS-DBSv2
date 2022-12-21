@@ -1,12 +1,12 @@
 
-from src.brain_model import BrainModel, MagneticResonanceImage
+from src.brain_model import BrainModel
 from src.voxels import Voxels
 from src.brainsubstance import Material
 import numpy as np
 import pytest
 
 
-class MockMRI(MagneticResonanceImage):
+class MockMRI():
 
     def __init__(self) -> None:
         self.__data = np.array([3, 2, 1, 3, 2, 1, 0, 0]).reshape((2, 2, 2))

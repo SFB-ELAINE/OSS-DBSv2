@@ -15,7 +15,7 @@ def main(json_path: str) -> None:
     mesh = brain_model.generate_mesh(input.mesh_order())
     boundaries = list(input.boundary_values().keys())
     mesh.refine_by_boundaries(boundaries)
-    mesh.refine_by_mri(input.mri())
+    # mesh.refine_by_mri(input.mri())
     conductivity = Conductivity(input.mri())
 
     vc_type = input.volume_conductor_type()
