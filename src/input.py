@@ -29,6 +29,9 @@ class Input:
 
     def __init__(self, json_path: str) -> None:
         self.__input = self.__load_json(path=json_path)
+        mri_path = self.__input['MagneticResonanceImage']['Path']
+        mri = MagneticResonanceImage(mri_path)
+        self.__offset = np.multiply(mri.bounding_box()[0], -1)
 
     @staticmethod
     def __load_json(path):
@@ -45,10 +48,20 @@ class Input:
                       Material.CSF: coding['CerebrospinalFluid'],
                       Material.UNKNOWN: coding['Unknown']}
         mri_path = self.__input['MagneticResonanceImage']['Path']
-        return MagneticResonanceImage(mri_path, mri_coding)
+        mri = MagneticResonanceImage(mri_path, mri_coding)
+        mri.set_offset(self.__offset)
+        return mri
 
     def electrodes(self):
+        self.__shift_electrodes()
         return ElectrodeGenerator.electrodes(self.__input['Electrodes'])
+
+    def __shift_electrodes(self):
+        start = self.__offset
+        for index in range(len(self.__input['Electrodes'])):
+            translation = self.__input['Electrodes'][index]['Translation']
+            new_translation = np.add(translation, start)
+            self.__input['Electrodes'][index]['Translation'] = new_translation
 
     def boundary_values(self):
         boundaries = {
@@ -72,12 +85,11 @@ class Input:
     def region_of_interest(self):
 
         if not self.__input['RegionOfInterest']['Active']:
-            start, end = self.mri().bounding_box()
-            return Region(start=start, end=end)
+            mri_start, mri_end = self.mri().bounding_box()
+            return Region(start=mri_start, end=mri_end)
 
         shape = self.__input['RegionOfInterest']['Shape']
-        center = self.__input['RegionOfInterest']['Center']
-
+        center = self.__input['RegionOfInterest']['Center'] + self.__offset
         start = center - np.divide(shape, 2)
         end = start + shape
         return Region(start=tuple(start.astype(int)),
