@@ -1,6 +1,7 @@
 # Abbott/St Jude Directed 6173
 from ossdbs.electrodes.abstract_electrode import Electrode
 import numpy as np
+import netgen
 
 
 class AbbottStjudeDirected6173(Electrode):
