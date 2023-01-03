@@ -1,4 +1,4 @@
-from src.fastfouriertransform import FFTWave, Signal, FastFourierTransform
+from ossdbs.fastfouriertransform import FFTWave, Signal, FastFourierTransform
 import numpy as np
 
 

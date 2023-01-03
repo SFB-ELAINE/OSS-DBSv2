@@ -1,4 +1,4 @@
-from src.signals import RectangleSignal, TriangleSignal, TrapzoidSignal
+from ossdbs.signals import RectangleSignal, TriangleSignal, TrapzoidSignal
 import numpy as np
 import pytest
 

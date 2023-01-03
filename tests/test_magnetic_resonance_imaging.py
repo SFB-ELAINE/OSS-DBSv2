@@ -3,9 +3,9 @@ import nibabel
 import pytest
 import numpy as np
 
-from src.brain_imaging import MagneticResonanceImage
-from src.brainsubstance import Material
-from src.voxels import Voxels
+from ossdbs.brain_imaging import MagneticResonanceImage
+from ossdbs.brainsubstance import Material
+from ossdbs.voxels import Voxels
 
 
 class TestMagneticResonanceImage:
