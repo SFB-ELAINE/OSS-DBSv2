@@ -1,7 +1,7 @@
 
-from src.brain_geometry import BrainGeometry
-from src.voxels import Voxels
-from src.brainsubstance import Material
+from ossdbs.brain_geometry import BrainGeometry
+from ossdbs.voxels import Voxels
+from ossdbs.brainsubstance import Material
 import numpy as np
 import pytest
 
