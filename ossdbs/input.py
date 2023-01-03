@@ -15,7 +15,8 @@ from ossdbs.electrodes import PINSMedicalL301
 from ossdbs.electrodes import PINSMedicalL302
 from ossdbs.electrodes import PINSMedicalL303
 from ossdbs.electrodes import MicroProbesCustomRodent
-from ossdbs.signals import RectangleSignal, TrapzoidSignal, TriangleSignal, Signal
+from ossdbs.signals import Signal
+from ossdbs.signals import RectangleSignal, TrapzoidSignal, TriangleSignal
 from ossdbs.volume_conductor_model import VolumeConductorQS, VolumeConductorEQS
 
 
