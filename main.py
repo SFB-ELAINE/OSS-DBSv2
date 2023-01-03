@@ -1,5 +1,5 @@
 
-from src.brain_model import BrainModel
+from src.brain_geometry import BrainGeometry
 from src.conductivity import Conductivity
 from src.input import Input
 from src.strategy import AllFrequenciesStrategy, StrategyOctavevands
@@ -10,8 +10,8 @@ import sys
 def main(json_path: str) -> None:
 
     input = Input(json_path=json_path)
-    brain_model = BrainModel(region=input.region_of_interest())
-    brain_model.add_electrodes(input.electrodes())
+    brain_model = BrainGeometry(region=input.region_of_interest())
+    brain_model.set_electrodes(input.electrodes())
     mesh = brain_model.generate_mesh(input.mesh_order())
     boundaries = list(input.boundary_values().keys())
     mesh.refine_by_boundaries(boundaries)

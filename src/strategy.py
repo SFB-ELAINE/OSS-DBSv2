@@ -31,10 +31,8 @@ class AllFrequenciesStrategy:
                                                         wave.frequency)
             potential_sum.vec.data += potential.vec.data * amplitude
 
-        mesh = self.__volume_conductor.mesh
-        return Output(mesh=mesh.ngsolvemesh(),
-                          potential=potential,
-                          density=density)
+        mesh = self.__volume_conductor.mesh.ngsolvemesh()
+        return Output(mesh=mesh, potential=potential, density=density)
 
 
 class StrategyOctavevands:
@@ -85,18 +83,19 @@ class Output:
 
     def save(self, path: str = ''):
 
-        file_name = os.path.basename(path)
-
-        if not file_name:
-            file_name = 'result'
-
+        file_base_name = os.path.basename(path)
         file_dir = os.path.dirname(path)
+
+        if not file_base_name:
+            file_base_name = 'result'
 
         if not file_dir:
             file_dir = 'result'
 
         if not os.path.exists(file_dir):
             os.makedirs(file_dir)
+
+        filename = os.path.join(file_dir, file_base_name)
 
         field = ngsolve.grad(self.__potential)
         Power = ngsolve.Integrate(field * ngsolve.Conj(self.__density),
@@ -116,6 +115,6 @@ class Output:
                                  "field_imag",
                                  "current_density_real",
                                  "current_density_imag"],
-                          filename=os.path.join(file_dir, file_name),
+                          filename=filename,
                           subdivision=0
                           ).Do()
