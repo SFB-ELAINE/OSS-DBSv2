@@ -1,14 +1,18 @@
 # Ignore folder
 __pycache__/
 .env/
+venv/
 .tox/
 .vscode/
 htmlcov/
 build/
 dist/
 *.egg-info/
+_build/
 
 # Ignore file
 *.pyc
 .coverage
 .coveragerc
+*.vtu
+
