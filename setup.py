@@ -23,7 +23,7 @@ setuptools.setup(
     description="Open-source DBS",
     packages=["ossdbs"],
     package_dir={"ossdbs": "ossdbs/"},
-    scripts=["ossdbs/scripts/ossdbs"],
+    scripts=["ossdbs/scripts/ossdbs.py"],
     python_requires='>=3.8',
     install_requires=install_requires,
 )

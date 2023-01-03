@@ -1,6 +1,6 @@
 
 from ossdbs.brainsubstance import Material
-from ossdbs.brain_imaging.magnetic_resonance_imaging import MagneticResonanceImage
+from ossdbs.brain_imaging.mri import MagneticResonanceImage
 from ossdbs.dielectric_model.dielectric_model_var1 import ColeColeFourModelCreator
 from ossdbs.voxels import Voxels
 import numpy as np

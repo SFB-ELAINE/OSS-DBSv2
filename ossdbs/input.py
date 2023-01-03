@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 import json
 import numpy as np
-from ossdbs.brain_imaging.magnetic_resonance_imaging import MagneticResonanceImage
+from ossdbs.brain_imaging.mri import MagneticResonanceImage
 from ossdbs.brainsubstance import Material
 from ossdbs.electrodes import AbbottStjudeActiveTip6142_6145
 from ossdbs.electrodes import AbbottStjudeActiveTip6146_6149
