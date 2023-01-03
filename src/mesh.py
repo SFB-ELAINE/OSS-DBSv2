@@ -51,7 +51,7 @@ class Mesh:
         limit = 0.5 * max(errors)
         return [errors[el.nr] > limit for el in self.__mesh.Elements()]
 
-    def elements_at_position(self, position: Voxels) -> None:
+    def __elements_at_position(self, position: Voxels) -> None:
         space = ngsolve.L2(self.__mesh, order=0)
         grid_function = ngsolve.GridFunction(space=space)
         cf = ngsolve.VoxelCoefficient(start=tuple(position.start),
@@ -81,13 +81,13 @@ class Mesh:
     def refine_by_mri(self, mri: MagneticResonanceImage) -> None:
         maximum_size = min(mri.voxel_size())
         csf_voxel = mri.material_distribution(Material.CSF)
-        flags = np.logical_and(self.elements_at_position(csf_voxel),
+        flags = np.logical_and(self.__elements_at_position(csf_voxel),
                                self.element_sizes() > maximum_size)
         while np.any(flags) and self.sobolev_space().ndof < 1e5:
             self.set_volume_refinement_flags(flags)
             self.refine()
             csf_voxel = mri.material_distribution(Material.CSF)
-            flags = np.logical_and(self.elements_at_position(csf_voxel),
+            flags = np.logical_and(self.__elements_at_position(csf_voxel),
                                    self.element_sizes() > maximum_size)
 
     def refine_by_boundaries(self, boundaries: list) -> None:

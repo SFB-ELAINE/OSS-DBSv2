@@ -1,5 +1,5 @@
 
-from src.brain_model import BrainModel
+from src.brain_geometry import BrainGeometry
 from src.voxels import Voxels
 from src.brainsubstance import Material
 import numpy as np
@@ -26,7 +26,7 @@ class MockMRI():
 class TestDielectricDistribution:
 
     def test_complex_conductivity(self):
-        model = BrainModel(mri=MockMRI())
+        model = BrainGeometry(mri=MockMRI())
         actual = model.conductivity(frequency=0)
         data = np.array([[[2.0 + 0j, 0.02 + 0j], [0.02 + 0j, 2.0 + 0j]],
                          [[0.02 + 0j, 0.02 + 0j], [0.02 + 0j, 0.02 + 0j]]])
