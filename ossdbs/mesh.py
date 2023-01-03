@@ -1,6 +1,6 @@
 
 from typing import List
-from ossdbs.brain_imaging.magnetic_resonance_imaging import MagneticResonanceImage
+from ossdbs.brain_imaging.mri import MagneticResonanceImage
 from ossdbs.brainsubstance import Material
 from ossdbs.voxels import Voxels
 import ngsolve
