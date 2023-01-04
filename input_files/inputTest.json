@@ -57,6 +57,7 @@
             "Center": [14.937, -13.613, -5.123],
             "Shape": [80, 80, 80]
         },
+    "SpectrumMode": "NoTruncation",
     "StimulationSignal":
         {
             "Type": "Rectangle",

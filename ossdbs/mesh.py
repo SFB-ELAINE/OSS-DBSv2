@@ -16,6 +16,7 @@ class Mesh:
         self.__mesh = ngsolve.Mesh(ngmesh=geometry.GenerateMesh())
         self.__mesh.Curve(order=order)
         self.__order = order
+        self.__complex = False
 
     def boundaries(self, name: str) -> ngsolve.comp.Region:
         return self.__mesh.Boundaries(pattern=name)
@@ -27,10 +28,10 @@ class Mesh:
             -> ngsolve.fem.CoefficientFunction:
         return self.__mesh.BoundaryCF(values=boundaries)
 
-    def flux_space(self, complex: bool = True) -> ngsolve.comp.HDiv:
+    def flux_space(self) -> ngsolve.comp.HDiv:
         return ngsolve.HDiv(mesh=self.__mesh,
                             order=self.__order-1,
-                            complex=complex)
+                            complex=self.__complex)
 
     def materials(self) -> tuple:
         return self.__mesh.GetMaterials()
@@ -51,6 +52,9 @@ class Mesh:
         limit = 0.5 * max(errors)
         return [errors[el.nr] > limit for el in self.__mesh.Elements()]
 
+    def set_complex(self, value: bool):
+        self.__complex = value
+
     def __elements_at_position(self, position: Voxels) -> None:
         space = ngsolve.L2(self.__mesh, order=0)
         grid_function = ngsolve.GridFunction(space=space)
@@ -61,20 +65,20 @@ class Mesh:
         grid_function.Set(cf)
         return grid_function.vec.FV().NumPy()
 
-    def element_sizes(self) -> list:
+    def __element_sizes(self) -> list:
         cf = ngsolve.CoefficientFunction(1)
         volumes = ngsolve.Integrate(cf=cf, mesh=self.__mesh, element_wise=True)
         return (6 * volumes.NumPy()) ** (1 / 3)
 
-    def sobolev_space(self, complex: bool = False) -> ngsolve.comp.H1:
+    def sobolev_space(self) -> ngsolve.comp.H1:
         dirichlet = '|'.join(boundary for boundary in self.get_boundaries())
         return ngsolve.H1(mesh=self.__mesh,
                           order=self.__order,
                           dirichlet=dirichlet,
-                          complex=complex,
+                          complex=self.__complex,
                           wb_withedges=False)
 
-    def set_volume_refinement_flags(self, flags: List[bool]) -> None:
+    def __set_volume_refinement_flags(self, flags: List[bool]) -> None:
         for element, flag in zip(self.__mesh.Elements(ngsolve.VOL), flags):
             self.__mesh.SetRefinementFlag(ei=element, refine=flag)
 
@@ -82,13 +86,13 @@ class Mesh:
         maximum_size = min(mri.voxel_size())
         csf_voxel = mri.material_distribution(Material.CSF)
         flags = np.logical_and(self.__elements_at_position(csf_voxel),
-                               self.element_sizes() > maximum_size)
+                               self.__element_sizes() > maximum_size)
         while np.any(flags) and self.sobolev_space().ndof < 1e5:
-            self.set_volume_refinement_flags(flags)
+            self.__set_volume_refinement_flags(flags)
             self.refine()
             csf_voxel = mri.material_distribution(Material.CSF)
             flags = np.logical_and(self.__elements_at_position(csf_voxel),
-                                   self.element_sizes() > maximum_size)
+                                   self.__element_sizes() > maximum_size)
 
     def refine_by_boundaries(self, boundaries: list) -> None:
         elements = self.__mesh.Elements(ngsolve.BND)

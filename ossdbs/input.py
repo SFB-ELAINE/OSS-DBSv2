@@ -17,7 +17,7 @@ from ossdbs.electrodes import PINSMedicalL303
 from ossdbs.electrodes import MicroProbesCustomRodent
 from ossdbs.signals import Signal
 from ossdbs.signals import RectangleSignal, TrapzoidSignal, TriangleSignal
-from ossdbs.volume_conductor_model import VolumeConductorQS, VolumeConductorEQS
+from ossdbs.spectrum_modes import Octavevands, NoTruncationTest
 
 
 @dataclass
@@ -78,10 +78,10 @@ class Input:
     def output_path(self):
         return self.__input['OutputPath']
 
-    def volume_conductor_type(self):
-        if self.__input['FEMMode'] == 'EQS':
-            return VolumeConductorEQS
-        return VolumeConductorQS
+    def complex_mode(self):
+        if not self.__input['FEMMode'] == 'EQS':
+            return False
+        return True
 
     def region_of_interest(self):
 
@@ -95,6 +95,11 @@ class Input:
         end = start + shape
         return Region(start=tuple(start.astype(int)),
                       end=tuple(end.astype(int)))
+
+    def spectrum_mode(self):
+        return {'NoTruncation': NoTruncationTest(),
+                'OctaveBand': Octavevands()
+                }[self.__input['SpectrumMode']]
 
 
 class ElectrodeGenerator:
