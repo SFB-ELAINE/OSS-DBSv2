@@ -3,15 +3,16 @@
 
 import ngsolve
 import sys
+
 try:
     import ossdbs
 except ImportError:
     print("ossdbs has not been properly installed")
 
+from ossdbs.brain_geometry import BrainGeometry
 from ossdbs.conductivity import Conductivity
 from ossdbs.input import Input
-from ossdbs.strategy import AllFrequenciesStrategy
-from ossdbs.brain_geometry import BrainGeometry
+from ossdbs.volume_conductor_model import VolumeConductor
 
 
 def main(json_path: str) -> None:
@@ -22,15 +23,15 @@ def main(json_path: str) -> None:
     mesh = brain_model.generate_mesh(input.mesh_order())
     boundaries = list(input.boundary_values().keys())
     mesh.refine_by_boundaries(boundaries)
-    # mesh.refine_by_mri(input.mri())
     conductivity = Conductivity(input.mri())
-
-    vc_type = input.volume_conductor_type()
-    volume_conductor = vc_type(conductivity=conductivity, mesh=mesh)
-    output = AllFrequenciesStrategy(boundary_values=input.boundary_values(),
-                                    signal=input.stimulation_signal(),
-                                    volume_conductor=volume_conductor
-                                    ).result()
+    conductivity.set_complex(input.complex_mode())
+    mesh.set_complex(input.complex_mode())
+    volume_conductor = VolumeConductor(conductivity=conductivity, mesh=mesh)
+    strategy = input.spectrum_mode()
+    output = strategy.result(boundary_values=input.boundary_values(),
+                             signal=input.stimulation_signal(),
+                             volume_conductor=volume_conductor
+                             )
     output.save(input.output_path())
 
 

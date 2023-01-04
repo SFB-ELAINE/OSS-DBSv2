@@ -43,6 +43,7 @@
             "Center": [0, 0, 0],
             "Shape": [1, 1, 1]
         },
+    "SpectrumMode": "NoTruncation",
     "StimulationSignal":
         {
             "Type": "Rectangle",
