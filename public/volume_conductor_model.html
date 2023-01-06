@@ -1,0 +1,408 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Volum Conductor Model &mdash; OSS-DBS /beta documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/sphinx_highlight.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Examples2" href="example2.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> OSS-DBS
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="start.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Volum Conductor Model</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-ossdbs.volume_conductor_model">ossdbs.volume_conductor_model module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#ossdbs.volume_conductor_model.LaplaceEquation"><code class="docutils literal notranslate"><span class="pre">LaplaceEquation</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#ossdbs.volume_conductor_model.LaplaceEquation.solve_bvp"><code class="docutils literal notranslate"><span class="pre">LaplaceEquation.solve_bvp()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#ossdbs.volume_conductor_model.Potential"><code class="docutils literal notranslate"><span class="pre">Potential</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#ossdbs.volume_conductor_model.Potential.error"><code class="docutils literal notranslate"><span class="pre">Potential.error()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#ossdbs.volume_conductor_model.PotentialEQ"><code class="docutils literal notranslate"><span class="pre">PotentialEQ</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#ossdbs.volume_conductor_model.PotentialEQ.error"><code class="docutils literal notranslate"><span class="pre">PotentialEQ.error()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#ossdbs.volume_conductor_model.PotentialEQS"><code class="docutils literal notranslate"><span class="pre">PotentialEQS</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#ossdbs.volume_conductor_model.PotentialEQS.error"><code class="docutils literal notranslate"><span class="pre">PotentialEQS.error()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#ossdbs.volume_conductor_model.VolumeConductor"><code class="docutils literal notranslate"><span class="pre">VolumeConductor</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#ossdbs.volume_conductor_model.VolumeConductor.evaluate_potential"><code class="docutils literal notranslate"><span class="pre">VolumeConductor.evaluate_potential()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#ossdbs.volume_conductor_model.VolumeConductorEQS"><code class="docutils literal notranslate"><span class="pre">VolumeConductorEQS</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#ossdbs.volume_conductor_model.VolumeConductorEQS.mesh"><code class="docutils literal notranslate"><span class="pre">VolumeConductorEQS.mesh</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ossdbs.volume_conductor_model.VolumeConductorEQS.conductivity"><code class="docutils literal notranslate"><span class="pre">VolumeConductorEQS.conductivity</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ossdbs.volume_conductor_model.VolumeConductorEQS.evaluate_potential"><code class="docutils literal notranslate"><span class="pre">VolumeConductorEQS.evaluate_potential()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id0"><code class="docutils literal notranslate"><span class="pre">VolumeConductorEQS.evaluate_potential()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#ossdbs.volume_conductor_model.VolumeConductorQS"><code class="docutils literal notranslate"><span class="pre">VolumeConductorQS</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#ossdbs.volume_conductor_model.VolumeConductorQS.mesh"><code class="docutils literal notranslate"><span class="pre">VolumeConductorQS.mesh</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ossdbs.volume_conductor_model.VolumeConductorQS.conductivity"><code class="docutils literal notranslate"><span class="pre">VolumeConductorQS.conductivity</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ossdbs.volume_conductor_model.VolumeConductorQS.evaluate_potential"><code class="docutils literal notranslate"><span class="pre">VolumeConductorQS.evaluate_potential()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#id1"><code class="docutils literal notranslate"><span class="pre">VolumeConductorQS.evaluate_potential()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">OSS-DBS</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Volum Conductor Model</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/volume_conductor_model.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <section id="volum-conductor-model">
+<h1>Volum Conductor Model<a class="headerlink" href="#volum-conductor-model" title="Permalink to this heading">¶</a></h1>
+<p>Read Docstrings from the code automaticly!</p>
+<section id="module-ossdbs.volume_conductor_model">
+<span id="ossdbs-volume-conductor-model-module"></span><h2>ossdbs.volume_conductor_model module<a class="headerlink" href="#module-ossdbs.volume_conductor_model" title="Permalink to this heading">¶</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.LaplaceEquation">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ossdbs.volume_conductor_model.</span></span><span class="sig-name descname"><span class="pre">LaplaceEquation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">space</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">H1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coefficient</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">CoefficientFunction</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#LaplaceEquation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ossdbs.volume_conductor_model.LaplaceEquation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.LaplaceEquation.solve_bvp">
+<span class="sig-name descname"><span class="pre">solve_bvp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GridFunction</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DynamicVectorExpression</span></span></span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#LaplaceEquation.solve_bvp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ossdbs.volume_conductor_model.LaplaceEquation.solve_bvp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solve boundary value problem.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.Potential">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ossdbs.volume_conductor_model.</span></span><span class="sig-name descname"><span class="pre">Potential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gridfunction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">GridFunction</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mesh</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#Potential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ossdbs.volume_conductor_model.Potential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.Potential.error">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">error</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#Potential.error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ossdbs.volume_conductor_model.Potential.error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.PotentialEQ">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ossdbs.volume_conductor_model.</span></span><span class="sig-name descname"><span class="pre">PotentialEQ</span></span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#PotentialEQ"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ossdbs.volume_conductor_model.PotentialEQ" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.PotentialEQ.error">
+<span class="sig-name descname"><span class="pre">error</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#PotentialEQ.error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ossdbs.volume_conductor_model.PotentialEQ.error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.PotentialEQS">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ossdbs.volume_conductor_model.</span></span><span class="sig-name descname"><span class="pre">PotentialEQS</span></span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#PotentialEQS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ossdbs.volume_conductor_model.PotentialEQS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.PotentialEQS.error">
+<span class="sig-name descname"><span class="pre">error</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#PotentialEQS.error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ossdbs.volume_conductor_model.PotentialEQS.error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.VolumeConductor">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ossdbs.volume_conductor_model.</span></span><span class="sig-name descname"><span class="pre">VolumeConductor</span></span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#VolumeConductor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ossdbs.volume_conductor_model.VolumeConductor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<dl class="py method">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.VolumeConductor.evaluate_potential">
+<em class="property"><span class="pre">abstract</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">evaluate_potential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boundaries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frequency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#VolumeConductor.evaluate_potential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ossdbs.volume_conductor_model.VolumeConductor.evaluate_potential" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.VolumeConductorEQS">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ossdbs.volume_conductor_model.</span></span><span class="sig-name descname"><span class="pre">VolumeConductorEQS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conductivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Conductivity</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#VolumeConductorEQS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ossdbs.volume_conductor_model.VolumeConductorEQS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ossdbs.volume_conductor_model.VolumeConductor" title="ossdbs.volume_conductor_model.VolumeConductor"><code class="xref py py-class docutils literal notranslate"><span class="pre">VolumeConductor</span></code></a></p>
+<p>Model for representing a volume conductor.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.VolumeConductorEQS.mesh">
+<span class="sig-name descname"><span class="pre">mesh</span></span><a class="headerlink" href="#ossdbs.volume_conductor_model.VolumeConductorEQS.mesh" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mesh</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.VolumeConductorEQS.conductivity">
+<span class="sig-name descname"><span class="pre">conductivity</span></span><a class="headerlink" href="#ossdbs.volume_conductor_model.VolumeConductorEQS.conductivity" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.VolumeConductorEQS.evaluate_potential">
+<span class="sig-name descname"><span class="pre">evaluate_potential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conductivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#VolumeConductorEQS.evaluate_potential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ossdbs.volume_conductor_model.VolumeConductorEQS.evaluate_potential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the electric potential of volume conductor.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">evaluate_potential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boundaries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frequency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">GridFunction</span></span></span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#VolumeConductorEQS.evaluate_potential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate electrical potential of volume conductor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>return</strong> – potential, error</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.VolumeConductorQS">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">ossdbs.volume_conductor_model.</span></span><span class="sig-name descname"><span class="pre">VolumeConductorQS</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conductivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Conductivity</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#VolumeConductorQS"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ossdbs.volume_conductor_model.VolumeConductorQS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#ossdbs.volume_conductor_model.VolumeConductor" title="ossdbs.volume_conductor_model.VolumeConductor"><code class="xref py py-class docutils literal notranslate"><span class="pre">VolumeConductor</span></code></a></p>
+<p>Model for representing a volume conductor.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.VolumeConductorQS.mesh">
+<span class="sig-name descname"><span class="pre">mesh</span></span><a class="headerlink" href="#ossdbs.volume_conductor_model.VolumeConductorQS.mesh" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Mesh</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.VolumeConductorQS.conductivity">
+<span class="sig-name descname"><span class="pre">conductivity</span></span><a class="headerlink" href="#ossdbs.volume_conductor_model.VolumeConductorQS.conductivity" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="ossdbs.volume_conductor_model.VolumeConductorQS.evaluate_potential">
+<span class="sig-name descname"><span class="pre">evaluate_potential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conductivity</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#VolumeConductorQS.evaluate_potential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#ossdbs.volume_conductor_model.VolumeConductorQS.evaluate_potential" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate the electric potential of volume conductor.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="id1">
+<span class="sig-name descname"><span class="pre">evaluate_potential</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">boundaries</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frequency</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">GridFunction</span></span></span><a class="reference internal" href="_modules/ossdbs/volume_conductor_model.html#VolumeConductorQS.evaluate_potential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Evaluate electrical potential of volume conductor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>return</strong> – potential, error</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="example2.html" class="btn btn-neutral float-left" title="Examples2" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2022, SFB 1270 ELAINE.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

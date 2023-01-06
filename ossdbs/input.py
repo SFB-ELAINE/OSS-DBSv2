@@ -4,6 +4,7 @@ import json
 import numpy as np
 from ossdbs.brain_imaging.mri import MagneticResonanceImage
 from ossdbs.brainsubstance import Material
+from ossdbs.conductivity import Conductivity
 from ossdbs.electrodes import AbbottStjudeActiveTip6142_6145
 from ossdbs.electrodes import AbbottStjudeActiveTip6146_6149
 from ossdbs.electrodes import AbbottStjudeDirected6172
@@ -42,7 +43,7 @@ class Input:
     def mesh_order(self):
         return self.__input['MeshElementOrder']
 
-    def mri(self):
+    def conductivity(self):
         coding = self.__input['MagneticResonanceImage']['MaterialCoding']
         mri_coding = {Material.GRAY_MATTER: coding['GrayMatter'],
                       Material.WHITE_MATTER: coding['WhiteMatter'],
@@ -51,17 +52,16 @@ class Input:
         mri_path = self.__input['MagneticResonanceImage']['Path']
         mri = MagneticResonanceImage(mri_path, mri_coding)
         mri.set_offset(self.__offset)
-        return mri
+        return Conductivity(mri)
 
     def electrodes(self):
         self.__shift_electrodes()
-        return ElectrodeGenerator.electrodes(self.__input['Electrodes'])
+        return ElectrodeFactory.create_electrodes(self.__input['Electrodes'])
 
     def __shift_electrodes(self):
-        start = self.__offset
         for index in range(len(self.__input['Electrodes'])):
             translation = self.__input['Electrodes'][index]['Translation']
-            new_translation = np.add(translation, start)
+            new_translation = np.add(translation, self.__offset)
             self.__input['Electrodes'][index]['Translation'] = new_translation
 
     def boundary_values(self):
@@ -70,10 +70,10 @@ class Input:
                             'Body': electrode['Body']}
                            for electrode in self.__input['Electrodes']],
             'BrainSurface': self.__input['BrainSurface']}
-        return BoundaryGenerator.generate(boundaries)
+        return BoundaryFactory.generate(boundaries)
 
     def stimulation_signal(self):
-        return SignalGenerator.generate(self.__input['StimulationSignal'])
+        return SignalFactory.generate(self.__input['StimulationSignal'])
 
     def output_path(self):
         return self.__input['OutputPath']
@@ -102,7 +102,8 @@ class Input:
                 }[self.__input['SpectrumMode']]
 
 
-class ElectrodeGenerator:
+class ElectrodeFactory:
+    """Creates a list of Electrode objects."""
 
     ELECTRODES = {'AbbottStjudeActiveTip6142_6145':
                   AbbottStjudeActiveTip6142_6145,
@@ -133,7 +134,18 @@ class ElectrodeGenerator:
                   }
 
     @classmethod
-    def electrodes(cls, electrodes) -> list:
+    def create_electrodes(cls, electrodes: dict) -> list:
+        """create a list of Electrode objects.
+
+        Parameters
+        ----------
+        electrodes : dict
+
+        Returns
+        -------
+        list
+            Collection of electrode objects.
+        """
         return [cls.__create_electrode(parameters, idx)
                 for idx, parameters in enumerate(electrodes)]
 
@@ -151,8 +163,8 @@ class ElectrodeGenerator:
         return electrode
 
 
-class BoundaryGenerator:
-
+class BoundaryFactory:
+    """Creates a dictionary of boundaries and corresponding boundary values."""
     @classmethod
     def generate(cls, boundaries) -> dict:
         boundary_values = {}
@@ -176,7 +188,7 @@ class BoundaryGenerator:
         return values
 
 
-class SignalGenerator:
+class SignalFactory:
 
     SIGNALS = {'Rectangle': RectangleSignal,
                'Triangle': TriangleSignal,
