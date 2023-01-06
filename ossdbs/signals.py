@@ -3,19 +3,42 @@ import numpy as np
 
 
 class Signal(ABC):
-
+    """Template for Signals.
+    """
     @abstractmethod
     def generate_samples(self, sample_spacing: float) -> np.ndarray:
         pass
 
 
 class RectangleSignal(Signal):
+    """Creates rectangular signal.
+
+    Parameters
+    ----------
+    frequency : float
+        Frequency [Hz] of the signal.
+    pulse_width : float
+        Relative pulse width for omne period.
+    """
 
     def __init__(self, frequency: float, pulse_width: float) -> None:
         self.frequency = frequency
         self.pulse_width = pulse_width
 
     def generate_samples(self, sample_spacing: float) -> np.ndarray:
+        """Generate samples which follow the signal form.
+
+        Parameters
+        ----------
+        sample_spacing : float
+            Timestep [s] between two samples.
+
+        Returns
+        -------
+        np.ndarray
+            Samples for one period.
+        """
+
         spacing = sample_spacing * self.frequency
         n_samples = int(1 / spacing) if 0 < spacing < 1 else 1
         pulse = self.__create_pulse(n_samples)
@@ -28,12 +51,33 @@ class RectangleSignal(Signal):
 
 
 class TriangleSignal(Signal):
+    """Creates triangle signal.
+
+    Parameters
+    ----------
+    frequency : float
+        Frequency [Hz] of the signal.
+    pulse_width : float
+        Relative pulse width for omne period.
+    """
 
     def __init__(self, frequency: float, pulse_width: float) -> None:
         self.frequency = frequency
         self.pulse_width = pulse_width
 
     def generate_samples(self, sample_spacing: float) -> np.ndarray:
+        """Generate samples which follow the signal form.
+
+        Parameters
+        ----------
+        sample_spacing : float
+            Timestep [s] between two samples.
+
+        Returns
+        -------
+        np.ndarray
+            Samples for one period.
+        """
         spacing = sample_spacing * self.frequency
         n_samples = int(1 / spacing) if 0 < spacing < 1 else 1
         pulse = self.__create_pulse(n_samples)
@@ -51,6 +95,17 @@ class TriangleSignal(Signal):
 
 
 class TrapzoidSignal(Signal):
+    """Creates trapezoidal signal.
+
+    Parameters
+    ----------
+    frequency : float
+        Frequency [Hz] of the signal.
+    pulse_width : float
+        Relative width of the pulse for one period.
+    top_width : float
+        Relative width of the top of the trapezoidal pulse.
+    """
 
     def __init__(self,
                  frequency: float,
@@ -61,6 +116,18 @@ class TrapzoidSignal(Signal):
         self.top_width = top_width
 
     def generate_samples(self, sample_spacing: float) -> np.ndarray:
+        """Generate samples which follow the signal form.
+
+        Parameters
+        ----------
+        sample_spacing : float
+            Timestep [s] between two samples.
+
+        Returns
+        -------
+        np.ndarray
+            Samples for one period.
+        """
         spacing = sample_spacing * self.frequency
         n_samples = int(1 / spacing) if 0 < spacing < 1 else 1
         pulse = self.__create_pulse(n_samples)

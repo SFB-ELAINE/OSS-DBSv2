@@ -1,5 +1,6 @@
 
 from ossdbs.electrodes.abstract_electrode import Electrode
+from ossdbs.input import Region
 from ossdbs.mesh import Mesh
 from typing import List
 import netgen
@@ -7,15 +8,29 @@ import numpy as np
 
 
 class BrainGeometry:
+    """Represents a simplification of the brain form.
 
-    def __init__(self, region) -> None:
+    region : Region
+        Location in 3D space of the geometry
+    """
+    def __init__(self, region: Region) -> None:
         self.__region = region
         self.__electrodes = []
 
     def set_electrodes(self, electrodes: List[Electrode]) -> None:
+        """Set the electrodes, which are implemented in the brain.
+
+        electrodes : list of Electrode objects
+            Collection of electrodes.
+        """
         self.__electrodes = [electrode for electrode in electrodes]
 
     def generate_mesh(self, order: int = 2) -> Mesh:
+        """Generate a mesh based on the geometry and given mesh element order.
+
+        order : int
+            Order of mesh elements.
+        """
         geometry = self.__create_ellipsoid()
         geometry.bc('Brain')
         for electrode in self.__electrodes:

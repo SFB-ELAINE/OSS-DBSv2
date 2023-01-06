@@ -32,7 +32,7 @@ class SpectrumMode(ABC):
 class NoTruncationTest(SpectrumMode):
 
     def result(self, signal, boundary_values, volume_conductor):
-        waves = self.fft_waves(signal)
+        waves = self._fft_waves(signal)
         frequency = waves[77].frequency
 
         potential, density = volume_conductor.evaluate_potential(
@@ -60,7 +60,7 @@ class Octavevands(SpectrumMode):
     SQRT2 = np.sqrt(2)
 
     def result(self, signal, boundary_values, volume_conductor):
-        waves = self.fft_waves(signal)
+        waves = self._fft_waves(signal)
         indices = 2 ** np.arange(0, int(np.log2(len(waves) - 1)))
         octave_freq = [waves[idx].frequency for idx in indices]
 

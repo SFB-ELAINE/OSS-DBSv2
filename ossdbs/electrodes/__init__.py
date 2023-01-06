@@ -15,7 +15,6 @@ from ossdbs.electrodes.pins_medical_L302 import PINSMedicalL302
 from ossdbs.electrodes.pins_medical_L303 import PINSMedicalL303
 from ossdbs.electrodes.micro_probes_custom_rodent import MicroProbesCustomRodent
 from ossdbs.electrodes.micro_probes_SNEX100 import MicroProbesSNEX_100
-from ossdbs.electrodes.electrodes import ElectrodeCreator
 
 
 __all__ = ('Electrode',
