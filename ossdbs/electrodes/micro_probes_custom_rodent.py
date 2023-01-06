@@ -1,9 +1,10 @@
-from ossdbs.electrodes.abstract_electrode import AbstractElectrode
+
+from ossdbs.electrodes.abstract_electrode import Electrode
 import netgen
 import numpy as np
 
 
-class MicroProbesCustomRodent(AbstractElectrode):
+class MicroProbesCustomRodent(Electrode):
     """MicroProbes Custom Rodent electrode.
 
     Attributes
@@ -33,10 +34,13 @@ class MicroProbesCustomRodent(AbstractElectrode):
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
                  translation: tuple = (0, 0, 0)) -> None:
-        self.__translation = translation
+        self.__translation = tuple(translation)
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
         self.__boundaries = {'Body': 'Body', 'Contact_1': 'Contact_1'}
+
+    def rename_boundaries(self, boundaries: dict) -> None:
+        self.__boundaries.update(boundaries)
 
     def generate_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of electrode.
@@ -81,9 +85,3 @@ class MicroProbesCustomRodent(AbstractElectrode):
             contact = tip + lead
         contact.bc(self.__boundaries['Contact_1'])
         return contact
-
-    def rename_boundaries(self, boundaries: dict) -> None:
-        self.__boundaries.update(boundaries)
-
-    def boundaries(self) -> dict:
-        return self.__boundaries

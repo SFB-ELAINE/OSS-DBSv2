@@ -1,10 +1,10 @@
 # Boston Scientific (Marlborough, Massachusetts, USA) vercise
-from ossdbs.electrodes.abstract_electrode import AbstractElectrode
+from ossdbs.electrodes.abstract_electrode import Electrode
 import netgen
 import numpy as np
 
 
-class BostonScientificVercise(AbstractElectrode):
+class BostonScientificVerciseDirected(Electrode):
     """Boston Scientific (Marlborough, Massachusetts, USA) vercise electrode.
 
     Attributes
@@ -36,6 +36,7 @@ class BostonScientificVercise(AbstractElectrode):
                  direction: tuple = (0, 0, 1),
                  translation: tuple = (0, 0, 0)) -> None:
         self.__translation = translation
+        self.__rotation = rotation
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
         self.__boundaries = {'Body': 'Body',

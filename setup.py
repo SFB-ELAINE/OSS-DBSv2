@@ -7,7 +7,8 @@ with open("README.md", "r") as fh:
 here = os.path.abspath(os.path.dirname(__file__))
 
 about = {}
-with open(os.path.join(here, 'ossdbs', '__version__.py'), mode='r',
+with open(os.path.join(here, 'ossdbs', '__version__.py'),
+          mode='r',
           encoding='utf-8') as f:
     exec(f.read(), about)
 
@@ -22,7 +23,7 @@ setuptools.setup(
     description="Open-source DBS",
     packages=["ossdbs"],
     package_dir={"ossdbs": "ossdbs/"},
-    scripts=["ossdbs/scripts/ossdbs"],
+    scripts=["ossdbs/scripts/ossdbs.py"],
     python_requires='>=3.8',
     install_requires=install_requires,
 )
