@@ -1,10 +1,10 @@
 # MicroProbes SNEX 100 Concentric Bipolar Electrodes
-from ossdbs.electrodes.abstract_electrode import AbstractElectrode
+from ossdbs.electrodes.abstract_electrode import Electrode
 import netgen
 import numpy as np
 
 
-class MicroProbesSNEX_100(AbstractElectrode):
+class MicroProbesSNEX_100(Electrode):
     """MicroProbes SNEX 100 Concentric Bipolar electrode.
 
     Attributes

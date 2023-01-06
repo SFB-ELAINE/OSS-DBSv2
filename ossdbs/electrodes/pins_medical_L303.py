@@ -1,10 +1,10 @@
 # PINS Medical L303
-from ossdbs.electrodes.abstract_electrode import AbstractElectrode
+from ossdbs.electrodes.abstract_electrode import Electrode
 import netgen
 import numpy as np
 
 
-class PINSMedicalL303(AbstractElectrode):
+class PINSMedicalL303(Electrode):
     """PINS Medical L302 electrode.
 
     Attributes

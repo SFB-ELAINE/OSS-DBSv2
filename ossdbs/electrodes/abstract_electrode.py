@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import netgen
 
 
-class AbstractElectrode(ABC):
+class Electrode(ABC):
     """Deep Brain Simulation electrode.
 
     Attributes
@@ -26,7 +26,6 @@ class AbstractElectrode(ABC):
                  rotation: float = 0,
                  direction: tuple = (0, 0, 1),
                  translation: tuple = (0, 0, 0),
-                 # contact_values: list = None
                  ) -> None:
         pass
 

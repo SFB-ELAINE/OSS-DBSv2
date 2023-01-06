@@ -1,10 +1,10 @@
 # Medtronic 3387
-from ossdbs.electrodes.abstract_electrode import AbstractElectrode
+from ossdbs.electrodes.abstract_electrode import Electrode
 import netgen
 import numpy as np
 
 
-class Medtronic3387(AbstractElectrode):
+class Medtronic3387(Electrode):
     """Medtronic 3387 electrode.
 
     Attributes

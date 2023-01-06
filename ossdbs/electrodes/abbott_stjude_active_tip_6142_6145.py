@@ -1,10 +1,10 @@
 # Abbott/St Jude Active Tip 6142-6145
-from ossdbs.electrodes.abstract_electrode import AbstractElectrode
+from ossdbs.electrodes.abstract_electrode import Electrode
 import netgen
 import numpy as np
 
 
-class AbbottStjudeActiveTip6142_6145(AbstractElectrode):
+class AbbottStjudeActiveTip6142_6145(Electrode):
     """Abbott/St Jude Active Tip 6142-6149 electrode.
 
     Attributes
@@ -17,11 +17,6 @@ class AbbottStjudeActiveTip6142_6145(AbstractElectrode):
 
     translation : tuple
         Translation vector (x,y,z) of electrode.
-
-    Methods
-    -------
-    generate_geometry()
-        Generate geometry of electrode.
     """
 
     # dimensions [mm]

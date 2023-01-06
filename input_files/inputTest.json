@@ -1,0 +1,68 @@
+{
+    "BrainSurface":
+        {
+            "Active": false,
+            "Value": 0
+        },
+    "DiffusionTensorImage":
+        {
+            "Path": ""
+        },
+    "Electrodes": [
+        {
+            "Name": "BostonScientificVerciseDirected",
+            "Rotation": 6.412,
+            "Direction": [2.2314, 5.0661, 3.990],
+            "Translation": [14.5884, -14.7434, -9.0634],
+            "Contacts": {
+                "Active": [true,
+                           false,
+                           false,
+                           false,
+                           false,
+                           false,
+                           false,
+                           true],
+                "Value": [1.0,
+                          0.0,
+                          0.0,
+                          0.0,
+                          0.0,
+                          0.0,
+                          0.0,
+                          0.0]
+            },
+            "Body": {
+                "Active": false,
+                "Value": 0.0
+            }
+        }
+    ],
+    "FEMMode": "QS",
+    "MagneticResonanceImage":
+        {
+            "MaterialCoding": {
+                "Unknown": 0,
+                "GrayMatter": 1,
+                "WhiteMatter": 2,
+                "CerebrospinalFluid": 3
+            },
+            "Path": "./input_files/segmask.nii"
+        },
+    "MeshElementOrder": 2,
+    "OutputPath": "test_result",
+    "RegionOfInterest":
+        {
+            "Active": true,
+            "Center": [14.937, -13.613, -5.123],
+            "Shape": [80, 80, 80]
+        },
+    "SpectrumMode": "NoTruncation",
+    "StimulationSignal":
+        {
+            "Type": "Rectangle",
+            "Frequency": 130.0,
+            "PulseWidthPercentage": 0.0078,
+            "TopWidthPercentage": 0.0
+        }
+}

@@ -1,10 +1,10 @@
 # Abbott/St Jude Directed 6172
-from ossdbs.electrodes.abstract_electrode import AbstractElectrode
+from ossdbs.electrodes.abstract_electrode import Electrode
 import netgen
 import numpy as np
 
 
-class AbbottStjudeDirected6172(AbstractElectrode):
+class AbbottStjudeDirected6172(Electrode):
     """Abbott/St Jude Directed 6172 electrode.
 
     Attributes
@@ -99,7 +99,6 @@ class AbbottStjudeDirected6172(AbstractElectrode):
                                       h=self.CONTACT_LENGTH)
 
         contact_directed = self.__contact_directed()
-
         contacts = [contact.Move(vector_1),
                     contact_directed.Move(vector_2),
                     contact_directed.Rotate(axis, 120).Move(vector_2),
