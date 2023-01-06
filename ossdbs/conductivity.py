@@ -1,7 +1,7 @@
 
 from ossdbs.brainsubstance import Material
 from ossdbs.brain_imaging.mri import MagneticResonanceImage
-from ossdbs.dielectric_model import ColeColeFourModelCreator
+from ossdbs.dielectric_model import ColeColeFourModelFactory
 from ossdbs.voxels import Voxels
 import numpy as np
 
@@ -35,13 +35,13 @@ class Conductivity:
         """
 
         omega = 2 * np.pi * frequency
-        colecole_model = ColeColeFourModelCreator.create(Material.GRAY_MATTER)
+        colecole_model = ColeColeFourModelFactory.create(Material.GRAY_MATTER)
         default = colecole_model.conductivity(omega)
         data = np.full(self.__mri.xyz_shape(), default)
 
         for material in self.__MATERIALS:
             position = self.__mri.material_distribution(material=material)
-            colecole_model = ColeColeFourModelCreator.create(material)
+            colecole_model = ColeColeFourModelFactory.create(material)
             data[position.data] = colecole_model.conductivity(omega)
 
         start, end = self.__mri.bounding_box()

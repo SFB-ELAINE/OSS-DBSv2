@@ -31,7 +31,7 @@ class CerebroSpinalFluidParameters(DielectricParamters):
     tau: np.ndarray = np.array([7.96e-12, 1.592e-9, 159.155e-6, 5.305e-3])
 
 
-class ColeColeFourModelCreator():
+class ColeColeFourModelFactory():
     @classmethod
     def create(cls, material: Material) -> 'DielectricModel':
         material_parameters = {Material.CSF: CerebroSpinalFluidParameters,

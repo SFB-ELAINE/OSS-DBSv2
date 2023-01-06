@@ -25,6 +25,13 @@ class DielectricModel():
         self.__tau = parameters.tau
 
     def permitivity(self, omega: float) -> complex:
+        """Calculate the permitivity by the angular frequency omega.
+
+        Returns
+        -------
+        complex
+            Complex permitivity.
+        """
         divisor = 1 + (1j * omega * self.__tau) ** (1 - self.__alpha)
         eps_dispersion = self.__eps_inf + np.sum(self.__eps_delta / divisor)
 
@@ -34,7 +41,13 @@ class DielectricModel():
         return self.e0 * eps_dispersion + self.__sigma / (1j * omega)
 
     def conductivity(self, omega: float) -> complex:
+        """Calculate the conductivity by the angular frequency omega.
 
+        Returns
+        -------
+        complex
+            Complex conductivity.
+        """
         if omega == 0:
             return self.__sigma + 0j
 

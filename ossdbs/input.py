@@ -18,7 +18,7 @@ from ossdbs.electrodes import PINSMedicalL303
 from ossdbs.electrodes import MicroProbesCustomRodent
 from ossdbs.signals import Signal
 from ossdbs.signals import RectangleSignal, TrapzoidSignal, TriangleSignal
-from ossdbs.spectrum_modes import Octavevands, NoTruncationTest
+from ossdbs.spectrum_modes import Octavevands, NoTruncationTest, SpectrumMode
 
 
 @dataclass
@@ -28,6 +28,12 @@ class Region:
 
 
 class Input:
+    """Transform the input json.
+
+    Parameters
+    ----------
+    json_path : str
+    """
 
     def __init__(self, json_path: str) -> None:
         self.__input = self.__load_json(path=json_path)
@@ -41,9 +47,23 @@ class Input:
             return json.load(json_file)
 
     def mesh_order(self):
+        """Return order of mesh elements.
+
+        Returns
+        -------
+        int
+            Order of mesh elements.
+        """
         return self.__input['MeshElementOrder']
 
     def conductivity(self):
+        """Return the conductivity.
+
+        Returns
+        -------
+        Conductivity
+            Conductivity distribution in a given space.
+        """
         coding = self.__input['MagneticResonanceImage']['MaterialCoding']
         mri_coding = {Material.GRAY_MATTER: coding['GrayMatter'],
                       Material.WHITE_MATTER: coding['WhiteMatter'],
@@ -55,6 +75,13 @@ class Input:
         return Conductivity(mri)
 
     def electrodes(self):
+        """Return list of electrode objects.
+
+        Returns
+        -------
+        list
+            Collection of Electrode objects.
+        """
         self.__shift_electrodes()
         return ElectrodeFactory.create_electrodes(self.__input['Electrodes'])
 
@@ -65,6 +92,13 @@ class Input:
             self.__input['Electrodes'][index]['Translation'] = new_translation
 
     def boundary_values(self):
+        """Return the boundary values.
+
+        Returns
+        -------
+        dict
+            Boundary names and the associated values.
+        """
         boundaries = {
             'Electrodes': [{'Contacts': electrode['Contacts'],
                             'Body': electrode['Body']}
@@ -73,18 +107,43 @@ class Input:
         return BoundaryFactory.create_boundaries(boundaries)
 
     def stimulation_signal(self):
-        return SignalFactory.generate(self.__input['StimulationSignal'])
+        """Return stimulation signal.
+
+        Returns
+        -------
+        Signal
+        """
+        return SignalFactory.create_signal(self.__input['StimulationSignal'])
 
     def output_path(self):
+        """Return path for results.
+
+        Returns
+        -------
+        str
+            Directory for result files.
+        """
         return self.__input['OutputPath']
 
     def complex_mode(self):
+        """Return the state of the complex mode
+
+        Returns
+        -------
+        bool
+            True if FEMMode is 'EQS', False otherwise.
+        """
         if not self.__input['FEMMode'] == 'EQS':
             return False
         return True
 
     def region_of_interest(self):
+        """Return the region of interest.
 
+        Returns
+        -------
+        Region
+        """
         if not self.__input['RegionOfInterest']['Active']:
             mri_start, mri_end = self.mri().bounding_box()
             return Region(start=mri_start, end=mri_end)
@@ -96,7 +155,13 @@ class Input:
         return Region(start=tuple(start.astype(int)),
                       end=tuple(end.astype(int)))
 
-    def spectrum_mode(self):
+    def spectrum_mode(self) -> SpectrumMode:
+        """Return the spectrum mode for the FEM.
+
+        Returns
+        -------
+        SpectrumMode
+        """
         return {'NoTruncation': NoTruncationTest(),
                 'OctaveBand': Octavevands()
                 }[self.__input['SpectrumMode']]
@@ -165,11 +230,19 @@ class ElectrodeFactory:
 
 class BoundaryFactory:
     """Creates a dictionary of boundaries and corresponding boundary values."""
-    
+
     @classmethod
     def create_boundaries(cls, boundaries: dict) -> dict:
-        """Creates a dictionary of boundaries and corresponding boundary values.
-        
+        """Create a dictionary of boundaries and corresponding boundary
+        values.
+
+        Parameters
+        ----------
+        boundaries : dict
+
+        Returns
+        -------
+        dict
         """
         boundary_values = {}
 
@@ -193,6 +266,12 @@ class BoundaryFactory:
 
 
 class SignalFactory:
+    """Creates signal.
+
+    Returns
+    -------
+    Signal
+    """
 
     SIGNALS = {'Rectangle': RectangleSignal,
                'Triangle': TriangleSignal,
@@ -200,7 +279,18 @@ class SignalFactory:
                }
 
     @classmethod
-    def generate(cls, parameters) -> Signal:
+    def create_signal(cls, parameters: dict) -> Signal:
+        """Create a signal.
+
+        Parameters
+        ----------
+        parameters : dict
+
+        Returns
+        -------
+        dict
+        """
+
         signal_type = parameters['Type']
         frequency = parameters['Frequency']
         pulse_width = parameters['PulseWidthPercentage']
