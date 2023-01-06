@@ -70,7 +70,7 @@ class Input:
                             'Body': electrode['Body']}
                            for electrode in self.__input['Electrodes']],
             'BrainSurface': self.__input['BrainSurface']}
-        return BoundaryFactory.generate(boundaries)
+        return BoundaryFactory.create_boundaries(boundaries)
 
     def stimulation_signal(self):
         return SignalFactory.generate(self.__input['StimulationSignal'])
@@ -165,8 +165,12 @@ class ElectrodeFactory:
 
 class BoundaryFactory:
     """Creates a dictionary of boundaries and corresponding boundary values."""
+    
     @classmethod
-    def generate(cls, boundaries) -> dict:
+    def create_boundaries(cls, boundaries: dict) -> dict:
+        """Creates a dictionary of boundaries and corresponding boundary values.
+        
+        """
         boundary_values = {}
 
         for index, electrode in enumerate(boundaries['Electrodes']):

@@ -17,11 +17,6 @@ class AbbottStjudeActiveTip6142_6145(Electrode):
 
     translation : tuple
         Translation vector (x,y,z) of electrode.
-
-    Methods
-    -------
-    generate_geometry()
-        Generate geometry of electrode.
     """
 
     # dimensions [mm]
