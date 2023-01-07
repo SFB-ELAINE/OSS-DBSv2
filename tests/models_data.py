@@ -33,7 +33,7 @@ class Wire_data:
     className : str
     Shapetype : int 
     NbChildren : int
-    Flags : 26
+    Flags : int 
     Location : dict
     Orient : int 
     
