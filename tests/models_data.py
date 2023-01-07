@@ -31,14 +31,14 @@ class Wire_data:
     className : str
     TShape : dict
     Location : dict
-    Orient :int 
+    Orient : int 
     
 
 @dataclass
 class Face_data:
     Orient : int
     Matrix : List[int]
-    Surface :dict
+    Surface : dict
 
 @dataclass
 class Solid_data:
