@@ -46,21 +46,23 @@ def convert_edge(edge) -> Edge_data:
                     new_curve)
     return result
 
-def convert_wire(w) -> Wire_data:
-    wire_data=json.loads('{'+str(w)+'}')
-    wire_obj = Wire_data(wire_data['className'],
-                wire_data['TShape'],
+def convert_wire(wire_obj) -> Wire_data:
+    wire_data=json.loads('{'+str(wire_obj)+'}')
+    wire = Wire_data(wire_data['className'],
+                wire_data['TShape']['ShapeType'],
+                wire_data['TShape']['NbChildren'],
+                wire_data['TShape']['Flags'],
                 wire_data['Location'],
                 wire_data['Orient'],
                 )
-    return wire_obj
+    return wire
 
 def convert_face(f)-> Face_data:
-    face_obj=json.loads('{'+str(f)+'}')
-    face_data=Face_data(face_obj['Orient'],
-                        face_obj['Location']['Transformation']['Matrix'],
-                        face_obj["TShape"]['Surface'])
-    return face_obj
+    face_data=json.loads('{'+str(f)+'}')
+    face=Face_data(face_data['Orient'],
+                        face_data['Location']['Transformation']['Matrix'],
+                        face_data["TShape"]['Surface'])
+    return face
 
 def convert_solid(solid_obj) -> Solid_data:
     solid=json.loads('{'+str(solid_obj)+'}')
@@ -90,6 +92,7 @@ assert(solid_to_json(all)!=solid_to_json(compound))
 def generate_json_AbbottStjudeActiveTip6142_6145():
     """
         Execute by calling python on the top level of the project and import this function and calling it.
+        OtherWise 
     """
     TESTDATA = [
         ((0,  0, 0), (0, 0, 1), 0.0), # UseCase 1,2,3
@@ -98,13 +101,13 @@ def generate_json_AbbottStjudeActiveTip6142_6145():
     ]
     for i in range(len(TESTDATA)):
         translation,direction,rotation=TESTDATA[i]
-        filename="AbbottStjudeActiveTip6142_6145_"+str(i)+".json"
+        filename="tests/test_data/AbbottStjudeActiveTip6142_6145_"+str(i)+".json"
         electrode = AbbottStjudeActiveTip6142_6145(rotation,
                                                    direction,
                                                    translation)
         with open(filename, 'w') as outfile:
             print("{"+str(electrode.generate_geometry())+"}")
-            json.dump(convert_solid(electrode.generate_geometry()), outfile, cls=EnhancedJSONEncoder)
+            json.dump(convert_solid(electrode.generate_geometry()),outfile, cls=EnhancedJSONEncoder)
 
 def main():
     generate_json_AbbottStjudeActiveTip6142_6145()
