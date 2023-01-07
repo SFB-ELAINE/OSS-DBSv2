@@ -1,7 +1,8 @@
 import netgen
-from static_classes import EnhancedJSONEncoder
+from tests.static_classes import EnhancedJSONEncoder
 import json
-from create_json import convert_solid
+from tests.create_json import convert_solid
+from abc import abstractmethod
 
 
 class ElectrodeTestBase():
@@ -12,4 +13,7 @@ class ElectrodeTestBase():
         with open(path, "r") as file:
             geometry_dict=json.load(file)
         return geometry_dict
+    @abstractmethod
+    def test_generate_geometry_default(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        pass
         
