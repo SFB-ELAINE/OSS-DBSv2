@@ -88,19 +88,23 @@ assert([solid_to_json(all)==solid_to_json(i) for i in all.solids]==[False]*len(a
 assert(solid_to_json(all)!=solid_to_json(compound))
 
 def generate_json_AbbottStjudeActiveTip6142_6145():
+    """
+        Execute by calling python on the top level of the project and import this function and calling it.
+    """
     TESTDATA = [
         ((0,  0, 0), (0, 0, 1), 0.0), # UseCase 1,2,3
         ((1, -2, 3), (0, 0, 1), 0.0), # UseCase 4,5,6
         ((1, -2, 3), (2, 0, 1), 0.0), # UseCase 7,8,9
     ]
-    for i in range(len(test_cases)):
-        translation,direction,rotation=test_cases[i]
+    for i in range(len(TESTDATA)):
+        translation,direction,rotation=TESTDATA[i]
         filename="AbbottStjudeActiveTip6142_6145_"+str(i)+".json"
-        electrode = AbbottStjudeActiveTip6142_6145(translation,
+        electrode = AbbottStjudeActiveTip6142_6145(rotation,
                                                    direction,
-                                                   rotation)
+                                                   translation)
         with open(filename, 'w') as outfile:
-            json.dump(convert_solid(electrode), outfile, cls=EnhancedJSONEncoder)
+            print("{"+str(electrode.generate_geometry())+"}")
+            json.dump(convert_solid(electrode.generate_geometry()), outfile, cls=EnhancedJSONEncoder)
 
 def main():
     generate_json_AbbottStjudeActiveTip6142_6145()
