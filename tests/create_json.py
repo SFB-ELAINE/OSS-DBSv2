@@ -2,7 +2,6 @@ import ngsolve
 import netgen
 from netgen.occ import Sphere, Pnt, Vec
 import json
-import jsons
 from dataclasses import dataclass
 from tests.models_data import Vertex_data,CurveRepresentation,Edge_data,Wire_data,Face_data,Solid_data
 from ossdbs.electrodes.abbott_stjude_active_tip_6142_6145 import AbbottStjudeActiveTip6142_6145
