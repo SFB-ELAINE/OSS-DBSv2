@@ -5,7 +5,7 @@ from create_json import convert_solid
 
 
 class ElectrodeTestBase():
-    def electrode_to_dict(self, geometry:netgen.libngpy._NgOCC.TopoDS_Shape):
+    def electrode_to_dict(self, geometry:netgen.libngpy._NgOCC.TopoDS_Shape) -> dict:
         # Encode dataclasses as string and decode it as dict
         return json.loads(json.dumps(convert_solid(geometry),cls=EnhancedJSONEncoder))
     def load_json(self, path: str)-> dict:
