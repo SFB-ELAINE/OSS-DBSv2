@@ -10,7 +10,6 @@ class TestAbbottStJudeActiveTip6142_6145(ElectrodeTestBase):
         ((0, 0, 0), (0, 0, 1), 0.0,FILE_PREFIX+ '_0.json'),
         ((0, 0, 0), (0, 0, 0), 0.0,FILE_PREFIX+ '_0.json'),
         ((0, 0, 0), (0, 0, 1), 3.0,FILE_PREFIX+ '_0.json'),
-        ((0, 0, 0), (0, 0, 1), 3.0,FILE_PREFIX+ '_1.json'),
         ((1, -2, 3), (0, 0, 1), 0.0,FILE_PREFIX+ '_1.json'),
         ((1, -2, 3), (0, 0, 0), 0.0,FILE_PREFIX+ '_1.json'),
         ((1, -2, 3), (0, 0, 0), 3.0,FILE_PREFIX+ '_1.json'),
