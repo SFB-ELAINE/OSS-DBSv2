@@ -26,10 +26,14 @@ class Edge_data:
     Tolerance: float
     CurveRepresentation : CurveRepresentation 
         
+
+
 @dataclass
 class Wire_data: 
     className : str
-    TShape : dict
+    Shapetype : int 
+    NbChildren : int
+    Flags : 26
     Location : dict
     Orient : int 
     
