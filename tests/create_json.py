@@ -2,6 +2,14 @@ import ngsolve
 import netgen
 from netgen.occ import Sphere, Pnt, Vec
 import json
+import jsons
+from dataclasses import dataclass
+from tests.models_data import Vertex_data,CurveRepresentation,Edge_data,Wire_data,Face_data,Solid_data
+from ossdbs.electrodes.abbott_stjude_active_tip_6142_6145 import AbbottStjudeActiveTip6142_6145
+from tests.static_classes import EnhancedJSONEncoder
+
+import dataclasses, json
+
 
 sp1 = Sphere(Pnt(0,0,0), 0.2)
 sp2 = Sphere(Pnt(0.5,0,0), 0.2)
@@ -17,98 +25,85 @@ def convert_vertex(vertex) -> tuple:
     vertex_data = json.loads("{"+str(vertex)+"}")
     transformation = vertex_data['Location']['Transformation']
     coordinates = vertex_data['TShape']['Pnt']['gp_Pnt']
-    return transformation, coordinates
+    return Vertex_data(transformation,coordinates)
 
-def convert_edge(edge):
+def convert_edge(edge) -> Edge_data:
     edge_data = json.loads("{"+str(edge)+"}")
     tshape = edge_data['TShape']
     curve = tshape['CurveRepresentation']
-    curve['Matrix'] = curve['Location']['Transformation']['Matrix']  
+    new_curve=CurveRepresentation(curve['className'],
+                                  curve['First'],
+                                  curve['Last'],
+                                  curve['UV1'],
+                                  curve['UV2'],
+                                  curve['PCurve'],
+                                  curve['Surface'],
+                                  curve['Location']['Transformation']['Matrix']
+                                  )
+    result=Edge_data(tshape['Flags'],
+                    tshape['Orientable'],
+                    tshape['Tolerance'],
+                    new_curve)
+    return result
 
-    tshape['CurveRepresentation']=curve
+def convert_wire(w) -> Wire_data:
+    wire_data=json.loads('{'+str(w)+'}')
+    wire_obj = Wire_data(wire_data['className'],
+                wire_data['TShape'],
+                wire_data['Location'],
+                wire_data['Orient'],
+                )
+    return wire_obj
 
-    del tshape['this']
-    del tshape['ShapeType']
-    del tshape['className']
-    del tshape['Free']
-    del tshape['Locked']
-    del tshape['Modified']
-    del tshape['Infinite']
-    del tshape['Convex']
-    del tshape['Checked']
-    del tshape['Closed']
-    del tshape['NbChildren']
-    del curve['Location']
-    return tshape
+def convert_face(f)-> Face_data:
+    face_obj=json.loads('{'+str(f)+'}')
+    face_data=Face_data(face_obj['Orient'],
+                        face_obj['Location']['Transformation']['Matrix'],
+                        face_obj["TShape"]['Surface'])
+    return face_obj
 
-def convert_wire(w):
-    obj=json.loads('{'+str(w)+'}')
-    tshape=obj['TShape']
-    location=obj['Location']
-    del tshape['this']
-    del tshape['ShapeType']
-    del tshape['className']
-    del tshape['Free']
-    del tshape['Locked']
-    del tshape['Modified']
-    del tshape['Infinite']
-    obj['TShape']=tshape
-    return obj
-
-def convert_face(f):
-    obj=json.loads('{'+str(f)+'}')
-    tshape=obj["TShape"]
-    obj['Matrix']=obj['Location']['Transformation']['Matrix']
-    obj['Surface']=tshape['Surface']
-    del obj['Surface']['className']
-    del obj['className']
-    del tshape['this']
-    del tshape['ShapeType']
-    del tshape['Checked']
-    del tshape['Closed']
-    del tshape['NbChildren']
-    del tshape['Location']
-    del obj["TShape"]
-    del obj['Location']
-    return str(obj)
-
-def convert_solid(s):
-    obj=json.loads('{'+str(s)+'}')
-    del obj['className']
-    tshape=obj["TShape"]
-    obj['NumberChildren'] = tshape['NbChildren']
-    obj['Matrix']=obj['Location']['Transformation']['Matrix']
-    del obj["TShape"]
-    del obj['Location']
-    if obj['NumberChildren'] != 1 :
-        obj['children'] = [convert_solid(i) for i in s.solids]
-    else:
-        obj['faces'] = [convert_face(f) for f in s.faces]
-        obj['vertices'] = [convert_vertex(f) for f in s.vertices]
-        obj['edges'] = [convert_edge(e) for e in s.edges]
-        obj['wires'] = [convert_wire(w) for w in s.wires]
-    return obj
+def convert_solid(solid_obj) -> Solid_data:
+    solid=json.loads('{'+str(solid_obj)+'}')
+    nbChildren = solid['TShape']['NbChildren']
+    children = [convert_solid(i) for i in solid_obj.solids] if nbChildren>1 else []
+    faces = [convert_face(f) for f in solid_obj.faces] if nbChildren==1 else []
+    vertices = [convert_vertex(v) for v in solid_obj.vertices] if nbChildren==1 else []
+    edges = [convert_edge(e) for e in solid_obj.edges] if nbChildren==1 else []
+    wires = [convert_wire(w) for w in solid_obj.wires] if nbChildren==1 else []
+    solid_data = Solid_data(children,
+                            solid['Orient'],
+                            nbChildren, 
+                            solid['Location']['Transformation']['Matrix'],
+                            faces,
+                            vertices,
+                            edges,
+                            wires
+                            )
+    return solid_data
 
 def solid_to_json(s):
-    return json.dumps(convert_solid(s))
+    return json.dumps(convert_solid(s),cls=EnhancedJSONEncoder)
 
 assert([solid_to_json(all)==solid_to_json(i) for i in all.solids]==[False]*len(all.solids))
 assert(solid_to_json(all)!=solid_to_json(compound))
 
+def generate_json_AbbottStjudeActiveTip6142_6145():
+    TESTDATA = [
+        ((0,  0, 0), (0, 0, 1), 0.0), # UseCase 1,2,3
+        ((1, -2, 3), (0, 0, 1), 0.0), # UseCase 4,5,6
+        ((1, -2, 3), (2, 0, 1), 0.0), # UseCase 7,8,9
+    ]
+    for i in range(len(test_cases)):
+        translation,direction,rotation=test_cases[i]
+        filename="AbbottStjudeActiveTip6142_6145_"+str(i)+".json"
+        electrode = AbbottStjudeActiveTip6142_6145(translation,
+                                                   direction,
+                                                   rotation)
+        with open(filename, 'w') as outfile:
+            json.dump(convert_solid(electrode), outfile, cls=EnhancedJSONEncoder)
 
 def main():
-    sp1 = Sphere(Pnt(0,0,0), 0.2)
-    sp2 = Sphere(Pnt(0.5,0,0), 0.2)
-    sp3 = Sphere(Pnt(0,0,0.5), 0.2)
-    sp4 = Sphere(Pnt(0,0.2,0.7), 0.2)
-
-    vector = Vec(1, 1, 1)
-    all = sp1 + sp2 + sp3 + sp4
-    compound = all.Move(vector)
-
-    with open('json_data.json', 'w') as outfile:
-        json.dump(convert_solid(compound), outfile)
-
+    generate_json_AbbottStjudeActiveTip6142_6145()
 
 
 if __name__ == '__main__':
