@@ -9,6 +9,7 @@ build/
 dist/
 *.egg-info/
 _build/
+docs/._*
 
 # Ignore file
 *.pyc
