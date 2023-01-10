@@ -53,7 +53,7 @@ class GeometryConverter:
     def __face_to_dict(face: netgen.libngpy._NgOCC.Face) -> dict:
         face_data = json.loads('{' + str(face) + '}')
         return {'Orient': face_data['Orient'],
-                'Maatrix': face_data['Location']['Transformation']['Matrix'],
+                'Matrix': face_data['Location']['Transformation']['Matrix'],
                 'Surface': face_data["TShape"]['Surface']}
 
     @staticmethod
@@ -66,7 +66,7 @@ class GeometryConverter:
     @staticmethod
     def __vertex_to_dict(vertex: netgen.libngpy._NgOCC.Vertex) -> dict:
         vertex_data = json.loads('{' + str(vertex) + '}')
-        return {'transormation': vertex_data['Location']['Transformation'],
+        return {'transformation': vertex_data['Location']['Transformation'],
                 'coordinates': vertex_data['TShape']['Pnt']['gp_Pnt']}
 
     @staticmethod
