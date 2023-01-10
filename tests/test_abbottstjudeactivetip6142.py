@@ -38,7 +38,6 @@ class TestAbbottStJudeActiveTip6142_6145():
         electrode = AbbottStjudeActiveTip6142_6145(rotation,
                                                    direction,
                                                    translation)
-
         GeometryConverter(electrode.generate_geometry()).to_json(path)
 
     @pytest.mark.parametrize('electrode_parameters, path', TESTDATA)
