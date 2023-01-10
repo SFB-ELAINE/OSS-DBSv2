@@ -4,12 +4,21 @@ import netgen
 
 class GeometryConverter:
 
-    def to_dictionary(self, solid: netgen.libngpy._NgOCC.TopoDS_Shape) -> dict:
-        solid_data = self.__solid_to_dict(solid)
-        edges_data = [self.__edge_to_dict(e) for e in solid.edges]
-        faces_data = [self.__face_to_dict(face) for face in solid.faces]
-        vertices_data = [self.__vertex_to_dict(v) for v in solid.vertices]
-        wires_data = [self.__wire_to_dict(w) for w in solid.wires]
+    def __init__(self, solid: netgen.libngpy._NgOCC.TopoDS_Shape) -> None:
+        self.__solid = solid
+
+    def to_json(self,
+                path: str) -> None:
+        with open(path, "w") as file:
+            file.write(json.dumps(self.to_dictionary()))
+
+    def to_dictionary(self) -> dict:
+        solid_data = self.__solid_to_dict(self.__solid)
+        edges_data = [self.__edge_to_dict(e) for e in self.__solid.edges]
+        faces_data = [self.__face_to_dict(face) for face in self.__solid.faces]
+        vertices_data = [self.__vertex_to_dict(v)
+                         for v in self.__solid.vertices]
+        wires_data = [self.__wire_to_dict(w) for w in self.__solid.wires]
 
         if solid_data['NbChildren'] == 1:
             return {'solid': solid_data,
@@ -18,7 +27,8 @@ class GeometryConverter:
                     'vertices': vertices_data,
                     'wires': wires_data}
 
-        children = [self.to_dictionary(solid) for solid in solid.solids]
+        children = [GeometryConverter(solid).to_dictionary()
+                    for solid in self.__solid.solids]
         return {'solid': solid_data, 'children': children}
 
     @staticmethod
@@ -41,7 +51,7 @@ class GeometryConverter:
 
     @staticmethod
     def __face_to_dict(face: netgen.libngpy._NgOCC.Face) -> dict:
-        face_data = json.loads('{'+str(face)+'}')
+        face_data = json.loads('{' + str(face) + '}')
         return {'Orient': face_data['Orient'],
                 'Maatrix': face_data['Location']['Transformation']['Matrix'],
                 'Surface': face_data["TShape"]['Surface']}
@@ -55,7 +65,7 @@ class GeometryConverter:
 
     @staticmethod
     def __vertex_to_dict(vertex: netgen.libngpy._NgOCC.Vertex) -> dict:
-        vertex_data = json.loads("{" + str(vertex) + "}")
+        vertex_data = json.loads('{' + str(vertex) + '}')
         return {'transormation': vertex_data['Location']['Transformation'],
                 'coordinates': vertex_data['TShape']['Pnt']['gp_Pnt']}
 
