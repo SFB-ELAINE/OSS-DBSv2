@@ -1,9 +1,9 @@
 
 from attr import dataclass
+from abc import ABC, abstractmethod
 import numpy as np
 import ngsolve
 import os
-from abc import ABC, abstractmethod
 
 
 @dataclass

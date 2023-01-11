@@ -1,6 +1,6 @@
 
-from ossdbs.electrodes.abstract_electrode import Electrode
-from ossdbs.input import Region
+from ossdbs.electrodes.electrode import Electrode
+from ossdbs.region import Region
 from ossdbs.mesh import Mesh
 from typing import List
 import netgen

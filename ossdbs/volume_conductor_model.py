@@ -72,7 +72,8 @@ class VolumeConductor():
         """
 
         conductivities = self.__conductivity.conductivity(frequency)
-        values = conductivities.data
+        # convert conductivity [S/m] to [S/mm] since mesh dimension is in mm.
+        values = conductivities.data * 1e-3
         start, end = conductivities.start, conductivities.end
         if not self.mesh.is_complex():
             values = np.real(values)

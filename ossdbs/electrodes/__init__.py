@@ -1,4 +1,4 @@
-from ossdbs.electrodes.abstract_electrode import Electrode
+from ossdbs.electrodes.electrode import Electrode
 from ossdbs.electrodes.abbott_stjude_active_tip_6142_6145 \
     import AbbottStjudeActiveTip6142_6145
 from ossdbs.electrodes.abbott_stjude_active_tip_6146_6149 \

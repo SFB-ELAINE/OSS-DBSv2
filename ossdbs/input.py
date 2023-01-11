@@ -1,7 +1,3 @@
-
-from dataclasses import dataclass
-import json
-import numpy as np
 from ossdbs.brain_imaging.mri import MagneticResonanceImage
 from ossdbs.brainsubstance import Material
 from ossdbs.conductivity import Conductivity
@@ -16,15 +12,14 @@ from ossdbs.electrodes import PINSMedicalL301
 from ossdbs.electrodes import PINSMedicalL302
 from ossdbs.electrodes import PINSMedicalL303
 from ossdbs.electrodes import MicroProbesCustomRodent
+from ossdbs.electrodes.electrode import Electrode
+from ossdbs.region import Region
 from ossdbs.signals import Signal
 from ossdbs.signals import RectangleSignal, TrapzoidSignal, TriangleSignal
 from ossdbs.spectrum_modes import Octavevands, NoTruncationTest, SpectrumMode
-
-
-@dataclass
-class Region:
-    start: tuple = (0, 0, 0)
-    end: tuple = (0, 0, 0)
+from typing import List
+import json
+import numpy as np
 
 
 class Input:
@@ -40,13 +35,9 @@ class Input:
         mri_path = self.__input['MagneticResonanceImage']['Path']
         mri = MagneticResonanceImage(mri_path)
         self.__offset = np.multiply(mri.bounding_box()[0], -1)
+        self.__shift_electrodes()
 
-    @staticmethod
-    def __load_json(path):
-        with open(path, 'r') as json_file:
-            return json.load(json_file)
-
-    def mesh_order(self):
+    def mesh_order(self) -> int:
         """Return order of mesh elements.
 
         Returns
@@ -56,7 +47,7 @@ class Input:
         """
         return self.__input['MeshElementOrder']
 
-    def conductivity(self):
+    def conductivity(self) -> Conductivity:
         """Return the conductivity.
 
         Returns
@@ -74,7 +65,7 @@ class Input:
         mri.set_offset(self.__offset)
         return Conductivity(mri)
 
-    def electrodes(self):
+    def electrodes(self) -> List[Electrode]:
         """Return list of electrode objects.
 
         Returns
@@ -82,14 +73,7 @@ class Input:
         list
             Collection of Electrode objects.
         """
-        self.__shift_electrodes()
         return ElectrodeFactory.create_electrodes(self.__input['Electrodes'])
-
-    def __shift_electrodes(self):
-        for index in range(len(self.__input['Electrodes'])):
-            translation = self.__input['Electrodes'][index]['Translation']
-            new_translation = np.add(translation, self.__offset)
-            self.__input['Electrodes'][index]['Translation'] = new_translation
 
     def boundary_values(self):
         """Return the boundary values.
@@ -115,7 +99,7 @@ class Input:
         """
         return SignalFactory.create_signal(self.__input['StimulationSignal'])
 
-    def output_path(self):
+    def output_path(self) -> str:
         """Return path for results.
 
         Returns
@@ -125,7 +109,7 @@ class Input:
         """
         return self.__input['OutputPath']
 
-    def complex_mode(self):
+    def complex_mode(self) -> bool:
         """Return the state of the complex mode
 
         Returns
@@ -137,7 +121,7 @@ class Input:
             return False
         return True
 
-    def region_of_interest(self):
+    def region_of_interest(self) -> Region:
         """Return the region of interest.
 
         Returns
@@ -165,6 +149,17 @@ class Input:
         return {'NoTruncation': NoTruncationTest(),
                 'OctaveBand': Octavevands()
                 }[self.__input['SpectrumMode']]
+
+    @staticmethod
+    def __load_json(path) -> dict:
+        with open(path, 'r') as json_file:
+            return json.load(json_file)
+
+    def __shift_electrodes(self) -> None:
+        for index in range(len(self.__input['Electrodes'])):
+            translation = self.__input['Electrodes'][index]['Translation']
+            new_translation = np.add(translation, self.__offset)
+            self.__input['Electrodes'][index]['Translation'] = new_translation
 
 
 class ElectrodeFactory:
@@ -199,7 +194,7 @@ class ElectrodeFactory:
                   }
 
     @classmethod
-    def create_electrodes(cls, electrodes: dict) -> list:
+    def create_electrodes(cls, electrodes: dict) -> List[Electrode]:
         """create a list of Electrode objects.
 
         Parameters
@@ -215,14 +210,13 @@ class ElectrodeFactory:
                 for idx, parameters in enumerate(electrodes)]
 
     @classmethod
-    def __create_electrode(cls, parameters, index):
-        electrode_class = cls.ELECTRODES[parameters['Name']]
-        electrode = electrode_class(direction=tuple(parameters['Direction']),
-                                    translation=tuple(parameters
-                                    ['Translation']),
-                                    rotation=parameters['Rotation'])
-        names = {'Contact_{}'.format(i+1): "E{}C{}".format(index, i)
-                 for i in range(len(parameters['Contacts']['Active']))}
+    def __create_electrode(cls, parameters: dict, index: int) -> Electrode:
+        elec_class = cls.ELECTRODES[parameters['Name']]
+        electrode = elec_class(direction=tuple(parameters['Direction']),
+                               translation=tuple(parameters['Translation']),
+                               rotation=parameters['Rotation'])
+        names = {'Contact_{}'.format(number+1): "E{}C{}".format(index, number)
+                 for number in range(len(parameters['Contacts']['Active']))}
         names.update({'Body': 'E{}B'.format(index)})
         electrode.rename_boundaries(names)
         return electrode
@@ -256,7 +250,7 @@ class BoundaryFactory:
         return boundary_values
 
     @staticmethod
-    def __electrode_values(index, electrode):
+    def __electrode_values(index: int, electrode: dict):
         values = {'E{}C{}'.format(index, i): value
                   for i, value in enumerate(electrode['Contacts']['Value'])
                   if electrode['Contacts']['Active'][i]}
