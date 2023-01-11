@@ -12,7 +12,7 @@ from ossdbs.electrodes import PINSMedicalL301
 from ossdbs.electrodes import PINSMedicalL302
 from ossdbs.electrodes import PINSMedicalL303
 from ossdbs.electrodes import MicroProbesCustomRodent
-from ossdbs.electrodes.electrode import Electrode
+from ossdbs.electrodes import Electrode
 from ossdbs.region import Region
 from ossdbs.signals import Signal
 from ossdbs.signals import RectangleSignal, TrapzoidSignal, TriangleSignal
