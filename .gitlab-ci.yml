@@ -20,12 +20,6 @@ before_script:
   script:
    - pip install .
    - ossdbs './input_files/inputTest.json'
-   # - python3 -c "import ossdbs"
-   # - python3 -c "import ossdbs.dielectric_model"
-   # - python3 -c "from ossdbs.brain_model import BrainModel"
-   #- cd ossdbs/scripts
-   #- python3 ossdbs 
-
 
 test-3.8:
    extends: ".test"
