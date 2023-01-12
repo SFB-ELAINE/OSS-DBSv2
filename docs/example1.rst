@@ -1,7 +1,7 @@
-Example1
-================
+Benchmark old version
+=====================
 
-Test1
+.. note::
+    Write about benchmark with isotropic and QS case
 
-Example to run from input directory.
-
+link folder
