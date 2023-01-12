@@ -24,7 +24,5 @@ setup(
     packages=find_packages(include=['ossdbs', 'ossdbs.*']),
     python_requires='>=3.8',
     install_requires=install_requires,
-    entry_points={
-        'console_scripts': ['ossdbs=ossdbs.main:main']
-    }
+    entry_points={'console_scripts': ['ossdbs=ossdbs.main:main']}
 )
