@@ -23,7 +23,7 @@ The software performs calculations of the electric field within the inhomogenius
 Further, the activation of automaticly generated axons is clculated to estimate a volume of activated tissue (VAT) or specific realistic fiber tracts can be loaded to performe detailed pathway activation modeling (PAM).
 
 A detailed overview over the implemented concepts can be find in the specific sections of this documentation.
-For more details about the first veriosn of OSS-DBS you can also refer to [Butenko2019]_.
+For more details about the first veriosn of OSS-DBS you can refer to [Butenko2019]_.
 
 ==============
 Installation
@@ -44,7 +44,10 @@ Table of contents
 
    start
    examples
+   brain_geometry
+   signals
    volume_conductor_model
+   new
 
 
 Indices and tables
