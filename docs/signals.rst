@@ -4,6 +4,11 @@ Stimulation signals
 .. note::
     Under construction
 
+Signal types
+------------
+There a different types of singals.
+For more details of the rectengular pulse see API references.
+
 API reference
 --------------
 
