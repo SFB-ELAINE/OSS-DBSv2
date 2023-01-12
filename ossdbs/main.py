@@ -1,20 +1,18 @@
-#! /usr/bin/python3
-
 
 import ngsolve
 import sys
 
-try:
-    import ossdbs
-except ImportError:
-    print("ossdbs has not been properly installed")
-
-from ossdbs.brain_geometry import BrainGeometry
-from ossdbs.input import Input
 from ossdbs.volume_conductor_model import VolumeConductor
+from ossdbs.input import Input
+from ossdbs.brain_geometry import BrainGeometry
 
 
-def main(json_path: str) -> None:
+def main() -> None:
+    with ngsolve.TaskManager():
+        ossdbs_fem(sys.argv[1])
+
+
+def ossdbs_fem(json_path: str) -> None:
 
     input = Input(json_path=json_path)
     brain_geometry = BrainGeometry(region=input.region_of_interest())
@@ -37,5 +35,4 @@ def main(json_path: str) -> None:
 
 
 if __name__ == '__main__':
-    with ngsolve.TaskManager():
-        main(sys.argv[1])
+    main()
