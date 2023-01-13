@@ -1,10 +1,7 @@
 
 from typing import List
-from ossdbs.brain_imaging.mri import MagneticResonanceImage
-from ossdbs.brainsubstance import Material
 from ossdbs.voxels import Voxels
 import ngsolve
-import numpy as np
 
 
 class Mesh:
@@ -17,10 +14,9 @@ class Mesh:
     order : int
         Order of mesh elements.
     """
-    def __init__(self,
-                 geometry,
-                 order: int) -> None:
-        self.__mesh = ngsolve.Mesh(ngmesh=geometry.GenerateMesh())
+
+    def __init__(self, mesh: ngsolve.comp.Mesh, order: int) -> None:
+        self.__mesh = mesh
         self.__mesh.Curve(order=order)
         self.__order = order
         self.__complex = False
@@ -33,6 +29,7 @@ class Mesh:
         list
             Collection of strings.
         """
+
         return list(set(self.__mesh.GetBoundaries()) - set(['default']))
 
     def boundary_coefficients(self, boundaries) \
@@ -43,6 +40,7 @@ class Mesh:
         -------
         ngsolve.fem.CoefficientFunction
         """
+
         return self.__mesh.BoundaryCF(values=boundaries)
 
     def flux_space(self) -> ngsolve.comp.HDiv:
@@ -52,6 +50,7 @@ class Mesh:
         -------
         ngsolve.comp.HDiv
         """
+
         return ngsolve.HDiv(mesh=self.__mesh,
                             order=self.__order-1,
                             complex=self.__complex)
@@ -63,12 +62,25 @@ class Mesh:
         -------
         ngsolve.comp.Mesh
         """
+
         return self.__mesh
 
     def refine(self) -> None:
         """Refine the mesh."""
+
         self.__mesh.Refine()
         self.__mesh.Curve(order=self.__order)
+
+    def save(self, file_name: str) -> None:
+        """Save netgen mesh.
+
+        Parameters
+        ----------
+        file_name : str
+            File name of the mesh data.
+        """
+
+        self.__mesh.ngmeshSave(file_name)
 
     def set_complex(self, state: bool) -> None:
         """Set the data type to complex.
@@ -78,6 +90,7 @@ class Mesh:
         state : bool
             True for complex data type, False otherwise.
         """
+
         self.__complex = state
 
     def is_complex(self) -> bool:
@@ -88,15 +101,17 @@ class Mesh:
         bool
             True if complex, False otherwise.
         """
+
         return self.__complex
 
-    def sobolev_space(self) -> ngsolve.comp.H1:
-        """Return a sobolev space based on the mesh.
+    def h1_space(self) -> ngsolve.comp.H1:
+        """Return a h1 space based on the mesh.
 
         Returns
         -------
         ngsolve.comp.H1
         """
+
         dirichlet = '|'.join(boundary for boundary in self.get_boundaries())
         return ngsolve.H1(mesh=self.__mesh,
                           order=self.__order,
@@ -104,25 +119,29 @@ class Mesh:
                           complex=self.__complex,
                           wb_withedges=False)
 
-    def refine_by_mri(self, mri: MagneticResonanceImage) -> None:
-        """Refine the mesh by magnetic resonance imaging.
+    def refine_at_location(self, marked_locations: Voxels) -> None:
+        """Refine the mesh at the marked locations.
 
         Parameters
         ----------
-        mri : MagneticResonanceImage
-            Image which represents the distributiion of brain substances.
+        marked_locations : Voxels
+            Representation of the locations which are to be refined:
+            True if specific position has to be refined, False otherwise.
         """
 
-        maximum_size = min(mri.voxel_size())
-        csf_voxel = mri.material_distribution(Material.CSF)
-        flags = np.logical_and(self.__elements_at_position(csf_voxel),
-                               self.__element_sizes() > maximum_size)
-        while np.any(flags) and self.sobolev_space().ndof < 1e5:
-            self.__set_volume_refinement_flags(flags)
-            self.refine()
-            csf_voxel = mri.material_distribution(Material.CSF)
-            flags = np.logical_and(self.__elements_at_position(csf_voxel),
-                                   self.__element_sizes() > maximum_size)
+        space = ngsolve.L2(self.__mesh, order=0)
+        grid_function = ngsolve.GridFunction(space=space)
+        values = marked_locations.data.astype(float)
+        cf = ngsolve.VoxelCoefficient(start=marked_locations.start,
+                                      end=marked_locations.end,
+                                      values=values,
+                                      linear=False)
+        grid_function.Set(cf)
+        flags = grid_function.vec.FV().NumPy()
+
+        for element, flag in zip(self.__mesh.Elements(ngsolve.VOL), flags):
+            self.__mesh.SetRefinementFlag(ei=element, refine=flag)
+        self.refine()
 
     def refine_by_boundaries(self, boundaries: list) -> None:
         """Refine the mesh by the boundaries.
@@ -157,22 +176,3 @@ class Mesh:
         for element, flag in zip(self.__mesh.Elements(ngsolve.BND), flags):
             self.__mesh.SetRefinementFlag(ei=element, refine=flag)
         self.refine()
-
-    def __set_volume_refinement_flags(self, flags: List[bool]) -> None:
-        for element, flag in zip(self.__mesh.Elements(ngsolve.VOL), flags):
-            self.__mesh.SetRefinementFlag(ei=element, refine=flag)
-
-    def __elements_at_position(self, position: Voxels) -> None:
-        space = ngsolve.L2(self.__mesh, order=0)
-        grid_function = ngsolve.GridFunction(space=space)
-        cf = ngsolve.VoxelCoefficient(start=tuple(position.start),
-                                      end=tuple(position.end),
-                                      values=position.data.astype(float),
-                                      linear=False)
-        grid_function.Set(cf)
-        return grid_function.vec.FV().NumPy()
-
-    def __element_sizes(self) -> List:
-        cf = ngsolve.CoefficientFunction(1)
-        volumes = ngsolve.Integrate(cf=cf, mesh=self.__mesh, element_wise=True)
-        return (6 * volumes.NumPy()) ** (1 / 3)

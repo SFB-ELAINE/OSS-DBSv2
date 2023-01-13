@@ -15,10 +15,11 @@ def main() -> None:
 def ossdbs_fem(json_path: str) -> None:
 
     input = Input(json_path=json_path)
-    brain_geometry = BrainGeometry(region=input.region_of_interest())
-    brain_geometry.set_electrodes(input.electrodes())
+    brain_geometry = BrainGeometry(region=input.region_of_interest(),
+                                   electrodes=input.electrodes())
 
-    mesh = brain_geometry.generate_mesh(input.mesh_order())
+    mesh = brain_geometry.generate_mesh(order=input.mesh_order(),
+                                        parameters=input.meshing_parameters())
     boundaries = list(input.boundary_values().keys())
     mesh.refine_by_boundaries(boundaries)
     mesh.set_complex(input.complex_mode())

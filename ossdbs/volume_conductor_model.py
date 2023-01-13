@@ -54,7 +54,7 @@ class VolumeConductor():
         self.__conductivity = conductivity
         self.mesh = mesh
 
-    def evaluate_potential(self, boundaries: dict, frequency: float) \
+    def potential(self, boundaries: dict, frequency: float) \
             -> ngsolve.comp.GridFunction:
         """Evaluate electrical potential of volume conductor.
 
@@ -78,7 +78,7 @@ class VolumeConductor():
         if not self.mesh.is_complex():
             values = np.real(values)
         sigma = ngsolve.VoxelCoefficient(start, end, values, linear=False)
-        space = self.mesh.sobolev_space()
+        space = self.mesh.h1_space()
         potential = ngsolve.GridFunction(space=space)
         coefficient = self.mesh.boundary_coefficients(boundaries=boundaries)
 
@@ -99,7 +99,8 @@ class LaplaceEquation:
 
     def __init__(self,
                  space: ngsolve.comp.H1,
-                 sigma: ngsolve.fem.CoefficientFunction) -> None:
+                 sigma: ngsolve.fem.CoefficientFunction,
+                 solver: ngsolve.la.KrylovSpaceSolver = None) -> None:
 
         u = space.TrialFunction()
         v = space.TestFunction()
@@ -110,6 +111,7 @@ class LaplaceEquation:
         self.__preconditioner = ngsolve.Preconditioner(bf=self.__a,
                                                        type="bddc",
                                                        coarsetype="local")
+        self.__solver = None
 
     def solve_bvp(self, input: ngsolve.comp.GridFunction) \
             -> ngsolve.la.DynamicVectorExpression:
@@ -133,6 +135,7 @@ class LaplaceEquation:
                                    printrates=True,
                                    maxsteps=10000,
                                    precision=1e-12)
+
         r = self.__f.vec.CreateVector()
         r.data = self.__f.vec - self.__a.mat * input.vec
         return input.vec.data + inverse * r
