@@ -90,6 +90,9 @@ class Input:
             'BrainSurface': self.__input['BrainSurface']}
         return BoundaryFactory.create_boundaries(boundaries)
 
+    def meshing_parameters(self):
+        return None
+
     def stimulation_signal(self):
         """Return stimulation signal.
 
