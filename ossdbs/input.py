@@ -1,5 +1,6 @@
+from ossdbs.brain_geometry import BrainGeometry
 from ossdbs.brain_imaging.mri import MagneticResonanceImage
-from ossdbs.brainsubstance import Material
+from ossdbs.materials import Material
 from ossdbs.conductivity import Conductivity
 from ossdbs.electrodes import AbbottStjudeActiveTip6142_6145
 from ossdbs.electrodes import AbbottStjudeActiveTip6146_6149
@@ -13,6 +14,7 @@ from ossdbs.electrodes import PINSMedicalL302
 from ossdbs.electrodes import PINSMedicalL303
 from ossdbs.electrodes import MicroProbesCustomRodent
 from ossdbs.electrodes import Electrode
+from ossdbs.mesh import Mesh
 from ossdbs.region import Region
 from ossdbs.signals import Signal
 from ossdbs.signals import RectangleSignal, TrapzoidSignal, TriangleSignal
@@ -20,6 +22,8 @@ from ossdbs.spectrum_modes import Octavevands, NoTruncationTest, SpectrumMode
 from typing import List
 import json
 import numpy as np
+import ngsolve
+import netgen
 
 
 class Input:
@@ -37,15 +41,23 @@ class Input:
         self.__offset = np.multiply(mri.bounding_box()[0], -1)
         self.__shift_electrodes()
 
-    def mesh_order(self) -> int:
-        """Return order of mesh elements.
+    def mesh(self):
+        electrodes = ElectrodeFactory.create(self.__input['Electrodes'])
+        geometry = BrainGeometry(region=self.__region_of_interest(),
+                                 electrodes=electrodes)
+        netgen_geometry = geometry.netgen_geometry()
 
-        Returns
-        -------
-        int
-            Order of mesh elements.
-        """
-        return self.__input['MeshElementOrder']
+        if self.__input["Mesh"]["LoadMesh"]:
+            file_path = self.__input["Mesh"]["LoadPath"]
+            ngsolve_mesh = ngsolve.Mesh(filename=file_path)
+            ngsolve_mesh.ngmesh.SetGeometry(netgen_geometry)
+        else:
+            ngsolve_mesh = ngsolve.Mesh(ngmesh=netgen_geometry.GenerateMesh())
+
+        order = self.__input["Mesh"]["MeshElementOrder"]
+        mesh = Mesh(ngsolve_mesh=ngsolve_mesh, order=order)
+        mesh.set_complex(state=self.__input['FEMMode'] == 'EQS')
+        return mesh
 
     def conductivity(self) -> Conductivity:
         """Return the conductivity.
@@ -65,16 +77,6 @@ class Input:
         mri.set_offset(self.__offset)
         return Conductivity(mri)
 
-    def electrodes(self) -> List[Electrode]:
-        """Return list of electrode objects.
-
-        Returns
-        -------
-        list
-            Collection of Electrode objects.
-        """
-        return ElectrodeFactory.create_electrodes(self.__input['Electrodes'])
-
     def boundary_values(self):
         """Return the boundary values.
 
@@ -83,15 +85,12 @@ class Input:
         dict
             Boundary names and the associated values.
         """
+
         boundaries = {
-            'Electrodes': [{'Contacts': electrode['Contacts'],
-                            'Body': electrode['Body']}
+            'Electrodes': [{'Contacts': electrode['Contacts']}
                            for electrode in self.__input['Electrodes']],
             'BrainSurface': self.__input['BrainSurface']}
         return BoundaryFactory.create_boundaries(boundaries)
-
-    def meshing_parameters(self):
-        return None
 
     def stimulation_signal(self):
         """Return stimulation signal.
@@ -112,19 +111,7 @@ class Input:
         """
         return self.__input['OutputPath']
 
-    def complex_mode(self) -> bool:
-        """Return the state of the complex mode
-
-        Returns
-        -------
-        bool
-            True if FEMMode is 'EQS', False otherwise.
-        """
-        if not self.__input['FEMMode'] == 'EQS':
-            return False
-        return True
-
-    def region_of_interest(self) -> Region:
+    def __region_of_interest(self) -> Region:
         """Return the region of interest.
 
         Returns
@@ -197,7 +184,7 @@ class ElectrodeFactory:
                   }
 
     @classmethod
-    def create_electrodes(cls, electrodes: dict) -> List[Electrode]:
+    def create(cls, electrodes: dict) -> List[Electrode]:
         """create a list of Electrode objects.
 
         Parameters
@@ -253,13 +240,11 @@ class BoundaryFactory:
         return boundary_values
 
     @staticmethod
-    def __electrode_values(index: int, electrode: dict):
-        values = {'E{}C{}'.format(index, i): value
-                  for i, value in enumerate(electrode['Contacts']['Value'])
-                  if electrode['Contacts']['Active'][i]}
-        if electrode['Body']['Active']:
-            values.update({'E{}B'.format(index): electrode['Body']['Value']})
-        return values
+    def __electrode_values(electrode_index: int, electrode: dict):
+        return {'E{}C{}'.format(electrode_index, contact_index): value
+                for contact_index, value
+                in enumerate(electrode['Contacts']['Value'])
+                if electrode['Contacts']['Active'][contact_index]}
 
 
 class SignalFactory:
@@ -290,8 +275,8 @@ class SignalFactory:
 
         signal_type = parameters['Type']
         frequency = parameters['Frequency']
-        pulse_width = parameters['PulseWidthPercentage']
-        top_width = parameters['TopWidthPercentage']
+        pulse_width = parameters['PulseWidthMicroSeconds'] * frequency
+        top_width = parameters['TopWidthMicroSeconds'] * frequency
 
         if signal_type == 'Trapzoid':
             return TrapzoidSignal(frequency, pulse_width, top_width)

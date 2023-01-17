@@ -17,10 +17,6 @@
             "Contacts": {
                 "Active": [true],
                 "Value": [1.0]
-            },
-            "Body": {
-                "Active": true,
-                "Value": 0.0
             }
         }
     ],
