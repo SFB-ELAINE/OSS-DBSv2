@@ -15,8 +15,8 @@ class Mesh:
         Order of mesh elements.
     """
 
-    def __init__(self, mesh: ngsolve.comp.Mesh, order: int) -> None:
-        self.__mesh = mesh
+    def __init__(self, ngsolve_mesh: ngsolve.comp.Mesh, order: int) -> None:
+        self.__mesh = ngsolve_mesh
         self.__mesh.Curve(order=order)
         self.__order = order
         self.__complex = False
@@ -119,7 +119,7 @@ class Mesh:
                           complex=self.__complex,
                           wb_withedges=False)
 
-    def refine_at_location(self, marked_locations: Voxels) -> None:
+    def refine_at_voxel(self, marked_voxels: Voxels) -> None:
         """Refine the mesh at the marked locations.
 
         Parameters
@@ -131,9 +131,9 @@ class Mesh:
 
         space = ngsolve.L2(self.__mesh, order=0)
         grid_function = ngsolve.GridFunction(space=space)
-        values = marked_locations.data.astype(float)
-        cf = ngsolve.VoxelCoefficient(start=marked_locations.start,
-                                      end=marked_locations.end,
+        values = marked_voxels.data.astype(float)
+        cf = ngsolve.VoxelCoefficient(start=marked_voxels.start,
+                                      end=marked_voxels.end,
                                       values=values,
                                       linear=False)
         grid_function.Set(cf)
@@ -152,10 +152,9 @@ class Mesh:
             Collection of boundary names.
         """
 
-        elements = self.__mesh.Elements(ngsolve.BND)
-        flags = [element.mat in boundaries for element in elements]
-        for element, flag in zip(self.__mesh.Elements(ngsolve.BND), flags):
-            self.__mesh.SetRefinementFlag(ei=element, refine=flag)
+        for element in self.__mesh.Elements(ngsolve.BND):
+            to_refine = element.mat in boundaries
+            self.__mesh.SetRefinementFlag(ei=element, refine=to_refine)
         self.refine()
 
     def refine_by_error(self, error: ngsolve.fem.CoefficientFunction) -> List:
@@ -172,7 +171,7 @@ class Mesh:
                                    VOL_or_BND=ngsolve.VOL,
                                    element_wise=True).real
         limit = 0.5 * max(errors)
-        flags = [errors[el.nr] > limit for el in self.__mesh.Elements()]
-        for element, flag in zip(self.__mesh.Elements(ngsolve.BND), flags):
-            self.__mesh.SetRefinementFlag(ei=element, refine=flag)
+        for element in self.__mesh.Elements(ngsolve.BND):
+            to_refine = errors[element.nr] > limit
+            self.__mesh.SetRefinementFlag(ei=element, refine=to_refine)
         self.refine()

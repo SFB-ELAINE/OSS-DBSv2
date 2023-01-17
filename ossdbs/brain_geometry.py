@@ -1,10 +1,8 @@
 
 from ossdbs.electrodes.electrode import Electrode
 from ossdbs.region import Region
-from ossdbs.mesh import Mesh
 from typing import List
 import netgen
-import ngsolve
 import numpy as np
 
 
@@ -18,31 +16,20 @@ class BrainGeometry:
         self.__region = region
         self.__electrodes = electrodes
 
-    def generate_mesh(self, parameters: dict = None, order: int = 2) -> Mesh:
-        """Generate a mesh based on the geometry and given mesh element order.
+    def netgen_geometry(self) -> netgen.libngpy._NgOCC.OCCGeometry:
+        """Create a netgen geometry of this brain model.
 
-        order : int
-            Order of mesh elements.
+        Returns
+        -------
+        netgen.libngpy._NgOCC.OCCGeometry
         """
-        netgen_geometry = self.__generate_geometry()
-        ngmesh = netgen_geometry.GenerateMesh(parameters)
-        mesh = ngsolve.Mesh(ngmesh=ngmesh)
-        return Mesh(mesh, order=order)
 
-    def load_mesh(self, file_name: str, order: int = 2) -> Mesh:
-        netgen_geometry = self.__generate_geometry()
-        mesh = ngsolve.Mesh(filename=file_name)
-        mesh.SetGeometry(netgen_geometry)
-        return Mesh(mesh, order=order)
-
-    def __generate_geometry(self):
         geometry = self.__create_ellipsoid()
         geometry.bc('Brain')
         for electrode in self.__electrodes:
             geometry = geometry - electrode.generate_geometry()
 
-        netgen_geometry = netgen.occ.OCCGeometry(geometry)
-        return netgen_geometry
+        return netgen.occ.OCCGeometry(geometry)
 
     def __create_ellipsoid(self) -> netgen.libngpy._NgOCC.Solid:
         x, y, z = np.subtract(self.__region.end, self.__region.start) / 2

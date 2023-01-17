@@ -4,7 +4,6 @@ import sys
 
 from ossdbs.volume_conductor_model import VolumeConductor
 from ossdbs.input import Input
-from ossdbs.brain_geometry import BrainGeometry
 
 
 def main() -> None:
@@ -15,14 +14,9 @@ def main() -> None:
 def ossdbs_fem(json_path: str) -> None:
 
     input = Input(json_path=json_path)
-    brain_geometry = BrainGeometry(region=input.region_of_interest(),
-                                   electrodes=input.electrodes())
-
-    mesh = brain_geometry.generate_mesh(order=input.mesh_order(),
-                                        parameters=input.meshing_parameters())
+    mesh = input.mesh()
     boundaries = list(input.boundary_values().keys())
-    mesh.refine_by_boundaries(boundaries)
-    mesh.set_complex(input.complex_mode())
+    # mesh.refine_by_boundaries(boundaries)
 
     conductivity = input.conductivity()
     volume_conductor = VolumeConductor(conductivity=conductivity, mesh=mesh)
@@ -33,6 +27,7 @@ def ossdbs_fem(json_path: str) -> None:
                              volume_conductor=volume_conductor
                              )
     output.save(input.output_path())
+    output.save_mesh()
 
 
 if __name__ == '__main__':
