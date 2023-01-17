@@ -23,7 +23,6 @@ from typing import List
 import json
 import numpy as np
 import ngsolve
-import netgen
 
 
 class Input:
@@ -86,11 +85,20 @@ class Input:
             Boundary names and the associated values.
         """
 
-        boundaries = {
-            'Electrodes': [{'Contacts': electrode['Contacts']}
-                           for electrode in self.__input['Electrodes']],
-            'BrainSurface': self.__input['BrainSurface']}
-        return BoundaryFactory.create_boundaries(boundaries)
+        boundaries = {}
+        for index, electrode in enumerate(self.__input['Electrodes']):
+            boundaries.update(self.__active_electrode_values(index, electrode))
+
+        if self.__input['BrainSurface']['Active']:
+            value = boundaries['Brainsurface']['Value']
+            boundaries.update({'Brain': value})
+        return boundaries
+
+    def __active_electrode_values(self, electrode_index, electrode):
+        return {'E{}C{}'.format(electrode_index, index):
+                electrode['Contact_' + str(index+1)]['Value']
+                for index in range(8)
+                if electrode['Contact_' + str(index+1)]['Active']}
 
     def stimulation_signal(self):
         """Return stimulation signal.
@@ -210,41 +218,6 @@ class ElectrodeFactory:
         names.update({'Body': 'E{}B'.format(index)})
         electrode.rename_boundaries(names)
         return electrode
-
-
-class BoundaryFactory:
-    """Creates a dictionary of boundaries and corresponding boundary values."""
-
-    @classmethod
-    def create_boundaries(cls, boundaries: dict) -> dict:
-        """Create a dictionary of boundaries and corresponding boundary
-        values.
-
-        Parameters
-        ----------
-        boundaries : dict
-
-        Returns
-        -------
-        dict
-        """
-        boundary_values = {}
-
-        for index, electrode in enumerate(boundaries['Electrodes']):
-            boundary_values.update(cls.__electrode_values(index, electrode))
-
-        if boundaries['BrainSurface']['Active']:
-            value = boundaries['Brainsurface']['Value']
-            boundary_values.update({'Brain': value})
-
-        return boundary_values
-
-    @staticmethod
-    def __electrode_values(electrode_index: int, electrode: dict):
-        return {'E{}C{}'.format(electrode_index, contact_index): value
-                for contact_index, value
-                in enumerate(electrode['Contacts']['Value'])
-                if electrode['Contacts']['Active'][contact_index]}
 
 
 class SignalFactory:

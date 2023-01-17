@@ -16,7 +16,7 @@ def ossdbs_fem(json_path: str) -> None:
     input = Input(json_path=json_path)
     mesh = input.mesh()
     boundaries = list(input.boundary_values().keys())
-    # mesh.refine_by_boundaries(boundaries)
+    mesh.refine_by_boundaries(boundaries)
 
     conductivity = input.conductivity()
     volume_conductor = VolumeConductor(conductivity=conductivity, mesh=mesh)
