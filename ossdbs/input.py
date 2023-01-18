@@ -1,9 +1,6 @@
-
-from dataclasses import dataclass
-import json
-import numpy as np
+from ossdbs.brain_geometry import BrainGeometry
 from ossdbs.brain_imaging.mri import MagneticResonanceImage
-from ossdbs.brainsubstance import Material
+from ossdbs.materials import Material
 from ossdbs.conductivity import Conductivity
 from ossdbs.electrodes import AbbottStjudeActiveTip6142_6145
 from ossdbs.electrodes import AbbottStjudeActiveTip6146_6149
@@ -16,34 +13,59 @@ from ossdbs.electrodes import PINSMedicalL301
 from ossdbs.electrodes import PINSMedicalL302
 from ossdbs.electrodes import PINSMedicalL303
 from ossdbs.electrodes import MicroProbesCustomRodent
+from ossdbs.electrodes import Electrode
+from ossdbs.mesh import Mesh
+from ossdbs.region import Region
 from ossdbs.signals import Signal
 from ossdbs.signals import RectangleSignal, TrapzoidSignal, TriangleSignal
-from ossdbs.spectrum_modes import Octavevands, NoTruncationTest
-
-
-@dataclass
-class Region:
-    start: tuple = (0, 0, 0)
-    end: tuple = (0, 0, 0)
+from ossdbs.spectrum_modes import Octavevands, NoTruncationTest, SpectrumMode
+from typing import List
+import json
+import numpy as np
+import ngsolve
 
 
 class Input:
+    """Transform the input json.
+
+    Parameters
+    ----------
+    json_path : str
+    """
 
     def __init__(self, json_path: str) -> None:
         self.__input = self.__load_json(path=json_path)
         mri_path = self.__input['MagneticResonanceImage']['Path']
         mri = MagneticResonanceImage(mri_path)
         self.__offset = np.multiply(mri.bounding_box()[0], -1)
+        self.__shift_electrodes()
 
-    @staticmethod
-    def __load_json(path):
-        with open(path, 'r') as json_file:
-            return json.load(json_file)
+    def mesh(self):
+        electrodes = ElectrodeFactory.create(self.__input['Electrodes'])
+        geometry = BrainGeometry(region=self.__region_of_interest(),
+                                 electrodes=electrodes)
+        netgen_geometry = geometry.netgen_geometry()
 
-    def mesh_order(self):
-        return self.__input['MeshElementOrder']
+        if self.__input["Mesh"]["LoadMesh"]:
+            file_path = self.__input["Mesh"]["LoadPath"]
+            ngsolve_mesh = ngsolve.Mesh(filename=file_path)
+            ngsolve_mesh.ngmesh.SetGeometry(netgen_geometry)
+        else:
+            ngsolve_mesh = ngsolve.Mesh(ngmesh=netgen_geometry.GenerateMesh())
 
-    def conductivity(self):
+        order = self.__input["Mesh"]["MeshElementOrder"]
+        mesh = Mesh(ngsolve_mesh=ngsolve_mesh, order=order)
+        mesh.set_complex(state=self.__input['FEMMode'] == 'EQS')
+        return mesh
+
+    def conductivity(self) -> Conductivity:
+        """Return the conductivity.
+
+        Returns
+        -------
+        Conductivity
+            Conductivity distribution in a given space.
+        """
         coding = self.__input['MagneticResonanceImage']['MaterialCoding']
         mri_coding = {Material.GRAY_MATTER: coding['GrayMatter'],
                       Material.WHITE_MATTER: coding['WhiteMatter'],
@@ -54,37 +76,56 @@ class Input:
         mri.set_offset(self.__offset)
         return Conductivity(mri)
 
-    def electrodes(self):
-        self.__shift_electrodes()
-        return ElectrodeFactory.create_electrodes(self.__input['Electrodes'])
-
-    def __shift_electrodes(self):
-        for index in range(len(self.__input['Electrodes'])):
-            translation = self.__input['Electrodes'][index]['Translation']
-            new_translation = np.add(translation, self.__offset)
-            self.__input['Electrodes'][index]['Translation'] = new_translation
-
     def boundary_values(self):
-        boundaries = {
-            'Electrodes': [{'Contacts': electrode['Contacts'],
-                            'Body': electrode['Body']}
-                           for electrode in self.__input['Electrodes']],
-            'BrainSurface': self.__input['BrainSurface']}
-        return BoundaryFactory.create_boundaries(boundaries)
+        """Return the boundary values.
+
+        Returns
+        -------
+        dict
+            Boundary names and the associated values.
+        """
+
+        boundaries = {}
+        for index, electrode in enumerate(self.__input['Electrodes']):
+            boundaries.update(self.__active_electrode_values(index, electrode))
+
+        if self.__input['BrainSurface']['Active']:
+            value = boundaries['Brainsurface']['Value']
+            boundaries.update({'Brain': value})
+        return boundaries
+
+    def __active_electrode_values(self, electrode_index, electrode):
+        return {'E{}C{}'.format(electrode_index, index):
+                electrode['Contact_' + str(index+1)]['Value']
+                for index in range(8)
+                if electrode['Contact_' + str(index+1)]['Active']}
 
     def stimulation_signal(self):
-        return SignalFactory.generate(self.__input['StimulationSignal'])
+        """Return stimulation signal.
 
-    def output_path(self):
+        Returns
+        -------
+        Signal
+        """
+        return SignalFactory.create_signal(self.__input['StimulationSignal'])
+
+    def output_path(self) -> str:
+        """Return path for results.
+
+        Returns
+        -------
+        str
+            Directory for result files.
+        """
         return self.__input['OutputPath']
 
-    def complex_mode(self):
-        if not self.__input['FEMMode'] == 'EQS':
-            return False
-        return True
+    def __region_of_interest(self) -> Region:
+        """Return the region of interest.
 
-    def region_of_interest(self):
-
+        Returns
+        -------
+        Region
+        """
         if not self.__input['RegionOfInterest']['Active']:
             mri_start, mri_end = self.mri().bounding_box()
             return Region(start=mri_start, end=mri_end)
@@ -96,10 +137,27 @@ class Input:
         return Region(start=tuple(start.astype(int)),
                       end=tuple(end.astype(int)))
 
-    def spectrum_mode(self):
+    def spectrum_mode(self) -> SpectrumMode:
+        """Return the spectrum mode for the FEM.
+
+        Returns
+        -------
+        SpectrumMode
+        """
         return {'NoTruncation': NoTruncationTest(),
                 'OctaveBand': Octavevands()
                 }[self.__input['SpectrumMode']]
+
+    @staticmethod
+    def __load_json(path) -> dict:
+        with open(path, 'r') as json_file:
+            return json.load(json_file)
+
+    def __shift_electrodes(self) -> None:
+        for index in range(len(self.__input['Electrodes'])):
+            translation = self.__input['Electrodes'][index]['Translation']
+            new_translation = np.add(translation, self.__offset)
+            self.__input['Electrodes'][index]['Translation'] = new_translation
 
 
 class ElectrodeFactory:
@@ -134,7 +192,7 @@ class ElectrodeFactory:
                   }
 
     @classmethod
-    def create_electrodes(cls, electrodes: dict) -> list:
+    def create(cls, electrodes: dict) -> List[Electrode]:
         """create a list of Electrode objects.
 
         Parameters
@@ -150,49 +208,25 @@ class ElectrodeFactory:
                 for idx, parameters in enumerate(electrodes)]
 
     @classmethod
-    def __create_electrode(cls, parameters, index):
-        electrode_class = cls.ELECTRODES[parameters['Name']]
-        electrode = electrode_class(direction=tuple(parameters['Direction']),
-                                    translation=tuple(parameters
-                                    ['Translation']),
-                                    rotation=parameters['Rotation'])
-        names = {'Contact_{}'.format(i+1): "E{}C{}".format(index, i)
-                 for i in range(len(parameters['Contacts']['Active']))}
+    def __create_electrode(cls, parameters: dict, index: int) -> Electrode:
+        elec_class = cls.ELECTRODES[parameters['Name']]
+        electrode = elec_class(direction=tuple(parameters['Direction']),
+                               translation=tuple(parameters['Translation']),
+                               rotation=parameters['Rotation'])
+        names = {'Contact_{}'.format(number+1): "E{}C{}".format(index, number)
+                 for number in range(len(parameters['Contacts']['Active']))}
         names.update({'Body': 'E{}B'.format(index)})
         electrode.rename_boundaries(names)
         return electrode
 
 
-class BoundaryFactory:
-    """Creates a dictionary of boundaries and corresponding boundary values."""
-    
-    @classmethod
-    def create_boundaries(cls, boundaries: dict) -> dict:
-        """Creates a dictionary of boundaries and corresponding boundary values.
-        
-        """
-        boundary_values = {}
-
-        for index, electrode in enumerate(boundaries['Electrodes']):
-            boundary_values.update(cls.__electrode_values(index, electrode))
-
-        if boundaries['BrainSurface']['Active']:
-            value = boundaries['Brainsurface']['Value']
-            boundary_values.update({'Brain': value})
-
-        return boundary_values
-
-    @staticmethod
-    def __electrode_values(index, electrode):
-        values = {'E{}C{}'.format(index, i): value
-                  for i, value in enumerate(electrode['Contacts']['Value'])
-                  if electrode['Contacts']['Active'][i]}
-        if electrode['Body']['Active']:
-            values.update({'E{}B'.format(index): electrode['Body']['Value']})
-        return values
-
-
 class SignalFactory:
+    """Creates signal.
+
+    Returns
+    -------
+    Signal
+    """
 
     SIGNALS = {'Rectangle': RectangleSignal,
                'Triangle': TriangleSignal,
@@ -200,11 +234,22 @@ class SignalFactory:
                }
 
     @classmethod
-    def generate(cls, parameters) -> Signal:
+    def create_signal(cls, parameters: dict) -> Signal:
+        """Create a signal.
+
+        Parameters
+        ----------
+        parameters : dict
+
+        Returns
+        -------
+        dict
+        """
+
         signal_type = parameters['Type']
         frequency = parameters['Frequency']
-        pulse_width = parameters['PulseWidthPercentage']
-        top_width = parameters['TopWidthPercentage']
+        pulse_width = parameters['PulseWidthMicroSeconds'] * frequency
+        top_width = parameters['TopWidthMicroSeconds'] * frequency
 
         if signal_type == 'Trapzoid':
             return TrapzoidSignal(frequency, pulse_width, top_width)

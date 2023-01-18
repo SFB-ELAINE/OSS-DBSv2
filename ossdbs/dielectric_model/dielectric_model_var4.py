@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from ossdbs.brainsubstance import Material
+from ossdbs.materials import Material
 from ossdbs.dielectric_model import DielectricParamters, DielectricModel
 import numpy as np
 

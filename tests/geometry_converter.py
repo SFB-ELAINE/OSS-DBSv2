@@ -78,20 +78,3 @@ class GeometryConverter:
                 'Flags': wire_data['TShape']['Flags'],
                 'Location': wire_data['Location'],
                 'Orient': wire_data['Orient']}
-
-
-from netgen.occ import Sphere, Pnt, Vec
-
-
-def test_foo():
-    sp1 = Sphere(Pnt(0, 0, 0), 0.2)
-    sp2 = Sphere(Pnt(0.5, 0, 0), 0.2)
-    sp3 = Sphere(Pnt(0, 0, 0.5), 0.2)
-    sp4 = Sphere(Pnt(0, 0.2, 0.7), 0.2)
-
-    vector = Vec(1, 1, 1)
-    all = sp1 + sp2 + sp3 + sp4
-    compound = all.Move(vector)
-    result = GeometryConverter().to_dictionary(compound)
-    with open("sample.json", "w") as outfile:
-        outfile.write(json.dumps(result))
