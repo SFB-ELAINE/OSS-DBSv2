@@ -18,21 +18,6 @@ class Potential():
         self.gridfunction = gridfunction
         self.mesh = mesh
 
-    def error(self):
-        """Evaluate the error of the potential.
-
-        Returns
-        -------
-        ngsolve.fem.CoefficientFunction
-            Error values.
-        """
-        flux = ngsolve.grad(self.gridfunction)
-        space = self.mesh.flux_space()
-        flux_potential = ngsolve.GridFunction(space=space)
-        flux_potential.Set(coefficient=flux)
-        difference = flux - flux_potential
-        return difference * ngsolve.Conj(difference)
-
     def __add__(self, other) -> 'Potential':
         self.gridfunction.vec.data += other._gridfunction.vec.data
 
@@ -85,7 +70,14 @@ class VolumeConductor():
         potential.Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
         equation = LaplaceEquation(space=space, sigma=sigma)
         potential.vec.data = equation.solve_bvp(input=potential)
-        return potential, sigma * ngsolve.grad(potential)
+
+        field = ngsolve.grad(potential)
+        current_density = sigma * field
+        power = ngsolve.Integrate(field * ngsolve.Conj(current_density),
+                                  self.mesh.ngsolvemesh())
+        impedance = 1 / power
+
+        return potential, current_density, impedance
 
 
 class LaplaceEquation:

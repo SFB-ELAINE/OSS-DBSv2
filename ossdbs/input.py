@@ -34,7 +34,7 @@ class Input:
 
     def __init__(self, json_path: str) -> None:
         self.__input = self.__load_json(path=json_path)
-        mri_path = self.__input['MagneticResonanceImage']['Path']
+        mri_path = self.__input['MaterialDistribution']['MRIPath']
         mri = MagneticResonanceImage(mri_path)
         self.__offset = np.multiply(mri.bounding_box()[0], -1)
         self.__shift_electrodes()
@@ -53,7 +53,7 @@ class Input:
             ngsolve_mesh = ngsolve.Mesh(ngmesh=netgen_geometry.GenerateMesh())
 
         order = self.__input["Mesh"]["MeshElementOrder"]
-        complex_datatpye = self.__input['FEMMode'] == 'EQS'
+        complex_datatpye = self.__input['EQSMode']
         return Mesh(ngsolve_mesh=ngsolve_mesh,
                     order=order,
                     complex_datatype=complex_datatpye)
@@ -66,12 +66,12 @@ class Input:
         Conductivity
             Conductivity distribution in a given space.
         """
-        coding = self.__input['MagneticResonanceImage']['MaterialCoding']
+        coding = self.__input['MaterialDistribution']['MaterialCoding']
         mri_coding = {Material.GRAY_MATTER: coding['GrayMatter'],
                       Material.WHITE_MATTER: coding['WhiteMatter'],
                       Material.CSF: coding['CerebrospinalFluid'],
                       Material.UNKNOWN: coding['Unknown']}
-        mri_path = self.__input['MagneticResonanceImage']['Path']
+        mri_path = self.__input['MaterialDistribution']['MRIPath']
         mri = MagneticResonanceImage(mri_path, mri_coding)
         mri.set_offset(self.__offset)
         return Conductivity(mri)
@@ -89,9 +89,10 @@ class Input:
         for index, electrode in enumerate(self.__input['Electrodes']):
             boundaries.update(self.__active_electrode_values(index, electrode))
 
-        if self.__input['BrainSurface']['Active']:
-            value = boundaries['Brainsurface']['Value']
-            boundaries.update({'Brain': value})
+        case_grounding = self.__input['CaseGrounding']
+        if case_grounding['Active']:
+            boundaries.update({'BrainSurface': case_grounding['Value']})
+
         return boundaries
 
     def __active_electrode_values(self, electrode_index, electrode):
@@ -110,9 +111,9 @@ class Input:
 
         parameters = self.__input['StimulationSignal']
         signal_type = parameters['Type']
-        frequency = parameters['Frequency']
-        pulse_width = parameters['PulseWidthMicroSeconds'] * frequency
-        top_width = parameters['TopWidthMicroSeconds'] * frequency
+        frequency = parameters['Frequency[Hz]']
+        pulse_width = parameters['PulseWidth[µs]'] * frequency
+        top_width = parameters['PulseTopWidth[µs]'] * frequency
 
         if signal_type == 'Trapzoid':
             return TrapzoidSignal(frequency, pulse_width, top_width)
@@ -144,9 +145,13 @@ class Input:
             mri_start, mri_end = self.mri().bounding_box()
             return Region(start=mri_start, end=mri_end)
 
-        shape = self.__input['RegionOfInterest']['Shape']
-        center = self.__input['RegionOfInterest']['Center'] + self.__offset
-        start = center - np.divide(shape, 2)
+        shape = (self.__input['RegionOfInterest']['Shape']['x[mm]'],
+                 self.__input['RegionOfInterest']['Shape']['y[mm]'],
+                 self.__input['RegionOfInterest']['Shape']['z[mm]'])
+        center = (self.__input['RegionOfInterest']['Center']['x[mm]'],
+                  self.__input['RegionOfInterest']['Center']['y[mm]'],
+                  self.__input['RegionOfInterest']['Center']['z[mm]'])
+        start = center - np.divide(shape, 2) + self.__offset
         end = start + shape
         return Region(start=tuple(start.astype(int)),
                       end=tuple(end.astype(int)))
@@ -169,8 +174,10 @@ class Input:
 
     def __shift_electrodes(self) -> None:
         for index in range(len(self.__input['Electrodes'])):
-            translation = self.__input['Electrodes'][index]['Translation']
-            new_translation = np.add(translation, self.__offset)
+            par = self.__input['Electrodes'][index]['Translation']
+            new_translation = {'x[mm]': par['x[mm]'] + self.__offset[0],
+                               'y[mm]': par['y[mm]'] + self.__offset[1],
+                               'z[mm]': par['z[mm]'] + self.__offset[2]}
             self.__input['Electrodes'][index]['Translation'] = new_translation
 
 
@@ -224,11 +231,18 @@ class ElectrodeFactory:
     @classmethod
     def __create_electrode(cls, parameters: dict, index: int) -> Electrode:
         elec_class = cls.ELECTRODES[parameters['Name']]
-        electrode = elec_class(direction=tuple(parameters['Direction']),
-                               translation=tuple(parameters['Translation']),
-                               rotation=parameters['Rotation'])
+        direction = (parameters['Direction']['x[mm]'],
+                     parameters['Direction']['y[mm]'],
+                     parameters['Direction']['z[mm]'])
+        translation = (parameters['Translation']['x[mm]'],
+                       parameters['Translation']['y[mm]'],
+                       parameters['Translation']['z[mm]'])
+        rotation = parameters['Rotation[Degrees]']
+        electrode = elec_class(direction=direction,
+                               translation=translation,
+                               rotation=rotation)
         names = {'Contact_{}'.format(number+1): "E{}C{}".format(index, number)
-                 for number in range(len(parameters['Contacts']['Active']))}
+                 for number in range(8)}
         names.update({'Body': 'E{}B'.format(index)})
         electrode.rename_boundaries(names)
         return electrode

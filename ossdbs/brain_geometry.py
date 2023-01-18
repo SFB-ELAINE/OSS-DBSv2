@@ -25,7 +25,7 @@ class BrainGeometry:
         """
 
         geometry = self.__create_ellipsoid()
-        geometry.bc('Brain')
+        geometry.bc('BrainSurface')
         for electrode in self.__electrodes:
             geometry = geometry - electrode.generate_geometry()
 
