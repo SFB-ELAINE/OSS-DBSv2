@@ -13,13 +13,19 @@ class Mesh:
 
     order : int
         Order of mesh elements.
+
+    complex_datatype : bool
+            True for complex data type, False otherwise.
     """
 
-    def __init__(self, ngsolve_mesh: ngsolve.comp.Mesh, order: int) -> None:
+    def __init__(self,
+                 ngsolve_mesh: ngsolve.comp.Mesh,
+                 order: int,
+                 complex_datatype: bool = False) -> None:
         self.__mesh = ngsolve_mesh
         self.__mesh.Curve(order=order)
         self.__order = order
-        self.__complex = False
+        self.__complex = complex_datatype
 
     def get_boundaries(self) -> List:
         """Return all boundary names.
@@ -81,17 +87,6 @@ class Mesh:
         """
 
         self.__mesh.ngmeshSave(file_name)
-
-    def set_complex(self, state: bool) -> None:
-        """Set the data type to complex.
-
-        Parameters
-        ----------
-        state : bool
-            True for complex data type, False otherwise.
-        """
-
-        self.__complex = state
 
     def is_complex(self) -> bool:
         """Check complex data type.
