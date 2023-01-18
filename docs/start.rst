@@ -1,20 +1,41 @@
 Getting Started
 ================
 
-There are differnet ways to use OSS-DBS.
+.. note::
+   Write instructions for simple model run, no links to or citation needed
 
-Run input from directory
--------------------------
+This Tutorial shows how to provide data to OSS-DBS and start the simulation
 
-You can run fill in data to input directory and start main.
+Provide your data
+------------------
 
-Import as libary
------------------
+List data + format and where to store:
+MRI, DTI, protocols
 
-You can import all functions containe in OSS-DBS by importing
+Starting simulation
+--------------------
+
+You can start the simulation by running
 
 .. code-block:: bash
 
-    $ import oss-dbs
-    
-in a python enviroment.
+    $ python main.py
+
+inside the project folder.
+
+Evaluating simulation results
+------------------------------
+
+The data from your simulation run will be stored inside the project folder
+labeled as results.
+
+API references
+--------------
+
+Input
+^^^^^^^
+
+.. automodule:: ossdbs.input
+    :members:
+    :undoc-members:
+    :show-inheritance:
