@@ -1,5 +1,5 @@
 
-from ossdbs.brainsubstance import Material
+from ossdbs.materials import Material
 from ossdbs.brain_imaging.Nifti1Image import Nifti1Image
 from ossdbs.voxels import Voxels
 import numpy as np
@@ -30,5 +30,5 @@ class MagneticResonanceImage(Nifti1Image):
 
     def material_distribution(self, material: Material) -> Voxels:
         start, end = self.bounding_box()
-        is_material = self.data_map() == material
-        return Voxels(data=is_material, start=tuple(start), end=tuple(end))
+        material_distribution = self.data_map() == material
+        return Voxels(data=material_distribution, start=start, end=end)

@@ -1,5 +1,5 @@
 # Abbott/St Jude Directed 6172
-from ossdbs.electrodes.abstract_electrode import Electrode
+from ossdbs.electrodes.electrode import Electrode
 import netgen
 import numpy as np
 

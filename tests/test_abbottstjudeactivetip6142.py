@@ -5,7 +5,7 @@ import netgen
 import ngsolve
 import json
 
-@pytest.mark.skip
+
 class TestAbbottStJudeActiveTip6142_6145():
     FILE_PREFIX = "tests/test_data/AbbottStjudeActiveTip6142_6145"
 
