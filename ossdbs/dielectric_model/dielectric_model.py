@@ -1,41 +1,30 @@
 
-from abc import ABC
-import numpy as np
+from abc import ABC, abstractmethod
 
 
-class DielectricParamters(ABC):
-    alpha: np.ndarray
-    eps_delta: np.ndarray
-    eps_inf: float
-    sigma: float
-    tau: np.ndarray
+class DielectricModel(ABC):
+    """Model for the dielectric spectrum of a tissue."""
 
-
-class DielectricModel():
-    """Model for the dielectric spectrum of a tissue using the
-    Cole-Cole equation"""
-
-    e0 = 8.8541878128e-12
-
-    def __init__(self, parameters: DielectricParamters) -> None:
-        self.__eps_inf = parameters.eps_inf
-        self.__sigma = parameters.sigma
-        self.__alpha = parameters.alpha
-        self.__eps_delta = parameters.eps_delta
-        self.__tau = parameters.tau
-
+    @abstractmethod
     def permitivity(self, omega: float) -> complex:
-        divisor = 1 + (1j * omega * self.__tau) ** (1 - self.__alpha)
-        eps_dispersion = self.__eps_inf + np.sum(self.__eps_delta / divisor)
+        """Calculate the permitivity by the angular frequency omega.
 
-        if omega == 0:
-            return eps_dispersion * self.e0 + 0j
+        Returns
+        -------
+        complex
+            Complex permitivity.
+        """
 
-        return self.e0 * eps_dispersion + self.__sigma / (1j * omega)
+        pass
 
+    @abstractmethod
     def conductivity(self, omega: float) -> complex:
+        """Calculate the conductivity by the angular frequency omega.
 
-        if omega == 0:
-            return self.__sigma + 0j
+        Returns
+        -------
+        complex
+            Complex conductivity.
+        """
 
-        return np.conjugate(1j * omega * self.permitivity(omega=omega))
+        pass

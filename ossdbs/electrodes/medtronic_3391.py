@@ -1,5 +1,5 @@
 # Medtronic 3391
-from ossdbs.electrodes.abstract_electrode import Electrode
+from ossdbs.electrodes.electrode import Electrode
 import netgen
 import numpy as np
 
