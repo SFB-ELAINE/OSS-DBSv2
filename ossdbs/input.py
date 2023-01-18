@@ -16,7 +16,6 @@ from ossdbs.electrodes import MicroProbesCustomRodent
 from ossdbs.electrodes import Electrode
 from ossdbs.mesh import Mesh
 from ossdbs.region import Region
-from ossdbs.signals import Signal
 from ossdbs.signals import RectangleSignal, TrapzoidSignal, TriangleSignal
 from ossdbs.spectrum_modes import Octavevands, NoTruncationTest, SpectrumMode
 from typing import List
@@ -54,9 +53,10 @@ class Input:
             ngsolve_mesh = ngsolve.Mesh(ngmesh=netgen_geometry.GenerateMesh())
 
         order = self.__input["Mesh"]["MeshElementOrder"]
-        mesh = Mesh(ngsolve_mesh=ngsolve_mesh, order=order)
-        mesh.set_complex(state=self.__input['FEMMode'] == 'EQS')
-        return mesh
+        complex_datatpye = self.__input['FEMMode'] == 'EQS'
+        return Mesh(ngsolve_mesh=ngsolve_mesh,
+                    order=order,
+                    complex_datatype=complex_datatpye)
 
     def conductivity(self) -> Conductivity:
         """Return the conductivity.
@@ -107,7 +107,21 @@ class Input:
         -------
         Signal
         """
-        return SignalFactory.create_signal(self.__input['StimulationSignal'])
+
+        parameters = self.__input['StimulationSignal']
+        signal_type = parameters['Type']
+        frequency = parameters['Frequency']
+        pulse_width = parameters['PulseWidthMicroSeconds'] * frequency
+        top_width = parameters['TopWidthMicroSeconds'] * frequency
+
+        if signal_type == 'Trapzoid':
+            return TrapzoidSignal(frequency, pulse_width, top_width)
+
+        signal = {'Rectangle': RectangleSignal,
+                  'Triangle': TriangleSignal,
+                  'Trapzoid': TrapzoidSignal
+                  }[signal_type]
+        return signal(frequency, pulse_width)
 
     def output_path(self) -> str:
         """Return path for results.
@@ -218,40 +232,3 @@ class ElectrodeFactory:
         names.update({'Body': 'E{}B'.format(index)})
         electrode.rename_boundaries(names)
         return electrode
-
-
-class SignalFactory:
-    """Creates signal.
-
-    Returns
-    -------
-    Signal
-    """
-
-    SIGNALS = {'Rectangle': RectangleSignal,
-               'Triangle': TriangleSignal,
-               'Trapzoid': TrapzoidSignal
-               }
-
-    @classmethod
-    def create_signal(cls, parameters: dict) -> Signal:
-        """Create a signal.
-
-        Parameters
-        ----------
-        parameters : dict
-
-        Returns
-        -------
-        dict
-        """
-
-        signal_type = parameters['Type']
-        frequency = parameters['Frequency']
-        pulse_width = parameters['PulseWidthMicroSeconds'] * frequency
-        top_width = parameters['TopWidthMicroSeconds'] * frequency
-
-        if signal_type == 'Trapzoid':
-            return TrapzoidSignal(frequency, pulse_width, top_width)
-        signal = cls.SIGNALS[signal_type]
-        return signal(frequency, pulse_width)
