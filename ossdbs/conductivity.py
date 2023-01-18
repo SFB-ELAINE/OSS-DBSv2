@@ -1,5 +1,5 @@
 
-from ossdbs.brainsubstance import Material
+from ossdbs.materials import Material
 from ossdbs.brain_imaging.mri import MagneticResonanceImage
 from ossdbs.dielectric_model import ColeColeFourModelFactory
 from ossdbs.voxels import Voxels

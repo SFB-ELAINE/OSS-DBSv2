@@ -1,5 +1,5 @@
 # MicroProbes SNEX 100 Concentric Bipolar Electrodes
-from ossdbs.electrodes.abstract_electrode import Electrode
+from ossdbs.electrodes.electrode import Electrode
 import netgen
 import numpy as np
 

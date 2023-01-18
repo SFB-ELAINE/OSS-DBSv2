@@ -18,7 +18,7 @@ class RectangleSignal(Signal):
     frequency : float
         Frequency [Hz] of the signal.
     pulse_width : float
-        Relative pulse width for omne period.
+        Relative pulse width for one period.
     """
 
     def __init__(self, frequency: float, pulse_width: float) -> None:
@@ -58,7 +58,7 @@ class TriangleSignal(Signal):
     frequency : float
         Frequency [Hz] of the signal.
     pulse_width : float
-        Relative pulse width for omne period.
+        Relative pulse width for one period.
     """
 
     def __init__(self, frequency: float, pulse_width: float) -> None:

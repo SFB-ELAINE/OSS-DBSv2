@@ -1,4 +1,4 @@
-import setuptools
+from setuptools import setup, find_packages
 import os
 
 with open("README.md", "r") as fh:
@@ -15,15 +15,14 @@ with open(os.path.join(here, 'ossdbs', '__version__.py'),
 with open('requirements.txt') as fp:
     install_requires = fp.read()
 
-setuptools.setup(
+setup(
     name=about['__title__'],
     version=about['__version__'],
     author="XYZ",
     author_email="xyz@abc.com",
     description="Open-source DBS",
-    packages=["ossdbs"],
-    package_dir={"ossdbs": "ossdbs/"},
-    scripts=["ossdbs/scripts/ossdbs.py"],
+    packages=find_packages(include=['ossdbs', 'ossdbs.*']),
     python_requires='>=3.8',
     install_requires=install_requires,
+    entry_points={'console_scripts': ['ossdbs=ossdbs.main:main']}
 )
