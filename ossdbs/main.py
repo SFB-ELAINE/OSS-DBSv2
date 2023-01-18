@@ -28,6 +28,7 @@ def ossdbs_fem(json_path: str) -> None:
                              )
     output.save(input.output_path())
     output.save_mesh()
+    output.save_impedances()
 
 
 if __name__ == '__main__':

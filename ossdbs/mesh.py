@@ -152,21 +152,27 @@ class Mesh:
             self.__mesh.SetRefinementFlag(ei=element, refine=to_refine)
         self.refine()
 
-    def refine_by_error(self, error: ngsolve.fem.CoefficientFunction) -> List:
+    def refine_by_error(self, gridfunction: ngsolve.GridFunction) -> List:
         """Refine the mesh by the error at each mesh element.
 
         Parameters
         ----------
-        error : ngsolve.fem.CoefficientFunction
-            Function holding all errors for each mesh element.
+        gridfunction : ngsolve.GridFunction
         """
 
-        errors = ngsolve.Integrate(cf=error,
-                                   mesh=self.__mesh,
-                                   VOL_or_BND=ngsolve.VOL,
-                                   element_wise=True).real
-        limit = 0.5 * max(errors)
+        flux = ngsolve.grad(gridfunction)
+        space = self.mesh.flux_space()
+        flux_potential = ngsolve.GridFunction(space=space)
+        flux_potential.Set(coefficient=flux)
+        difference = flux - flux_potential
+        error = difference * ngsolve.Conj(difference)
+
+        element_errors = ngsolve.Integrate(cf=error,
+                                           mesh=self.__mesh,
+                                           VOL_or_BND=ngsolve.VOL,
+                                           element_wise=True).real
+        limit = 0.5 * max(element_errors)
         for element in self.__mesh.Elements(ngsolve.BND):
-            to_refine = errors[element.nr] > limit
+            to_refine = element_errors[element.nr] > limit
             self.__mesh.SetRefinementFlag(ei=element, refine=to_refine)
         self.refine()
