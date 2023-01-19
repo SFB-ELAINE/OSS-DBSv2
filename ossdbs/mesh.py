@@ -126,10 +126,10 @@ class Mesh:
 
         space = ngsolve.L2(self.__mesh, order=0)
         grid_function = ngsolve.GridFunction(space=space)
-        values = marked_voxels.data.astype(float)
+        values = marked_voxels.data
         cf = ngsolve.VoxelCoefficient(start=marked_voxels.start,
                                       end=marked_voxels.end,
-                                      values=values,
+                                      values=values.astype(float),
                                       linear=False)
         grid_function.Set(cf)
         flags = grid_function.vec.FV().NumPy()

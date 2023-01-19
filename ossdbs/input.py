@@ -135,16 +135,15 @@ class Input:
         if not self.__input['RegionOfInterest']['Active']:
             return Region(start=mri_start, end=mri_end)
 
-        shape = (self.__input['RegionOfInterest']['Shape']['x[mm]'],
-                 self.__input['RegionOfInterest']['Shape']['y[mm]'],
-                 self.__input['RegionOfInterest']['Shape']['z[mm]'])
-        center = (self.__input['RegionOfInterest']['Center']['x[mm]'],
-                  self.__input['RegionOfInterest']['Center']['y[mm]'],
-                  self.__input['RegionOfInterest']['Center']['z[mm]'])
+        shape = (self.__input['RegionOfInterest']['Shape']['x[mm]'] * 1e-3,
+                 self.__input['RegionOfInterest']['Shape']['y[mm]'] * 1e-3,
+                 self.__input['RegionOfInterest']['Shape']['z[mm]'] * 1e-3)
+        center = (self.__input['RegionOfInterest']['Center']['x[mm]'] * 1e-3,
+                  self.__input['RegionOfInterest']['Center']['y[mm]'] * 1e-3,
+                  self.__input['RegionOfInterest']['Center']['z[mm]'] * 1e-3)
         start = center - np.divide(shape, 2) + self.__offset
         end = start + shape
-        return Region(start=tuple(start.astype(int)),
-                      end=tuple(end.astype(int)))
+        return Region(start=tuple(start), end=tuple(end))
 
     def spectrum_mode(self) -> SpectrumMode:
         """Return the spectrum mode for the FEM.
@@ -166,12 +165,12 @@ class Input:
 
         electrodes = []
         for input_par in self.__input['Electrodes']:
-            direction = (input_par['Direction']['x[mm]'],
-                         input_par['Direction']['y[mm]'],
-                         input_par['Direction']['z[mm]'])
-            position = (input_par['Position']['x[mm]'],
-                        input_par['Position']['y[mm]'],
-                        input_par['Position']['z[mm]'])
+            direction = (input_par['Direction']['x[mm]'] * 1e-3,
+                         input_par['Direction']['y[mm]'] * 1e-3,
+                         input_par['Direction']['z[mm]'] * 1e-3)
+            position = (input_par['Position']['x[mm]'] * 1e-3,
+                        input_par['Position']['y[mm]'] * 1e-3,
+                        input_par['Position']['z[mm]'] * 1e-3)
             rotation = input_par['Rotation[Degrees]']
             electrode_par = ElectrodeParameters(name=input_par['Name'],
                                                 direction=direction,
@@ -194,9 +193,10 @@ class Input:
         return electrodes
 
     def __shift_electrodes(self) -> None:
+        x, y, z = np.multiply(self.__offset, 1e3)
         for index in range(len(self.__input['Electrodes'])):
             position = self.__input['Electrodes'][index]['Position']
-            new_position = {'x[mm]': position['x[mm]'] + self.__offset[0],
-                            'y[mm]': position['y[mm]'] + self.__offset[1],
-                            'z[mm]': position['z[mm]'] + self.__offset[2]}
+            new_position = {'x[mm]': position['x[mm]'] + x,
+                            'y[mm]': position['y[mm]'] + y,
+                            'z[mm]': position['z[mm]'] + z}
             self.__input['Electrodes'][index]['Position'] = new_position

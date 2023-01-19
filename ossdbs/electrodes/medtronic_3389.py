@@ -17,19 +17,14 @@ class Medtronic3389(Electrode):
 
     translation : tuple
         Translation vector (x,y,z) of electrode.
-
-    Methods
-    -------
-    generate_geometry()
-        Generate geometry of electrode.
     """
 
-    # dimensions [mm]
-    TIP_LENGTH = 1.5
-    CONTACT_LENGTH = 1.5
-    CONTACT_SPACING = 1.5
-    LEAD_DIAMETER = 1.27
-    TOTAL_LENGHTH = 100.0
+    # dimensions [m]
+    TIP_LENGTH = 1.5e-3
+    CONTACT_LENGTH = 1.5e-3
+    CONTACT_SPACING = 1.5e-3
+    LEAD_DIAMETER = 1.27e-3
+    TOTAL_LENGHTH = 100.0e-3
     N_CONTACTS = 4
 
     def __init__(self,

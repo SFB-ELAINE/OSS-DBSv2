@@ -17,19 +17,14 @@ class PINSMedicalL303(Electrode):
 
     translation : tuple
         Translation vector (x,y,z) of electrode.
-
-    Methods
-    -------
-    generate_geometry()
-        Generate geometry of electrode.
     """
 
-    # dimensions [mm]
-    TIP_LENGTH = 1.1
-    CONTACT_LENGTH = 3.0
-    CONTACT_SPACING = 3.0
-    LEAD_DIAMETER = 1.3
-    TOTAL_LENGHTH = 100.0
+    # dimensions [m]
+    TIP_LENGTH = 1.1e-3
+    CONTACT_LENGTH = 3.0e-3
+    CONTACT_SPACING = 3.0e-3
+    LEAD_DIAMETER = 1.3e-3
+    TOTAL_LENGHTH = 100.0e-3
     N_CONTACTS = 4
 
     def __init__(self,
