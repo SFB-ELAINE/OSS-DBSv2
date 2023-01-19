@@ -2,6 +2,7 @@
 from typing import List
 from ossdbs.voxels import Voxels
 import ngsolve
+import re
 
 
 class Mesh:
@@ -27,6 +28,72 @@ class Mesh:
         self.__order = order
         self.__complex = complex_datatype
 
+    def get_boundaries(self) -> List:
+        """Return all boundary names
+
+        Returns
+        -------
+        list
+            Collection of strings.
+        """
+
+        return list(self.__mesh.GetBoundaries())
+
+    def get_floating_electrodes(self) -> List:
+        """Return boundary names for floating electrodes.
+
+        Returns
+        -------
+        list
+            Collection of strings.
+
+        Notes
+        -----
+
+        The naming has to be `floating_IDX` where
+        `IDX` is an integer.
+
+        """
+        electrodes = list(set(self.get_boundaries()) - set(["default"]))
+        floating_electrodes = []
+        pattern = 'floating_[0-9]+'
+        for e in electrodes:
+            match = re.match(pattern, e)
+            if match is None:
+                matched = False
+            else:
+                matched = match.end() == match.endpos()
+            if matched:
+                floating_electrodes.append(e)
+        return floating_electrodes
+
+    def get_floating_impedance_electrodes(self) -> List:
+        """Return boundary names for floating impedance electrodes.
+
+        Returns
+        -------
+        list
+            Collection of strings.
+
+        Notes
+        -----
+
+        The naming has to be `floating_impedance_IDX` where
+        `IDX` is an integer.
+        """
+        electrodes = list(set(self.get_boundaries()) - set(["default"]))
+        floating_impedance_electrodes = []
+        pattern = 'floating_impedance_[0-9]+'
+        for e in electrodes:
+            match = re.match(pattern, e)
+            if match is None:
+                matched = False
+            else:
+                matched = match.end() == match.endpos()
+            if matched:
+                floating_impedance_electrodes.append(e)
+        return floating_impedance_electrodes
+
     def get_dirichlet_boundaries(self) -> List:
         """Return boundary names for Dirichlet BC.
 
@@ -35,8 +102,10 @@ class Mesh:
         list
             Collection of strings.
         """
-
-        return list(set(self.__mesh.GetBoundaries()) - set(['default']) - set(['floating']))
+        all_boundaries = self.get_boundaries()
+        floating_electrodes = self.get_floating_electrodes()
+        floating_impedance_electrodes = self.get_floating_impedance_electrodes()
+        return list(set(all_boundaries) - set(['default']) - set(floating_electrodes) - set(floating_impedance_electrodes))
 
     def get_not_floating_boundaries(self) -> List:
         """Return boundary names that are not floating electrodes.
