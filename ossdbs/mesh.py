@@ -27,8 +27,8 @@ class Mesh:
         self.__order = order
         self.__complex = complex_datatype
 
-    def get_boundaries(self) -> List:
-        """Return all boundary names.
+    def get_dirichlet_boundaries(self) -> List:
+        """Return boundary names for Dirichlet BC.
 
         Returns
         -------
@@ -36,7 +36,18 @@ class Mesh:
             Collection of strings.
         """
 
-        return list(set(self.__mesh.GetBoundaries()) - set(['default']))
+        return list(set(self.__mesh.GetBoundaries()) - set(['default']) - set(['floating']))
+
+    def get_not_floating_boundaries(self) -> List:
+        """Return boundary names that are not floating electrodes.
+
+        Returns
+        -------
+        list
+            Collection of strings.
+        """
+
+        return list(set(self.__mesh.GetBoundaries()) - set(['floating']))
 
     def boundary_coefficients(self, boundaries) \
             -> ngsolve.fem.CoefficientFunction:
@@ -58,7 +69,7 @@ class Mesh:
         """
 
         return ngsolve.HDiv(mesh=self.__mesh,
-                            order=self.__order-1,
+                            order=self.__order - 1,
                             complex=self.__complex)
 
     def ngsolvemesh(self) -> ngsolve.comp.Mesh:
@@ -107,12 +118,61 @@ class Mesh:
         ngsolve.comp.H1
         """
 
-        dirichlet = '|'.join(boundary for boundary in self.get_boundaries())
+        dirichlet = '|'.join(boundary for boundary in self.get_dirichlet_boundaries())
         return ngsolve.H1(mesh=self.__mesh,
                           order=self.__order,
                           dirichlet=dirichlet,
                           complex=self.__complex,
                           wb_withedges=False)
+
+    def surfacel2_space(self) -> ngsolve.comp.SurfaceL2:
+        """Return a surface l2 space based on the mesh.
+
+        Returns
+        -------
+        ngsolve.comp.SurfaceL2
+
+        Notes
+        -----
+
+        To implement a floating conductor, Lagrange multipliers
+        have to be defined on the surfaces of the floating
+        conductors.
+        For that, a SurfaceL2 space is used. To keep only
+        the DOFs on the conductor surface, all other surfaces
+        have to be declared as `dirichlet` surfaces when
+        constructing the function space.
+
+        """
+
+        not_floating = '|'.join(boundary for boundary in self.get_not_floating_boundaries())
+
+        if self.__order > 1:
+            order_lam = self.__order - 1
+        else:
+            order_lam = self.__order
+
+        return ngsolve.SurfaceL2(mesh=self.__mesh,
+                                 order=order_lam,
+                                 dirichlet=not_floating,
+                                 complex=self.__complex)
+
+    def number_space(self) -> ngsolve.comp.NumberSpace:
+        """Return a number space based on the mesh.
+
+        Returns
+        -------
+        ngsolve.comp.NumberSpace
+
+        Notes
+        -----
+
+        This space contains just one single (global) DOF.
+        """
+
+        return ngsolve.NumberSpace(mesh=self.__mesh,
+                                   order=0,  # do not change!
+                                   complex=self.__complex)
 
     def refine_at_voxel(self, marked_voxels: Voxels) -> None:
         """Refine the mesh at the marked locations.
