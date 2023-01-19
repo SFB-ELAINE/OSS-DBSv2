@@ -105,7 +105,7 @@ class NoTruncationTest(SpectrumMode):
         freq_components = self._frequency_components(signal)
         frequency = freq_components[77].frequency
         result = volume_conductor.potential(boundary_values, frequency)
-        potential, density, impedance = result
+        potential, density, impedance, floating_potentials = result
         amplitude = np.real(freq_components[0].fourier_coefficient) / 2
         potential_sum = potential
         # potential_sum.vec.data = potential.vec.data * amplitude
@@ -115,7 +115,7 @@ class NoTruncationTest(SpectrumMode):
             amplitude = np.real(wave.fourier_coefficient)
             result = volume_conductor.evaluate_potential(boundary_values,
                                                          wave.frequency)
-            potential, density, impedance = result
+            potential, density, impedance, floating_potentials = result
             potential_sum.vec.data += potential.vec.data * amplitude
             impedances.append(impedance)
         mesh = volume_conductor.mesh.ngsolvemesh()
@@ -137,7 +137,7 @@ class Octavevands(SpectrumMode):
 
         result = volume_conductor.potential(boundary_values,
                                             freq_components[0].frequency)
-        potential, density, impedance = result
+        potential, density, impedance, floating_potentials = result
         amplitude = freq_components[0].fourier_coefficient / 2
         total_amplitude = abs(amplitude) * np.real(amplitude)
         potential_sum = potential
@@ -148,7 +148,7 @@ class Octavevands(SpectrumMode):
         for frequency in octave_freq:
             result = volume_conductor.evaluate_potential(boundary_values,
                                                          frequency)
-            potential, density, impedance = result
+            potential, density, impedance, floating_potentials = result
             lower_limit = frequency / self.SQRT2
             upper_limit = frequency * self.SQRT2
             amplitudes = [abs(wave.fourier_coefficient)
