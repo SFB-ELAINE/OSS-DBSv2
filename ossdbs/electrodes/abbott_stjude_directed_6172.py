@@ -35,8 +35,8 @@ class AbbottStjudeDirected6172(Electrode):
     def __init__(self,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
-                 translation: tuple = (0, 0, 0)) -> None:
-        self.__translation = translation
+                 position: tuple = (0, 0, 0)) -> None:
+        self.__position = position
         self.__rotation = rotation
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
@@ -65,7 +65,7 @@ class AbbottStjudeDirected6172(Electrode):
         electrode = netgen.occ.Glue([body, contacts])
         axis = netgen.occ.Axis(p=(0, 0, 0), d=self.__direction)
         rotated_electrode = electrode.Rotate(axis=axis, ang=self.__rotation)
-        return rotated_electrode.Move(self.__translation)
+        return rotated_electrode.Move(self.__position)
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self.LEAD_DIAMETER * 0.5

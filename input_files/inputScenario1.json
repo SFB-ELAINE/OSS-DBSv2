@@ -2,7 +2,7 @@
     "CaseGrounding":
         {
             "Active": true,
-            "Value": 0
+            "Voltage[V]": 0
         },
     "DiffusionTensorImage":
         {
@@ -16,25 +16,25 @@
             "Direction": {"x[mm]": 0,
                           "y[mm]": 0,
                           "z[mm]": 1},
-            "Translation": {"x[mm]": 22.95,
-                            "y[mm]": 11.35,
-                            "z[mm]": 7.95},
+            "Position": {"x[mm]": 22.95,
+                         "y[mm]": 11.35,
+                         "z[mm]": 7.95},
             "Contact_1": {"Active": true,
-                          "Value": 1.0},
+                          "Voltage[V]": 1.0},
             "Contact_2": {"Active": false,
-                          "Value": 0.0},
+                          "Voltage[V]": 0.0},
             "Contact_3": {"Active": false,
-                          "Value": 0.0},
+                          "Voltage[V]": 0.0},
             "Contact_4": {"Active": false,
-                          "Value": 0.0},
+                          "Voltage[V]": 0.0},
             "Contact_5": {"Active": false,
-                          "Value": 0.0},
+                          "Voltage[V]": 0.0},
             "Contact_6": {"Active": false,
-                          "Value": 0.0},
+                          "Voltage[V]": 0.0},
             "Contact_7": {"Active": false,
-                          "Value": 0.0},
+                          "Voltage[V]": 0.0},
             "Contact_8": {"Active": false,
-                          "Value": 0.0}
+                          "Voltage[V]": 0.0}
             }
         ],
     "EQSMode": false,
@@ -54,7 +54,7 @@
             "LoadMesh": false,
             "LoadPath": "",
             "MeshElementOrder": 2,
-            "SavePath": ""
+            "SaveMesh": false
         },
     "OutputPath": "test_result",
     "RegionOfInterest":

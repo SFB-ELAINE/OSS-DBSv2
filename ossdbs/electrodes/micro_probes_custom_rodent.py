@@ -33,8 +33,8 @@ class MicroProbesCustomRodent(Electrode):
     def __init__(self,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
-                 translation: tuple = (0, 0, 0)) -> None:
-        self.__translation = tuple(translation)
+                 position: tuple = (0, 0, 0)) -> None:
+        self.__position = tuple(position)
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
         self.__boundaries = {'Body': 'Body', 'Contact_1': 'Contact_1'}
@@ -50,7 +50,7 @@ class MicroProbesCustomRodent(Electrode):
         geometry : netgen.libngpy._NgOCC.TopoDS_Shape
         """
         electrode = netgen.occ.Glue([self.__contact(), self.__body()])
-        moved_electrode = electrode.Move(self.__translation)
+        moved_electrode = electrode.Move(self.__position)
         return moved_electrode
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:

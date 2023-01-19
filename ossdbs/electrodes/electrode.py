@@ -25,7 +25,7 @@ class Electrode(ABC):
     def __init__(self,
                  rotation: float = 0,
                  direction: tuple = (0, 0, 1),
-                 translation: tuple = (0, 0, 0),
+                 position: tuple = (0, 0, 0),
                  ) -> None:
         pass
 
