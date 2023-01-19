@@ -35,8 +35,8 @@ class Medtronic3387(Electrode):
     def __init__(self,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
-                 translation: tuple = (0, 0, 0)) -> None:
-        self.__translation = translation
+                 position: tuple = (0, 0, 0)) -> None:
+        self.__position = position
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
         self.__boundaries = {'Body': 'Body',
@@ -58,7 +58,7 @@ class Medtronic3387(Electrode):
         contacts = self.__contacts()
         body = self.__body() - contacts
         electrode = netgen.occ.Glue([body, contacts])
-        return electrode.Move(self.__translation)
+        return electrode.Move(self.__position)
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self.LEAD_DIAMETER * 0.5
