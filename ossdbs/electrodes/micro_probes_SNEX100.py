@@ -17,21 +17,16 @@ class MicroProbesSNEX_100(Electrode):
 
     translation : tuple
         Translation vector (x,y,z) of electrode.
-
-    Methods
-    -------
-    generate_geometry()
-        Generate geometry of electrode.
     """
-    # dimensions [mm]
-    CORE_ELECTRODE_LENGTH = 0.25
-    CORE_ELECTRODE_DIAMETER = 0.1
-    CORE_TUBING_LENGTH = 0.5
-    CORE_TUBING_DIAMETER = 0.140
-    OUTER_ELECTRODE_LENGTH = 0.25
-    OUTER_ELECTRODE_DIAMETER = 0.330
-    OUTER_TUBING_DIAMETER = 0.411
-    TOTAL_LENGTH = 10.0
+    # dimensions [m]
+    CORE_ELECTRODE_LENGTH = 0.25e-3
+    CORE_ELECTRODE_DIAMETER = 0.1e-3
+    CORE_TUBING_LENGTH = 0.5e-3
+    CORE_TUBING_DIAMETER = 0.140e-3
+    OUTER_ELECTRODE_LENGTH = 0.25e-3
+    OUTER_ELECTRODE_DIAMETER = 0.330e-3
+    OUTER_TUBING_DIAMETER = 0.411e-3
+    TOTAL_LENGTH = 10.0e-3
 
     def __init__(self,
                  rotation: float = 0.0,

@@ -40,31 +40,31 @@ class TestNifti1Image:
         np.testing.assert_equal(nifti1_image_3d.data_map(), desired)
 
     def test_boundingbox_units_default(self, nifti1_image_3d):
-        desired = (2, 2, 2), (3, 3, 3)
+        desired = (.002, .002, .002), (.003, .003, .003)
         np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
 
     def test_boundingbox_4d_shape(self, nifti1_image_4d):
-        desired = (2, 2, 2), (3, 3, 3)
+        desired = (.002, .002, .002), (.003, .003, .003)
         np.testing.assert_equal(nifti1_image_4d.bounding_box(), desired)
 
     def test_boundingbox_units_mm(self, nifti1_image_3d):
         nifti1_image_3d.header()['xyzt_units'] = 2
-        desired = (2, 2, 2), (3, 3, 3)
+        desired = (.002, .002, .002), (.003, .003, .003)
         np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
 
     def test_boundingbox_units_meter(self, nifti1_image_3d):
         nifti1_image_3d.header()['xyzt_units'] = 1
-        desired = (2000, 2000, 2000), (3000, 3000, 3000)
+        desired = (2, 2, 2), (3, 3, 3)
         np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
 
     def test_boundingbox_units_micron(self, nifti1_image_3d):
         nifti1_image_3d.header()['xyzt_units'] = 3
-        desired = (0.002, 0.002, 0.002), (0.003, 0.003, 0.003)
+        desired = (2e-6, 2e-6, 2e-6), (3e-6, 3e-6, 3e-6)
         np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
 
     def test_bounding_box_shift(self, nifti1_image_3d):
-        nifti1_image_3d.set_offset((1, 2, 3))
-        desired = (3, 4, 5), (4, 5, 6)
+        nifti1_image_3d.set_offset((1e-3, 2e-3, 3e-3))
+        desired = (3e-3, 4e-3, 5e-3), (4e-3, 5e-3, 6e-3)
         np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
 
     def test_voxel_size(self, nifti1_image_3d):

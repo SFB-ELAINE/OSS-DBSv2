@@ -17,18 +17,13 @@ class MicroProbesCustomRodent(Electrode):
 
     translation : tuple
         Translation vector (x,y,z) of electrode.
-
-    Methods
-    -------
-    generate_geometry()
-        Generate mesh of electrode.
     """
 
-    # dimensions [mm]
-    CONTACT_LENGTH = 0.01125
-    LEAD_DIAMETER = 0.225
-    TOTAL_LENGHTH = 13.3
-    TUBE_THICKNESS = .01
+    # dimensions [m]
+    CONTACT_LENGTH = 0.01125e-3
+    LEAD_DIAMETER = 0.225e-3
+    TOTAL_LENGHTH = 13.3e-3
+    TUBE_THICKNESS = .01e-3
 
     def __init__(self,
                  rotation: float = 0.0,

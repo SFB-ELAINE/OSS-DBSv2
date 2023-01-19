@@ -17,20 +17,15 @@ class AbbottStjudeDirected6172(Electrode):
 
     translation : tuple
         Translation vector (x,y,z) of electrode.
-
-    Methods
-    -------
-    generate_geometry()
-        Generate geometry of electrode.
     """
 
-    # dimensions [mm]
-    TIP_LENGTH = 1.1
-    CONTACT_LENGTH = 1.5
-    CONTACT_SPACING = 1.5
-    LEAD_DIAMETER = 1.3
-    TOTAL_LENGTH = 20.0
-    CONTACT_SPACING_RADIAL = 0.25
+    # dimensions [m]
+    TIP_LENGTH = 1.1e-3
+    CONTACT_LENGTH = 1.5e-3
+    CONTACT_SPACING = 1.5e-3
+    LEAD_DIAMETER = 1.3e-3
+    TOTAL_LENGTH = 20.0e-3
+    CONTACT_SPACING_RADIAL = 0.25e-3
 
     def __init__(self,
                  rotation: float = 0.0,
