@@ -20,7 +20,10 @@
                          "y[mm]": 11.35,
                          "z[mm]": 7.95},
             "Contact_1": {"Active": true,
-                          "Voltage[V]": 1.0},
+                          "Voltage[V]": 1.0,
+                          "Floating": false,
+                          "ImpedanceFloating": false,
+                          "SurfaceImpedane[Ohmm]": 1.0},
             "Contact_2": {"Active": false,
                           "Voltage[V]": 0.0},
             "Contact_3": {"Active": false,
@@ -37,6 +40,12 @@
                           "Voltage[V]": 0.0}
             }
         ],
+
+    "Floating": {
+        
+    }, 
+
+
     "EQSMode": false,
     "MaterialDistribution":
         {
