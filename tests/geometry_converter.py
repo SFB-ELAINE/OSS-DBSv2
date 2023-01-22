@@ -35,15 +35,22 @@ class GeometryConverter:
     def __edge_to_dict(edge: netgen.libngpy._NgOCC.Edge) -> dict:
         edge_data = json.loads("{" + str(edge) + "}")
         curve_data = edge_data['TShape']['CurveRepresentation']
+        uv1 = curve_data['UV1'] if 'UV1' in  curve_data.keys() else None
+        uv2 = curve_data['UV2'] if 'UV2' in curve_data.keys() else None
+        pcurve = curve_data['PCurve'] if  'PCurve' in curve_data.keys() else None
+        surface = curve_data['Surface'] if 'Surface' in curve_data.keys() else None
+        last = curve_data['Last'] if 'Last' in curve_data.keys() else None
+        first = curve_data['First'] if 'First' in curve_data.keys() else None
+        ccurve = curve_data['curve'] if 'curve' in curve_data.keys() else None
         curve = {'className': curve_data['className'],
-                 'First': curve_data['First'],
-                 'Last': curve_data['Last'],
-                 'UV1': curve_data['UV1'],
-                 'UV2': curve_data['UV2'],
-                 'PCurve': curve_data['PCurve'],
-                 'Surface': curve_data['Surface'],
                  'Matrix': curve_data['Location']['Transformation']['Matrix']}
-
+        if uv1 != None: curve.setdefault('UV1', uv1)
+        if uv2 != None: curve.setdefault('UV2', uv2)
+        if surface != None: curve.setdefault('Surface', surface)
+        if pcurve != None: curve.setdefault('PCurve', pcurve)
+        if last != None: curve.setdefault('Last', last)
+        if first != None: curve.setdefault('First', last)
+        if ccurve != None: curve.setdefault('curve', ccurve)
         return {'Flags': edge_data['TShape']['Flags'],
                 'Orientable': edge_data['TShape']['Orientable'],
                 'Tolerance': edge_data['TShape']['Tolerance'],
