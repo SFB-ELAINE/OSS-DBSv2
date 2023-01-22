@@ -2,6 +2,7 @@
 from ossdbs.electrodes.abstract_electrode import Electrode
 import netgen
 import numpy as np
+from netgen.occ import  Vec
 
 
 class AbbottStjudeActiveTip6142_6145(Electrode):
