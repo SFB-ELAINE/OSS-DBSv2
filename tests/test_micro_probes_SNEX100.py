@@ -1,4 +1,4 @@
-from ossdbs.electrodes import AbbottStjudeActiveTip6142_6145
+from ossdbs.electrodes import MicroProbesSNEX_100
 from tests.geometry_converter import GeometryConverter
 import pytest
 import netgen
@@ -6,8 +6,8 @@ import ngsolve
 import json
 
 
-class TestAbbottStJudeActiveTip6142_6145():
-    FILE_PREFIX = "tests/test_data/AbbottStjudeActiveTip6142_6145"
+class TestMicroProbesSNEX_100():
+    FILE_PREFIX = "tests/test_data/MicroProbesSNEX_100"
 
     TESTDATA = [
         # electrode_parameters (Rotation, Translation, Direction), file_path
@@ -31,11 +31,10 @@ class TestAbbottStJudeActiveTip6142_6145():
             geometry_data = json.load(file)
         return geometry_data
 
-
     @pytest.mark.parametrize('electrode_parameters, path', TESTDATA)
     def test_generate_geometry(self, electrode_parameters, path) -> None:
         rotation, translation, direction = electrode_parameters
-        electrode = AbbottStjudeActiveTip6142_6145(rotation,
+        electrode = MicroProbesSNEX_100(rotation,
                                                    direction,
                                                    translation)
         geometry = electrode.generate_geometry()
@@ -43,13 +42,13 @@ class TestAbbottStJudeActiveTip6142_6145():
         assert desired == self.geometry_to_dictionary(geometry)
 
     def test_generate_geometry_default(self):
-        electrode = AbbottStjudeActiveTip6142_6145()
+        electrode = MicroProbesSNEX_100()
         geometry = electrode.generate_geometry()
         desired = self.load_geometry_data(path=self.FILE_PREFIX+'_0.json')
         assert desired == self.geometry_to_dictionary(geometry)
 
     def test_rename_boundaries(self):
-        electrode = AbbottStjudeActiveTip6142_6145()
+        electrode = MicroProbesSNEX_100()
         electrode.rename_boundaries({'Body': 'RenamedBody',
                                      'Contact_1': 'RenamedContact_1',
                                      'NonExistingPart': 'NonExistingPart'})
@@ -58,7 +57,6 @@ class TestAbbottStJudeActiveTip6142_6145():
         mesh = ngsolve.Mesh(netgen_geometry.GenerateMesh())
         desired = set(['RenamedBody',
                        'RenamedContact_1',
-                       'Contact_2',
-                       'Contact_3',
-                       'Contact_4'])
+                       'Contact_2'
+                       ])
         assert desired == set(mesh.GetBoundaries())

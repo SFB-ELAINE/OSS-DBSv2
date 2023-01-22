@@ -5,6 +5,8 @@ from ossdbs.electrodes.abbott_stjude_active_tip_6146_6149 \
     import AbbottStjudeActiveTip6146_6149
 from ossdbs.electrodes.abbott_stjude_directed_6172 \
     import AbbottStjudeDirected6172
+from ossdbs.electrodes.abbott_stjude_directed_6173 \
+    import AbbottStjudeDirected6173
 from ossdbs.electrodes.boston_scientific_vercise import BostonScientificVercise
 from ossdbs.electrodes.boston_scientific_vercise_directed import BostonScientificVerciseDirected
 from ossdbs.electrodes.medtronic_3387 import Medtronic3387
@@ -21,6 +23,7 @@ __all__ = ('Electrode',
            'AbbottStjudeActiveTip6142_6145',
            'AbbottStjudeActiveTip6146_6149',
            'AbbottStjudeDirected6172',
+           'AbbottStjudeDirected6173',
            'BostonScientificVercise',
            'BostonScientificVerciseDirected',
            'Medtronic3387',
