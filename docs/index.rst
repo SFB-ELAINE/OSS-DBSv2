@@ -41,6 +41,7 @@ The software OSS-DBS can be easily installed using pip:
     $ pip install oss_dbs
 
 For first steps with OSS-DBS see the next section of this documentation.
+Some examples to run you can find in the :ref:'ref_examples'
 
 =================
 Table of contents
