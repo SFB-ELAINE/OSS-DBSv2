@@ -2,7 +2,7 @@
     "CaseGrounding":
         {
             "Active": false,
-            "Value": 0
+            "Voltage[V]": 0.0
         },
     "DiffusionTensorImage":
         {
@@ -13,30 +13,74 @@
             "Name": "BostonScientificVerciseDirected",
             "Rotation[Degrees]": 6.412,
             "Direction": {"x[mm]": 2.2314,
-                           "y[mm]": 5.0661,
-                           "z[mm]": 3.990},
-            "Translation": {"x[mm]": 14.5884,
-                            "y[mm]": -14.7434,
-                            "z[mm]": -9.0634},
+                          "y[mm]": 5.0661,
+                          "z[mm]": 3.990},
+            "Position": {"x[mm]": 14.5884,
+                         "y[mm]": -14.7434,
+                         "z[mm]": -9.0634},
             "Contact_1": {"Active": true,
-                          "Value": 1.0},
+                          "Current[A]": 0.0,
+                          "Voltage[V]": 1.0,
+                          "Floating": false,
+                          "SurfaceImpedance[Ωm]": {"real": 0.0,
+                                                   "imag": 0.0}
+                        },
             "Contact_2": {"Active": false,
-                          "Value": 0.0},
+                          "Current[A]": 0.0,
+                          "Voltage[V]": 0.0,
+                          "Floating": false,
+                          "SurfaceImpedance[Ωm]": {"real": 0.0,
+                                                   "imag": 0.0}
+                        },
             "Contact_3": {"Active": false,
-                          "Value": 0.0},
+                          "Current[A]": 0.0,
+                          "Voltage[V]": 0.0,
+                          "Floating": false,
+                          "SurfaceImpedance[Ωm]": {
+                            "real": 0.0,
+                             "imag": 0.0}},
             "Contact_4": {"Active": false,
-                          "Value": 0.0},
+                          "Current[A]": 0.0,
+                          "Voltage[V]": 0.0,
+                          "Floating": false,
+                          "SurfaceImpedance[Ωm]": {
+                            "real": 0.0,
+                             "imag": 0.0}},
             "Contact_5": {"Active": false,
-                          "Value": 0.0},
+                          "Current[A]": 0.0,
+                          "Voltage[V]": 0.0,
+                          "Floating": false,
+                          "SurfaceImpedance[Ωm]": {
+                            "real": 0.0,
+                             "imag": 0.0}},
             "Contact_6": {"Active": false,
-                          "Value": 0.0},
+                          "Current[A]": 0.0,
+                          "Voltage[V]": 0.0,
+                          "Floating": false,
+                          "SurfaceImpedance[Ωm]": {
+                            "real": 0.0,
+                             "imag": 0.0}},
             "Contact_7": {"Active": false,
-                          "Value": 0.0},
+                          "Current[A]": 0.0,
+                          "Voltage[V]": 0.0,
+                          "Floating": false,
+                          "SurfaceImpedance[Ωm]": {
+                            "real": 0.0,
+                             "imag": 0.0}},
             "Contact_8": {"Active": true,
-                          "Value": 0.0}
+                          "Current[A]": 0.0,
+                          "Voltage[V]": 0.0,
+                          "Floating": false,
+                          "SurfaceImpedance[Ωm]": {
+                            "real": 0.0,
+                             "imag": 0.0}}
         }
     ],
     "EQSMode": false,
+    "Floating": {
+        "Active": false,
+        "FloatingImpedance": false
+    },
     "MaterialDistribution":
         {
             "MaterialCoding": {
@@ -64,6 +108,13 @@
                       "y[mm]": 80.0,
                       "z[mm]": 80.0}
         },
+    "Solver": {
+        "Type": "CG",
+        "Preconditioner": "bddc",
+        "PrintRates": false,
+        "MaximumSteps": 10000,
+        "Precision": 1e-12
+    },
     "SpectrumMode": "NoTruncation",
     "StimulationSignal":
         {

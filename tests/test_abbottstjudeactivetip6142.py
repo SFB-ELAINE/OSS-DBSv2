@@ -10,7 +10,7 @@ class TestAbbottStJudeActiveTip6142_6145():
     FILE_PREFIX = "tests/test_data/AbbottStjudeActiveTip6142_6145"
 
     TESTDATA = [
-        # electrode_parameters (Rotation, Translation, Direction), file_path
+        # electrode_parameters (Rotation, Position, Direction), file_path
         ((0.0, (0, 0, 0), (0, 0, 1)), FILE_PREFIX + '_0.json'),
         ((0.0, (0, 0, 0), (0, 0, 0)), FILE_PREFIX + '_0.json'),
         ((3.0, (0, 0, 0), (0, 0, 1)), FILE_PREFIX + '_0.json'),
@@ -34,18 +34,18 @@ class TestAbbottStJudeActiveTip6142_6145():
     @pytest.mark.skip
     @pytest.mark.parametrize('electrode_parameters, path', TESTDATA)
     def test_creation(self, electrode_parameters, path) -> None:
-        rotation, translation, direction = electrode_parameters
+        rotation, position, direction = electrode_parameters
         electrode = AbbottStjudeActiveTip6142_6145(rotation,
                                                    direction,
-                                                   translation)
+                                                   position)
         GeometryConverter(electrode.generate_geometry()).to_json(path)
 
     @pytest.mark.parametrize('electrode_parameters, path', TESTDATA)
     def test_generate_geometry(self, electrode_parameters, path) -> None:
-        rotation, translation, direction = electrode_parameters
+        rotation, position, direction = electrode_parameters
         electrode = AbbottStjudeActiveTip6142_6145(rotation,
                                                    direction,
-                                                   translation)
+                                                   position)
         geometry = electrode.generate_geometry()
         desired = self.load_geometry_data(path=path)
         assert desired == self.geometry_to_dictionary(geometry)

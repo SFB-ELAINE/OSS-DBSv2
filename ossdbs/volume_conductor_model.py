@@ -1,28 +1,121 @@
 
+from ossdbs.boundaries import BoundaryCollection
 from ossdbs.conductivity import Conductivity
 from ossdbs.mesh import Mesh
+from ossdbs.solver import Solver
 import ngsolve
-import numpy as np
 
 
-class Potential():
-    """Represents the electrical potential.
+class WeakFormLaplace:
 
-    Parameters
-    ----------
-    gridfunction : ngsolve.GridFunction
-    mesh : Mesh
-    """
+    def __init__(self, mesh: Mesh, boundaries: BoundaryCollection) -> None:
+        self.__mesh = mesh
+        self.__boundaries = boundaries
 
-    def __init__(self, gridfunction: ngsolve.GridFunction, mesh: Mesh) -> None:
-        self.gridfunction = gridfunction
-        self.mesh = mesh
+    def equation_terms(self, sigma: ngsolve.CoefficientFunction) -> tuple:
+        active_boundaries = self.__boundaries.active_contacts()
+        h1_space = self.__mesh.h1_space(boundaries=active_boundaries)
+        finite_elements_space = ngsolve.FESpace(spaces=[h1_space])
+        space = ngsolve.CompressCompound(finite_elements_space)
+        boundary_values = self.__boundaries.voltage_values()
+        coefficient = self.__mesh.boundary_coefficients(boundary_values)
+        solution = ngsolve.GridFunction(space=space)
+        solution.components[0].Set(coefficient=coefficient,
+                                   VOL_or_BND=ngsolve.BND)
+        u = space.TrialFunction()[0]
+        v = space.TestFunction()[0]
+        bilinear_form = ngsolve.BilinearForm(space=space, symmetric=True)
+        bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
+        linear_form = ngsolve.LinearForm(space=space)
+        return solution, bilinear_form, linear_form
 
-    def __add__(self, other) -> 'Potential':
-        self.gridfunction.vec.data += other._gridfunction.vec.data
 
-    def __mul__(self, value) -> 'Potential':
-        self.gridfunction.vec.data *= value
+class WeakFormFloating:
+
+    def __init__(self, mesh: Mesh, boundaries: BoundaryCollection) -> None:
+        self.__mesh = mesh
+        self.__boundaries = boundaries
+
+    def equation_terms(self, sigma: ngsolve.CoefficientFunction) -> tuple:
+
+        boundary_values = self.__boundaries.voltage_values()
+        coefficient = self.__mesh.boundary_coefficients(boundary_values)
+        space = self.__create_space(self.__boundaries)
+        solution = ngsolve.GridFunction(space=space)
+        solution.components[0].Set(coefficient=coefficient,
+                                   VOL_or_BND=ngsolve.BND)
+        bilinear_form = self.__bilinear_form(sigma, space)
+        linear_form = ngsolve.LinearForm(space=space)
+        return solution, bilinear_form, linear_form
+
+    def __create_space(self):
+        active_contacts = self.__boundaries.active_contacts()
+        spaces_active = [self.__mesh.h1_space(active_contacts),
+                         self.__mesh.surfacel2_space(active_contacts)]
+        spaces_floating = [self.__mesh.number_space()
+                           for _ in self.__boundaries.floating_contacts()]
+        spaces = spaces_active + spaces_floating
+        finite_elements_space = ngsolve.FESpace(spaces=spaces)
+        return ngsolve.CompressCompound(finite_elements_space)
+
+    def __bilinear_form(self, sigma, space):
+        bilinear_form = ngsolve.BilinearForm(space)
+        trial_functions = space.TrialFunction()
+        test_functions = space.TestFunction()
+        u, lam = trial_functions[:2]
+        v, mu = test_functions[:2]
+        bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
+        boundaries = self.__boundaries.floating_contacts()
+        for index, boundary in enumerate(boundaries, 2):
+            ufix = trial_functions[index]
+            vfix = test_functions[index]
+            bilinear_form += u * mu + v * lam * ngsolve.ds(boundary)
+            bilinear_form += -(ufix * mu + vfix * lam) * ngsolve.ds(boundary)
+
+        return bilinear_form
+
+
+class WeakFormFloatingImpedance:
+
+    def __init__(self, mesh: Mesh, boundaries: BoundaryCollection) -> None:
+        self.__mesh = mesh
+        self.__boundaries = boundaries
+
+    def equation_terms(self, sigma: ngsolve.CoefficientFunction) -> tuple:
+        boundary_values = self.__boundaries.voltage_values()
+        coefficient = self.__mesh.boundary_coefficients(boundary_values)
+        space = self.__create_space()
+        solution = ngsolve.GridFunction(space=space)
+        solution.components[0].Set(coefficient=coefficient,
+                                   VOL_or_BND=ngsolve.BND)
+        bilinear_form = self.__bilinear_form(sigma, space)
+        linear_form = ngsolve.LinearForm(space=space)
+        return solution, bilinear_form, linear_form
+
+    def __create_space(self):
+        h1_space = self.__mesh.h1_space(self.__boundaries.active_contacts())
+        number_spaces = [self.mesh.number_space()
+                         for _ in self.__boundaries.floating_contacts()]
+        spaces = [h1_space] + number_spaces
+        finite_elements_space = ngsolve.FESpace(spaces=spaces)
+        return ngsolve.CompressCompound(finite_elements_space)
+
+    def __bilinear_form(self, sigma, space):
+        bilinear_form = ngsolve.BilinearForm(space)
+        trial_functions = space.TrialFunction()
+        test_functions = space.TestFunction()
+        u = trial_functions[0]
+        v = test_functions[0]
+        bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
+        surface_impedances = self.__boundaries.floating_impedances_values()
+        boundaries = self.__boundaries.floating_contacts()
+        for index, boundary in enumerate(boundaries, 1):
+            a = ngsolve.CoefficientFunction(1 / surface_impedances[boundary])
+            ufix = trial_functions[index]
+            vfix = test_functions[index]
+            bilinear_form += a * (u - ufix) * (v - vfix) * ngsolve.ds(boundary)
+
+        return bilinear_form
 
 
 class VolumeConductor():
@@ -35,15 +128,17 @@ class VolumeConductor():
     conductivity : Conductivity
     """
 
-    def __init__(self, mesh: Mesh, conductivity: Conductivity) -> None:
-        self.__conductivity = conductivity
+    def __init__(self,
+                 mesh: Mesh,
+                 conductivity: Conductivity,
+                 boundaries: BoundaryCollection,
+                 solver: Solver) -> None:
+        self.conductivity = conductivity
         self.mesh = mesh
+        self.boundaries = boundaries
+        self.solver = solver
 
-    # Julius: not sure if an empty dict for preconditioner_options is best idea
-    # Julius: would refactor: add solver, preconditioner, etc. to __init__ of volume_conductor_model
-    def potential(self, boundaries: dict, frequency: float, solver: str = "CG",
-                  preconditioner: str = "bddc", preconditioner_options: dict = {"coarsetype": "local"}) \
-            -> ngsolve.comp.GridFunction:
+    def potential(self, frequency: float) -> ngsolve.comp.GridFunction:
         """Evaluate electrical potential of volume conductor.
 
         Parameters
@@ -59,88 +154,26 @@ class VolumeConductor():
             potential and current density of volume conductor
         """
 
-        conductivities = self.__conductivity.conductivity(frequency)
-        # convert conductivity [S/m] to [S/mm] since mesh dimension is in mm.
-        values = conductivities.data * 1e-3
-        start, end = conductivities.start, conductivities.end
-        if not self.mesh.is_complex():
-            values = np.real(values)
-        sigma = ngsolve.VoxelCoefficient(start, end, values, linear=False)
-        # TODO add surface_impedance through input dictionary
-        # it is a (complex) value defined on each surface
-        surface_impedance = None
-        # WIP: add floating electrodes
-        # Missing:
-        # Make sure that there is only floating or floating_impedance
-        # Some calls here should be wrapped in external functions for the sake
-        # of readability
-        floating_electrodes = self.mesh.get_floating_electrodes()
-        floating_impedance_electrodes = self.mesh.get_floating_impedance_electrodes()
-        if len(floating_electrodes) > 0:
-            if len(floating_impedance_electrodes) > 0:
-                raise RuntimeError("You did specify both floating and floating impedance electrodes!")
-            h1_space = self.mesh.h1_space()
-            surfacel2_space = self.mesh.surfacel2_space()
-            number_spaces = []
-            for _ in range(len(floating_electrodes)):
-                number_spaces.append(self.mesh.number_space())
-            space = ngsolve.FESpace(h1_space, surfacel2_space, *number_spaces)
-            space = ngsolve.CompressCompound(space)
-            solution = ngsolve.GridFunction(space=space)
-            potential = solution.components[0]
-            self.bilinear_form = ngsolve.BilinearForm(space)
-            self.linear_form = ngsolve.LinearForm(space)
-            trial_functions = space.TrialFunction()
-            test_functions = space.TestFunction()
-            self.apply_weak_form_laplace_equation(trial_functions[0],
-                                                  test_functions[0],
-                                                  sigma)
-            for idx in range(len(floating_electrodes)):
-                self.apply_weak_form_floating_electrode(trial_functions[0],
-                                                        trial_functions[1],
-                                                        trial_functions[2 + idx],
-                                                        test_functions[0],
-                                                        test_functions[1],
-                                                        test_functions[2 + idx],
-                                                        idx)
+        sigma = self.conductivity.conductivity(frequency)
+        active_boundaries = self.boundaries.active_contacts()
+        h1_space = self.mesh.h1_space(boundaries=active_boundaries)
+        finite_elements_space = ngsolve.FESpace(spaces=[h1_space])
+        space = ngsolve.CompressCompound(finite_elements_space)
+        boundary_values = self.boundaries.voltage_values()
+        coefficient = self.mesh.boundary_coefficients(boundary_values)
+        solution = ngsolve.GridFunction(space=space)
+        solution.components[0].Set(coefficient=coefficient,
+                                   VOL_or_BND=ngsolve.BND)
+        u = space.TrialFunction()[0]
+        v = space.TestFunction()[0]
+        bilinear_form = ngsolve.BilinearForm(space=space, symmetric=True)
+        bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
+        linear_form = ngsolve.LinearForm(space=space)
 
-        elif len(floating_impedance_electrodes) > 0:
-            raise NotImplementedError("Surface impedance not yet implemented")
-            h1_space = self.mesh.h1_space()
-            number_spaces = []
-            for _ in range(len(floating_impedance_electrodes)):
-                number_spaces.append(self.mesh.number_space())
-            space = ngsolve.FESpace(h1_space, *number_spaces)
-            solution = ngsolve.GridFunction(space=space)
-            potential = solution.components[0]
-            self.bilinear_form = ngsolve.BilinearForm(space)
-            self.linear_form = ngsolve.LinearForm(space)
-            trial_functions = space.TrialFunction()
-            test_functions = space.TestFunction()
-            for idx in range(len(floating_impedance_electrodes)):
-                self.apply_weak_form_floating_impedance_electrode(trial_functions[0],
-                                                                  trial_functions[1 + idx],
-                                                                  test_functions[0],
-                                                                  test_functions[1 + idx],
-                                                                  idx,
-                                                                  surface_impedance
-                                                                  )
-        else:
-            space = self.mesh.h1_space()
-            potential = ngsolve.GridFunction(space=space)
-            # ugly, I am sorry, please think about a better solution
-            solution = potential
-            self.bilinear_form = ngsolve.BilinearForm(space=space, symmetric=True)
-            self.linear_form = ngsolve.LinearForm(space=space)
-            self.apply_weak_form_laplace_equation(space.TrialFunction(),
-                                                  space.TestFunction(),
-                                                  sigma)
-
-        coefficient = self.mesh.boundary_coefficients(boundaries=boundaries)
-
-        fem_system = FEMSolver(self.bilinear_form, self.linear_form, solver, preconditioner, preconditioner_options)
-        potential.Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
-        solution.vec.data = fem_system.solve_bvp(input=solution)
+        self.solver.bvp(bilinear_form, linear_form, solution)
+        print(type(solution.components))
+        print(solution.components[1:])
+        potential = solution.components[0]
 
         field = ngsolve.grad(potential)
         current_density = sigma * field
@@ -148,125 +181,168 @@ class VolumeConductor():
                                   self.mesh.ngsolvemesh())
         impedance = 1 / power
 
-        floating_potentials = []
-        for idx in range(len(floating_electrodes)):
-            floating_potentials.append(solution.components[2 + idx].vec[0])
-        for idx in range(len(floating_impedance_electrodes)):
-            floating_potentials.append(solution.components[1 + idx].vec[0])
-
-        return potential, current_density, impedance, floating_potentials
-
-    def apply_weak_form_floating_electrode(self,
-                                           u: ngsolve.comp.FESpace.TrialFunction,
-                                           lam: ngsolve.comp.FESpace.TrialFunction,
-                                           ufix: ngsolve.comp.FESpace.TrialFunction,
-                                           v: ngsolve.comp.FESpace.TestFunction,
-                                           mu: ngsolve.comp.FESpace.TestFunction,
-                                           vfix: ngsolve.comp.FESpace.TestFunction,
-                                           idx: int
-                                           ) -> None:
-
-        self.bilinear_form += (u * mu + v * lam) * ngsolve.ds("floating_{}".format(idx))
-        self.bilinear_form += -(ufix * mu + vfix * lam) * ngsolve.ds("floating_{}".format(idx))
-
-        # TODO for linear form: current can be imposed
-
-    def apply_weak_form_floating_impedance_electrode(self,
-                                                     u: ngsolve.comp.FESpace.TrialFunction,
-                                                     ufix: ngsolve.comp.FESpace.TrialFunction,
-                                                     v: ngsolve.comp.FESpace.TestFunction,
-                                                     vfix: ngsolve.comp.FESpace.TestFunction,
-                                                     idx: int,
-                                                     surface_impedance: ngsolve.CoefficientFunction
-                                                     ) -> None:
-
-        self.bilinear_form += 1. / surface_impedance * (u - ufix) * (v - vfix) * ngsolve.ds("floating_impedance_{}".format(idx))
-
-        # TODO for linear form: current can be imposed
-
-    def apply_weak_form_laplace_equation(self,
-                                         u: ngsolve.comp.FESpace.TrialFunction,
-                                         v: ngsolve.comp.FESpace.TestFunction,
-                                         sigma: ngsolve.fem.CoefficientFunction
-                                         ) -> None:
-
-        equation = sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
-        self.bilinear_form += equation
+        return potential, current_density, impedance
 
 
-class FEMSolver:
-    """Solves boundary value problem.
+class VolumeConductorFloating():
+    """Model for representing a volume conductor which evaluates the potential.
 
     Parameters
     ----------
-    bilinear_form : ngsolve.BilinearForm
-    linear_form : ngsolve.LinearForm
-    solver : str
-    preconditioner : str
-    preconditioner_options: dict
+    mesh : Mesh
 
-    Notes
-    -----
-
-    The bilinear and linear form are
-    used to assemble the linear system of equations to
-    be solved by a (preconditioned) solver.
-    The preconditioner options have to be chosen according
-    to the chosen preconditioner and for now apply only for the
-    `bddc` preconditioner.
-
+    conductivity : Conductivity
     """
 
     def __init__(self,
-                 bilinear_form: ngsolve.BilinearForm,
-                 linear_form: ngsolve.LinearForm,
-                 solver: str,
-                 preconditioner: str,
-                 preconditioner_options: str = {}) -> None:
+                 mesh: Mesh,
+                 conductivity: Conductivity,
+                 boundaries: BoundaryCollection,
+                 solver: Solver) -> None:
+        self.conductivity = conductivity
+        self.mesh = mesh
+        self.boundaries = boundaries
+        self.solver = solver
 
-        self.__a = bilinear_form
-        self.__f = linear_form
-        # TODO Physics related checks and asserts
-        # For example: for floating not every preconditioner is suitable
-        self.__preconditioner = ngsolve.Preconditioner(bf=self.__a,
-                                                       type=preconditioner,
-                                                       **preconditioner_options)
-        if solver in ["CG", "GMRES"]:
-            self.__solver = solver
-        else:
-            raise RuntimeError("The solver has to be either CG or GMRES")
-
-    def solve_bvp(self, input: ngsolve.comp.GridFunction) \
-            -> ngsolve.la.DynamicVectorExpression:
-        """Solve the boundary value problem.
+    def potential(self, frequency: float) -> ngsolve.comp.GridFunction:
+        """Evaluate electrical potential of volume conductor.
 
         Parameters
         ----------
-        input : ngsolve.comp.GridFunction
-            Solution vector with boundary values.
+        boundaries : dict
+            Dictionary containing the values for accordingly boundaries.
+        frequency : float
+            Frequency [Hz] of the input signal.
 
         Returns
         -------
-        ngsolve.la.DynamicVectorExpression
-            Numerical solution of the boundary value problem.
+        tuple
+            potential and current density of volume conductor
         """
 
-        self.__a.Assemble()
-        self.__f.Assemble()
-        if self.__solver == "CG":
-            # TODO make printrates, maxsteps and precision flexible => input dict
-            inverse = ngsolve.CGSolver(mat=self.__a.mat,
-                                       pre=self.__preconditioner.mat,
-                                       printrates=True,
-                                       maxsteps=10000,
-                                       precision=1e-12)
-        elif self.__solver == "GMRES":
-            # TODO make printrates, maxsteps and precision flexible => input dict
-            inverse = ngsolve.GMRESSolver(mat=self.__a.mat,
-                                          pre=self.__preconditioner.mat,
-                                          printrates=True,
-                                          maxsteps=10000,
-                                          precision=1e-12)
-        r = self.__f.vec.CreateVector()
-        r.data = self.__f.vec - self.__a.mat * input.vec
-        return input.vec.data + inverse * r
+        sigma = self.conductivity.conductivity(frequency)
+
+        boundary_values = self.boundaries.voltage_values()
+        coefficient = self.mesh.boundary_coefficients(boundary_values)
+        space = self.__create_space(self.boundaries)
+        solution = ngsolve.GridFunction(space=space)
+        solution.components[0].Set(coefficient=coefficient,
+                                   VOL_or_BND=ngsolve.BND)
+        bilinear_form = self.__bilinear_form(sigma, space)
+        linear_form = ngsolve.LinearForm(space=space)
+        self.solver.bvp(bilinear_form=bilinear_form,
+                        linear_form=linear_form,
+                        grid_function=solution)
+
+        potential = solution.components[0]
+        floating_potentials = [comp.vec[0] for comp in solution.components[2:]]
+
+        return potential, floating_potentials
+
+    def __create_space(self):
+        active_contacts = self.boundaries.active_contacts()
+        spaces_active = [self.mesh.h1_space(active_contacts),
+                         self.mesh.surfacel2_space(active_contacts)]
+        spaces_floating = [self.mesh.number_space()
+                           for _ in self.boundaries.floating_contacts()]
+        spaces = spaces_active + spaces_floating
+        finite_elements_space = ngsolve.FESpace(spaces=spaces)
+        return ngsolve.CompressCompound(finite_elements_space)
+
+    def __bilinear_form(self, sigma, space):
+        bilinear_form = ngsolve.BilinearForm(space)
+        trial_functions = space.TrialFunction()
+        test_functions = space.TestFunction()
+        u, lam = trial_functions[:2]
+        v, mu = test_functions[:2]
+        bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
+        boundaries = self.boundaries.floating_contacts()
+        for index, boundary in enumerate(boundaries, 2):
+            ufix = trial_functions[index]
+            vfix = test_functions[index]
+            bilinear_form += u * mu + v * lam * ngsolve.ds(boundary)
+            bilinear_form += -(ufix * mu + vfix * lam) * ngsolve.ds(boundary)
+
+        return bilinear_form
+
+
+class VolumeConductorFloatingImpedance():
+    """Model for representing a volume conductor which evaluates the potential.
+
+    Parameters
+    ----------
+    mesh : Mesh
+
+    conductivity : Conductivity
+    """
+
+    def __init__(self,
+                 mesh: Mesh,
+                 conductivity: Conductivity,
+                 boundaries: BoundaryCollection,
+                 solver: Solver) -> None:
+        self.conductivity = conductivity
+        self.mesh = mesh
+        self.boundaries = boundaries
+        self.solver = solver
+
+    def potential(self, frequency: float) -> ngsolve.comp.GridFunction:
+        """Evaluate electrical potential of volume conductor.
+
+        Parameters
+        ----------
+        boundaries : dict
+            Dictionary containing the values for accordingly boundaries.
+        frequency : float
+            Frequency [Hz] of the input signal.
+
+        Returns
+        -------
+        tuple
+            potential and current density of volume conductor
+        """
+
+        sigma = self.__conductivity.conductivity(frequency)
+
+        boundary_values = self.boundaries.voltage_values()
+        coefficient = self.mesh.boundary_coefficients(boundary_values)
+        space = self.__create_space()
+        solution = ngsolve.GridFunction(space=space)
+        solution.components[0].Set(coefficient=coefficient,
+                                   VOL_or_BND=ngsolve.BND)
+        bilinear_form = self.__bilinear_form(sigma, space)
+        linear_form = ngsolve.LinearForm(space=space)
+
+        self.solver.bvp(bilinear_form=bilinear_form,
+                        linear_form=linear_form,
+                        grid_function=solution)
+
+        potential = solution.components[0]
+        floating_potentials = [comp.vec[0] for comp in solution.components[1:]]
+
+        return potential, floating_potentials
+
+    def __create_space(self):
+        h1_space = self.mesh.h1_space(self.boundaries.active_contacts())
+        number_spaces = [self.mesh.number_space()
+                         for _ in self.boundaries.floating_contacts()]
+        spaces = [h1_space] + number_spaces
+        finite_elements_space = ngsolve.FESpace(spaces=spaces)
+        return ngsolve.CompressCompound(finite_elements_space)
+
+    def __bilinear_form(self, sigma, space):
+        bilinear_form = ngsolve.BilinearForm(space)
+        trial_functions = space.TrialFunction()
+        test_functions = space.TestFunction()
+        u = trial_functions[0]
+        v = test_functions[0]
+        bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
+        surface_impedances = self.boundaries.floating_impedances_values()
+        boundaries = self.boundaries.floating_contacts()
+        for index, boundary in enumerate(boundaries, 1):
+            a = ngsolve.CoefficientFunction(1 / surface_impedances[boundary])
+            ufix = trial_functions[index]
+            vfix = test_functions[index]
+            bilinear_form += a * (u - ufix) * (v - vfix) * ngsolve.ds(boundary)
+
+        return bilinear_form

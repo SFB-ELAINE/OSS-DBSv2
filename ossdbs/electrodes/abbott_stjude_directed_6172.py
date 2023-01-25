@@ -17,26 +17,21 @@ class AbbottStjudeDirected6172(Electrode):
 
     translation : tuple
         Translation vector (x,y,z) of electrode.
-
-    Methods
-    -------
-    generate_geometry()
-        Generate geometry of electrode.
     """
 
-    # dimensions [mm]
-    TIP_LENGTH = 1.1
-    CONTACT_LENGTH = 1.5
-    CONTACT_SPACING = 1.5
-    LEAD_DIAMETER = 1.3
-    TOTAL_LENGTH = 20.0
-    CONTACT_SPACING_RADIAL = 0.25
+    # dimensions [m]
+    TIP_LENGTH = 1.1e-3
+    CONTACT_LENGTH = 1.5e-3
+    CONTACT_SPACING = 1.5e-3
+    LEAD_DIAMETER = 1.3e-3
+    TOTAL_LENGTH = 20.0e-3
+    CONTACT_SPACING_RADIAL = 0.25e-3
 
     def __init__(self,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
-                 translation: tuple = (0, 0, 0)) -> None:
-        self.__translation = translation
+                 position: tuple = (0, 0, 0)) -> None:
+        self.__position = position
         self.__rotation = rotation
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
@@ -65,7 +60,7 @@ class AbbottStjudeDirected6172(Electrode):
         electrode = netgen.occ.Glue([body, contacts])
         axis = netgen.occ.Axis(p=(0, 0, 0), d=self.__direction)
         rotated_electrode = electrode.Rotate(axis=axis, ang=self.__rotation)
-        return rotated_electrode.Move(self.__translation)
+        return rotated_electrode.Move(self.__position)
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self.LEAD_DIAMETER * 0.5

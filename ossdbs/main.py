@@ -15,20 +15,21 @@ def ossdbs_fem(json_path: str) -> None:
 
     input = Input(json_path=json_path)
     mesh = input.mesh()
-    boundaries = list(input.boundary_values().keys())
-    mesh.refine_by_boundaries(boundaries)
-
+    solver = input.solver()
+    contacts = input.contacts()
     conductivity = input.conductivity()
-    volume_conductor = VolumeConductor(conductivity=conductivity, mesh=mesh)
-    strategy = input.spectrum_mode()
 
-    output = strategy.result(boundary_values=input.boundary_values(),
-                             signal=input.stimulation_signal(),
+    mesh.refine_by_boundaries(contacts.active_contacts())
+    volume_conductor = VolumeConductor(conductivity=conductivity,
+                                       mesh=mesh,
+                                       boundaries=contacts,
+                                       solver=solver)
+    strategy = input.spectrum_mode()
+    output = strategy.result(signal=input.stimulation_signal(),
                              volume_conductor=volume_conductor
                              )
     output.save(input.output_path())
     output.save_mesh()
-    output.save_impedances()
 
 
 if __name__ == '__main__':
