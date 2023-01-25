@@ -4,6 +4,7 @@ from ossdbs.brain_imaging.mri import MagneticResonanceImage
 from ossdbs.dielectric_model import ColeColeFourModelFactory
 from ossdbs.voxels import Voxels
 import numpy as np
+import ngsolve
 
 
 class Conductivity:
@@ -17,8 +18,11 @@ class Conductivity:
 
     __MATERIALS = [Material.CSF, Material.GRAY_MATTER, Material.WHITE_MATTER]
 
-    def __init__(self, mri: MagneticResonanceImage) -> None:
+    def __init__(self,
+                 mri: MagneticResonanceImage,
+                 complex_datatype: bool = False) -> None:
         self.__mri = mri
+        self.__complex = complex_datatype
 
     def conductivity(self, frequency: float) -> Voxels:
         """Return the conductivity distribution by the given frequency.
@@ -44,5 +48,8 @@ class Conductivity:
             colecole_model = ColeColeFourModelFactory.create(material)
             data[position.data] = colecole_model.conductivity(omega)
 
+        if not self.__complex:
+            data = np.real(data)
+
         start, end = self.__mri.bounding_box()
-        return Voxels(data=data, start=start, end=end)
+        return ngsolve.VoxelCoefficient(start, end, data, linear=False)

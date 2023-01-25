@@ -17,26 +17,21 @@ class Medtronic3391(Electrode):
 
     translation : tuple
         Translation vector (x,y,z) of electrode.
-
-    Methods
-    -------
-    generate_geometry()
-        Generate geometry of electrode.
     """
 
-    # dimensions [mm]
-    TIP_LENGTH = 1.5
-    CONTACT_LENGTH = 3.0
-    CONTACT_SPACING = 3.5
-    LEAD_DIAMETER = 1.27
-    TOTAL_LENGHTH = 100.0
+    # dimensions [m]
+    TIP_LENGTH = 1.5e-3
+    CONTACT_LENGTH = 3.0e-3
+    CONTACT_SPACING = 3.5e-3
+    LEAD_DIAMETER = 1.27e-3
+    TOTAL_LENGHTH = 100.0e-3
     N_CONTACTS = 4
 
     def __init__(self,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
-                 translation: tuple = (0, 0, 0)) -> None:
-        self.__translation = translation
+                 position: tuple = (0, 0, 0)) -> None:
+        self.__position = position
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
         self.__boundaries = {'Body': 'Body',
@@ -58,7 +53,7 @@ class Medtronic3391(Electrode):
         contacts = self.__contacts()
         body = self.__body() - contacts
         electrode = netgen.occ.Glue([body, contacts])
-        return electrode.Move(self.__translation)
+        return electrode.Move(self.__position)
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self.LEAD_DIAMETER * 0.5

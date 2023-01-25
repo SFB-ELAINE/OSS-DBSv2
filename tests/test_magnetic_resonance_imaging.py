@@ -33,28 +33,36 @@ class TestMagneticResonanceImage:
     def test_material_distribution_CSF(self, mri):
         is_material = np.array([[[True, False], [False, False]],
                                 [[False, True], [True, False]]])
-        desired = Voxels(start=(2, 2, 2), end=(3, 3, 3), data=is_material)
+        desired = Voxels(start=(.002, .002, .002),
+                         end=(.003, .003, .003),
+                         data=is_material)
         actual = mri.material_distribution(Material.CSF)
         self.is_equal(actual, desired)
 
     def test_material_distribution_WhiteMatter(self, mri):
         is_material = np.array([[[False, False], [False, True]],
                                 [[True, False], [False, False]]])
-        desired = Voxels(start=(2, 2, 2), end=(3, 3, 3), data=is_material)
+        desired = Voxels(start=(.002, .002, .002),
+                         end=(.003, .003, .003),
+                         data=is_material)
         actual = mri.material_distribution(Material.WHITE_MATTER)
         self.is_equal(actual, desired)
 
     def test_material_distribution_GrayMatter(self, mri):
         is_material = np.array([[[False, False], [True, False]],
                                 [[False, False], [False, True]]])
-        desired = Voxels(start=(2, 2, 2), end=(3, 3, 3), data=is_material)
+        desired = Voxels(start=(.002, .002, .002),
+                         end=(.003, .003, .003),
+                         data=is_material)
         actual = mri.material_distribution(Material.GRAY_MATTER)
         self.is_equal(actual, desired)
 
     def test_material_distribution_Unknown(self, mri):
         is_material = np.array([[[False, True], [False, False]],
                                 [[False, False], [False, False]]])
-        desired = Voxels(start=(2, 2, 2), end=(3, 3, 3), data=is_material)
+        desired = Voxels(start=(.002, .002, .002),
+                         end=(.003, .003, .003),
+                         data=is_material)
         actual = mri.material_distribution(Material.UNKNOWN)
         self.is_equal(actual, desired)
 

@@ -19,13 +19,6 @@ class Output:
         self.__mesh = mesh
         self.__potential = potential
         self.__density = density
-        self.__impedances = impedances
-        self.__frequencies = frequencies
-
-    def save_impedances(self) -> None:
-        header = [('frequency [Hz]', 'impedance [ohm]')]
-        rows = [data for data in zip(self.__frequencies, self.__impedances)]
-        np.savetxt("test.csv", header+rows, delimiter=" ", fmt='% s')
 
     def save_mesh(self, path: str = '') -> None:
         file_base_name = os.path.basename(path)
@@ -101,11 +94,11 @@ class SpectrumMode(ABC):
 
 class NoTruncationTest(SpectrumMode):
 
-    def result(self, signal, boundary_values, volume_conductor):
+    def result(self, signal, volume_conductor):
         freq_components = self._frequency_components(signal)
         frequency = freq_components[77].frequency
-        result = volume_conductor.potential(boundary_values, frequency)
-        potential, density, impedance, floating_potentials = result
+        result = volume_conductor.potential(frequency)
+        potential, density, impedance = result
         amplitude = np.real(freq_components[0].fourier_coefficient) / 2
         potential_sum = potential
         # potential_sum.vec.data = potential.vec.data * amplitude
@@ -113,9 +106,8 @@ class NoTruncationTest(SpectrumMode):
         frequencies = [freq_components[77].frequency]
         for wave in freq_components[1:1]:
             amplitude = np.real(wave.fourier_coefficient)
-            result = volume_conductor.evaluate_potential(boundary_values,
-                                                         wave.frequency)
-            potential, density, impedance, floating_potentials = result
+            result = volume_conductor.evaluate_potential(wave.frequency)
+            potential, density, impedance = result
             potential_sum.vec.data += potential.vec.data * amplitude
             impedances.append(impedance)
         mesh = volume_conductor.mesh.ngsolvemesh()
@@ -137,7 +129,7 @@ class Octavevands(SpectrumMode):
 
         result = volume_conductor.potential(boundary_values,
                                             freq_components[0].frequency)
-        potential, density, impedance, floating_potentials = result
+        potential, density, impedance = result
         amplitude = freq_components[0].fourier_coefficient / 2
         total_amplitude = abs(amplitude) * np.real(amplitude)
         potential_sum = potential
@@ -148,7 +140,7 @@ class Octavevands(SpectrumMode):
         for frequency in octave_freq:
             result = volume_conductor.evaluate_potential(boundary_values,
                                                          frequency)
-            potential, density, impedance, floating_potentials = result
+            potential, density, impedance = result
             lower_limit = frequency / self.SQRT2
             upper_limit = frequency * self.SQRT2
             amplitudes = [abs(wave.fourier_coefficient)

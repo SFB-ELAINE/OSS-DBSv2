@@ -17,10 +17,13 @@ class Nifti1Image:
         starts = np.array([self._image.header['qoffset_x'],
                            self._image.header['qoffset_y'],
                            self._image.header['qoffset_z']
-                           ], dtype=np.float64) + self._offset
+                           ], dtype=np.float64)
+
         shape = np.array(self.xyz_shape(), dtype=np.float32)
         ends = starts + shape * self.voxel_size()
-        return tuple(starts * self.__scaling()), tuple(ends * self.__scaling())
+
+        return (tuple(starts * self.__scaling() + self._offset),
+                tuple(ends * self.__scaling() + self._offset))
 
     def header(self) -> nibabel.nifti1.Nifti1Header:
         return self._image.header
@@ -43,7 +46,7 @@ class Nifti1Image:
 
     def __scaling(self) -> float:
         xyz_unit = self._image.header.get_xyzt_units()[0]
-        return {'unknown': 1.0,
-                'meter': 1000.0,
-                'mm': 1.0,
-                'micron': 0.001}[xyz_unit]
+        return {'unknown': 1e-3,
+                'meter': 1.0,
+                'mm': 1e-3,
+                'micron': 1e-6}[xyz_unit]

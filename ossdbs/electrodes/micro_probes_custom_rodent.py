@@ -17,24 +17,19 @@ class MicroProbesCustomRodent(Electrode):
 
     translation : tuple
         Translation vector (x,y,z) of electrode.
-
-    Methods
-    -------
-    generate_geometry()
-        Generate mesh of electrode.
     """
 
-    # dimensions [mm]
-    CONTACT_LENGTH = 0.01125
-    LEAD_DIAMETER = 0.225
-    TOTAL_LENGHTH = 13.3
-    TUBE_THICKNESS = .01
+    # dimensions [m]
+    CONTACT_LENGTH = 0.01125e-3
+    LEAD_DIAMETER = 0.225e-3
+    TOTAL_LENGHTH = 13.3e-3
+    TUBE_THICKNESS = .01e-3
 
     def __init__(self,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
-                 translation: tuple = (0, 0, 0)) -> None:
-        self.__translation = tuple(translation)
+                 position: tuple = (0, 0, 0)) -> None:
+        self.__position = tuple(position)
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
         self.__boundaries = {'Body': 'Body', 'Contact_1': 'Contact_1'}
@@ -50,7 +45,7 @@ class MicroProbesCustomRodent(Electrode):
         geometry : netgen.libngpy._NgOCC.TopoDS_Shape
         """
         electrode = netgen.occ.Glue([self.__contact(), self.__body()])
-        moved_electrode = electrode.Move(self.__translation)
+        moved_electrode = electrode.Move(self.__position)
         return moved_electrode
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
