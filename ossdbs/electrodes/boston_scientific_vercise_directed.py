@@ -24,12 +24,12 @@ class BostonScientificVerciseDirected(Electrode):
         Generate geometry of electrode.
     """
     # dimensions [mm]
-    TIP_LENGTH = 1.1
+    TIP_LENGTH = 1.5
     CONTACT_LENGTH = 1.5
     CONTACT_SPACING = 0.5
     LEAD_DIAMETER = 1.3
-    TOTAL_LENGHTH = 50.0
-    CONTACT_SPACING_RADIAL = 0.25
+    TOTAL_LENGHTH = 45.0
+    CONTACT_SPACING_RADIAL = 0.25 # SET IT TO 30°
 
     def __init__(self,
                  rotation: float = 0.0,

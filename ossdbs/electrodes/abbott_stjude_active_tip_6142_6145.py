@@ -21,10 +21,10 @@ class AbbottStjudeActiveTip6142_6145(Electrode):
     """
 
     # dimensions [mm]
-    TIP_LENGTH = 1.1
+    TIP_LENGTH = 1.5
     CONTACT_LENGTH = 1.5
-    CONTACT_SPACING = 0.5
-    LEAD_DIAMETER = 1.3
+    CONTACT_SPACING = 1.5
+    LEAD_DIAMETER = 1.4
     TOTAL_LENGHTH = 100.0
     N_CONTACTS = 4
 
