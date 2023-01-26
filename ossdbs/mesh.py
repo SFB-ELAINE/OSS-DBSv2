@@ -169,6 +169,14 @@ class Mesh:
         self.refine()
 
     def surfacel2_space(self, boundaries: List[str]) -> ngsolve.comp.SurfaceL2:
+        """Return a number SurfaceL2 on the mesh.
+
+        Returns
+        -------
+        ngsolve.comp.SurfaceL2
+            SurfaceL2 space with minimum order of 1.
+        """
+
         dirichlet = '|'.join(boundary for boundary in boundaries)
         return ngsolve.SurfaceL2(mesh=self.__mesh,
                                  order=max(1, self.__order - 1),

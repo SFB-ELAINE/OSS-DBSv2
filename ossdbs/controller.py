@@ -1,4 +1,4 @@
-from ossdbs.boundaries import ElectrodeContact, BoundaryCollection
+from ossdbs.electrode_contacts import ElectrodeContact, ContactCollection
 from ossdbs.brain_geometry import BrainGeometry
 from ossdbs.brain_imaging.mri import MagneticResonanceImage
 from ossdbs.materials import Material
@@ -7,7 +7,6 @@ from ossdbs.electrodes import Electrode, ElectrodeParameters, ElectrodeFactory
 from ossdbs.mesh import Mesh
 from ossdbs.preconditioner import BDDCPreconditioner, LocalPreconditioner
 from ossdbs.preconditioner import MultigridPreconditioner
-from ossdbs.preconditioner import PreconditionerParameters
 from ossdbs.region import Region
 from ossdbs.signals import RectangleSignal, TrapzoidSignal, TriangleSignal
 from ossdbs.solver import CGSolver, GMRESSolver
@@ -18,7 +17,7 @@ import numpy as np
 import ngsolve
 
 
-class Input:
+class Controller:
     """Transform the input json.
 
     Parameters
@@ -68,7 +67,7 @@ class Input:
         return Conductivity(mri=mri, complex_datatype=self.__input['EQSMode'])
 
     def contacts(self) -> List[ElectrodeContact]:
-        contacts = BoundaryCollection()
+        contacts = ContactCollection()
         for index, electrode in enumerate(self.__input['Electrodes']):
             for contact_index in range(0, 8):
                 parameters = electrode['Contact_{}'.format(contact_index + 1)]
@@ -205,19 +204,16 @@ class Input:
             self.__input['Electrodes'][index]['Position'] = new_position
 
     def solver(self):
+        solver_type = self.__input['Solver']['Type']
+        solver = {'CG': CGSolver, 'GMRES': GMRESSolver}[solver_type]
 
-        solver = {
-            'CG': CGSolver,
-            'GMRES': GMRESSolver
-        }[self.__input['Solver']['Type']]
+        preconditioner_type = self.__input['Solver']['Preconditioner']
+        preconditioner = {'bddc': BDDCPreconditioner(),
+                          'local': LocalPreconditioner(),
+                          'multigrid': MultigridPreconditioner()
+                          }[preconditioner_type]
 
-        return solver(precond_par=self.__preconditioner(),
+        return solver(precond_par=preconditioner,
                       printrates=self.__input['Solver']['PrintRates'],
                       maxsteps=self.__input['Solver']['MaximumSteps'],
                       precision=self.__input['Solver']['Precision'])
-
-    def __preconditioner(self) -> PreconditionerParameters:
-        preconditioner = self.__input['Solver']['Preconditioner']
-        return {'bddc': BDDCPreconditioner(),
-                'local': LocalPreconditioner(),
-                'multigrid': MultigridPreconditioner()}[preconditioner]

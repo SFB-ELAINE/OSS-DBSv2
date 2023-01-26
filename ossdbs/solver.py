@@ -1,20 +1,33 @@
 import ngsolve
 
-from ossdbs.preconditioner import BDDCPreconditioner, PreconditionerParameters
+from ossdbs.preconditioner import BDDCPreconditioner, Preconditioner
 from abc import ABC, abstractmethod
 
 
 class Solver(ABC):
+    """Computes the boundary volume problem.
+    """
 
     @abstractmethod
-    def bvp(self, bilinear_form, linear_form, grid_function):
+    def bvp(self,
+            bilinear_form: ngsolve.BilinearForm,
+            linear_form: ngsolve.LinearForm,
+            grid_function: ngsolve.GridFunction) -> None:
         pass
 
 
 class CGSolver:
+    """
 
+    Parameters
+    ----------
+    precond_par : Preconditioner
+    printrates : bool
+    maxsteps : int
+    precision : float
+    """
     def __init__(self,
-                 precond_par: PreconditionerParameters = BDDCPreconditioner(),
+                 precond_par: Preconditioner = BDDCPreconditioner(),
                  printrates: bool = True,
                  maxsteps: int = 10000,
                  precision: float = 1e-12) -> None:
@@ -23,7 +36,18 @@ class CGSolver:
         self.__maxsteps = maxsteps
         self.__precision = precision
 
-    def bvp(self, bilinear_form, linear_form, grid_function):
+    def bvp(self,
+            bilinear_form: ngsolve.BilinearForm,
+            linear_form: ngsolve.LinearForm,
+            grid_function: ngsolve.GridFunction) -> None:
+        """Compute boundary volume problem.
+
+        Parameters
+        ----------
+        bilinear_form: ngsolve.BilinearForm
+        linear_form: ngsolve.LinearForm
+        grid_function: ngsolve.GridFunction
+        """
         preconditioner = ngsolve.Preconditioner(bf=bilinear_form,
                                                 **self.__precond_par)
 
@@ -41,9 +65,17 @@ class CGSolver:
 
 
 class GMRESSolver:
+    """
 
+    Parameters
+    ----------
+    precond_par : Preconditioner
+    printrates : bool
+    maxsteps : int
+    precision : float
+    """
     def __init__(self,
-                 precond_par: PreconditionerParameters = BDDCPreconditioner(),
+                 precond_par: Preconditioner = BDDCPreconditioner(),
                  printrates: bool = True,
                  maxsteps: int = 10000,
                  precision: float = 1e-12) -> None:
@@ -52,7 +84,18 @@ class GMRESSolver:
         self.__maxsteps = maxsteps
         self.__precision = precision
 
-    def bvp(self, bilinear_form, linear_form, grid_function):
+    def bvp(self,
+            bilinear_form: ngsolve.BilinearForm,
+            linear_form: ngsolve.LinearForm,
+            grid_function: ngsolve.GridFunction) -> None:
+        """Compute boundary volume problem.
+
+        Parameters
+        ----------
+        bilinear_form: ngsolve.BilinearForm
+        linear_form: ngsolve.LinearForm
+        grid_function: ngsolve.GridFunction
+        """
         preconditioner = ngsolve.Preconditioner(bf=bilinear_form,
                                                 **self.__precond_par)
 

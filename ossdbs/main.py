@@ -2,8 +2,8 @@
 import ngsolve
 import sys
 
-from ossdbs.volume_conductor_model import VolumeConductor
-from ossdbs.input import Input
+from ossdbs.volume_conductor_model import VolumeConductorNonFloating
+from ossdbs.controller import Controller
 
 
 def main() -> None:
@@ -13,22 +13,22 @@ def main() -> None:
 
 def ossdbs_fem(json_path: str) -> None:
 
-    input = Input(json_path=json_path)
-    mesh = input.mesh()
-    solver = input.solver()
-    contacts = input.contacts()
-    conductivity = input.conductivity()
+    controller = Controller(json_path=json_path)
+    mesh = controller.mesh()
+    solver = controller.solver()
+    contacts = controller.contacts()
+    conductivity = controller.conductivity()
+    strategy = controller.spectrum_mode()
 
-    mesh.refine_by_boundaries(contacts.active_contacts())
-    volume_conductor = VolumeConductor(conductivity=conductivity,
+    mesh.refine_by_boundaries(contacts.active())
+    volume_conductor = VolumeConductorNonFloating(conductivity=conductivity,
                                        mesh=mesh,
-                                       boundaries=contacts,
+                                       contacts=contacts,
                                        solver=solver)
-    strategy = input.spectrum_mode()
-    output = strategy.result(signal=input.stimulation_signal(),
+    output = strategy.result(signal=controller.stimulation_signal(),
                              volume_conductor=volume_conductor
                              )
-    output.save(input.output_path())
+    output.save(controller.output_path())
     output.save_mesh()
 
 
