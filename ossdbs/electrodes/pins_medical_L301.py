@@ -25,7 +25,7 @@ class PINSMedicalL301(Electrode):
     """
 
     # dimensions [mm]
-    TIP_LENGTH = 1.1
+    TIP_LENGTH = 1.5
     CONTACT_LENGTH = 1.5
     CONTACT_SPACING = 0.5
     LEAD_DIAMETER = 1.3

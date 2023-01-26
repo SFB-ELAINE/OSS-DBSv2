@@ -25,12 +25,12 @@ class AbbottStjudeDirected6173(Electrode):
     """
 
     # dimensions [mm]
-    TIP_LENGTH = 1.1
+    TIP_LENGTH = 1.5
     CONTACT_LENGTH = 1.5
     CONTACT_SPACING = 1.5
-    LEAD_DIAMETER = 1.3
-    TOTAL_LENGTH = 20.0
-    CONTACT_SPACING_RADIAL = 0.25
+    LEAD_DIAMETER = 1.29
+    TOTAL_LENGTH = 40.0 # Updated
+    CONTACT_SPACING_RADIAL = 0.337721210261 # UPDATED to 30°
 
     def __init__(self,
                  rotation: float = 0.0,

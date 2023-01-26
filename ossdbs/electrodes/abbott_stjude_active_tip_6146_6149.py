@@ -25,11 +25,11 @@ class AbbottStjudeActiveTip6146_6149(Electrode):
     """
 
     # dimensions [mm]
-    TIP_LENGTH = 1.1
+    TIP_LENGTH = 1.5
     CONTACT_LENGTH = 1.5
-    CONTACT_SPACING = 1.5
-    LEAD_DIAMETER = 1.3
-    TOTAL_LENGHTH = 100.0
+    CONTACT_SPACING = 0.5
+    LEAD_DIAMETER = 1.4
+    TOTAL_LENGHTH = 100.0 # does not matter for simulation
     N_CONTACTS = 4
 
     def __init__(self,
