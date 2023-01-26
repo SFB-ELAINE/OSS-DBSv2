@@ -2,14 +2,14 @@
 from abc import ABC, abstractmethod
 
 
-class PreconditionerParameters(ABC):
+class Preconditioner(ABC):
 
     @abstractmethod
     def to_dictionary(self) -> dict:
         pass
 
 
-class BDDCPreconditioner(PreconditionerParameters):
+class BDDCPreconditioner(Preconditioner):
 
     def __init__(self) -> None:
         self.type = 'bddc'
@@ -19,7 +19,7 @@ class BDDCPreconditioner(PreconditionerParameters):
         return {'type': self.type, 'coarsetype': self.coarsetype}
 
 
-class LocalPreconditioner(PreconditionerParameters):
+class LocalPreconditioner(Preconditioner):
     def __init__(self) -> None:
         self.type = 'local'
 
@@ -27,7 +27,7 @@ class LocalPreconditioner(PreconditionerParameters):
         return {'type': self.type}
 
 
-class MultigridPreconditioner(PreconditionerParameters):
+class MultigridPreconditioner(Preconditioner):
     def __init__(self) -> None:
         self.type = 'multigrid'
 

@@ -2,7 +2,6 @@
 from ossdbs.materials import Material
 from ossdbs.brain_imaging.mri import MagneticResonanceImage
 from ossdbs.dielectric_model import ColeColeFourModelFactory
-from ossdbs.voxels import Voxels
 import numpy as np
 import ngsolve
 
@@ -24,7 +23,7 @@ class Conductivity:
         self.__mri = mri
         self.__complex = complex_datatype
 
-    def conductivity(self, frequency: float) -> Voxels:
+    def distribution(self, frequency: float) -> ngsolve.VoxelCoefficient:
         """Return the conductivity distribution by the given frequency.
 
         Parameters
@@ -33,7 +32,7 @@ class Conductivity:
 
         Returns
         -------
-        Voxels
+        ngsolve.VoxelCoefficient
             Data structure representing the conductivity distribution and the
             location in space.
         """

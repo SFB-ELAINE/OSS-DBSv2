@@ -13,7 +13,7 @@ class ElectrodeContact:
     surface_impedance: float = 0.0
 
 
-class BoundaryCollection:
+class ContactCollection:
 
     def __init__(self, contacts: list = None) -> None:
         self.__contacts = contacts if contacts else []
@@ -21,13 +21,13 @@ class BoundaryCollection:
     def append(self, contact: ElectrodeContact) -> None:
         self.__contacts.append(contact)
 
-    def floating_contacts(self) -> List[str]:
-        return [contact.name for contact in self.__contacts
-                if contact.floating and not contact.active]
+    def floating(self) -> List[str]:
+        return sorted([contact.name for contact in self.__contacts
+                       if contact.floating and not contact.active])
 
-    def active_contacts(self) -> List[str]:
-        return [contact.name for contact in self.__contacts
-                if contact.active]
+    def active(self) -> List[str]:
+        return sorted([contact.name for contact in self.__contacts
+                       if contact.active])
 
     def current_values(self) -> dict:
         return {contact.name: contact.current
