@@ -16,7 +16,7 @@ class Solver(ABC):
         pass
 
 
-class CGSolver:
+class CGSolver(Solver):
     """
 
     Parameters
@@ -64,7 +64,7 @@ class CGSolver:
         grid_function.vec.data = grid_function.vec.data + inverse * r
 
 
-class GMRESSolver:
+class GMRESSolver(Solver):
     """
 
     Parameters

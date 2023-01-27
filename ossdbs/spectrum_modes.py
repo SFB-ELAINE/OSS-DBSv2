@@ -6,6 +6,18 @@ import ngsolve
 import os
 
 
+def convert2Niftiimage():
+
+        # points
+
+        #  mapped_integration_point = self.__mesh(0.11, 0.11, 0.06)
+
+        # try:
+        #     value = potential(mapped_integration_point))    
+        # except TypeError:
+        #     value = 0
+
+
 @dataclass
 class FrequencyComponent:
     fourier_coefficient: float
