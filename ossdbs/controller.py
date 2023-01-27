@@ -15,6 +15,10 @@ from typing import List
 import json
 import numpy as np
 import ngsolve
+from ossdbs.volume_conductor_model import VolumeConductor
+from ossdbs.volume_conductor_model import VolumeConductorFloating
+from ossdbs.volume_conductor_model import VolumeConductorFloatingImpedance
+from ossdbs.volume_conductor_model import VolumeConductorNonFloating
 
 
 class Controller:
@@ -89,29 +93,6 @@ class Controller:
 
         return contacts
 
-    def stimulation_signal(self):
-        """Return stimulation signal.
-
-        Returns
-        -------
-        Signal
-        """
-
-        parameters = self.__input['StimulationSignal']
-        signal_type = parameters['Type']
-        frequency = parameters['Frequency[Hz]']
-        pulse_width = parameters['PulseWidth[µs]'] * frequency
-        top_width = parameters['PulseTopWidth[µs]'] * frequency
-
-        if signal_type == 'Trapzoid':
-            return TrapzoidSignal(frequency, pulse_width, top_width)
-
-        signal = {'Rectangle': RectangleSignal,
-                  'Triangle': TriangleSignal,
-                  'Trapzoid': TrapzoidSignal
-                  }[signal_type]
-        return signal(frequency, pulse_width)
-
     def output_path(self) -> str:
         """Return path for results.
 
@@ -121,6 +102,18 @@ class Controller:
             Directory for result files.
         """
         return self.__input['OutputPath']
+
+    def volume_conductor(self) -> VolumeConductor:
+
+        floating = self.__input['Floating']
+
+        if not floating['Active']:
+            return VolumeConductorNonFloating
+
+        if not floating['FloatingImpedance']:
+            return VolumeConductorFloating
+
+        return VolumeConductorFloatingImpedance
 
     def __region_of_interest(self) -> Region:
         """Return the region of interest.
@@ -158,10 +151,28 @@ class Controller:
                 'OctaveBand': Octavevands()
                 }[self.__input['SpectrumMode']]
 
-    @staticmethod
-    def __load_json(path) -> dict:
-        with open(path, 'r') as json_file:
-            return json.load(json_file)
+    def stimulation_signal(self):
+        """Return stimulation signal.
+
+        Returns
+        -------
+        Signal
+        """
+
+        parameters = self.__input['StimulationSignal']
+        signal_type = parameters['Type']
+        frequency = parameters['Frequency[Hz]']
+        pulse_width = parameters['PulseWidth[µs]'] * frequency
+        top_width = parameters['PulseTopWidth[µs]'] * frequency
+
+        if signal_type == 'Trapzoid':
+            return TrapzoidSignal(frequency, pulse_width, top_width)
+
+        signal = {'Rectangle': RectangleSignal,
+                  'Triangle': TriangleSignal,
+                  'Trapzoid': TrapzoidSignal
+                  }[signal_type]
+        return signal(frequency, pulse_width)
 
     def __create_electrodes(self) -> List[Electrode]:
 
@@ -174,6 +185,7 @@ class Controller:
                         input_par['Position']['y[mm]'] * 1e-3,
                         input_par['Position']['z[mm]'] * 1e-3)
             rotation = input_par['Rotation[Degrees]']
+            print(position)
             electrode_par = ElectrodeParameters(name=input_par['Name'],
                                                 direction=direction,
                                                 position=position,
@@ -193,6 +205,11 @@ class Controller:
             electrode.rename_boundaries(boundary_names)
 
         return electrodes
+
+    @staticmethod
+    def __load_json(path) -> dict:
+        with open(path, 'r') as json_file:
+            return json.load(json_file)
 
     def __shift_electrodes(self) -> None:
         x, y, z = np.multiply(self.__offset, 1e3)
