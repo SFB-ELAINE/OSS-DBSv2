@@ -1,57 +1,86 @@
 {
-    "CaseGrounding":
-        {
-            "Active": false,
-            "Value": 0
-        },
-    "DiffusionTensorImage":
-        {
-            "Path": ""
-        },
-    "Electrodes": [
-        {
-            "Name": "BostonScientificVerciseDirected",
-            "Rotation[Degrees]": 6.412,
-            "Direction": {"x[mm]": 2.2314,
-                          "y[mm]": 5.0661,
-                          "z[mm]": 3.990},
-            "Position": {"x[mm]": 14.5884,
-                         "y[mm]": -14.7434,
-                         "z[mm]": -9.0634},
-            "Contact_1": {"Active": true,
-                          "Voltage[V]": 1.0},
-            "Contact_2": {"Active": false,
-                          "Voltage[V]": 0.0},
-            "Contact_3": {"Active": false,
-                          "Voltage[V]": 0.0},
-            "Contact_4": {"Active": false,
-                          "Voltage[V]": 0.0},
-            "Contact_5": {"Active": false,
-                          "Voltage[V]": 0.0},
-            "Contact_6": {"Active": false,
-                          "Voltage[V]": 0.0},
-            "Contact_7": {"Active": false,
-                          "Voltage[V]": 0.0},
-            "Contact_8": {"Active": true,
-                          "Voltage[V]": 0.0}
-        }
-    ],
-    "EQSMode": false,
-    "MaterialDistribution":
-        {
-            "MaterialCoding": {
-                "Unknown": 0,
-                "GrayMatter": 1,
-                "WhiteMatter": 2,
-                "CerebrospinalFluid": 3
-            },
-            "MRIPath": "./input_files/segmask.nii"
-        },
-    "Mesh": {
-        "LoadMesh": false,
-        "LoadPath": "./input_files/mesh.vol",
-        "MeshElementOrder": 2,
-        "SavePath": ""
+  "CaseGrounding": {
+    "Active": false,
+    "Voltage[V]": 0.0
+  },
+  "DiffusionTensorImage": {
+    "Path": ""
+  },
+  "Electrodes": [
+    {
+      "Name": "BostonScientificVerciseDirected",
+      "Rotation[Degrees]": 6.412,
+      "Direction": { "x[mm]": 2.2314, "y[mm]": 5.0661, "z[mm]": 3.99 },
+      "Position": { "x[mm]": 14.5884, "y[mm]": -14.7434, "z[mm]": -9.0634 },
+      "Contact_1": {
+        "Active": true,
+        "Current[A]": 0.0,
+        "Voltage[V]": 1.0,
+        "Floating": false,
+        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+      },
+      "Contact_2": {
+        "Active": false,
+        "Current[A]": 0.0,
+        "Voltage[V]": 0.0,
+        "Floating": false,
+        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+      },
+      "Contact_3": {
+        "Active": false,
+        "Current[A]": 0.0,
+        "Voltage[V]": 0.0,
+        "Floating": false,
+        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+      },
+      "Contact_4": {
+        "Active": false,
+        "Current[A]": 0.0,
+        "Voltage[V]": 0.0,
+        "Floating": false,
+        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+      },
+      "Contact_5": {
+        "Active": false,
+        "Current[A]": 0.0,
+        "Voltage[V]": 0.0,
+        "Floating": false,
+        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+      },
+      "Contact_6": {
+        "Active": false,
+        "Current[A]": 0.0,
+        "Voltage[V]": 0.0,
+        "Floating": false,
+        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+      },
+      "Contact_7": {
+        "Active": false,
+        "Current[A]": 0.0,
+        "Voltage[V]": 0.0,
+        "Floating": false,
+        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+      },
+      "Contact_8": {
+        "Active": true,
+        "Current[A]": 0.0,
+        "Voltage[V]": 0.0,
+        "Floating": false,
+        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0  }
+      }
+    }
+  ],
+  "EQSMode": false,
+  "Floating": {
+    "Active": false,
+    "FloatingImpedance": false
+  },
+  "MaterialDistribution": {
+    "MaterialCoding": {
+      "Unknown": 0,
+      "GrayMatter": 1,
+      "WhiteMatter": 2,
+      "CerebrospinalFluid": 3
     },
     "MRIPath": "./input_files/segmask.nii"
   },

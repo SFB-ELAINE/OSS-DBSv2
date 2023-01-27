@@ -185,7 +185,6 @@ class Controller:
                         input_par['Position']['y[mm]'] * 1e-3,
                         input_par['Position']['z[mm]'] * 1e-3)
             rotation = input_par['Rotation[Degrees]']
-            print(position)
             electrode_par = ElectrodeParameters(name=input_par['Name'],
                                                 direction=direction,
                                                 position=position,
