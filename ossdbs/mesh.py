@@ -27,17 +27,6 @@ class Mesh:
         self.__order = order
         self.__complex = complex_datatype
 
-    def get_boundaries(self) -> List:
-        """Return all boundary names.
-
-        Returns
-        -------
-        list
-            Collection of strings.
-        """
-
-        return list(set(self.__mesh.GetBoundaries()) - set(['default']))
-
     def boundary_coefficients(self, boundaries) \
             -> ngsolve.fem.CoefficientFunction:
         """Return a boundary coefficient function.
@@ -88,18 +77,7 @@ class Mesh:
 
         self.__mesh.ngmeshSave(file_name)
 
-    def is_complex(self) -> bool:
-        """Check complex data type.
-
-        Returns
-        -------
-        bool
-            True if complex, False otherwise.
-        """
-
-        return self.__complex
-
-    def h1_space(self) -> ngsolve.comp.H1:
+    def h1_space(self, boundaries: List[str]) -> ngsolve.comp.H1:
         """Return a h1 space based on the mesh.
 
         Returns
@@ -107,12 +85,25 @@ class Mesh:
         ngsolve.comp.H1
         """
 
-        dirichlet = '|'.join(boundary for boundary in self.get_boundaries())
+        dirichlet = '|'.join(boundary for boundary in boundaries)
         return ngsolve.H1(mesh=self.__mesh,
                           order=self.__order,
                           dirichlet=dirichlet,
                           complex=self.__complex,
                           wb_withedges=False)
+
+    def number_space(self) -> ngsolve.comp.NumberSpace:
+        """Return a number space based on the mesh.
+
+        Returns
+        -------
+        ngsolve.comp.NumberSpace
+            Space with only one single (global) DOF.
+        """
+
+        return ngsolve.NumberSpace(mesh=self.__mesh,
+                                   order=0,
+                                   complex=self.__complex)
 
     def refine_at_voxel(self, marked_voxels: Voxels) -> None:
         """Refine the mesh at the marked locations.
@@ -176,3 +167,18 @@ class Mesh:
             to_refine = element_errors[element.nr] > limit
             self.__mesh.SetRefinementFlag(ei=element, refine=to_refine)
         self.refine()
+
+    def surfacel2_space(self, boundaries: List[str]) -> ngsolve.comp.SurfaceL2:
+        """Return a number SurfaceL2 on the mesh.
+
+        Returns
+        -------
+        ngsolve.comp.SurfaceL2
+            SurfaceL2 space with minimum order of 1.
+        """
+
+        dirichlet = '|'.join(boundary for boundary in boundaries)
+        return ngsolve.SurfaceL2(mesh=self.__mesh,
+                                 order=max(1, self.__order - 1),
+                                 dirichlet=dirichlet,
+                                 complex=self.__complex)

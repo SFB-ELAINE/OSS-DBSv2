@@ -42,7 +42,8 @@
         ],
 
     "Floating": {
-        
+        "Active": false,
+        "FloatingImpedance": false
     }, 
 
 

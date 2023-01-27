@@ -6,6 +6,20 @@ import ngsolve
 import os
 
 
+def convert2Niftiimage():
+
+        # points
+
+        #  mapped_integration_point = self.__mesh(0.11, 0.11, 0.06)
+
+        # try:
+        #     value = potential(mapped_integration_point))    
+        # except TypeError:
+        #     value = 0
+
+    pass 
+
+
 @dataclass
 class FrequencyComponent:
     fourier_coefficient: float
@@ -14,18 +28,9 @@ class FrequencyComponent:
 
 class Output:
 
-    def __init__(self, mesh, potential, density, impedances, frequencies) \
-            -> None:
+    def __init__(self, mesh, potential) -> None:
         self.__mesh = mesh
         self.__potential = potential
-        self.__density = density
-        self.__impedances = impedances
-        self.__frequencies = frequencies
-
-    def save_impedances(self) -> None:
-        header = [('frequency [Hz]', 'impedance [ohm]')]
-        rows = [data for data in zip(self.__frequencies, self.__impedances)]
-        np.savetxt("test.csv", header+rows, delimiter=" ", fmt='% s')
 
     def save_mesh(self, path: str = '') -> None:
         file_base_name = os.path.basename(path)
@@ -59,24 +64,13 @@ class Output:
 
         filename = os.path.join(file_dir, file_base_name)
 
-        field = ngsolve.grad(self.__potential)
-        Power = ngsolve.Integrate(field * ngsolve.Conj(self.__density),
-                                  self.__mesh)
-
-        print(1 / Power)
         ngsolve.VTKOutput(ma=self.__mesh,
                           coefs=[self.__potential.real,
                                  self.__potential.imag,
-                                 field.real,
-                                 field.imag,
-                                 self.__density.real,
-                                 self.__density.imag],
+                                 ],
                           names=["potential_real",
                                  "potential_imag",
-                                 "field_real",
-                                 "field_imag",
-                                 "current_density_real",
-                                 "current_density_imag"],
+                                 ],
                           filename=filename,
                           subdivision=0
                           ).Do()
@@ -101,29 +95,22 @@ class SpectrumMode(ABC):
 
 class NoTruncationTest(SpectrumMode):
 
-    def result(self, signal, boundary_values, volume_conductor):
+    def result(self, signal, volume_conductor):
         freq_components = self._frequency_components(signal)
         frequency = freq_components[77].frequency
-        result = volume_conductor.potential(boundary_values, frequency)
-        potential, density, impedance = result
+        result = volume_conductor.potential(frequency)
+        potential = result
         amplitude = np.real(freq_components[0].fourier_coefficient) / 2
         potential_sum = potential
         # potential_sum.vec.data = potential.vec.data * amplitude
-        impedances = [impedance]
-        frequencies = [freq_components[77].frequency]
         for wave in freq_components[1:1]:
             amplitude = np.real(wave.fourier_coefficient)
-            result = volume_conductor.evaluate_potential(boundary_values,
-                                                         wave.frequency)
+            result = volume_conductor.evaluate_potential(wave.frequency)
             potential, density, impedance = result
             potential_sum.vec.data += potential.vec.data * amplitude
-            impedances.append(impedance)
         mesh = volume_conductor.mesh.ngsolvemesh()
         return Output(mesh=mesh,
-                      potential=potential,
-                      density=density,
-                      impedances=impedances,
-                      frequencies=frequencies)
+                      potential=potential.gridfunction)
 
 
 class Octavevands(SpectrumMode):
