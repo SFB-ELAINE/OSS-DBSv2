@@ -41,20 +41,29 @@ The software OSS-DBS can be easily installed using pip:
     $ pip install oss_dbs
 
 For first steps with OSS-DBS see the next section of this documentation.
-Some examples to run you can find in the :ref:'ref_examples'
+Some examples to run you can find in the 'ref_examples'_.
+
+.. note::
+   To edit Sphinx documentation you need to install the following packages:
+
+.. code-block:: console
+
+   $ pip install sphinx
+   $ pip install sphinx-rtd-theme
 
 =================
 Table of contents
 =================
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 1
 
    start
    examples
    brain_geometry
+   meshing
    signals
    volume_conductor_model
-   new
+   postprocessing
 
 
 Indices and tables

@@ -1,4 +1,4 @@
-Stimulation signals
+Stimulation Signals
 ====================
 
 .. note::
