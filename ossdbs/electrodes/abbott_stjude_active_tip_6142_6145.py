@@ -25,7 +25,6 @@ class AbbottStjudeActiveTip6142_6145(Electrode):
     CONTACT_SPACING = 0.5e-3
     LEAD_DIAMETER = 1.3e-3
     TOTAL_LENGHTH = 100.0e-3
-    N_CONTACTS = 4
 
     def __init__(self,
                  rotation: float = 0.0,
@@ -81,7 +80,8 @@ class AbbottStjudeActiveTip6142_6145(Electrode):
                                       h=self.CONTACT_LENGTH)
         length = (self.CONTACT_LENGTH + self.CONTACT_SPACING)
         offset = self.TIP_LENGTH + self.CONTACT_SPACING
-        distrances = np.arange(1, self.N_CONTACTS) * length + offset
+        n_contacts = 4
+        distrances = np.arange(1, n_contacts) * length + offset
         contacts = [active_tip] + \
                    [contact.Move(tuple(np.array(self.__direction) * distance))
                     for distance in distrances]

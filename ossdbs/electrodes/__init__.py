@@ -5,6 +5,8 @@ from ossdbs.electrodes.abbott_stjude_active_tip_6146_6149 \
     import AbbottStjudeActiveTip6146_6149
 from ossdbs.electrodes.abbott_stjude_directed_6172 \
     import AbbottStjudeDirected6172
+from ossdbs.electrodes.abbott_stjude_directed_6173 \
+    import AbbottStjudeDirected6173
 from ossdbs.electrodes.boston_scientific_vercise import BostonScientificVercise
 from ossdbs.electrodes.boston_scientific_vercise_directed \
     import BostonScientificVerciseDirected
@@ -20,11 +22,28 @@ from ossdbs.electrodes.micro_probes_SNEX100 import MicroProbesSNEX_100
 from ossdbs.electrodes.electrode_creation import ElectrodeParameters
 from ossdbs.electrodes.electrode_creation import ElectrodeFactory
 
+from ossdbs.electrodes.abbott_stjude_active_tip_custom \
+    import AbbottStjudeActiveCustom
+from ossdbs.electrodes.abbott_stjude_directed_custom \
+    import AbbottStjudeDirectedCustom
+from ossdbs.electrodes.boston_scientific_vercise_custom \
+    import BostonScientificVerciseCustom
+from ossdbs.electrodes.boston_scientific_vercise_directed_custom \
+    import BostonScientificVerciseDirectedCustom
+from ossdbs.electrodes.medtronic_custom \
+    import MedtronicCustom
+from ossdbs.electrodes.micro_probes_custom_rodent_custom \
+    import MicroProbesCustomRodentCustom
+from ossdbs.electrodes.micro_probes_SNEX100_custom \
+    import MicroProbesSNEX_100Custom
+from ossdbs.electrodes.pins_medical_custom \
+    import PINSMedicalCustom
 
 __all__ = ('Electrode',
            'AbbottStjudeActiveTip6142_6145',
            'AbbottStjudeActiveTip6146_6149',
            'AbbottStjudeDirected6172',
+           'AbbottStjudeDirected6173',
            'BostonScientificVercise',
            'BostonScientificVerciseDirected',
            'Medtronic3387',
@@ -36,4 +55,13 @@ __all__ = ('Electrode',
            'PINSMedicalL303',
            'MicroProbesCustomRodent',
            'ElectrodeFactory',
-           'ElectrodeParameters')
+           'ElectrodeParameters',
+           'AbbottStjudeActiveCustom',
+           'AbbottStjudeDirectedCustom',
+           'BostonScientificVerciseCustom',
+           'BostonScientificVerciseDirectedCustom',
+           'MedtronicCustom',
+           'MicroProbesCustomRodentCustom',
+           'MicroProbesSNEX_100Custom',
+           'PINSMedicalCustom'
+           )

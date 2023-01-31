@@ -74,7 +74,8 @@ class PINSMedicalL302(Electrode):
                                       h=self.CONTACT_LENGTH)
 
         length = (self.CONTACT_LENGTH + self.CONTACT_SPACING)
-        distrances = np.arange(self.N_CONTACTS) * length + self.TIP_LENGTH
+        n_contacts = 4
+        distrances = np.arange(n_contacts) * length + self.TIP_LENGTH
         contacts = [contact.Move(tuple(np.array(self.__direction) * distance))
                     for distance in distrances]
 

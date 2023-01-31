@@ -25,7 +25,6 @@ class Medtronic3387(Electrode):
     CONTACT_SPACING = 0.5e-3
     LEAD_DIAMETER = 1.27e-3
     TOTAL_LENGHTH = 100.0e-3
-    N_CONTACTS = 4
 
     def __init__(self,
                  rotation: float = 0.0,
@@ -74,7 +73,8 @@ class Medtronic3387(Electrode):
                                       h=self.CONTACT_LENGTH)
 
         length = (self.CONTACT_LENGTH + self.CONTACT_SPACING)
-        distrances = np.arange(self.N_CONTACTS) * length + self.TIP_LENGTH
+        n_contacts = 4
+        distrances = np.arange(n_contacts) * length + self.TIP_LENGTH
         contacts = [contact.Move(tuple(np.array(self.__direction) * distance))
                     for distance in distrances]
 

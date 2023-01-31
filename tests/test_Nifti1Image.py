@@ -68,5 +68,5 @@ class TestNifti1Image:
         np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
 
     def test_voxel_size(self, nifti1_image_3d):
-        desired = (0.5, 0.5, 0.5)
+        desired = (0.0005, 0.0005, 0.0005)
         np.testing.assert_equal(nifti1_image_3d.voxel_size(), desired)

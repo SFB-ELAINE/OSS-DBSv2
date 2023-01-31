@@ -25,6 +25,7 @@ class BrainGeometry:
         """
 
         geometry = self.__create_ellipsoid()
+        # geometry = self.__create_box()
         geometry.bc('BrainSurface')
         for electrode in self.__electrodes:
             geometry = geometry - electrode.generate_geometry()
@@ -36,3 +37,6 @@ class BrainGeometry:
         trasformator = netgen.occ.gp_GTrsf(mat=[x, 0, 0, 0, y, 0, 0, 0, z])
         sphere = netgen.occ.Sphere(c=netgen.occ.Pnt(1, 1, 1), r=1)
         return trasformator(sphere).Move(self.__region.start)
+
+    def __create_box(self) -> netgen.libngpy._NgOCC.Solid:
+        return netgen.occ.Box(self.__region.start, self.__region.end)

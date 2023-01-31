@@ -4,21 +4,8 @@ from abc import ABC, abstractmethod
 import numpy as np
 import ngsolve
 import os
-
-
-def convert2Niftiimage():
-
-        # points
-
-        #  mapped_integration_point = self.__mesh(0.11, 0.11, 0.06)
-
-        # try:
-        #     value = potential(mapped_integration_point))    
-        # except TypeError:
-        #     value = 0
-
-    pass 
-
+import pickle
+from ossdbs.region import Region
 
 @dataclass
 class FrequencyComponent:
@@ -62,15 +49,14 @@ class Output:
         if not os.path.exists(file_dir):
             os.makedirs(file_dir)
 
-        filename = os.path.join(file_dir, file_base_name)
+        filename = os.path.join(file_dir, 'potential.data')
+        pickler = pickle.Pickler(open(filename, 'wb'))
+        pickler.dump([self.__potential, self.__mesh])
 
+        filename = os.path.join(file_dir, file_base_name)
         ngsolve.VTKOutput(ma=self.__mesh,
-                          coefs=[self.__potential.real,
-                                 self.__potential.imag,
-                                 ],
-                          names=["potential_real",
-                                 "potential_imag",
-                                 ],
+                          coefs=[self.__potential.real, self.__potential.imag],
+                          names=["potential_real", "potential_imag"],
                           filename=filename,
                           subdivision=0
                           ).Do()

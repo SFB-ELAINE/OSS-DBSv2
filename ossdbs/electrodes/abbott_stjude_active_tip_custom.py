@@ -1,11 +1,13 @@
-# Boston Scientific (Marlborough, Massachusetts, USA) vercise
+# Abbott/St Jude Active Tip Custom
 from ossdbs.electrodes.electrode import Electrode
 import netgen
 import numpy as np
+import os
+import json
 
 
-class BostonScientificVercise(Electrode):
-    """Boston Scientific (Marlborough, Massachusetts, USA) vercise electrode.
+class AbbottStjudeActiveCustom(Electrode):
+    """Abbott/St Jude Active Tip custom electrode.
 
     Attributes
     ----------
@@ -33,15 +35,12 @@ class BostonScientificVercise(Electrode):
         self.__position = position
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
+        self.__load_parameters()
         self.__boundaries = {'Body': 'Body',
                              'Contact_1': 'Contact_1',
                              'Contact_2': 'Contact_2',
                              'Contact_3': 'Contact_3',
-                             'Contact_4': 'Contact_4',
-                             'Contact_5': 'Contact_5',
-                             'Contact_6': 'Contact_6',
-                             'Contact_7': 'Contact_7',
-                             'Contact_8': 'Contact_8'}
+                             'Contact_4': 'Contact_4'}
 
     def rename_boundaries(self, boundaries: dict) -> None:
         self.__boundaries.update(boundaries)
@@ -60,29 +59,50 @@ class BostonScientificVercise(Electrode):
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self.LEAD_DIAMETER * 0.5
-        center = tuple(np.array(self.__direction) * radius)
-        tip = netgen.occ.Sphere(c=center, r=radius)
-        lead = netgen.occ.Cylinder(p=center,
+        point = tuple(np.array(self.__direction) * radius)
+        body = netgen.occ.Cylinder(p=point,
                                    d=self.__direction,
                                    r=radius,
                                    h=self.TOTAL_LENGHTH - self.TIP_LENGTH)
-        body = tip + lead
         body.bc(self.__boundaries['Body'])
         return body
 
     def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        radius = self.LEAD_DIAMETER * 0.5
+        center = tuple(np.array(self.__direction) * radius)
+        tip = netgen.occ.Sphere(c=center, r=radius)
+        contact_1 = netgen.occ.Cylinder(p=center,
+                                        d=self.__direction,
+                                        r=radius,
+                                        h=self.TIP_LENGTH + radius)
+        active_tip = tip + contact_1
+
         contact = netgen.occ.Cylinder(p=(0, 0, 0),
                                       d=self.__direction,
-                                      r=self.LEAD_DIAMETER * 0.5,
+                                      r=radius,
                                       h=self.CONTACT_LENGTH)
-
         length = (self.CONTACT_LENGTH + self.CONTACT_SPACING)
-        n_contacts = 8
-        distrances = np.arange(n_contacts) * length + self.TIP_LENGTH
-        contacts = [contact.Move(tuple(np.array(self.__direction) * distance))
+        offset = self.TIP_LENGTH + self.CONTACT_SPACING
+        n_contacts = 4
+        distrances = np.arange(1, n_contacts) * length + offset
+        contacts = [active_tip] + \
+                   [contact.Move(tuple(np.array(self.__direction) * distance))
                     for distance in distrances]
 
         for index, contact in enumerate(contacts, 1):
             contact.bc(self.__boundaries['Contact_{}'.format(index)])
 
-        return netgen.occ.Glue(contacts)
+        return netgen.occ.Fuse(contacts)
+
+    def __load_parameters(self) -> None:
+        dir_name = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(dir_name, 'abbott_stjude_active_tip_custom.json')
+
+        with open(path, 'r') as json_file:
+            parameters = json.load(json_file)
+
+        self.CONTACT_LENGTH = parameters['ContactLength[m]']
+        self.TIP_LENGTH = parameters['TipLength[m]']
+        self.CONTACT_SPACING = parameters['ContactSpacingAxial[m]']
+        self.LEAD_DIAMETER = parameters['LeadDiameter[m]']
+        self.TOTAL_LENGHTH = parameters['LeadLength[m]']
