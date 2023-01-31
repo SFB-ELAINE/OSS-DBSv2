@@ -8,31 +8,33 @@ class Nifti1Image:
 
     def __init__(self, file_path: str) -> None:
         self._image = self.__load_image(file_path)
-        self._offset = (0, 0, 0)
+        self._shift = (0.0, 0.0, 0.0)
 
     def data_map(self) -> np.memmap:
         return self._image.get_fdata()
 
     def bounding_box(self) -> tuple:
-        starts = np.array([self._image.header['qoffset_x'],
-                           self._image.header['qoffset_y'],
-                           self._image.header['qoffset_z']
-                           ], dtype=np.float64)
-
-        shape = np.array(self.xyz_shape(), dtype=np.float32)
-        ends = starts + shape * self.voxel_size()
-
-        return (tuple(starts * self.__scaling() + self._offset),
-                tuple(ends * self.__scaling() + self._offset))
+        start = self.offset()
+        shape = np.array(self.xyz_shape(), dtype=np.float64)
+        ends = start + shape * self.voxel_size()
+        return tuple(start), tuple(ends)
 
     def header(self) -> nibabel.nifti1.Nifti1Header:
         return self._image.header
 
-    def set_offset(self, offset: tuple) -> None:
-        self._offset = offset
+    def offset(self) -> tuple:
+        offset = np.array([self._image.header['qoffset_x'],
+                           self._image.header['qoffset_y'],
+                           self._image.header['qoffset_z']
+                           ], dtype=np.float64)
+        return offset * self.__scaling() + self._shift
+
+    def set_offset(self, shift: tuple) -> None:
+        self._shift = shift
 
     def voxel_size(self) -> tuple:
-        return self._image.header.get_zooms()[:self.__VOXEL_DIMENSION]
+        x, y, z = self._image.header.get_zooms()[:self.__VOXEL_DIMENSION]
+        return tuple(np.array((x, y, z), dtype=np.float64) * self.__scaling())
 
     def xyz_shape(self) -> tuple:
         return self._image.header.get_data_shape()[:self.__VOXEL_DIMENSION]

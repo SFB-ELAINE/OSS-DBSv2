@@ -1,3 +1,4 @@
+from ossdbs.boundaries import ElectrodeContact, ContactCollection
 from ossdbs.brain_geometry import BrainGeometry
 from ossdbs.brain_imaging.mri import MagneticResonanceImage
 from ossdbs.materials import Material
@@ -86,6 +87,32 @@ class Input:
                 electrode['Contact_' + str(index+1)]['Voltage[V]']
                 for index in range(8)
                 if electrode['Contact_' + str(index+1)]['Active']}
+
+    def contacts(self) -> List[ElectrodeContact]:
+        contacts = ContactCollection()
+        for index, electrode in enumerate(self.__input['Electrodes']):
+            for contact_index in range(0, 8):
+                parameters = electrode['Contact_{}'.format(contact_index + 1)]
+                contact = ElectrodeContact()
+                contact.name = 'E{}C{}'.format(index, contact_index)
+                contact.active = parameters['Active']
+                contact.floating = parameters['Floating'] and not contact.active
+                contact.current = parameters['Current[A]']
+                contact.voltage = parameters['Voltage[V]']
+                real = parameters['SurfaceImpedance[Ωm]']['real']
+                imag = parameters['SurfaceImpedance[Ωm]']['imag']
+                contact.surface_impedance = real + 1j * imag
+                contacts.append(contact)
+            contact = ElectrodeContact()
+            contact.name = 'E{}B'.format(index)
+            contacts.append(contact)
+        case_grounding = self.__input['CaseGrounding']
+        contact = ElectrodeContact(name='BrainSurface',
+                                   voltage=case_grounding['Voltage[V]'],
+                                   active=case_grounding['Active'])
+        contacts.append(contact)
+
+        return contacts
 
     def stimulation_signal(self):
         """Return stimulation signal.

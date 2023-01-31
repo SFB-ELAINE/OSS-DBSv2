@@ -1,0 +1,8 @@
+{
+    "TipLength[m]": 0.0011,
+    "ContactLength[m]": 0.0015,
+    "ContactSpacingAxial[m]": 0.0005,
+    "ContactSpacingRadial[m]": 0.00025,
+    "LeadDiameter[m]": 0.0013,
+    "LeadLength[m]": 0.1
+}

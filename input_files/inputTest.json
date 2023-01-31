@@ -108,6 +108,9 @@
     "Type": "Rectangle",
     "Frequency[Hz]": 130.0,
     "PulseWidth[µs]": 60.0,
-    "PulseTopWidth[µs]": 0.0
+    "PulseTopWidth[µs]": 0.0,
+    "CounterPulseWidth[µs]": 0.0,
+    "CounterPulseTopWidth[µs]": 0.0,
+    "InterPulseWidth[µs]": 0.0
   }
 }

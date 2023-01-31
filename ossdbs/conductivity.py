@@ -47,8 +47,9 @@ class Conductivity:
             colecole_model = ColeColeFourModelFactory.create(material)
             data[position.data] = colecole_model.conductivity(omega)
 
-        if not self.__complex:
-            data = np.real(data)
-
         start, end = self.__mri.bounding_box()
-        return ngsolve.VoxelCoefficient(start, end, data, linear=False)
+
+        if not self.__complex:
+            return ngsolve.VoxelCoefficient(start, end, np.real(data), False)
+
+        return ngsolve.VoxelCoefficient(start, end, data, False)

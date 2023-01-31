@@ -2,9 +2,11 @@
 from ossdbs.electrodes.electrode import Electrode
 import netgen
 import numpy as np
+import os
+import json
 
 
-class BostonScientificVercise(Electrode):
+class BostonScientificVerciseCustom(Electrode):
     """Boston Scientific (Marlborough, Massachusetts, USA) vercise electrode.
 
     Attributes
@@ -25,6 +27,7 @@ class BostonScientificVercise(Electrode):
     CONTACT_SPACING = 0.5e-3
     LEAD_DIAMETER = 1.3e-3
     TOTAL_LENGHTH = 100.0e-3
+    N_CONTACTS = 8
 
     def __init__(self,
                  rotation: float = 0.0,
@@ -33,6 +36,7 @@ class BostonScientificVercise(Electrode):
         self.__position = position
         norm = np.linalg.norm(direction)
         self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
+        self.__load_parameters()
         self.__boundaries = {'Body': 'Body',
                              'Contact_1': 'Contact_1',
                              'Contact_2': 'Contact_2',
@@ -86,3 +90,16 @@ class BostonScientificVercise(Electrode):
             contact.bc(self.__boundaries['Contact_{}'.format(index)])
 
         return netgen.occ.Glue(contacts)
+
+    def __load_parameters(self) -> None:
+        dir_name = os.path.dirname(os.path.abspath(__file__))
+        path = os.path.join(dir_name, 'boston_scientific_vercise_custom.json')
+
+        with open(path, 'r') as json_file:
+            parameters = json.load(json_file)
+
+        self.CONTACT_LENGTH = parameters['ContactLength[m]']
+        self.TIP_LENGTH = parameters['TipLength[m]']
+        self.CONTACT_SPACING = parameters['ContactSpacingAxial[m]']
+        self.LEAD_DIAMETER = parameters['LeadDiameter[m]']
+        self.TOTAL_LENGHTH = parameters['LeadLength[m]']

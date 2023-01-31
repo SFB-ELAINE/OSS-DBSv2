@@ -1,0 +1,10 @@
+{
+    "CoreElectrodeLength[m]": 0.00025,
+    "CoreElectrodeDiameter[m]": 0.0001,
+    "CoreTubingLength[m]": 0.0005,
+    "CoreTubingDiameter[m]": 0.000140,
+    "OuterElectrodeLength[m]": 0.00025,
+    "OuterElectrodeDiameter[m]": 0.00033,
+    "OuterTubingDiameter[m]": 0.000411,
+    "LeadLength[m]": 0.01
+}
