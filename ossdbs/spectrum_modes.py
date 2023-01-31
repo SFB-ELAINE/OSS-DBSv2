@@ -5,7 +5,7 @@ import numpy as np
 import ngsolve
 import os
 import pickle
-from ossdbs.region import Region
+
 
 @dataclass
 class FrequencyComponent:
