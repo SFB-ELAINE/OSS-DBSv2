@@ -32,8 +32,8 @@ class Controller:
     def __init__(self, json_path: str) -> None:
         self.__input = self.__load_json(path=json_path)
         mri_path = self.__input['MaterialDistribution']['MRIPath']
-        mri = MagneticResonanceImage(mri_path)
-        self.__offset = np.multiply(mri.bounding_box()[0], -1)
+        self.__mri = MagneticResonanceImage(mri_path)
+        self.__offset = np.multiply(self.__mri.bounding_box()[0], -1)
 
     def mesh(self):
         electrodes = self.__create_electrodes()
@@ -180,6 +180,33 @@ class Controller:
                   'Trapzoid': TrapzoidSignal
                   }[signal_type]
         return signal(frequency, pulse_width)
+
+    def coordinates(self):
+        electrodes = self.__create_electrodes()
+        bounding_boxes = [elec.bounding_box() for elec in electrodes]
+        mri_path = self.__input['MaterialDistribution']['MRIPath']
+        mri = MagneticResonanceImage(mri_path)
+        voxel_size = mri.voxel_size()
+
+        new_boxes = []
+
+        for box in bounding_boxes:
+            start, end = box
+            new_start = np.array(start) // voxel_size * voxel_size
+            new_end = (np.array(end) // voxel_size + 1) * voxel_size
+            new_boxes.append((new_start, new_end))
+
+        regions = []
+        for box in new_boxes:
+            start, end = box
+            x_coor = np.arange(start[0], end[0], voxel_size[0])
+            y_coor = np.arange(start[1], end[1], voxel_size[1])
+            z_coor = np.arange(start[2], end[2], voxel_size[2])
+            coordinates = [(x, y, z)
+                           for x in x_coor
+                           for y in y_coor
+                           for z in z_coor]
+            regions.append(coordinates)
 
     def __create_electrodes(self) -> List[Electrode]:
 

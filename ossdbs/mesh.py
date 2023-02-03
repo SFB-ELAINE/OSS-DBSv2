@@ -2,6 +2,7 @@
 from typing import List
 from ossdbs.voxels import Voxels
 import ngsolve
+import numpy as np
 
 
 class Mesh:
@@ -59,6 +60,40 @@ class Mesh:
         """
 
         return self.__mesh
+
+    def point_in_mesh(self, point: tuple) -> bool:
+        """Check if point lays in mesh.
+
+        Parameters
+        ----------
+        point : tuple
+            Represents the coordinates x, y, z of 3D point.
+
+        Returns
+        -------
+        bool
+            True if point is inside mesh, False otherwise.
+        """
+        x, y, z = point
+        return self.__mesh(x=x, y=y, z=z).nr != -1
+
+    def included_points(self, points: np.ndarray) -> np.ndarray:
+        """Check if point lays in mesh.
+
+        Parameters
+        ----------
+        points : np.ndarray
+            Collection of 3D point coordinates (x, y, z).
+
+        Returns
+        -------
+        np.ndarray
+            Collection of bool values:
+            True if point is inside mesh, False otherwise.
+        """
+        x, y, z = points.T
+        mips = self.__mesh(x, y, z)
+        return points[np.array([mip[5] != -1 for mip in mips])]
 
     def refine(self) -> None:
         """Refine the mesh."""
