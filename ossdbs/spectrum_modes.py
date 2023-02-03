@@ -5,7 +5,7 @@ import numpy as np
 import ngsolve
 import os
 import pickle
-
+from ossdbs.region import Region
 
 @dataclass
 class FrequencyComponent:
@@ -67,7 +67,7 @@ class SpectrumMode(ABC):
     SPACING_FACTOR = 1e5
 
     @abstractmethod
-    def result(self, signal, boundary_values, volume_conductor) -> Output:
+    def result(self, signal, volume_conductor, points) -> Output:
         pass
 
     def _frequency_components(self, signal):
@@ -81,7 +81,7 @@ class SpectrumMode(ABC):
 
 class NoTruncationTest(SpectrumMode):
 
-    def result(self, signal, volume_conductor):
+    def result(self, signal, volume_conductor, point):
         freq_components = self._frequency_components(signal)
         frequency = freq_components[77].frequency
         result = volume_conductor.potential(frequency)
@@ -103,10 +103,29 @@ class Octavevands(SpectrumMode):
 
     SQRT2 = np.sqrt(2)
 
-    def result(self, signal, boundary_values, volume_conductor):
+    def result(self, signal, volume_conductor, points):
+        sample_spacing = 1 / (signal.frequency * self.SPACING_FACTOR)
+        samples = signal.generate_samples(sample_spacing)
+        complex_values = np.fft.rfft(samples)
+        frequencies = np.fft.rfftfreq(len(samples), sample_spacing)
+        octave_indices = 2 ** np.arange(0, int(np.log2(len(frequencies) - 1)))
+        octave_frequencies = np.append(0, frequencies[octave_indices])
+        lower_limits = octave_frequencies / self.SQRT2
+        upper_limits = octave_frequencies * self.SQRT2
+
+        frequency = frequencies[0]
+        lower_limit = lower_limits[0]
+        upper_limit = upper_limits[0]
+
+        # for frequency in octave_frequencies:
+        potential = volume_conductor.potential(frequency=frequency)
+        fft_values = [value for value, freq in zip(complex_values, frequencies)
+                      if lower_limit <= freq < upper_limit]
+
+        
+
+
         freq_components = self._frequency_components(signal)
-        indices = 2 ** np.arange(0, int(np.log2(len(freq_components) - 1)))
-        octave_freq = [freq_components[idx].frequency for idx in indices]
 
         result = volume_conductor.potential(boundary_values,
                                             freq_components[0].frequency)
@@ -118,17 +137,19 @@ class Octavevands(SpectrumMode):
         impedances = [impedance]
         frequencies = [freq_components[0].frequency]
 
-        for frequency in octave_freq:
+        for frequency in octave_frequencies:
             result = volume_conductor.evaluate_potential(boundary_values,
                                                          frequency)
             potential, density, impedance = result
             lower_limit = frequency / self.SQRT2
             upper_limit = frequency * self.SQRT2
-            amplitudes = [abs(wave.fourier_coefficient)
+            
+            complex_values = [abs(wave.fourier_coefficient)
                           * np.real(wave.fourier_coefficient)
                           for wave in freq_components
                           if lower_limit <= wave.frequency < upper_limit]
-            potential_sum.vec.data += potential.vec.data * sum(amplitudes)
+            
+            potential_sum.vec.data += potential.vec.data * sum(complex_values)
 
         mesh = volume_conductor.mesh.ngsolvemesh()
         return Output(mesh=mesh,

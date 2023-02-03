@@ -51,3 +51,7 @@ class Electrode(ABC):
              'Contact_2': ...}
         """
         pass
+
+    def bounding_box(self):
+        start, end = self.generate_geometry().bounding_box
+        return tuple(start), tuple(end)

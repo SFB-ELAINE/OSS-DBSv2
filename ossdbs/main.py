@@ -18,6 +18,9 @@ def ossdbs_fem(json_path: str) -> None:
     conductivity = controller.conductivity()
     strategy = controller.spectrum_mode()
     volume_conductor = controller.volume_conductor()
+    controller.coordinates()
+    region = controller.region_of_interest()
+    points = mesh.included_points(region.coordinates())
 
     mesh.refine_by_boundaries(contacts.active())
     volume_conductor = volume_conductor(conductivity=conductivity,
@@ -25,7 +28,8 @@ def ossdbs_fem(json_path: str) -> None:
                                         contacts=contacts,
                                         solver=solver)
     output = strategy.result(signal=controller.stimulation_signal(),
-                             volume_conductor=volume_conductor)
+                             volume_conductor=volume_conductor,
+                             points=points)
     output.save(controller.output_path())
     output.save_mesh()
 
