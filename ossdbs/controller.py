@@ -31,9 +31,6 @@ class Controller:
 
     def __init__(self, json_path: str) -> None:
         self.__input = self.__load_json(path=json_path)
-        mri_path = self.__input['MaterialDistribution']['MRIPath']
-        self.__mri = MagneticResonanceImage(mri_path)
-        self.__offset = np.multiply(self.__mri.bounding_box()[0], -1)
 
     def mesh(self):
         electrodes = self.__create_electrodes()
@@ -66,7 +63,6 @@ class Controller:
                       Material.UNKNOWN: coding['Unknown']}
         mri_path = self.__input['MaterialDistribution']['MRIPath']
         mri = MagneticResonanceImage(mri_path, mri_coding)
-        mri.set_offset(self.__offset)
         return Conductivity(mri=mri, complex_datatype=self.__input['EQSMode'])
 
     def contacts(self) -> List[ElectrodeContact]:
@@ -84,10 +80,7 @@ class Controller:
                 imag = parameters['SurfaceImpedance[Ωm]']['imag']
                 contact.surface_impedance = real + 1j * imag
                 contacts.append(contact)
-        case_grounding = self.__input['CaseGrounding']
-        contact = ElectrodeContact(name='BrainSurface',
-                                   voltage=case_grounding['Voltage[V]'],
-                                   active=case_grounding['Active'])
+
         contacts.append(contact)
 
         return contacts
@@ -123,7 +116,6 @@ class Controller:
         """
         mri_path = self.__input['MaterialDistribution']['MRIPath']
         mri = MagneticResonanceImage(mri_path)
-        mri.set_offset(self.__offset)
         mri_start, mri_end = mri.bounding_box()
         shape = mri.xyz_shape()
         step_size = mri.voxel_size()
@@ -136,7 +128,7 @@ class Controller:
         center = (self.__input['RegionOfInterest']['Center']['x[mm]'] * 1e-3,
                   self.__input['RegionOfInterest']['Center']['y[mm]'] * 1e-3,
                   self.__input['RegionOfInterest']['Center']['z[mm]'] * 1e-3)
-        start = center - np.divide(size, 2) + self.__offset
+        start = center - np.divide(size, 2)
         end = start + size
 
         x_step = step_size[0]
@@ -182,43 +174,18 @@ class Controller:
         return signal(frequency, pulse_width)
 
     def coordinates(self):
-        electrodes = self.__create_electrodes()
-        bounding_boxes = [elec.bounding_box() for elec in electrodes]
-        mri_path = self.__input['MaterialDistribution']['MRIPath']
-        mri = MagneticResonanceImage(mri_path)
-        voxel_size = mri.voxel_size()
-
-        new_boxes = []
-
-        for box in bounding_boxes:
-            start, end = box
-            new_start = np.array(start) // voxel_size * voxel_size
-            new_end = (np.array(end) // voxel_size + 1) * voxel_size
-            new_boxes.append((new_start, new_end))
-
-        regions = []
-        for box in new_boxes:
-            start, end = box
-            x_coor = np.arange(start[0], end[0], voxel_size[0])
-            y_coor = np.arange(start[1], end[1], voxel_size[1])
-            z_coor = np.arange(start[2], end[2], voxel_size[2])
-            coordinates = [(x, y, z)
-                           for x in x_coor
-                           for y in y_coor
-                           for z in z_coor]
-            regions.append(coordinates)
+        return np.array(self.__input['Points']) * 1e-3
 
     def __create_electrodes(self) -> List[Electrode]:
 
         electrodes = []
         for input_par in self.__input['Electrodes']:
-            x_offset, y_offset, z_offset = self.__offset
             direction = (input_par['Direction']['x[mm]'] * 1e-3,
                          input_par['Direction']['y[mm]'] * 1e-3,
                          input_par['Direction']['z[mm]'] * 1e-3)
-            position = (input_par['Position']['x[mm]'] * 1e-3 + x_offset,
-                        input_par['Position']['y[mm]'] * 1e-3 + y_offset,
-                        input_par['Position']['z[mm]'] * 1e-3 + z_offset)
+            position = (input_par['TipPosition']['x[mm]'] * 1e-3,
+                        input_par['TipPosition']['y[mm]'] * 1e-3,
+                        input_par['TipPosition']['z[mm]'] * 1e-3)
             rotation = input_par['Rotation[Degrees]']
             electrode_par = ElectrodeParameters(name=input_par['Name'],
                                                 direction=direction,

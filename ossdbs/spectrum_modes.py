@@ -81,22 +81,47 @@ class SpectrumMode(ABC):
 
 class NoTruncationTest(SpectrumMode):
 
-    def result(self, signal, volume_conductor, point):
-        freq_components = self._frequency_components(signal)
-        frequency = freq_components[77].frequency
-        result = volume_conductor.potential(frequency)
-        potential = result
-        amplitude = np.real(freq_components[0].fourier_coefficient) / 2
-        potential_sum = potential
-        # potential_sum.vec.data = potential.vec.data * amplitude
-        for wave in freq_components[1:1]:
-            amplitude = np.real(wave.fourier_coefficient)
-            result = volume_conductor.evaluate_potential(wave.frequency)
-            potential, density, impedance = result
-            potential_sum.vec.data += potential.vec.data * amplitude
+    SQRT2 = np.sqrt(2)
+
+    def result(self, signal, volume_conductor, points):
+
+        sample_spacing = 1 / (signal.frequency * self.SPACING_FACTOR)
+        samples = signal.generate_samples(sample_spacing)
+        complex_values = np.fft.rfft(samples)
+        frequencies = np.fft.rfftfreq(len(samples), sample_spacing)
+        octave_indices = 2 ** np.arange(0, int(np.log2(len(frequencies) - 1)))
+        octave_frequencies = frequencies[octave_indices]
+        lower_limits = octave_frequencies / self.SQRT2
+        upper_limits = octave_frequencies * self.SQRT2
+        starts = lower_limits // signal.frequency + 1
+        ends = upper_limits // signal.frequency + 1
+
+        starts = np.concatenate([[0], starts, ends[-1:]]).astype(int)
+        ends = np.concatenate([[1], ends, [len(frequencies)]]).astype(int)
+        octave_frequencies = np.concatenate([[0],
+                                             octave_frequencies,
+                                        [octave_frequencies[-1] * self.SQRT2]])
+
         mesh = volume_conductor.mesh.ngsolvemesh()
+        mesh_integrated_points = [mesh(*point) for point in points]
+        data = np.zeros((len(points), len(frequencies)))
+
+        # for frequency, start, end in zip(octave_frequencies, starts, ends):
+        #     result = volume_conductor.potential(frequency)
+        #     potential = result.gridfunction
+        #     for index, mip in enumerate(mesh_integrated_points):
+        #         value = potential(mip)
+        #         data[index, start:end] = value * complex_values[start:end]
+
+        result = volume_conductor.potential(frequencies[77])
+        potential = result.gridfunction
+
+        for index, mip in enumerate(mesh_integrated_points):
+            value = potential(mip)
+            print(value)
+
         return Output(mesh=mesh,
-                      potential=potential.gridfunction)
+                      potential=result.gridfunction)
 
 
 class Octavevands(SpectrumMode):

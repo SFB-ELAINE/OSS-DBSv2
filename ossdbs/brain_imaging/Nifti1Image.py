@@ -8,7 +8,6 @@ class Nifti1Image:
 
     def __init__(self, file_path: str) -> None:
         self._image = self.__load_image(file_path)
-        self._shift = (0.0, 0.0, 0.0)
 
     def data_map(self) -> np.memmap:
         return self._image.get_fdata()
@@ -27,10 +26,7 @@ class Nifti1Image:
                            self._image.header['qoffset_y'],
                            self._image.header['qoffset_z']
                            ], dtype=np.float64)
-        return offset * self.__scaling() + self._shift
-
-    def set_offset(self, shift: tuple) -> None:
-        self._shift = shift
+        return offset * self.__scaling()
 
     def voxel_size(self) -> tuple:
         x, y, z = self._image.header.get_zooms()[:self.__VOXEL_DIMENSION]

@@ -62,11 +62,6 @@ class TestNifti1Image:
         desired = (2e-6, 2e-6, 2e-6), (3e-6, 3e-6, 3e-6)
         np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
 
-    def test_bounding_box_shift(self, nifti1_image_3d):
-        nifti1_image_3d.set_offset((1e-3, 2e-3, 3e-3))
-        desired = (3e-3, 4e-3, 5e-3), (4e-3, 5e-3, 6e-3)
-        np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
-
     def test_voxel_size(self, nifti1_image_3d):
         desired = (0.0005, 0.0005, 0.0005)
         np.testing.assert_equal(nifti1_image_3d.voxel_size(), desired)
