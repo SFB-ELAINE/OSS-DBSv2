@@ -1,8 +1,4 @@
 {
-  "CaseGrounding": {
-    "Active": false,
-    "Voltage[V]": 0.0
-  },
   "DiffusionTensorImage": {
     "Path": ""
   },
@@ -11,7 +7,7 @@
       "Name": "BostonScientificVerciseDirected",
       "Rotation[Degrees]": 6.412,
       "Direction": { "x[mm]": 2.2314, "y[mm]": 5.0661, "z[mm]": 3.99 },
-      "Position": { "x[mm]": 14.5884, "y[mm]": -14.7434, "z[mm]": -9.0634 },
+      "TipPosition": { "x[mm]": 14.5884, "y[mm]": -14.7434, "z[mm]": -9.0634 },
       "Contact_1": {
         "Active": true,
         "Current[A]": 0.0,
@@ -109,8 +105,9 @@
     "Frequency[Hz]": 130.0,
     "PulseWidth[µs]": 60.0,
     "PulseTopWidth[µs]": 0.0,
-    "CounterPulseWidth[µs]": 0.0,
-    "CounterPulseTopWidth[µs]": 0.0,
+    "CounterPulseWidth[µs]": 600.0,
     "InterPulseWidth[µs]": 0.0
-  }
+  },
+  "Points": [[14.5, -14.7, -9.1],
+             [14.5, -14.7, -9.1]]
 }

@@ -20,7 +20,7 @@ class MicroProbesCustomRodent(Electrode):
     """
 
     # dimensions [m]
-    CONTACT_LENGTH = 0.01125e-3
+    CONTACT_LENGTH = 0.1125e-3
     LEAD_DIAMETER = 0.225e-3
     TOTAL_LENGHTH = 13.3e-3
     TUBE_THICKNESS = .01e-3

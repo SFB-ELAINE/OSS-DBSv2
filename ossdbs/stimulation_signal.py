@@ -7,10 +7,12 @@ class RectangleStimulationSignal:
     def __init__(self,
                  frequency: float,
                  pulse_width: float,
+                 counter_pulse_width: float,
                  inter_pulse_width: float) -> None:
         self.frequency = frequency
         self.pulse_width = pulse_width
         self.space_width = inter_pulse_width
+        self.counter_pulse_width = counter_pulse_width
 
     def generate_samples(self, sample_spacing: float) -> np.ndarray:
         spacing = sample_spacing * self.frequency
@@ -21,13 +23,16 @@ class RectangleStimulationSignal:
 
         space_length = int(self.space_width * n_samples)
 
-        counter_pulse = np.array([-0.1] * pulse_length * 10)
+        counter_length = int(self.counter_pulse_width * n_samples)
+        counter_value = -pulse_length / counter_length if counter_length else 0
+        counter_pulse = np.array([counter_value] * counter_length)
         counter_start = pulse_length + space_length
-        counter_end = counter_start + 10 * pulse_length
+        counter_end = counter_start + counter_length
 
         signal = np.zeros(n_samples)
         signal[:pulse_length] = pulse
-        signal[counter_start:counter_end] = counter_pulse
+        n_counter_samples = n_samples - counter_start
+        signal[counter_start:counter_end] = counter_pulse[:n_counter_samples]
         return signal
 
 
@@ -36,10 +41,12 @@ class TriangleStimulationSignal:
     def __init__(self,
                  frequency: float,
                  pulse_width: float,
+                 counter_pulse_width: float,
                  inter_pulse_width: float) -> None:
         self.frequency = frequency
         self.pulse_width = pulse_width
         self.space_width = inter_pulse_width
+        self.counter_pulse_width = counter_pulse_width
 
     def generate_samples(self, sample_spacing: float) -> np.ndarray:
         spacing = sample_spacing * self.frequency
@@ -50,9 +57,11 @@ class TriangleStimulationSignal:
 
         space_length = int(self.space_width * n_samples)
 
-        counter_pulse = -0.1 * self.__create_pulse(pulse_length * 10)
+        counter_length = int(self.counter_pulse_width * n_samples)
+        counter_value = -pulse_length / counter_length if counter_length else 0
+        counter_pulse = counter_value * self.__create_pulse(counter_length)
         counter_start = pulse_length + space_length
-        counter_end = counter_start + 10 * pulse_length
+        counter_end = counter_start + counter_length
 
         signal = np.zeros(n_samples)
         signal[:pulse_length] = pulse

@@ -69,7 +69,6 @@ class VolumeConductorNonFloating(VolumeConductor):
                                   self.mesh.ngsolvemesh())
         impedance = 1 / power
         print(impedance)
-
         return Potential(gridfunction=solution.components[0],
                          floating_values={},
                          frequency=frequency)
