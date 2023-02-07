@@ -28,7 +28,7 @@ class Medtronic3387(Electrode):
     TIP_LENGTH = 1.5
     CONTACT_LENGTH = 1.5
     CONTACT_SPACING = 1.5
-    LEAD_DIAMETER = 1.27 # Updated
+    LEAD_DIAMETER = 1.27 
     TOTAL_LENGHTH = 100.0
     N_CONTACTS = 4
 
