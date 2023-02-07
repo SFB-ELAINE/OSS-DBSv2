@@ -29,7 +29,7 @@ class BostonScientificVerciseDirected(Electrode):
     CONTACT_SPACING = 0.5
     LEAD_DIAMETER = 1.3
     TOTAL_LENGHTH = 45.0
-    CONTACT_SPACING_RADIAL = 0.25 # SET IT TO 30°
+    CONTACT_SPACING_RADIAL = 0.25 # SET IT TO 30° # Bogenmaß
 
     def __init__(self,
                  rotation: float = 0.0,
@@ -128,7 +128,7 @@ class BostonScientificVerciseDirected(Electrode):
                                    h=self.CONTACT_LENGTH)
         new_direction = tuple(np.cross(self.__direction_2(), self.__direction))
         eraser = netgen.occ.HalfSpace(p=(0, 0, 0), n=new_direction)
-        delta = self.CONTACT_SPACING_RADIAL / self.LEAD_DIAMETER * 180 / np.pi
+        delta = self.CONTACT_SPACING_RADIAL / self.LEAD_DIAMETER * 180 / np.pi # \frac{RADIAL*180}{d*\pi}
         angle = 30 + delta
         axis = netgen.occ.Axis((0, 0, 0), self.__direction)
         return body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
