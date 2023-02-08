@@ -41,7 +41,6 @@ class RectangleSignal(Signal):
 
         spacing = sample_spacing * self.frequency
         n_samples = int(1 / spacing) if 0 < spacing < 1 else 1
-
         pulse = self.__create_pulse(n_samples)
         padding = np.zeros(n_samples - len(pulse))
         return np.concatenate((pulse[:n_samples], padding))

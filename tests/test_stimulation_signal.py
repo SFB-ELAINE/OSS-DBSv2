@@ -1,7 +1,6 @@
 from ossdbs.stimulation_signal import RectangleStimulationSignal
 from ossdbs.stimulation_signal import TriangleStimulationSignal
 import numpy as np
-import pytest
 
 
 class TestRectangleStimulationSignal:
@@ -61,7 +60,6 @@ class TestRectangleStimulationSignal:
         np.testing.assert_equal(actual, desired)
 
 
-@pytest.mark.skip
 class TestTriangleStimulationSignal:
 
     def test_generate_samples(self):
@@ -70,7 +68,7 @@ class TestTriangleStimulationSignal:
                                            counter_pulse_width=0.6,
                                            inter_pulse_width=0.1)
         actual = signal.generate_samples(sample_spacing=0.1)
-        desired = [1, 1, 1, 0, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5]
+        desired = [0.5, 1, 0.5, 0, -1/6, -1/3, -0.5, -1/3, -1/6, 0]
         np.testing.assert_equal(actual, desired)
 
     def test_generate_no_samples(self):
@@ -97,7 +95,7 @@ class TestTriangleStimulationSignal:
                                            counter_pulse_width=0.0,
                                            inter_pulse_width=0.1)
         actual = signal.generate_samples(sample_spacing=0.1)
-        desired = [1, 1, 1, 0, 0, 0, 0, 0, 0, 0]
+        desired = [0.5, 1, 0.5, 0, 0, 0, 0, 0, 0, 0]
         np.testing.assert_equal(actual, desired)
 
     def test_generate_no_frequency(self):
@@ -115,5 +113,5 @@ class TestTriangleStimulationSignal:
                                            counter_pulse_width=0.6,
                                            inter_pulse_width=0.3)
         actual = signal.generate_samples(sample_spacing=0.1)
-        desired = [1, 1, 1, 0, 0, 0, -0.5, -0.5, -0.5, -0.5]
+        desired = [0.5, 1, 0.5, 0, 0, 0, -1/6, -1/3, -0.5, -1/3]
         np.testing.assert_equal(actual, desired)

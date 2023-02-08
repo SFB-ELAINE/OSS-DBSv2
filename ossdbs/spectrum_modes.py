@@ -7,6 +7,24 @@ import os
 import pickle
 from ossdbs.region import Region
 
+import h5py
+import numpy as np
+
+
+class OctaveBand:
+
+    SQRT2 = np.sqrt(2)
+
+    def __init__(self, frequency: float) -> None:
+        self.frequency = frequency
+
+    def lower_limit(self):
+        return self.frequency / self.SQRT2
+
+    def upper_limit(self):
+        return self.frequency * self.SQRT2
+
+
 @dataclass
 class FrequencyComponent:
     fourier_coefficient: float
@@ -64,7 +82,7 @@ class Output:
 
 class SpectrumMode(ABC):
 
-    SPACING_FACTOR = 1e5
+    SPACING_FACTOR = 1e4
 
     @abstractmethod
     def result(self, signal, volume_conductor, points) -> Output:
@@ -89,39 +107,51 @@ class NoTruncationTest(SpectrumMode):
         samples = signal.generate_samples(sample_spacing)
         complex_values = np.fft.rfft(samples)
         frequencies = np.fft.rfftfreq(len(samples), sample_spacing)
-        octave_indices = 2 ** np.arange(0, int(np.log2(len(frequencies) - 1)))
+        n_octaves = int(np.log2(len(frequencies) - 1))
+        octave_indices = 2 ** np.arange(0, n_octaves)
         octave_frequencies = frequencies[octave_indices]
-        lower_limits = octave_frequencies / self.SQRT2
-        upper_limits = octave_frequencies * self.SQRT2
-        starts = lower_limits // signal.frequency + 1
-        ends = upper_limits // signal.frequency + 1
-
-        starts = np.concatenate([[0], starts, ends[-1:]]).astype(int)
-        ends = np.concatenate([[1], ends, [len(frequencies)]]).astype(int)
-        octave_frequencies = np.concatenate([[0],
-                                             octave_frequencies,
-                                        [octave_frequencies[-1] * self.SQRT2]])
+        octave_bands = [OctaveBand(freq) for freq in octave_frequencies]
+        last_octave_band = OctaveBand(2 ** (n_octaves + 1) * signal.frequency)
+        octave_bands.append(last_octave_band)
 
         mesh = volume_conductor.mesh.ngsolvemesh()
         mesh_integrated_points = [mesh(*point) for point in points]
-        data = np.zeros((len(points), len(frequencies)))
+        data = np.zeros((len(points), len(frequencies)), dtype=complex)
 
-        # for frequency, start, end in zip(octave_frequencies, starts, ends):
-        #     result = volume_conductor.potential(frequency)
-        #     potential = result.gridfunction
-        #     for index, mip in enumerate(mesh_integrated_points):
-        #         value = potential(mip)
-        #         data[index, start:end] = value * complex_values[start:end]
-
-        result = volume_conductor.potential(frequencies[77])
-        potential = result.gridfunction
-
+        # result = volume_conductor.potential(frequency)
+        # potential = result.gridfunction
         for index, mip in enumerate(mesh_integrated_points):
-            value = potential(mip)
-            print(value)
+            value = 1  # potential(mip)
+            data[index, 0] = value * complex_values[0]
 
-        return Output(mesh=mesh,
-                      potential=result.gridfunction)
+        for octave_band in octave_bands:
+            # result = volume_conductor.potential(frequency)
+            # potential = result.gridfunction
+            for index, mip in enumerate(mesh_integrated_points):
+                value = 1  # potential(mip)
+                start = int(octave_band.lower_limit() / 130 + 1)
+                end = int(octave_band.upper_limit() / 130 + 1)
+                data[index, start:end] = value * complex_values[start:end]
+
+        with h5py.File("result.hdf5", "w") as f:
+            f.create_dataset("points", data=points)
+            f.create_dataset("frequencies", data=frequencies)
+            f.create_dataset("potential_values", data=data)
+            f.create_dataset("current_density_values", data=data)
+
+        # result = volume_conductor.potential(frequencies[77])
+        # potential = result.gridfunction
+
+        # for index, mip in enumerate(mesh_integrated_points):
+        #     value = potential(mip)
+        #     print(value)
+
+        # return Output(mesh=mesh,
+        #               potential=result.gridfunction)
+
+
+
+
 
 
 class Octavevands(SpectrumMode):

@@ -24,11 +24,9 @@ def ossdbs_fem(json_path: str) -> None:
                                         mesh=mesh,
                                         contacts=contacts,
                                         solver=solver)
-    output = strategy.result(signal=controller.stimulation_signal(),
-                             volume_conductor=volume_conductor,
-                             points=points)
-    output.save(controller.output_path())
-    output.save_mesh()
+    strategy.result(signal=controller.stimulation_signal(),
+                    volume_conductor=volume_conductor,
+                    points=points)
 
 
 if __name__ == '__main__':

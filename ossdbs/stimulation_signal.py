@@ -65,7 +65,8 @@ class TriangleStimulationSignal:
 
         signal = np.zeros(n_samples)
         signal[:pulse_length] = pulse
-        signal[counter_start:counter_end] = counter_pulse
+        n_counter_samples = n_samples - counter_start
+        signal[counter_start:counter_end] = counter_pulse[:n_counter_samples]
 
         return signal
 
@@ -78,4 +79,5 @@ class TriangleStimulationSignal:
         n_ramp_samples = max(0, int(pulse_length - 2 + is_odd) // 2)
         step_size = 1 / (n_ramp_samples + 1)
         ramp = np.arange(step_size, 1, step_size)[:n_ramp_samples]
-        return np.concatenate((ramp, 1, np.flip(ramp)))
+        rest_samples = [0] * int(pulse_length - 2 * len(ramp) - 1)
+        return np.concatenate((ramp, [1], np.flip(ramp), rest_samples))
