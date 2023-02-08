@@ -1,17 +1,25 @@
 import h5py
 import numpy as np
 
-# with h5py.File("mytestfile.hdf5", "w") as f:
-#     dset = f.create_dataset("mydataset", (100,), dtype='int')
+# with h5py.File("result.hdf5", "w") as f:
+#     f.create_dataset("points", data=np.array([(1, 2, 3)]))
+#     f.create_dataset("frequencies", data=np.array([1, 2, 3]))
+#     f.create_dataset("potential_values", data=np.array([1 + 3j]))
+#     f.create_dataset("current_density_values", data=np.array([1 + 3j]))
 
-path = 'mytestfile.hdf5'
-path = 'Johnson_Butenko_axon_McIntyre.h5'
 
+path = 'result.hdf5'
+# path = 'Johnson_Butenko_axon_McIntyre.h5'
+# path = 'solution_130.0.h5'
 f = h5py.File(path, 'r')
 print(list(f.keys()))
-
-data = f['CF_21']
-print(data)
+print(np.array(f['frequencies']))
+print(np.array(f['points']))
+print(np.array(f['potential_values']))
+print(np.array(f['frequencies']).shape)
+print(np.array(f['potential_values']).shape)
+# data = f['mydataset']
+# print(np.array(data))
 
 # print(data.shape)
 
