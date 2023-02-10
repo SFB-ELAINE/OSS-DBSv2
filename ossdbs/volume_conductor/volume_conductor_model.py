@@ -1,16 +1,14 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from ossdbs.electrode_contacts import ContactCollection
-from ossdbs.conductivity import Conductivity
-from ossdbs.mesh import Mesh
-from ossdbs.solver import Solver
 import ngsolve
 
 
 @dataclass
-class Potential:
-    gridfunction: ngsolve.GridFunction
+class Solution:
+    potential: ngsolve.GridFunction
+    current_density: ngsolve.GridFunction
+    conductivity: ngsolve.CoefficientFunction
     frequency: float
     floating_values: dict
 
@@ -18,5 +16,5 @@ class Potential:
 class VolumeConductor(ABC):
 
     @abstractmethod
-    def potential(self, frequency: float) -> Potential:
+    def compute_solution(self, frequency: float) -> Solution:
         pass

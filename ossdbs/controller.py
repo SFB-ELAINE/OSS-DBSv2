@@ -8,9 +8,8 @@ from ossdbs.mesh import Mesh
 from ossdbs.preconditioner import BDDCPreconditioner, LocalPreconditioner
 from ossdbs.preconditioner import MultigridPreconditioner
 from ossdbs.region import Region
-from ossdbs.signals import RectangleSignal, TrapzoidSignal, TriangleSignal
+from ossdbs.stimulation_signal import RectangleSignal, TrapzoidSignal, TriangleSignal
 from ossdbs.solver import CGSolver, GMRESSolver
-from ossdbs.spectrum_modes import Octavevands, NoTruncationTest, SpectrumMode
 from typing import List
 import json
 import numpy as np
@@ -19,6 +18,9 @@ from ossdbs.volume_conductor import VolumeConductor
 from ossdbs.volume_conductor import VolumeConductorFloating
 from ossdbs.volume_conductor import VolumeConductorFloatingImpedance
 from ossdbs.volume_conductor import VolumeConductorNonFloating
+from ossdbs.modes.spectrum import SpectrumMode
+from ossdbs.modes.octave_band import OctaveBandModeImpedance, OctaveBandMode
+from ossdbs.modes.no_truncation import NoTruncation, NoTruncationImpedance
 
 
 class Controller:
@@ -116,11 +118,8 @@ class Controller:
         """
         mri_path = self.__input['MaterialDistribution']['MRIPath']
         mri = MagneticResonanceImage(mri_path)
-        mri_start, mri_end = mri.bounding_box()
         shape = mri.xyz_shape()
         step_size = mri.voxel_size()
-        if not self.__input['RegionOfInterest']['Active']:
-            return Region(mri_start, mri_end, shape, step_size)
 
         size = (self.__input['RegionOfInterest']['Shape']['x[mm]'] * 1e-3,
                 self.__input['RegionOfInterest']['Shape']['y[mm]'] * 1e-3,
@@ -146,9 +145,13 @@ class Controller:
         -------
         SpectrumMode
         """
-        return {'NoTruncation': NoTruncationTest(),
-                'OctaveBand': Octavevands()
-                }[self.__input['SpectrumMode']]
+
+        return OctaveBandModeImpedance()
+
+        if self.__input['SpectrumMode'] == 'OctaveBand':
+            return OctaveBandMode()
+
+        return NoTruncation()
 
     def stimulation_signal(self):
         """Return stimulation signal.
@@ -159,19 +162,29 @@ class Controller:
         """
 
         parameters = self.__input['StimulationSignal']
-        signal_type = parameters['Type']
         frequency = parameters['Frequency[Hz]']
         pulse_width = parameters['PulseWidth[µs]'] * 1e-6 * frequency
+        counter_width = parameters['CounterPulseWidth[µs]'] * 1e-6 * frequency
+        inter_width = parameters['InterPulseWidth[µs]'] * 1e-6 * frequency
         top_width = parameters['PulseTopWidth[µs]'] * 1e-6 * frequency
 
-        if signal_type == 'Trapzoid':
-            return TrapzoidSignal(frequency, pulse_width, top_width)
+        if parameters['Type'] == 'Trapzoid':
+            return TrapzoidSignal(frequency=frequency,
+                                  pulse_width=pulse_width,
+                                  top_width=top_width,
+                                  counter_pulse_width=counter_width,
+                                  inter_pulse_width=inter_width)
 
-        signal = {'Rectangle': RectangleSignal,
-                  'Triangle': TriangleSignal,
-                  'Trapzoid': TrapzoidSignal
-                  }[signal_type]
-        return signal(frequency, pulse_width)
+        if parameters['Type'] == 'Triangle':
+            return TriangleSignal(frequency=frequency,
+                                  pulse_width=pulse_width,
+                                  counter_pulse_width=counter_width,
+                                  inter_pulse_width=inter_width)
+
+        return RectangleSignal(frequency=frequency,
+                               pulse_width=pulse_width,
+                               counter_pulse_width=counter_width,
+                               inter_pulse_width=inter_width)
 
     def coordinates(self):
         return np.array(self.__input['Points']) * 1e-3

@@ -88,7 +88,6 @@
   },
   "OutputPath": "test_result",
   "RegionOfInterest": {
-    "Active": true,
     "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
     "Shape": { "x[mm]": 80.0, "y[mm]": 80.0, "z[mm]": 80.0 }
   },
@@ -105,9 +104,10 @@
     "Frequency[Hz]": 130.0,
     "PulseWidth[µs]": 60.0,
     "PulseTopWidth[µs]": 0.0,
-    "CounterPulseWidth[µs]": 600.0,
+    "CounterPulseWidth[µs]": 0.0,
     "InterPulseWidth[µs]": 0.0
   },
   "Points": [[14.5, -14.7, -9.1],
+             [14.5, -14.7, -9.1],
              [14.5, -14.7, -9.1]]
 }
