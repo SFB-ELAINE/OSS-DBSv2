@@ -1,6 +1,6 @@
 
 from ossdbs.volume_conductor.volume_conductor_model import VolumeConductor
-from ossdbs.volume_conductor.volume_conductor_model import Potential
+from ossdbs.volume_conductor.volume_conductor_model import Solution
 from ossdbs.electrode_contacts import ContactCollection
 from ossdbs.conductivity import Conductivity
 from ossdbs.mesh import Mesh
@@ -29,7 +29,7 @@ class VolumeConductorNonFloating(VolumeConductor):
         self.contacts = contacts
         self.solver = solver
 
-    def potential(self, frequency: float) -> ngsolve.comp.GridFunction:
+    def compute_solution(self, frequency: float) -> ngsolve.comp.GridFunction:
         """Evaluate electrical potential of volume conductor.
 
         Parameters
@@ -62,13 +62,10 @@ class VolumeConductorNonFloating(VolumeConductor):
 
         self.solver.bvp(bilinear_form, linear_form, solution)
         potential = solution.components[0]
+        current_density = sigma * ngsolve.grad(potential)
 
-        field = ngsolve.grad(potential)
-        current_density = sigma * field
-        power = ngsolve.Integrate(field * ngsolve.Conj(current_density),
-                                  self.mesh.ngsolvemesh())
-        impedance = 1 / power
-        print(impedance)
-        return Potential(gridfunction=solution.components[0],
-                         floating_values={},
-                         frequency=frequency)
+        return Solution(potential=potential,
+                        current_density=current_density,
+                        conductivity=sigma,
+                        floating_values={},
+                        frequency=frequency)
