@@ -95,6 +95,11 @@ class Mesh:
         mips = self.__mesh(x, y, z)
         return points[np.array([mip[5] != -1 for mip in mips])]
 
+    def is_included(self, points: np.ndarray) -> np.ndarray:
+        x, y, z = points.T
+        mips = self.__mesh(x, y, z)
+        return np.array([mip[5] != -1 for mip in mips])
+
     def refine(self) -> None:
         """Refine the mesh."""
 

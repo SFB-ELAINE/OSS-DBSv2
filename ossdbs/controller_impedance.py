@@ -8,23 +8,22 @@ from ossdbs.mesh import Mesh
 from ossdbs.preconditioner import BDDCPreconditioner, LocalPreconditioner
 from ossdbs.preconditioner import MultigridPreconditioner
 from ossdbs.region import Region
-from ossdbs.stimulation_signal import RectangleSignal, TrapzoidSignal, TriangleSignal
+from ossdbs.stimulation_signal import RectangleSignal
 from ossdbs.solver import CGSolver, GMRESSolver
 from typing import List
 import json
 import numpy as np
 import ngsolve
-import h5py
 from ossdbs.volume_conductor import VolumeConductor
 from ossdbs.volume_conductor import VolumeConductorFloating
 from ossdbs.volume_conductor import VolumeConductorFloatingImpedance
 from ossdbs.volume_conductor import VolumeConductorNonFloating
-from ossdbs.modes.spectrum import SpectrumMode
-from ossdbs.modes.octave_band import OctaveBandMode
-from ossdbs.modes.no_truncation import NoTruncation
+from ossdbs.impedance_mode.spectrum import SpectrumMode
+from ossdbs.impedance_mode.octave_band import OctaveBandModeImpedance
+from ossdbs.impedance_mode.no_truncation import NoTruncationImpedance
 
 
-class Controller:
+class ControllerImpedance:
     """Transform the input json.
 
     Parameters
@@ -84,7 +83,9 @@ class Controller:
                 contact.surface_impedance = real + 1j * imag
                 contacts.append(contact)
 
-        contacts.append(contact)
+        acvtive_contacts = contacts.active()
+        for contact_name in acvtive_contacts[2:]:
+            contacts.set_inactive(contact_name)
 
         return contacts
 
@@ -148,9 +149,9 @@ class Controller:
         """
 
         if self.__input['SpectrumMode'] == 'OctaveBand':
-            return OctaveBandMode()
+            return OctaveBandModeImpedance()
 
-        return NoTruncation()
+        return NoTruncationImpedance()
 
     def stimulation_signal(self):
         """Return stimulation signal.
@@ -161,42 +162,10 @@ class Controller:
         """
 
         parameters = self.__input['StimulationSignal']
-        frequency = parameters['Frequency[Hz]']
-        pulse_width = parameters['PulseWidth[µs]'] * 1e-6 * frequency
-        counter_width = parameters['CounterPulseWidth[µs]'] * 1e-6 * frequency
-        inter_width = parameters['InterPulseWidth[µs]'] * 1e-6 * frequency
-        top_width = parameters['PulseTopWidth[µs]'] * 1e-6 * frequency
-
-        if parameters['Type'] == 'Trapzoid':
-            return TrapzoidSignal(frequency=frequency,
-                                  pulse_width=pulse_width,
-                                  top_width=top_width,
-                                  counter_pulse_width=counter_width,
-                                  inter_pulse_width=inter_width)
-
-        if parameters['Type'] == 'Triangle':
-            return TriangleSignal(frequency=frequency,
-                                  pulse_width=pulse_width,
-                                  counter_pulse_width=counter_width,
-                                  inter_pulse_width=inter_width)
-
-        return RectangleSignal(frequency=frequency,
-                               pulse_width=pulse_width,
-                               counter_pulse_width=counter_width,
-                               inter_pulse_width=inter_width)
-
-    def coordinates(self):
-
-        with h5py.File(self.__input['Points'], "r") as file:
-            points = np.concatenate([file[key] for key in file.keys()])
-
-        return points * 1e-3
-
-    def categories(self):
-        with h5py.File(self.__input['Points'], "r") as file:
-            categories = [(key, file[key].shape) for key in file.keys()]
-
-        return categories
+        return RectangleSignal(frequency=parameters['Frequency[Hz]'],
+                               pulse_width=0.0,
+                               counter_pulse_width=0.0,
+                               inter_pulse_width=0.0)
 
     def __create_electrodes(self) -> List[Electrode]:
 
