@@ -1,5 +1,5 @@
 
-from ossdbs.modes.spectrum import SpectrumMode, Result, ResultImpedance
+from ossdbs.modes.spectrum import SpectrumMode, Result
 import numpy as np
 import ngsolve
 
@@ -28,7 +28,7 @@ class NoTruncation(SpectrumMode):
         current_densities = np.zeros((n_points, n_freq, 3), dtype=complex)
         conductivities = np.zeros((n_points, n_freq), dtype=complex)
 
-        for index, frequency in enumerate(frequencies):
+        for index, frequency in enumerate(frequencies[:1]):
             solution = volume_conductor.compute_solution(frequency)
             potential = [solution.potential(mip) for mip in mips]
             current_density = [solution.current_density(mip) for mip in mips]
@@ -44,47 +44,3 @@ class NoTruncation(SpectrumMode):
                       potential=potentials,
                       current_density=current_densities,
                       conductivity=conductivities)
-
-
-class NoTruncationImpedance(SpectrumMode):
-
-    def compute(self,
-                signal: Signal,
-                volume_conductor: VolumeConductor,
-                points: np.ndarray):
-
-        sample_spacing = 1 / (signal.frequency * self.SPACING_FACTOR)
-        samples = signal.generate_samples(sample_spacing)
-        complex_values = np.fft.rfft(samples)
-        frequencies = np.fft.rfftfreq(len(samples), sample_spacing)
-
-        mesh = volume_conductor.mesh.ngsolvemesh()
-        mips = [mesh(*point) for point in points]
-        n_points = len(points)
-        n_freq = len(frequencies)
-        potentials = np.zeros((n_points, n_freq), dtype=complex)
-        current_densities = np.zeros((n_points, n_freq, 3), dtype=complex)
-        conductivities = np.zeros((n_points, n_freq), dtype=complex)
-        impedance = np.zeros(n_freq, dtype=complex)
-
-        for index, frequency in enumerate(frequencies):
-            solution = volume_conductor.compute_solution(frequency)
-            potential = [solution.potential(mip) for mip in mips]
-            current_density = [solution.current_density(mip) for mip in mips]
-            conductivity = [solution.conductivity(mip) for mip in mips]
-
-            field = ngsolve.grad(solution.potential)
-            curr_dens_conj = ngsolve.Conj(solution.current_density)
-            power = ngsolve.Integrate(field * curr_dens_conj, mesh)
-            impedance[index] = 1 / power if power else 0
-            pointer = complex_values[index]
-            potentials[:, index] = np.array(potential) * pointer
-            current_densities[:, index] = np.array(current_density) * pointer
-            conductivities[:, index] = conductivity
-
-        return ResultImpedance(points=points,
-                               frequency=frequencies,
-                               potential=potentials,
-                               current_density=current_densities,
-                               conductivity=conductivities,
-                               imdedance=impedance)

@@ -1,38 +1,40 @@
 import h5py
 import numpy as np
 
-# with h5py.File("result.hdf5", "w") as f:
-#     f.create_dataset("points", data=np.array([(1, 2, 3)]))
-#     f.create_dataset("frequencies", data=np.array([1, 2, 3]))
-#     f.create_dataset("potential_values", data=np.array([1 + 3j]))
-#     f.create_dataset("current_density_values", data=np.array([1 + 3j]))
+# with h5py.File("test.hdf5", "w") as f:
+#     f.create_dataset('CF_21', data=np.array([[14.5, -14.7, -9.1]]))
+#     f.create_dataset('CbTh_31', data=np.array([[14.5, -14.7, -9.1]]))
+#     f.create_dataset('EPN2VA_VL_21', data=np.array([[14.5, -14.7, -9.1]]))
+#     f.create_dataset('HDP_21', data=np.array([[14.5, -14.7, -9.1]]))
 
 
-path = 'result.hdf5'
-# path = 'Johnson_Butenko_axon_McIntyre.h5'
-# path = 'solution_130.0.h5'
-f = h5py.File(path, 'r')
+with h5py.File("test.hdf5", "w") as f:
+    group = f.create_group('group')
+    group.create_dataset('DataSet1', data=np.array([[1, 2, 3]]))
+    group.create_dataset('DataSet2', data=np.array([[4, 5, 6]]))
+    group = f.create_group('group2')
+    group.create_dataset('DataSet1', data=np.array([[1, 2, 3]]))
+    group.create_dataset('DataSet2', data=np.array([[4, 5, 6]]))
+
+
+f = h5py.File("test.hdf5", 'r')
 print(list(f.keys()))
-print(np.array(f['frequencies']))
-print(np.array(f['points']))
-print(np.array(f['potential_values']))
-print(np.array(f['frequencies']).shape)
-print(np.array(f['potential_values']).shape)
-# data = f['mydataset']
-# print(np.array(data))
 
-# print(data.shape)
+for group in f.keys():
+    for sub_group in f[group].keys():
+        print(np.array(f[group][sub_group]))
 
-# print(data.dtype)
 
-# print(type(data))
 
-# print(data[0])
+# path = 'Johnson_Butenko_axon_McIntyre.h5'
+# # path = 'Johnson_Butenko_axon_McIntyre.h5'
+# # path = 'solution_130.0.h5'
+# f = h5py.File(path, 'r')
+# print(list(f.keys()))
 
-# print(np.array(data))
+# points = np.concatenate([f[key] for key in f.keys()])
+# n_points = points.shape[0]
 
-# print(f.name)
-
-# print(data.name)
+# print(points.shape)
 
 f.close()

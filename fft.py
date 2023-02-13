@@ -16,19 +16,33 @@ signal[:n_pulse_samples] = 1
 sp = np.fft.rfft(signal)
 frequencies = np.fft.rfftfreq(len(signal), time_step / 130)
 print(frequencies)
-plt.plot(frequencies, sp.real, frequencies, sp.imag)
-plt.show()
+# plt.plot(frequencies, sp.real, frequencies, sp.imag)
+# plt.show()
 
 cut_off_samples = int(min(cut_off, 1) * n_samples / 2) + 1
 s = np.fft.irfft(sp[:cut_off_samples]) * cut_off
 print(len(s))
-plt.plot(s)
-plt.show()
+# plt.plot(s)
+# plt.show()
 
 sp2d = np.array([sp] * n_ifft)
+
+
+sp2d_test = np.concatenate([[sp], [sp], [sp]], axis=0).T
+sp2d_test = np.array([sp2d_test, sp2d_test, sp2d_test, sp2d_test])
+print(sp2d_test.shape)
 
 t = time.time()
 s_2d = np.fft.irfft(sp2d, axis=1)
 duration = time.time() - t
 print('duration', duration)
 print(s_2d.shape)
+
+t = time.time()
+s_2d = np.fft.irfft(sp2d_test, axis=1)
+duration = time.time() - t
+print('duration', duration)
+print(s_2d.shape)
+
+plt.plot(s_2d[1,:, 2])
+plt.show()

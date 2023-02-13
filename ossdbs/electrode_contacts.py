@@ -25,6 +25,11 @@ class ContactCollection:
         return sorted([contact.name for contact in self.__contacts
                        if contact.floating and not contact.active])
 
+    def set_inactive(self, name: str) -> None:
+        for contact in self.__contacts:
+            if contact.name == name:
+                contact.active = False
+
     def active(self) -> List[str]:
         return sorted([contact.name for contact in self.__contacts
                        if contact.active])
