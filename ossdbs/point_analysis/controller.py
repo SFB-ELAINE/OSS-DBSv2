@@ -19,9 +19,9 @@ from ossdbs.volume_conductor import VolumeConductor
 from ossdbs.volume_conductor import VolumeConductorFloating
 from ossdbs.volume_conductor import VolumeConductorFloatingImpedance
 from ossdbs.volume_conductor import VolumeConductorNonFloating
-from ossdbs.modes.spectrum import SpectrumMode
-from ossdbs.modes.octave_band import OctaveBandMode
-from ossdbs.modes.no_truncation import NoTruncation
+from ossdbs.point_analysis.fourier_analysis.spectrum import SpectrumMode
+from ossdbs.point_analysis.fourier_analysis.octave_band import OctaveBandMode
+from ossdbs.point_analysis.fourier_analysis.no_truncation import NoTruncation
 
 
 class Controller:
@@ -32,8 +32,8 @@ class Controller:
     json_path : str
     """
 
-    def __init__(self, json_path: str) -> None:
-        self.__input = self.__load_json(path=json_path)
+    def __init__(self, paramters: dict) -> None:
+        self.__input = paramters
 
     def mesh(self):
         electrodes = self.__create_electrodes()
@@ -228,11 +228,6 @@ class Controller:
             electrode.rename_boundaries(boundary_names)
 
         return electrodes
-
-    @staticmethod
-    def __load_json(path) -> dict:
-        with open(path, 'r') as json_file:
-            return json.load(json_file)
 
     def solver(self):
         solver_type = self.__input['Solver']['Type']

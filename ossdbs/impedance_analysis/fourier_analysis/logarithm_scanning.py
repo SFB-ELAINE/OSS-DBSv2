@@ -1,13 +1,13 @@
 
-from ossdbs.impedance_mode.spectrum import SpectrumMode, ResultImpedance
+from ossdbs.impedance_analysis.fourier_analysis.spectrum import SpectrumMode, Impedances
 import numpy as np
 import ngsolve
 
-from ossdbs.signals import Signal
-from ossdbs.volume_conductor.volume_conductor_model import VolumeConductor
+from ossdbs.stimulation_signal import Signal
+from ossdbs.volume_conductor import VolumeConductor
 
 
-class NoTruncationImpedance(SpectrumMode):
+class LogarithmScanning(SpectrumMode):
 
     def compute(self, signal: Signal, volume_conductor: VolumeConductor,):
         n_fft_frequencies = int(self.SPACING_FACTOR // 2) + 1
@@ -27,4 +27,4 @@ class NoTruncationImpedance(SpectrumMode):
             power = ngsolve.Integrate(field * curr_dens_conj, mesh)
             impedance[index] = 1 / power if power else 0
 
-        return ResultImpedance(frequency=frequencies, imdedance=impedance)
+        return Impedances(frequency=frequencies, imdedance=impedance)
