@@ -1,27 +1,25 @@
 
-from ossdbs.modes.spectrum import SpectrumMode, Result
+from ossdbs.point_analysis.fourier_analysis.spectrum import SpectrumMode, Result
 import numpy as np
-import ngsolve
 
-from ossdbs.signals import Signal
+from ossdbs.stimulation_signal import Signal
 from ossdbs.volume_conductor.volume_conductor_model import VolumeConductor
 
 
-class OctaveBand:
-
-    SQRT2 = np.sqrt(2)
-
-    def __init__(self, frequency: float) -> None:
-        self.frequency = frequency
-
-    def lower_limit(self):
-        return self.frequency / self.SQRT2
-
-    def upper_limit(self):
-        return self.frequency * self.SQRT2
-
-
 class OctaveBandMode(SpectrumMode):
+
+    class OctaveBand:
+
+        SQRT2 = np.sqrt(2)
+
+        def __init__(self, frequency: float) -> None:
+            self.frequency = frequency
+
+        def lower_limit(self):
+            return self.frequency / self.SQRT2
+
+        def upper_limit(self):
+            return self.frequency * self.SQRT2
 
     def compute(self,
                 signal: Signal,
@@ -35,7 +33,7 @@ class OctaveBandMode(SpectrumMode):
         n_octaves = int(np.log2(len(frequencies) - 1)) + 1
         octave_indices = 2 ** np.arange(0, n_octaves)
         octave_frequencies = signal.frequency * octave_indices
-        octave_bands = [OctaveBand(freq) for freq in octave_frequencies]
+        octave_bands = [self.OctaveBand(freq) for freq in octave_frequencies]
 
         mesh = volume_conductor.mesh.ngsolvemesh()
         mips = [mesh(*point) for point in points]
@@ -74,4 +72,4 @@ class OctaveBandMode(SpectrumMode):
                       frequency=frequencies,
                       potential=potentials,
                       current_density=current_densities,
-                      conductivity=conductivities)
+                      conductivity=conductivities).time_result()

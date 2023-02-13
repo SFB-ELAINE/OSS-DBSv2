@@ -18,12 +18,11 @@ from ossdbs.volume_conductor import VolumeConductor
 from ossdbs.volume_conductor import VolumeConductorFloating
 from ossdbs.volume_conductor import VolumeConductorFloatingImpedance
 from ossdbs.volume_conductor import VolumeConductorNonFloating
-from ossdbs.impedance_mode.spectrum import SpectrumMode
-from ossdbs.impedance_mode.octave_band import OctaveBandModeImpedance
-from ossdbs.impedance_mode.no_truncation import NoTruncationImpedance
+from ossdbs.impedance_analysis.fourier_analysis.spectrum import SpectrumMode
+from ossdbs.impedance_analysis.fourier_analysis.logarithm_scanning import LogarithmScanning
 
 
-class ControllerImpedance:
+class Controller:
     """Transform the input json.
 
     Parameters
@@ -31,8 +30,8 @@ class ControllerImpedance:
     json_path : str
     """
 
-    def __init__(self, json_path: str) -> None:
-        self.__input = self.__load_json(path=json_path)
+    def __init__(self, parameters: dict) -> None:
+        self.__input = parameters
 
     def mesh(self):
         electrodes = self.__create_electrodes()
@@ -148,10 +147,7 @@ class ControllerImpedance:
         SpectrumMode
         """
 
-        if self.__input['SpectrumMode'] == 'OctaveBand':
-            return OctaveBandModeImpedance()
-
-        return NoTruncationImpedance()
+        return LogarithmScanning()
 
     def stimulation_signal(self):
         """Return stimulation signal.
@@ -197,11 +193,6 @@ class ControllerImpedance:
             electrode.rename_boundaries(boundary_names)
 
         return electrodes
-
-    @staticmethod
-    def __load_json(path) -> dict:
-        with open(path, 'r') as json_file:
-            return json.load(json_file)
 
     def solver(self):
         solver_type = self.__input['Solver']['Type']

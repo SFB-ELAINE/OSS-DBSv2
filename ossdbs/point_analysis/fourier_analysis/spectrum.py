@@ -31,15 +31,26 @@ class Result:
             file.create_dataset("conductivity", data=self.conductivity)
 
     def time_result(self):
-        potential_t = np.fft.irfft(self.potential, axis=1)
-        current_density_t = np.fft.irfft(self.current_density, axis=1)
+
+        n_time_steps = (len(self.frequency) - 1) * 2
+        potential_t = np.zeros((len(self.points), n_time_steps))
+        current_density_t = np.zeros((len(self.points), n_time_steps, 3))
+
+        for start in range(0, len(self.points), 1000):
+            end = start + 1000
+            potential = self.potential[start:end]
+            potential_t[start:end] = np.fft.irfft(potential, axis=1)
+            current_density = self.current_density[start:end]
+            current_density_t[start:end] = np.fft.irfft(current_density,
+                                                        axis=1)
+
         frequency = self.frequency[1]
-        time = np.arange(len(potential_t)) * 1 / (frequency * len(potential_t))
+        n_steps = self.potential.shape[1]
+        time = np.arange(n_steps) * 1 / (frequency * n_steps)
         return TimeResult(points=self.points,
                           potential=potential_t,
                           current_density=current_density_t,
                           time_steps=time)
-
 
 
 class SpectrumMode(ABC):

@@ -1,9 +1,8 @@
 
-from ossdbs.modes.spectrum import SpectrumMode, Result
+from ossdbs.point_analysis.fourier_analysis.spectrum import SpectrumMode, Result
 import numpy as np
-import ngsolve
 
-from ossdbs.signals import Signal
+from ossdbs.stimulation_signal import Signal
 from ossdbs.volume_conductor.volume_conductor_model import VolumeConductor
 
 
@@ -28,7 +27,7 @@ class NoTruncation(SpectrumMode):
         current_densities = np.zeros((n_points, n_freq, 3), dtype=complex)
         conductivities = np.zeros((n_points, n_freq), dtype=complex)
 
-        for index, frequency in enumerate(frequencies[:1]):
+        for index, frequency in enumerate(frequencies[:0]):
             solution = volume_conductor.compute_solution(frequency)
             potential = [solution.potential(mip) for mip in mips]
             current_density = [solution.current_density(mip) for mip in mips]
@@ -43,4 +42,4 @@ class NoTruncation(SpectrumMode):
                       frequency=frequencies,
                       potential=potentials,
                       current_density=current_densities,
-                      conductivity=conductivities)
+                      conductivity=conductivities).time_result()
