@@ -7,21 +7,22 @@ from ossdbs.electrodes import Electrode, ElectrodeParameters, ElectrodeFactory
 from ossdbs.mesh import Mesh
 from ossdbs.preconditioner import BDDCPreconditioner, LocalPreconditioner
 from ossdbs.preconditioner import MultigridPreconditioner
-from ossdbs.region import Region
-from ossdbs.stimulation_signal import RectangleSignal, TrapzoidSignal, TriangleSignal
+from ossdbs.region import BoundingBox
+from ossdbs.stimulation_signal import RectangleSignal
+from ossdbs.stimulation_signal import TrapzoidSignal
+from ossdbs.stimulation_signal import TriangleSignal
 from ossdbs.solver import CGSolver, GMRESSolver
-from typing import List
-import json
-import numpy as np
-import ngsolve
-import h5py
 from ossdbs.volume_conductor import VolumeConductor
 from ossdbs.volume_conductor import VolumeConductorFloating
 from ossdbs.volume_conductor import VolumeConductorFloatingImpedance
 from ossdbs.volume_conductor import VolumeConductorNonFloating
 from ossdbs.point_analysis.fourier_analysis.spectrum import SpectrumMode
 from ossdbs.point_analysis.fourier_analysis.octave_band import OctaveBandMode
-from ossdbs.point_analysis.fourier_analysis.no_truncation import NoTruncation
+from ossdbs.point_analysis.fourier_analysis.full_spectrum import FullSpectrum
+from typing import List
+import numpy as np
+import ngsolve
+import h5py
 
 
 class Controller:
@@ -69,22 +70,27 @@ class Controller:
         return Conductivity(mri=mri, complex_datatype=self.__input['EQSMode'])
 
     def contacts(self) -> List[ElectrodeContact]:
+
         contacts = ContactCollection()
         for index, electrode in enumerate(self.__input['Electrodes']):
-            for contact_index in range(0, 8):
-                parameters = electrode['Contact_{}'.format(contact_index + 1)]
-                contact = ElectrodeContact()
-                contact.name = 'E{}C{}'.format(index, contact_index)
-                contact.active = parameters['Active']
-                contact.floating = parameters['Floating'] and not contact.active
-                contact.current = parameters['Current[A]']
-                contact.voltage = parameters['Voltage[V]']
-                real = parameters['SurfaceImpedance[Ωm]']['real']
-                imag = parameters['SurfaceImpedance[Ωm]']['imag']
-                contact.surface_impedance = real + 1j * imag
-                contacts.append(contact)
+            for contact_par in electrode['Contacts']:
+                name = 'E{}C{}'.format(index, contact_par['Contact_ID'] - 1)
+                active = contact_par['Active']
+                floating = contact_par['Floating'] and not active
+                current = contact_par['Current[A]']
+                voltage = contact_par['Voltage[V]']
+                real = contact_par['SurfaceImpedance[Ωm]']['real']
+                imag = contact_par['SurfaceImpedance[Ωm]']['imag']
+                surface_impedance = real + 1j * imag
 
-        contacts.append(contact)
+                contact = ElectrodeContact(name=name,
+                                           active=active,
+                                           floating=floating,
+                                           current=current,
+                                           voltage=voltage,
+                                           surface_impedance=surface_impedance)
+
+                contacts.append(contact)
 
         return contacts
 
@@ -110,17 +116,13 @@ class Controller:
 
         return VolumeConductorFloatingImpedance
 
-    def region_of_interest(self) -> Region:
+    def region_of_interest(self) -> BoundingBox:
         """Return the region of interest.
 
         Returns
         -------
         Region
         """
-        mri_path = self.__input['MaterialDistribution']['MRIPath']
-        mri = MagneticResonanceImage(mri_path)
-        shape = mri.xyz_shape()
-        step_size = mri.voxel_size()
 
         size = (self.__input['RegionOfInterest']['Shape']['x[mm]'] * 1e-3,
                 self.__input['RegionOfInterest']['Shape']['y[mm]'] * 1e-3,
@@ -131,13 +133,7 @@ class Controller:
         start = center - np.divide(size, 2)
         end = start + size
 
-        x_step = step_size[0]
-        y_step = step_size[1]
-        z_step = step_size[2]
-
-        x, y, z = size
-        shape = int(x/x_step), int(y/y_step), int(z/z_step)
-        return Region(tuple(start), tuple(end), shape, (x_step, y_step, z_step))
+        return BoundingBox(tuple(start), tuple(end))
 
     def spectrum_mode(self) -> SpectrumMode:
         """Return the spectrum mode for the FEM.
@@ -150,7 +146,7 @@ class Controller:
         if self.__input['SpectrumMode'] == 'OctaveBand':
             return OctaveBandMode()
 
-        return NoTruncation()
+        return FullSpectrum()
 
     def stimulation_signal(self):
         """Return stimulation signal.
@@ -185,17 +181,14 @@ class Controller:
                                counter_pulse_width=counter_width,
                                inter_pulse_width=inter_width)
 
-    def coordinates(self):
-
+    def points(self):
         with h5py.File(self.__input['Points'], "r") as file:
-            points = np.concatenate([file[key] for key in file.keys()])
-
-        return points * 1e-3
+            points = [np.array(file[key]) for key in file.keys()]
+        return np.concatenate(points, axis=0) * 1e-3
 
     def categories(self):
         with h5py.File(self.__input['Points'], "r") as file:
-            categories = [(key, file[key].shape) for key in file.keys()]
-
+            categories = [(key, file[key].shape[0]) for key in file.keys()]
         return categories
 
     def __create_electrodes(self) -> List[Electrode]:

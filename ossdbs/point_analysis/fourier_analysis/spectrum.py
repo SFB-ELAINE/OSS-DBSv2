@@ -12,6 +12,29 @@ class TimeResult:
     potential: np.ndarray[float]
     current_density: np.ndarray[float]
 
+    def save(self, path: str) -> None:
+        with h5py.File(path, "w") as file:
+            file.create_dataset('TimeSteps[s]', data=self.time_steps)
+            file.create_dataset('Points[mm]', data=self.points)
+            file.create_dataset('Potential[V]', data=self.potential)
+            file.create_dataset('Current_density[A/m2]',
+                                data=self.current_density)
+
+    def save_by_categories(self, path: str, categories: list) -> None:
+        with h5py.File(path, "w") as file:
+            file.create_dataset('TimeSteps', data=self.time_steps)
+            start = 0
+            for category in categories:
+                name, n_points = category
+                end = start + n_points
+                h5_group = file.create_group(name)
+                points = self.points[start:end]
+                h5_group.create_dataset('Points', data=points)
+                potential = self.potential[start:end]
+                h5_group.create_dataset('Potential', data=potential)
+                current_density = self.current_density[start:end]
+                h5_group.create_dataset('CurrentDensity', data=current_density)
+
 
 @dataclass
 class Result:
@@ -29,28 +52,6 @@ class Result:
             file.create_dataset("potential", data=self.potential)
             file.create_dataset("current_density", data=self.current_density)
             file.create_dataset("conductivity", data=self.conductivity)
-
-    def time_result(self):
-
-        n_time_steps = (len(self.frequency) - 1) * 2
-        potential_t = np.zeros((len(self.points), n_time_steps))
-        current_density_t = np.zeros((len(self.points), n_time_steps, 3))
-
-        for start in range(0, len(self.points), 1000):
-            end = start + 1000
-            potential = self.potential[start:end]
-            potential_t[start:end] = np.fft.irfft(potential, axis=1)
-            current_density = self.current_density[start:end]
-            current_density_t[start:end] = np.fft.irfft(current_density,
-                                                        axis=1)
-
-        frequency = self.frequency[1]
-        n_steps = self.potential.shape[1]
-        time = np.arange(n_steps) * 1 / (frequency * n_steps)
-        return TimeResult(points=self.points,
-                          potential=potential_t,
-                          current_density=current_density_t,
-                          time_steps=time)
 
 
 class SpectrumMode(ABC):

@@ -1,25 +1,12 @@
 
 from ossdbs.point_analysis.fourier_analysis.spectrum import SpectrumMode
 from ossdbs.point_analysis.fourier_analysis.spectrum import TimeResult
-from ossdbs.stimulation_signal import Signal
 from ossdbs.volume_conductor.volume_conductor_model import VolumeConductor
+from ossdbs.stimulation_signal import Signal
 import numpy as np
 
 
-class OctaveBandMode(SpectrumMode):
-
-    class OctaveBand:
-
-        SQRT2 = np.sqrt(2)
-
-        def __init__(self, frequency: float) -> None:
-            self.frequency = frequency
-
-        def lower_limit(self):
-            return self.frequency / self.SQRT2
-
-        def upper_limit(self):
-            return self.frequency * self.SQRT2
+class FullSpectrum(SpectrumMode):
 
     def compute(self,
                 signal: Signal,
@@ -30,10 +17,6 @@ class OctaveBandMode(SpectrumMode):
         samples = signal.generate_samples(sample_spacing)
         complex_values = np.fft.rfft(samples)
         frequencies = np.fft.rfftfreq(len(samples), sample_spacing)
-        n_octaves = int(np.log2(len(frequencies) - 1)) + 1
-        octave_indices = 2 ** np.arange(0, n_octaves)
-        octave_frequencies = signal.frequency * octave_indices
-        octave_bands = [self.OctaveBand(freq) for freq in octave_frequencies]
 
         ng_mesh = volume_conductor.mesh.ngsolvemesh()
         included_index = volume_conductor.mesh.is_included(points)
@@ -44,35 +27,17 @@ class OctaveBandMode(SpectrumMode):
         current_dens_fft = np.zeros((*data_shape, 3), dtype=complex)
         conductivities = np.zeros(data_shape, dtype=complex)
 
-        solution = volume_conductor.compute_solution(0)
-        potential_mip = [solution.potential(mip) for mip in mips]
-        current_dens_mip = [solution.current_density(mip) for mip in mips]
-        conductivity = [solution.conductivity(mip) for mip in mips]
-
-        pt_index = (included_index, 0)
-        pointer = complex_values[0]
-        potentials_fft[pt_index] = np.array(potential_mip) * pointer
-        current_dens_fft[pt_index] = np.array(current_dens_mip) * pointer
-        conductivities[pt_index] = conductivity
-
-        for octave_band in octave_bands:
-            frequency = octave_band.frequency
+        for index, frequency in enumerate(frequencies[:0]):
             solution = volume_conductor.compute_solution(frequency)
             potential_mip = [solution.potential(mip) for mip in mips]
             current_dens_mip = [solution.current_density(mip) for mip in mips]
-            conductivity = [solution.conductivity(mip) for mip in mips]
+            conductivity_mip = [solution.conductivity(mip) for mip in mips]
 
-            start = int(octave_band.lower_limit() / signal.frequency + 1)
-            end = int(octave_band.upper_limit() / signal.frequency + 1)
-            end = min(end, len(frequencies))
-
-            for index in range(start, end):
-                pointer = complex_values[index]
-                pt_index = (included_index, index)
-                potentials_fft[pt_index] = np.array(potential_mip) * pointer
-                current_dens_fft[pt_index] = (np.array(current_dens_mip) *
-                                              pointer)
-                conductivities[pt_index] = conductivity
+            pointer = complex_values[index]
+            pt_index = (included_index, index)
+            potentials_fft[pt_index] = np.array(potential_mip) * pointer
+            current_dens_fft[pt_index] = np.array(current_dens_mip) * pointer
+            conductivities[pt_index] = conductivity_mip
 
         potentials_t = self.__ifft(potentials_fft)
         current_densitys_t = self.__ifft(current_dens_fft)

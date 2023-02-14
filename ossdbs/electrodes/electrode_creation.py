@@ -21,21 +21,21 @@ from ossdbs.electrodes.micro_probes_custom_rodent \
     import MicroProbesCustomRodent
 from ossdbs.electrodes.micro_probes_SNEX100 import MicroProbesSNEX_100
 
-from ossdbs.electrodes.abbott_stjude_active_tip_custom \
+from ossdbs.electrodes.custom.abbott_stjude_active_tip_custom \
     import AbbottStjudeActiveCustom
-from ossdbs.electrodes.abbott_stjude_directed_custom \
+from ossdbs.electrodes.custom.abbott_stjude_directed_custom \
     import AbbottStjudeDirectedCustom
-from ossdbs.electrodes.boston_scientific_vercise_custom \
+from ossdbs.electrodes.custom.boston_scientific_vercise_custom \
     import BostonScientificVerciseCustom
-from ossdbs.electrodes.boston_scientific_vercise_directed_custom \
+from ossdbs.electrodes.custom.boston_scientific_vercise_directed_custom \
     import BostonScientificVerciseDirectedCustom
-from ossdbs.electrodes.medtronic_custom \
+from ossdbs.electrodes.custom.medtronic_custom \
     import MedtronicCustom
-from ossdbs.electrodes.micro_probes_custom_rodent_custom \
+from ossdbs.electrodes.custom.micro_probes_custom_rodent_custom \
     import MicroProbesCustomRodentCustom
-from ossdbs.electrodes.micro_probes_SNEX100_custom \
+from ossdbs.electrodes.custom.micro_probes_SNEX100_custom \
     import MicroProbesSNEX_100Custom
-from ossdbs.electrodes.pins_medical_custom \
+from ossdbs.electrodes.custom.pins_medical_custom \
     import PINSMedicalCustom
 
 from dataclasses import dataclass

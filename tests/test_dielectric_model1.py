@@ -1,5 +1,5 @@
 from ossdbs.dielectric_model import ColeColeFourModelFactory
-from ossdbs.brainsubstance import Material
+from ossdbs.materials import Material
 import numpy as np
 import pytest
 

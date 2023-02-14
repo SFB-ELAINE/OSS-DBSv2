@@ -1,10 +1,10 @@
 
-from ossdbs.impedance_analysis.fourier_analysis.spectrum import SpectrumMode, Impedances
-import numpy as np
-import ngsolve
-
+from ossdbs.impedance_analysis.fourier_analysis.spectrum \
+    import SpectrumMode, Impedances
 from ossdbs.stimulation_signal import Signal
 from ossdbs.volume_conductor import VolumeConductor
+import numpy as np
+import ngsolve
 
 
 class OctaveBandModeImpedance(SpectrumMode):
@@ -22,7 +22,9 @@ class OctaveBandModeImpedance(SpectrumMode):
         def upper_limit(self):
             return self.frequency * self.SQRT2
 
-    def compute(self, signal: Signal, volume_conductor: VolumeConductor):
+    def compute(self,
+                signal: Signal,
+                volume_conductor: VolumeConductor) -> Impedances:
 
         n_frequencies = (self.SPACING_FACTOR // 2) + 1
         frequencies = signal.frequency * np.arange(0, n_frequencies)
