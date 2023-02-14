@@ -8,8 +8,8 @@ import pandas as pd
 @dataclass
 class Impedances:
 
-    frequency: np.ndarray[float]
-    imdedance: np.ndarray[complex]
+    frequency: np.ndarray
+    imdedance: np.ndarray
 
     def save(self, path: str) -> None:
         data_frame = pd.DataFrame({'frequencies [Hz]': self.frequency,

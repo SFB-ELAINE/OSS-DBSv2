@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 
 from ossdbs.brain_imaging import MagneticResonanceImage
-from ossdbs.brainsubstance import Material
+from ossdbs.materials import Material
 from ossdbs.voxels import Voxels
 
 

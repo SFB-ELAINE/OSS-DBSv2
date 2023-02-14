@@ -8,62 +8,25 @@
       "Rotation[Degrees]": 6.412,
       "Direction": { "x[mm]": 2.2314, "y[mm]": 5.0661, "z[mm]": 3.99 },
       "TipPosition": { "x[mm]": 14.5884, "y[mm]": -14.7434, "z[mm]": -9.0634 },
-      "Contact_1": {
-        "Active": true,
-        "Current[A]": 0.0,
-        "Voltage[V]": 1.0,
-        "Floating": false,
-        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
-      },
-      "Contact_2": {
-        "Active": false,
-        "Current[A]": 0.0,
-        "Voltage[V]": 0.0,
-        "Floating": false,
-        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
-      },
-      "Contact_3": {
-        "Active": false,
-        "Current[A]": 0.0,
-        "Voltage[V]": 0.0,
-        "Floating": false,
-        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
-      },
-      "Contact_4": {
-        "Active": false,
-        "Current[A]": 0.0,
-        "Voltage[V]": 0.0,
-        "Floating": false,
-        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
-      },
-      "Contact_5": {
-        "Active": false,
-        "Current[A]": 0.0,
-        "Voltage[V]": 0.0,
-        "Floating": false,
-        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
-      },
-      "Contact_6": {
-        "Active": false,
-        "Current[A]": 0.0,
-        "Voltage[V]": 0.0,
-        "Floating": false,
-        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
-      },
-      "Contact_7": {
-        "Active": false,
-        "Current[A]": 0.0,
-        "Voltage[V]": 0.0,
-        "Floating": false,
-        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
-      },
-      "Contact_8": {
-        "Active": true,
-        "Current[A]": 0.0,
-        "Voltage[V]": 0.0,
-        "Floating": false,
-        "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0  }
-      }
+
+      "Contacts": [
+        {
+          "Contact_ID": 1,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 1.0,
+          "Floating": false,
+          "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+        }, 
+        {
+          "Contact_ID": 8,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
+          "Floating": false,
+          "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+        }
+      ]
     }
   ],
   "EQSMode": false,
@@ -84,6 +47,7 @@
     "LoadMesh": false,
     "LoadPath": "./input_files/mesh.vol",
     "MeshElementOrder": 2,
+    "MeshRefinement": "",
     "SavePath": ""
   },
   "OutputPath": "test_result",
@@ -98,7 +62,7 @@
     "MaximumSteps": 10000,
     "Precision": 1e-12
   },
-  "SpectrumMode": "NoTruncation",
+  "SpectrumMode": "FullSpectrum",
   "StimulationSignal": {
     "Type": "Rectangle",
     "Frequency[Hz]": 130.0,
@@ -107,5 +71,5 @@
     "CounterPulseWidth[µs]": 0.0,
     "InterPulseWidth[µs]": 0.0
   },
-  "Points": "./input_files/axon_test.hdf5"
+  "Points": "./input_files/test.hdf5"
 }

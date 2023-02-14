@@ -1,6 +1,6 @@
 
 from ossdbs.electrodes.electrode import Electrode
-from ossdbs.region import Region
+from ossdbs.region import BoundingBox
 from typing import List
 import netgen
 import numpy as np
@@ -12,7 +12,9 @@ class BrainGeometry:
     region : Region
         Location in 3D space of the geometry
     """
-    def __init__(self, region: Region, electrodes: List[Electrode]) -> None:
+    def __init__(self,
+                 region: BoundingBox,
+                 electrodes: List[Electrode]) -> None:
         self.__region = region
         self.__electrodes = electrodes
 
@@ -25,7 +27,7 @@ class BrainGeometry:
         """
 
         geometry = self.__create_ellipsoid()
-        #geometry = self.__create_box()
+        #  geometry = self.__create_box()
         geometry.bc('BrainSurface')
         for electrode in self.__electrodes:
             geometry = geometry - electrode.generate_geometry()
