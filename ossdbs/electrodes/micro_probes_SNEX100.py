@@ -109,3 +109,51 @@ class MicroProbesSNEX_100(Electrode):
         outer_contact.bc(self.__boundaries['Contact_2'])
 
         return netgen.occ.Glue([inner_contact, outer_contact])
+
+    def encapsulating_geometry(self, thickness: float) \
+            -> netgen.libngpy._NgOCC.TopoDS_Shape:
+
+        distance_1 = self.CORE_ELECTRODE_DIAMETER * 0.5
+        point_1 = tuple(np.array(self.__direction) * distance_1)
+        radius_1 = self.CORE_ELECTRODE_DIAMETER * 0.5 + thickness
+        part_0 = netgen.occ.Sphere(c=point_1, r=radius_1)
+        height = self.CORE_ELECTRODE_LENGTH - distance_1
+        part_1 = netgen.occ.Cylinder(p=point_1,
+                                     d=self.__direction,
+                                     r=radius_1,
+                                     h=height)
+
+        distance_2 = self.CORE_ELECTRODE_LENGTH - thickness
+        point_2 = tuple(np.array(self.__direction) * distance_2)
+        radius_2 = self.CORE_TUBING_DIAMETER * 0.5 + thickness
+        part_2 = netgen.occ.Cylinder(p=point_2,
+                                     d=self.__direction,
+                                     r=radius_2,
+                                     h=self.CORE_TUBING_LENGTH)
+
+        distance_3 = (self.CORE_ELECTRODE_LENGTH
+                      + self.CORE_TUBING_LENGTH
+                      - thickness)
+        point_3 = tuple(np.array(self.__direction) * distance_3)
+        radius_3 = self.OUTER_ELECTRODE_DIAMETER * 0.5 + thickness
+        part_3 = netgen.occ.Cylinder(p=point_3,
+                                     d=self.__direction,
+                                     r=radius_3,
+                                     h=self.OUTER_ELECTRODE_LENGTH)
+
+        distance_4 = (self.CORE_ELECTRODE_LENGTH
+                      + self.CORE_TUBING_LENGTH
+                      + self.OUTER_ELECTRODE_LENGTH
+                      - thickness)
+        point_4 = tuple(np.array(self.__direction) * distance_4)
+        radius_4 = self.OUTER_TUBING_DIAMETER * 0.5 + thickness
+        part_4 = netgen.occ.Cylinder(p=point_4,
+                                     d=self.__direction,
+                                     r=radius_4,
+                                     h=self.TOTAL_LENGTH - distance_4)
+
+        capsule = part_0 + part_1 + part_2 + part_3 + part_4
+        capsule.bc('Capsule')
+        capsule.mat('Capsule')
+        capsule.maxh = 0.0001
+        return capsule.Move(self.__position)

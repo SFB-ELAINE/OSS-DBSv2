@@ -7,7 +7,7 @@ import numpy as np
 import ngsolve
 
 
-class OctaveBandModeImpedance(SpectrumMode):
+class OctaveBandMode(SpectrumMode):
 
     class OctaveBand:
 
@@ -36,7 +36,7 @@ class OctaveBandModeImpedance(SpectrumMode):
         impedances = np.zeros((len(frequencies)))
         impedances[0] = self.__compute_impedance(volume_conductor, 0)
 
-        for octave_band in octave_bands: 
+        for octave_band in octave_bands:
             start = int(octave_band.lower_limit() / signal.frequency + 1)
             end_index = int(octave_band.upper_limit() / signal.frequency + 1)
             end = min(end_index, len(frequencies))

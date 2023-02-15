@@ -52,6 +52,11 @@ class Electrode(ABC):
         """
         pass
 
+    @abstractmethod
+    def encapsulating_geometry(self, thickness: float) \
+            -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        pass
+
     def bounding_box(self):
         start, end = self.generate_geometry().bounding_box
         return tuple(start), tuple(end)
