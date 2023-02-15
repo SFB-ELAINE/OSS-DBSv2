@@ -1,5 +1,6 @@
 
-from ossdbs.impedance_analysis.fourier_analysis.spectrum import SpectrumMode, Impedances
+from ossdbs.impedance_analysis.fourier_analysis.spectrum \
+    import SpectrumMode, Impedances
 import numpy as np
 import ngsolve
 

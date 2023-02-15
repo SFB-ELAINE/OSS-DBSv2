@@ -10,7 +10,7 @@ from ossdbs.electrodes import PINSMedicalL301
 from ossdbs.electrodes import PINSMedicalL302
 from ossdbs.electrodes import PINSMedicalL303
 from ossdbs.electrodes import MicroProbesCustomRodent
-from tests.geometry_converter import GeometryConverter
+#from tests.geometry_converter import GeometryConverter
 import ngsolve
 import netgen
 
@@ -52,16 +52,24 @@ def create_json(electrode_parameters, electrode_type, path):
 
     rotation, translation, direction = electrode_parameters
     electrode = electrode_type(rotation, direction, translation)
-    GeometryConverter(electrode.generate_geometry()).to_json(path)
+    # GeometryConverter(electrode.generate_geometry()).to_json(path)
 
 
-def draw_electrode(electrode):
+def draw_electrode():
 
-    electrode = AbbottStjudeActiveTip6142_6145()
+    electrode = BostonScientificVerciseDirected()
 
-    geometry = electrode.generate_geometry()
+    electrode_geo = electrode.generate_geometry()
+    geometry = electrode_geo
+
     with ngsolve.TaskManager():
         mesh = ngsolve.Mesh(netgen.occ.OCCGeometry(geometry).GenerateMesh())
-    bnd_dict = {"Contact_{}".format(i): float(i) for i in range(1, 9)}
+
+    bnd_dict = {"Contact_{}".format(i): i for i in range(1, 9)}
+    bnd_dict.update({"Capsule": 9})
     bndcf = mesh.BoundaryCF(bnd_dict, default=-1)
     ngsolve.Draw(bndcf, mesh, "BND")
+
+
+if __name__ == '__main__':
+    draw_electrode()

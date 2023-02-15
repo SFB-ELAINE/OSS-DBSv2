@@ -12,9 +12,8 @@ class BrainGeometry:
     region : Region
         Location in 3D space of the geometry
     """
-    def __init__(self,
-                 region: BoundingBox,
-                 electrodes: List[Electrode]) -> None:
+    def __init__(self, region: BoundingBox, electrodes: List[Electrode])\
+            -> None:
         self.__region = region
         self.__electrodes = electrodes
 
@@ -31,6 +30,12 @@ class BrainGeometry:
         geometry.bc('BrainSurface')
         for electrode in self.__electrodes:
             geometry = geometry - electrode.generate_geometry()
+
+        for electrode in self.__electrodes:
+            capsule_geo = electrode.encapsulating_geometry(thickness=0.0001)
+            electrode_geo = electrode.generate_geometry()
+            geometry = netgen.occ.Glue([geometry - capsule_geo,
+                                        capsule_geo - electrode_geo])
 
         return netgen.occ.OCCGeometry(geometry)
 

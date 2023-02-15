@@ -134,3 +134,18 @@ class AbbottStjudeDirected6172(Electrode):
             return (0, 1, 0)
 
         return (x, y, not z)
+
+    def encapsulating_geometry(self, thickness: float) \
+            -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        radius = self.LEAD_DIAMETER * 0.5
+        center = tuple(np.array(self.__direction) * radius)
+        lead = netgen.occ.Cylinder(p=center,
+                                   d=self.__direction,
+                                   r=radius + thickness,
+                                   h=self.TOTAL_LENGHTH - self.TIP_LENGTH)
+        tip = netgen.occ.Sphere(c=center, r=radius + thickness,)
+        capsule = tip + lead
+        capsule.bc('Capsule')
+        capsule.mat('Capsule')
+        capsule.maxh = 0.0001
+        return capsule.Move(self.__position)

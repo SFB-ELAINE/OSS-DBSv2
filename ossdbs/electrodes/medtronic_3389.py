@@ -81,3 +81,18 @@ class Medtronic3389(Electrode):
         for index, contact in enumerate(contacts, 1):
             contact.bc(self.__boundaries['Contact_{}'.format(index)])
         return netgen.occ.Glue(contacts)
+
+    def encapsulating_geometry(self, thickness: float) \
+            -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        radius = self.LEAD_DIAMETER * 0.5
+        center = tuple(np.array(self.__direction) * radius)
+        lead = netgen.occ.Cylinder(p=center,
+                                   d=self.__direction,
+                                   r=radius + thickness,
+                                   h=self.TOTAL_LENGHTH - self.TIP_LENGTH)
+        tip = netgen.occ.Sphere(c=center, r=radius + thickness,)
+        capsule = tip + lead
+        capsule.bc('Capsule')
+        capsule.mat('Capsule')
+        capsule.maxh = 0.0001
+        return capsule.Move(self.__position)
