@@ -35,7 +35,13 @@ class Controller:
 
     def mesh(self):
         electrodes = self.__create_electrodes()
-        geometry = BrainGeometry(self.region_of_interest(), electrodes)
+        encapsulating_d = self.__input['EncapsulatingLayer']['Thickness[mm]']
+        geometry = BrainGeometry(self.region_of_interest(),
+                                 electrodes,
+                                 encapsulating_d)
+        contacts = self.contacts()
+        edges = contacts.active() + contacts.floating()
+        geometry.edges_for_finer_meshing(edges)
         netgen_geometry = geometry.netgen_geometry()
 
         if self.__input["Mesh"]["LoadMesh"]:

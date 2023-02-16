@@ -22,6 +22,7 @@ from ossdbs.point_analysis.fourier_analysis.full_spectrum import FullSpectrum
 from typing import List
 import numpy as np
 import ngsolve
+import netgen
 import h5py
 
 
@@ -38,7 +39,13 @@ class Controller:
 
     def mesh(self):
         electrodes = self.__create_electrodes()
-        geometry = BrainGeometry(self.region_of_interest(), electrodes)
+        encapsulating_d = self.__input['EncapsulatingLayer']['Thickness[mm]']
+        geometry = BrainGeometry(self.region_of_interest(),
+                                 electrodes,
+                                 encapsulating_d)
+        contacts = self.contacts()
+        edges = contacts.active() + contacts.floating()
+        geometry.edges_for_finer_meshing(edges)
         netgen_geometry = geometry.netgen_geometry()
 
         if self.__input["Mesh"]["LoadMesh"]:
@@ -46,11 +53,26 @@ class Controller:
             ngsolve_mesh = ngsolve.Mesh(filename=file_path)
             ngsolve_mesh.ngmesh.SetGeometry(netgen_geometry)
         else:
-            ngsolve_mesh = ngsolve.Mesh(ngmesh=netgen_geometry.GenerateMesh())
+            parameters = self.meshing_parameters()
+            ng_mesh = netgen_geometry.GenerateMesh(parameters)
+            ngsolve_mesh = ngsolve.Mesh(ngmesh=ng_mesh)
 
         order = self.__input["Mesh"]["MeshElementOrder"]
         complex_datatpye = self.__input['EQSMode']
         return Mesh(ngsolve_mesh, order, complex_datatpye)
+
+    def meshing_parameters(self) -> netgen.meshing.MeshingParameters:
+        mesh_type = self.__input['Mesh']['MeshingHypothesis']['Type']
+        max_h = self.__input['Mesh']['MeshingHypothesis']['MaxH']
+        return {'Coarse': netgen.meshing.meshsize.coarse,
+                'Fine': netgen.meshing.meshsize.fine,
+                'Moderate': netgen.meshing.meshsize.moderate,
+                'VeryCoarse': netgen.meshing.meshsize.very_coarse,
+                'VeryFine': netgen.meshing.meshsize.very_fine,
+                'Default': netgen.meshing.MeshingParameters(),
+                'Custom': netgen.meshing.MeshingParameters(max_h=max_h)
+                }[mesh_type]
+
 
     def conductivity(self) -> Conductivity:
         """Return the conductivity.
@@ -69,7 +91,7 @@ class Controller:
         mri = MagneticResonanceImage(mri_path, mri_coding)
         return Conductivity(mri=mri, complex_datatype=self.__input['EQSMode'])
 
-    def contacts(self) -> List[ElectrodeContact]:
+    def contacts(self) -> ContactCollection:
 
         contacts = ContactCollection()
         for index, electrode in enumerate(self.__input['Electrodes']):

@@ -76,14 +76,38 @@ class BostonScientificVercise(Electrode):
                                       r=self.LEAD_DIAMETER * 0.5,
                                       h=self.CONTACT_LENGTH)
 
-        length = (self.CONTACT_LENGTH + self.CONTACT_SPACING)
-        n_contacts = 8
-        distrances = np.arange(n_contacts) * length + self.TIP_LENGTH
-        contacts = [contact.Move(tuple(np.array(self.__direction) * distance))
-                    for distance in distrances]
+        distance_1 = self.TIP_LENGTH
+        distance_2 = distance_1 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+        distance_3 = distance_2 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+        distance_4 = distance_3 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+        distance_5 = distance_4 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+        distance_6 = distance_5 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+        distance_7 = distance_6 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+        distance_8 = distance_7 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+
+        vector_1 = tuple(np.array(self.__direction) * distance_1)
+        vector_2 = tuple(np.array(self.__direction) * distance_2)
+        vector_3 = tuple(np.array(self.__direction) * distance_3)
+        vector_4 = tuple(np.array(self.__direction) * distance_4)
+        vector_5 = tuple(np.array(self.__direction) * distance_5)
+        vector_6 = tuple(np.array(self.__direction) * distance_6)
+        vector_7 = tuple(np.array(self.__direction) * distance_7)
+        vector_8 = tuple(np.array(self.__direction) * distance_8)
+
+        contacts = [contact.Move(vector_1),
+                    contact.Move(vector_2),
+                    contact.Move(vector_3),
+                    contact.Move(vector_4),
+                    contact.Move(vector_5),
+                    contact.Move(vector_6),
+                    contact.Move(vector_7),
+                    contact.Move(vector_8)]
 
         for index, contact in enumerate(contacts, 1):
             contact.bc(self.__boundaries['Contact_{}'.format(index)])
+
+            for edge in contact.edges:
+                edge.name = self.__boundaries['Contact_{}'.format(index)]
 
         return netgen.occ.Glue(contacts)
 

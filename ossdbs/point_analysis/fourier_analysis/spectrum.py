@@ -7,10 +7,10 @@ import h5py
 
 @dataclass
 class TimeResult:
-    points: np.ndarray[float]
-    time_steps: np.ndarray[float]
-    potential: np.ndarray[float]
-    current_density: np.ndarray[float]
+    points: np.ndarray
+    time_steps: np.ndarray
+    potential: np.ndarray
+    current_density: np.ndarray
 
     def save(self, path: str) -> None:
         with h5py.File(path, "w") as file:

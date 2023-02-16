@@ -24,7 +24,7 @@ class AbbottStjudeDirected6173(Electrode):
     CONTACT_LENGTH = 1.5e-3
     CONTACT_SPACING = 1.5e-3
     LEAD_DIAMETER = 1.3e-3
-    TOTAL_LENGTH = 20.0e-3
+    TOTAL_LENGTH = 100.0e-3
     CONTACT_SPACING_RADIAL = 0.25e-3
 
     def __init__(self,
@@ -78,12 +78,12 @@ class AbbottStjudeDirected6173(Electrode):
 
         axis = netgen.occ.Axis(p=(0, 0, 0), d=self.__direction)
 
-        distance = self.CONTACT_LENGTH + self.CONTACT_SPACING
-        distance_2 = self.TIP_LENGTH + distance
-        distance_3 = self.TIP_LENGTH + 2 * distance
-        distance_4 = self.TIP_LENGTH + 3 * distance
+        distance_1 = self.TIP_LENGTH
+        distance_2 = distance_1 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+        distance_3 = distance_2 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+        distance_4 = distance_3 + self.CONTACT_LENGTH + self.CONTACT_SPACING
 
-        vector_1 = tuple(np.array(self.__direction) * self.TIP_LENGTH)
+        vector_1 = tuple(np.array(self.__direction) * distance_1)
         vector_2 = tuple(np.array(self.__direction) * distance_2)
         vector_3 = tuple(np.array(self.__direction) * distance_3)
         vector_4 = tuple(np.array(self.__direction) * distance_4)
@@ -107,6 +107,9 @@ class AbbottStjudeDirected6173(Electrode):
 
         for index, contact in enumerate(contacts, 1):
             contact.bc(self.__boundaries['Contact_{}'.format(index)])
+
+            for edge in contact.edges:
+                edge.name = self.__boundaries['Contact_{}'.format(index)]
 
         return netgen.occ.Fuse(contacts)
 
@@ -143,7 +146,7 @@ class AbbottStjudeDirected6173(Electrode):
         lead = netgen.occ.Cylinder(p=center,
                                    d=self.__direction,
                                    r=radius + thickness,
-                                   h=self.TOTAL_LENGHTH - self.TIP_LENGTH)
+                                   h=self.TOTAL_LENGTH - self.TIP_LENGTH)
         tip = netgen.occ.Sphere(c=center, r=radius + thickness,)
         capsule = tip + lead
         capsule.bc('Capsule')

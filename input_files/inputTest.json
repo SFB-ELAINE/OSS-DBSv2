@@ -17,7 +17,7 @@
           "Voltage[V]": 1.0,
           "Floating": false,
           "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
-        }, 
+        },
         {
           "Contact_ID": 8,
           "Active": true,
@@ -29,6 +29,10 @@
       ]
     }
   ],
+  "EncapsulatingLayer": {
+    "Thickness[mm]": 0.0,
+    "Material": "Blood"
+  },
   "EQSMode": false,
   "Floating": {
     "Active": false,
@@ -47,7 +51,10 @@
     "LoadMesh": false,
     "LoadPath": "./input_files/mesh.vol",
     "MeshElementOrder": 2,
-    "MeshRefinement": "",
+    "MeshingHypothesis": {
+      "Type": "Default",
+      "MaxH": 0.0
+    },
     "SavePath": ""
   },
   "OutputPath": "test_result",
