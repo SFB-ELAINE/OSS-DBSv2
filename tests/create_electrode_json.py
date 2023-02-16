@@ -2,6 +2,7 @@
 from ossdbs.electrodes import AbbottStjudeActiveTip6142_6145
 from ossdbs.electrodes import AbbottStjudeActiveTip6146_6149
 from ossdbs.electrodes import AbbottStjudeDirected6172
+from ossdbs.electrodes import AbbottStjudeDirected6173
 from ossdbs.electrodes import BostonScientificVercise
 from ossdbs.electrodes import BostonScientificVerciseDirected
 from ossdbs.electrodes import Medtronic3387, Medtronic3389, Medtronic3391
@@ -21,6 +22,8 @@ ELECTRODES = {'AbbottStjudeActiveTip6142_6145':
               AbbottStjudeActiveTip6146_6149,
               'AbbottStjudeDirected6172':
               AbbottStjudeDirected6172,
+              'AbbottStjudeDirected6173':
+              AbbottStjudeDirected6173,
               'BostonScientificVercise':
               BostonScientificVercise,
               'BostonScientificVerciseDirected':
@@ -57,14 +60,26 @@ def create_json(electrode_parameters, electrode_type, path):
 
 def draw_electrode():
 
-    electrode = BostonScientificVerciseDirected()
+    electrode = PINSMedicalL303()
 
     electrode_geo = electrode.generate_geometry()
+    capsule = electrode.encapsulating_geometry(0.0001)
+
+    box = netgen.occ.Box((-0.005, -0.005, -0.005,), (0.005, 0.005, 0.005))
+
+    cut = capsule - box
+    geometry = netgen.occ.Glue([box - capsule, capsule - electrode_geo - cut]) 
+
+    print(set([edge.name for edge in geometry.edges]))
+   # geometry = geometry - geometry + box
+
     geometry = electrode_geo
+
 
     with ngsolve.TaskManager():
         mesh = ngsolve.Mesh(netgen.occ.OCCGeometry(geometry).GenerateMesh())
 
+    print(set(mesh.GetBoundaries()))
     bnd_dict = {"Contact_{}".format(i): i for i in range(1, 9)}
     bnd_dict.update({"Capsule": 9})
     bndcf = mesh.BoundaryCF(bnd_dict, default=-1)

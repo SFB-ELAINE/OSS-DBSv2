@@ -108,6 +108,12 @@ class MicroProbesSNEX_100(Electrode):
         inner_contact.bc(self.__boundaries['Contact_1'])
         outer_contact.bc(self.__boundaries['Contact_2'])
 
+        for edge in inner_contact.edges:
+            edge.name = self.__boundaries['Contact_1']
+
+        for edge in outer_contact.edges:
+            edge.name = self.__boundaries['Contact_2']
+
         return netgen.occ.Glue([inner_contact, outer_contact])
 
     def encapsulating_geometry(self, thickness: float) \

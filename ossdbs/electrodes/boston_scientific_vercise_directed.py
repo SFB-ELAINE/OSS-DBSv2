@@ -19,11 +19,11 @@ class BostonScientificVerciseDirected(Electrode):
         Translation vector (x,y,z) of electrode.
     """
     # dimensions [m]
-    TIP_LENGTH = 1.1e-3
+    TIP_LENGTH = 1.5e-3
     CONTACT_LENGTH = 1.5e-3
     CONTACT_SPACING = 0.5e-3
     LEAD_DIAMETER = 1.3e-3
-    TOTAL_LENGHTH = 50.0e-3
+    TOTAL_LENGHTH = 100.0e-3
     CONTACT_SPACING_RADIAL = 0.25e-3
 
     def __init__(self,
@@ -100,6 +100,8 @@ class BostonScientificVerciseDirected(Electrode):
 
         for index, contact in enumerate(contacts, 1):
             contact.bc(self.__boundaries['Contact_{}'.format(index)])
+            for edge in contact.edges:
+                edge.name = self.__boundaries['Contact_{}'.format(index)]
 
         return netgen.occ.Fuse(contacts)
 

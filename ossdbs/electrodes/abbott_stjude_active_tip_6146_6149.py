@@ -67,29 +67,39 @@ class AbbottStjudeActiveTip6146_6149(Electrode):
     def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self.LEAD_DIAMETER * 0.5
         center = tuple(np.array(self.__direction) * radius)
-        tip = netgen.occ.Sphere(c=center, r=radius)
-        contact_1 = netgen.occ.Cylinder(p=center,
-                                        d=self.__direction,
-                                        r=radius,
-                                        h=self.TIP_LENGTH + radius)
-        active_tip = tip + contact_1
+        contact_1_tip = netgen.occ.Sphere(c=center, r=radius)
+        contact_1_pt2 = netgen.occ.Cylinder(p=center,
+                                            d=self.__direction,
+                                            r=radius,
+                                            h=self.TIP_LENGTH - radius)
+        contact_1 = contact_1_tip + contact_1_pt2
 
         contact = netgen.occ.Cylinder(p=(0, 0, 0),
                                       d=self.__direction,
                                       r=radius,
                                       h=self.CONTACT_LENGTH)
-        length = (self.CONTACT_LENGTH + self.CONTACT_SPACING)
-        offset = self.TIP_LENGTH + self.CONTACT_SPACING
-        n_contacts = 4
-        distrances = np.arange(1, n_contacts) * length + offset
-        contacts = [active_tip] + \
-                   [contact.Move(tuple(np.array(self.__direction) * distance))
-                    for distance in distrances]
+
+        distance_1 = self.TIP_LENGTH + self.CONTACT_SPACING
+        distance_2 = distance_1 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+        distance_3 = distance_2 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+
+        vector_1 = tuple(np.array(self.__direction) * distance_1)
+        vector_2 = tuple(np.array(self.__direction) * distance_2)
+        vector_3 = tuple(np.array(self.__direction) * distance_3)
+
+        contact_2 = contact.Move(vector_1)
+        contact_3 = contact.Move(vector_2)
+        contact_4 = contact.Move(vector_3)
+
+        contacts = [contact_1, contact_2, contact_3, contact_4]
 
         for index, contact in enumerate(contacts, 1):
             contact.bc(self.__boundaries['Contact_{}'.format(index)])
 
-        return netgen.occ.Fuse(contacts)
+            for edge in contact.edges:
+                edge.name = self.__boundaries['Contact_{}'.format(index)]
+
+        return netgen.occ.Glue(contacts)
 
     def encapsulating_geometry(self, thickness: float) \
             -> netgen.libngpy._NgOCC.TopoDS_Shape:

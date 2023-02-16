@@ -72,14 +72,26 @@ class Medtronic3391(Electrode):
                                       r=self.LEAD_DIAMETER * 0.5,
                                       h=self.CONTACT_LENGTH)
 
-        length = (self.CONTACT_LENGTH + self.CONTACT_SPACING)
-        n_contacts = 4
-        distrances = np.arange(n_contacts) * length + self.TIP_LENGTH
-        contacts = [contact.Move(tuple(np.array(self.__direction) * distance))
-                    for distance in distrances]
+        distance_1 = self.TIP_LENGTH
+        distance_2 = distance_1 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+        distance_3 = distance_2 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+        distance_4 = distance_3 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+
+        vector_1 = tuple(np.array(self.__direction) * distance_1)
+        vector_2 = tuple(np.array(self.__direction) * distance_2)
+        vector_3 = tuple(np.array(self.__direction) * distance_3)
+        vector_4 = tuple(np.array(self.__direction) * distance_4)
+
+        contacts = [contact.Move(vector_1),
+                    contact.Move(vector_2),
+                    contact.Move(vector_3),
+                    contact.Move(vector_4)]
 
         for index, contact in enumerate(contacts, 1):
             contact.bc(self.__boundaries['Contact_{}'.format(index)])
+
+            for edge in contact.edges:
+                edge.name = self.__boundaries['Contact_{}'.format(index)]
 
         return netgen.occ.Glue(contacts)
 

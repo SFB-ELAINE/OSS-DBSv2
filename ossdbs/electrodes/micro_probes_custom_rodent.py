@@ -79,6 +79,8 @@ class MicroProbesCustomRodent(Electrode):
         else:
             contact = tip + lead
         contact.bc(self.__boundaries['Contact_1'])
+        for edge in contact.edges:
+            edge.name = self.__boundaries['Contact_1']
         return contact
 
     def encapsulating_geometry(self, thickness: float) \

@@ -12,10 +12,18 @@ class BrainGeometry:
     region : Region
         Location in 3D space of the geometry
     """
-    def __init__(self, region: BoundingBox, electrodes: List[Electrode])\
-            -> None:
+    def __init__(self,
+                 region: BoundingBox,
+                 electrodes: List[Electrode],
+                 encapsulating_thickness: float,
+                 ) -> None:
         self.__region = region
         self.__electrodes = electrodes
+        self.__encapsulating_thickness = encapsulating_thickness
+        self.__edges = []
+
+    def edges_for_finer_meshing(self, edges: List[str]) -> None:
+        self.__edges = edges
 
     def netgen_geometry(self) -> netgen.libngpy._NgOCC.OCCGeometry:
         """Create a netgen geometry of this brain model.
@@ -25,18 +33,26 @@ class BrainGeometry:
         netgen.libngpy._NgOCC.OCCGeometry
         """
 
-        geometry = self.__create_ellipsoid()
+        body = self.__create_ellipsoid()
+        geometry = body
         #  geometry = self.__create_box()
         geometry.bc('BrainSurface')
-        for electrode in self.__electrodes:
-            geometry = geometry - electrode.generate_geometry()
+        thickness = self.__encapsulating_thickness
+
+        if not thickness:
+            for electrode in self.__electrodes:
+                geometry = geometry - electrode.generate_geometry()
+            self.__set_maxh_edges(geometry)
+            return netgen.occ.OCCGeometry(geometry)
 
         for electrode in self.__electrodes:
-            capsule_geo = electrode.encapsulating_geometry(thickness=0.0001)
+            capsule_geo = electrode.encapsulating_geometry(thickness)
             electrode_geo = electrode.generate_geometry()
+            cut = capsule_geo - body
             geometry = netgen.occ.Glue([geometry - capsule_geo,
-                                        capsule_geo - electrode_geo])
+                                        capsule_geo - electrode_geo - cut])
 
+        self.__set_maxh_edges(geometry)
         return netgen.occ.OCCGeometry(geometry)
 
     def __create_ellipsoid(self) -> netgen.libngpy._NgOCC.Solid:
@@ -47,3 +63,8 @@ class BrainGeometry:
 
     def __create_box(self) -> netgen.libngpy._NgOCC.Solid:
         return netgen.occ.Box(self.__region.start, self.__region.end)
+
+    def __set_maxh_edges(self, geometry: netgen.libngpy._NgOCC.Solid) -> None:
+        for edge in geometry.edges:
+            if edge.name in self.__edges:
+                edge.maxh = 0.0005
