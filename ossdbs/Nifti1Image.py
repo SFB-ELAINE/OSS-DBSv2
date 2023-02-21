@@ -44,7 +44,7 @@ class Nifti1Image:
 
     def __scaling(self) -> float:
         xyz_unit = self._image.header.get_xyzt_units()[0]
-        return {'unknown': 1e-3,
-                'meter': 1.0,
-                'mm': 1e-3,
-                'micron': 1e-6}[xyz_unit]
+        return {'unknown': 1.0,
+                'meter': 1.0e3,
+                'mm': 1.0,
+                'micron': 1.0e-3}[xyz_unit]

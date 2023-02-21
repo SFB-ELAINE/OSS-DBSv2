@@ -1,6 +1,7 @@
 # Boston Scientific (Marlborough, Massachusetts, USA) vercise
 from ossdbs.electrodes.electrode import Electrode
 import netgen
+import netgen.occ as occ
 import numpy as np
 
 
@@ -19,12 +20,12 @@ class BostonScientificVercise(Electrode):
         Translation vector (x,y,z) of electrode.
     """
 
-    # dimensions [m]
-    TIP_LENGTH = 1.1e-3
-    CONTACT_LENGTH = 1.5e-3
-    CONTACT_SPACING = 0.5e-3
-    LEAD_DIAMETER = 1.3e-3
-    TOTAL_LENGHTH = 100.0e-3
+    # dimensions [mm]
+    TIP_LENGTH = 1.1
+    CONTACT_LENGTH = 1.5
+    CONTACT_SPACING = 0.5
+    LEAD_DIAMETER = 1.3
+    TOTAL_LENGHTH = 100.0
 
     def __init__(self,
                  rotation: float = 0.0,
@@ -46,7 +47,7 @@ class BostonScientificVercise(Electrode):
     def rename_boundaries(self, boundaries: dict) -> None:
         self.__boundaries.update(boundaries)
 
-    def generate_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of electrode.
 
         Returns
@@ -54,27 +55,24 @@ class BostonScientificVercise(Electrode):
         geometry : netgen.libngpy._NgOCC.TopoDS_Shape
         """
         contacts = self.__contacts()
-        body = self.__body() - contacts
-        electrode = netgen.occ.Glue([body, contacts])
+        electrode = netgen.occ.Glue([self.__body() - contacts, contacts])
         return electrode.Move(self.__position)
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self.LEAD_DIAMETER * 0.5
         center = tuple(np.array(self.__direction) * radius)
-        tip = netgen.occ.Sphere(c=center, r=radius)
-        lead = netgen.occ.Cylinder(p=center,
-                                   d=self.__direction,
-                                   r=radius,
-                                   h=self.TOTAL_LENGHTH - self.TIP_LENGTH)
+        tip = occ.Sphere(c=center, r=radius)
+        height = self.TOTAL_LENGHTH - self.TIP_LENGTH
+        lead = occ.Cylinder(p=center, d=self.__direction, r=radius, h=height)
         body = tip + lead
         body.bc(self.__boundaries['Body'])
         return body
 
     def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        contact = netgen.occ.Cylinder(p=(0, 0, 0),
-                                      d=self.__direction,
-                                      r=self.LEAD_DIAMETER * 0.5,
-                                      h=self.CONTACT_LENGTH)
+        point = (0, 0, 0)
+        radius = self.LEAD_DIAMETER * 0.5
+        height = self.CONTACT_LENGTH
+        contact = occ.Cylinder(p=point, d=self.__direction, r=radius, h=height)
 
         distance_1 = self.TIP_LENGTH
         distance_2 = distance_1 + self.CONTACT_LENGTH + self.CONTACT_SPACING
@@ -94,34 +92,32 @@ class BostonScientificVercise(Electrode):
         vector_7 = tuple(np.array(self.__direction) * distance_7)
         vector_8 = tuple(np.array(self.__direction) * distance_8)
 
-        contacts = [contact.Move(vector_1),
-                    contact.Move(vector_2),
-                    contact.Move(vector_3),
-                    contact.Move(vector_4),
-                    contact.Move(vector_5),
-                    contact.Move(vector_6),
-                    contact.Move(vector_7),
-                    contact.Move(vector_8)]
+        contacts = [contact.Move(v=vector_1),
+                    contact.Move(v=vector_2),
+                    contact.Move(v=vector_3),
+                    contact.Move(v=vector_4),
+                    contact.Move(v=vector_5),
+                    contact.Move(v=vector_6),
+                    contact.Move(v=vector_7),
+                    contact.Move(v=vector_8)]
 
         for index, contact in enumerate(contacts, 1):
-            contact.bc(self.__boundaries['Contact_{}'.format(index)])
-
+            name = self.__boundaries['Contact_{}'.format(index)]
+            contact.bc(name)
             for edge in contact.edges:
-                edge.name = self.__boundaries['Contact_{}'.format(index)]
+                edge.name = name
 
         return netgen.occ.Glue(contacts)
 
-    def encapsulating_geometry(self, thickness: float) \
+    def capsule_geometry(self, thickness: float, max_h: float = 0.1) \
             -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        radius = self.LEAD_DIAMETER * 0.5
-        center = tuple(np.array(self.__direction) * radius)
-        lead = netgen.occ.Cylinder(p=center,
-                                   d=self.__direction,
-                                   r=radius + thickness,
-                                   h=self.TOTAL_LENGHTH - self.TIP_LENGTH)
-        tip = netgen.occ.Sphere(c=center, r=radius + thickness,)
+        radius = self.LEAD_DIAMETER * 0.5 + thickness
+        height = self.TOTAL_LENGHTH - self.TIP_LENGTH
+        center = tuple(np.array(self.__direction) * self.LEAD_DIAMETER * 0.5)
+        tip = occ.Sphere(c=center, r=radius)
+        lead = occ.Cylinder(p=center, d=self.__direction, r=radius, h=height)
         capsule = tip + lead
         capsule.bc('Capsule')
         capsule.mat('Capsule')
-        capsule.maxh = 0.0001
+        capsule.maxh = max_h
         return capsule.Move(self.__position)

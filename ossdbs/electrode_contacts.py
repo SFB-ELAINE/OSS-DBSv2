@@ -16,9 +16,14 @@ class ElectrodeContact:
 class ContactCollection:
 
     def __init__(self, contacts: list = None) -> None:
+        for contact in contacts:
+            if contact.active:
+                contact.floating = False
         self.__contacts = contacts if contacts else []
 
     def append(self, contact: ElectrodeContact) -> None:
+        if contact.active:
+            contact.floating = False
         self.__contacts.append(contact)
 
     def floating(self) -> List[str]:

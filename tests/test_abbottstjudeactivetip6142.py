@@ -39,7 +39,7 @@ class TestAbbottStJudeActiveTip6142_6145():
         electrode = AbbottStjudeActiveTip6142_6145(rotation,
                                                    direction,
                                                    position)
-        GeometryConverter(electrode.generate_geometry()).to_json(path)
+        GeometryConverter(electrode.geometry()).to_json(path)
 
     @pytest.mark.parametrize('electrode_parameters, path', TESTDATA)
     def test_generate_geometry(self, electrode_parameters, path) -> None:
@@ -47,13 +47,13 @@ class TestAbbottStJudeActiveTip6142_6145():
         electrode = AbbottStjudeActiveTip6142_6145(rotation,
                                                    direction,
                                                    position)
-        geometry = electrode.generate_geometry()
+        geometry = electrode.geometry()
         desired = self.load_geometry_data(path=path)
         assert desired == self.geometry_to_dictionary(geometry)
 
     def test_generate_geometry_default(self):
         electrode = AbbottStjudeActiveTip6142_6145()
-        geometry = electrode.generate_geometry()
+        geometry = electrode.geometry()
         desired = self.load_geometry_data(path=self.FILE_PREFIX+'_0.json')
         assert desired == self.geometry_to_dictionary(geometry)
 
@@ -62,7 +62,7 @@ class TestAbbottStJudeActiveTip6142_6145():
         electrode.rename_boundaries({'Body': 'RenamedBody',
                                      'Contact_1': 'RenamedContact_1',
                                      'NonExistingPart': 'NonExistingPart'})
-        geometry = electrode.generate_geometry()
+        geometry = electrode.geometry()
         netgen_geometry = netgen.occ.OCCGeometry(geometry)
         mesh = ngsolve.Mesh(netgen_geometry.GenerateMesh())
         desired = set(['RenamedBody',

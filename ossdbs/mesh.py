@@ -1,6 +1,5 @@
 
 from typing import List
-from ossdbs.voxels import Voxels
 import ngsolve
 import numpy as np
 
@@ -61,40 +60,6 @@ class Mesh:
 
         return self.__mesh
 
-    def point_in_mesh(self, point: tuple) -> bool:
-        """Check if point lays in mesh.
-
-        Parameters
-        ----------
-        point : tuple
-            Represents the coordinates x, y, z of 3D point.
-
-        Returns
-        -------
-        bool
-            True if point is inside mesh, False otherwise.
-        """
-        x, y, z = point
-        return self.__mesh(x=x, y=y, z=z).nr != -1
-
-    def included_points(self, points: np.ndarray) -> np.ndarray:
-        """Check if point lays in mesh.
-
-        Parameters
-        ----------
-        points : np.ndarray
-            Collection of 3D point coordinates (x, y, z).
-
-        Returns
-        -------
-        np.ndarray
-            Collection of bool values:
-            True if point is inside mesh, False otherwise.
-        """
-        x, y, z = points.T
-        mips = self.__mesh(x, y, z)
-        return points[np.array([mip[5] != -1 for mip in mips])]
-
     def is_included(self, points: np.ndarray) -> np.ndarray:
         x, y, z = points.T
         mips = self.__mesh(x, y, z)
@@ -145,7 +110,10 @@ class Mesh:
                                    order=0,
                                    complex=self.__complex)
 
-    def refine_at_voxel(self, marked_voxels: Voxels) -> None:
+    def refine_at_voxel(self,
+                        start: tuple,
+                        end: tuple,
+                        data: np.ndarray) -> None:
         """Refine the mesh at the marked locations.
 
         Parameters
@@ -157,10 +125,9 @@ class Mesh:
 
         space = ngsolve.L2(self.__mesh, order=0)
         grid_function = ngsolve.GridFunction(space=space)
-        values = marked_voxels.data
-        cf = ngsolve.VoxelCoefficient(start=marked_voxels.start,
-                                      end=marked_voxels.end,
-                                      values=values.astype(float),
+        cf = ngsolve.VoxelCoefficient(start=start,
+                                      end=end,
+                                      values=data.astype(float),
                                       linear=False)
         grid_function.Set(cf)
         flags = grid_function.vec.FV().NumPy()

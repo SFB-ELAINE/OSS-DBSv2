@@ -30,10 +30,7 @@ class OctaveBandMode(SpectrumMode):
         samples = signal.generate_samples(sample_spacing)
         complex_values = np.fft.rfft(samples)
         frequencies = np.fft.rfftfreq(len(samples), sample_spacing)
-        n_octaves = int(np.log2(len(frequencies) - 1)) + 1
-        octave_indices = 2 ** np.arange(0, n_octaves)
-        octave_frequencies = signal.frequency * octave_indices
-        octave_bands = [self.OctaveBand(freq) for freq in octave_frequencies]
+        octave_bands = self.octave_bands(signal, len(frequencies))
 
         ng_mesh = volume_conductor.mesh.ngsolvemesh()
         included_index = volume_conductor.mesh.is_included(points)
@@ -82,6 +79,12 @@ class OctaveBandMode(SpectrumMode):
                           potential=potentials_t,
                           current_density=current_densitys_t,
                           time_steps=time_steps)
+
+    def octave_bands(self, signal, n_frequencies):
+        n_octaves = int(np.log2(n_frequencies - 1)) + 1
+        octave_indices = 2 ** np.arange(0, n_octaves)
+        octave_frequencies = signal.frequency * octave_indices
+        return [self.OctaveBand(freq) for freq in octave_frequencies]
 
     def __ifft(self, fft_spectrum: np.ndarray) -> np.ndarray:
         time_signals = []

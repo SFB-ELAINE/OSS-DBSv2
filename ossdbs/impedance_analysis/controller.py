@@ -1,9 +1,10 @@
+from ossdbs.Nifti1Image import Nifti1Image
 from ossdbs.electrode_contacts import ElectrodeContact, ContactCollection
 from ossdbs.brain_geometry import BrainGeometry
-from ossdbs.brain_imaging.mri import MagneticResonanceImage
 from ossdbs.materials import Material
 from ossdbs.conductivity import Conductivity
-from ossdbs.electrodes import Electrode, ElectrodeParameters, ElectrodeFactory
+from ossdbs.electrodes import Electrode
+from ossdbs.electrode_creation import ElectrodeFactory
 from ossdbs.mesh import Mesh
 from ossdbs.preconditioner import BDDCPreconditioner, LocalPreconditioner
 from ossdbs.preconditioner import MultigridPreconditioner
@@ -13,6 +14,7 @@ from ossdbs.solver import CGSolver, GMRESSolver
 from typing import List
 import numpy as np
 import ngsolve
+import netgen
 from ossdbs.volume_conductor import VolumeConductor
 from ossdbs.volume_conductor import VolumeConductorFloating
 from ossdbs.volume_conductor import VolumeConductorFloatingImpedance
@@ -42,6 +44,7 @@ class Controller:
         contacts = self.contacts()
         edges = contacts.active() + contacts.floating()
         geometry.edges_for_finer_meshing(edges)
+        # geometry.set_edge_max_h()
         netgen_geometry = geometry.netgen_geometry()
 
         if self.__input["Mesh"]["LoadMesh"]:
@@ -49,11 +52,25 @@ class Controller:
             ngsolve_mesh = ngsolve.Mesh(filename=file_path)
             ngsolve_mesh.ngmesh.SetGeometry(netgen_geometry)
         else:
-            ngsolve_mesh = ngsolve.Mesh(ngmesh=netgen_geometry.GenerateMesh())
+            parameters = self.__meshing_parameters()
+            ng_mesh = netgen_geometry.GenerateMesh(parameters)
+            ngsolve_mesh = ngsolve.Mesh(ngmesh=ng_mesh)
 
         order = self.__input["Mesh"]["MeshElementOrder"]
         complex_datatpye = self.__input['EQSMode']
         return Mesh(ngsolve_mesh, order, complex_datatpye)
+
+    def __meshing_parameters(self) -> netgen.meshing.MeshingParameters:
+        mesh_type = self.__input['Mesh']['MeshingHypothesis']['Type']
+        max_h = self.__input['Mesh']['MeshingHypothesis']['MaxH']
+        return {'Coarse': netgen.meshing.meshsize.coarse,
+                'Fine': netgen.meshing.meshsize.fine,
+                'Moderate': netgen.meshing.meshsize.moderate,
+                'VeryCoarse': netgen.meshing.meshsize.very_coarse,
+                'VeryFine': netgen.meshing.meshsize.very_fine,
+                'Default': netgen.meshing.MeshingParameters(),
+                'Custom': netgen.meshing.MeshingParameters(max_h=max_h)
+                }[mesh_type]
 
     def conductivity(self) -> Conductivity:
         """Return the conductivity.
@@ -63,14 +80,33 @@ class Controller:
         Conductivity
             Conductivity distribution in a given space.
         """
-        coding = self.__input['MaterialDistribution']['MaterialCoding']
-        mri_coding = {Material.GRAY_MATTER: coding['GrayMatter'],
-                      Material.WHITE_MATTER: coding['WhiteMatter'],
-                      Material.CSF: coding['CerebrospinalFluid'],
-                      Material.UNKNOWN: coding['Unknown']}
         mri_path = self.__input['MaterialDistribution']['MRIPath']
-        mri = MagneticResonanceImage(mri_path, mri_coding)
-        return Conductivity(mri=mri, complex_datatype=self.__input['EQSMode'])
+
+        nifti = Nifti1Image(file_path=mri_path)
+        voxel_size = nifti.voxel_size()
+        offset = nifti.offset()
+
+        region = self.region_of_interest()
+        start_indices = (np.array(region.start) - offset) / voxel_size
+        stop_indices = (np.array(region.end) - offset) / voxel_size
+
+        x_s, y_s, z_s = np.floor(start_indices).astype(int)
+        x_e, y_e, z_e = np.ceil(stop_indices).astype(int)
+
+        data = nifti.data_map()[x_s:x_e, y_s:y_e, z_s:z_e]
+        bbox = (tuple(np.array((x_s, y_s, z_s)) * voxel_size + offset),
+                tuple(np.array((x_e, y_e, z_e)) * voxel_size + offset))
+
+        encap_points = self.points_in_encapsulating_layer(voxel_size, bbox)
+        point_indices = (encap_points - bbox[0]) / voxel_size
+
+        for index in point_indices:
+            x, y, z = index.astype(int)
+            data[x, y, z] = Material(1)
+
+        return Conductivity(material_distribution=data,
+                            bounding_box=bbox,
+                            complex_datatype=self.__input['EQSMode'])
 
     def contacts(self) -> List[ElectrodeContact]:
         contacts = ContactCollection()
@@ -129,12 +165,10 @@ class Controller:
         -------
         Region
         """
-        size = (self.__input['RegionOfInterest']['Shape']['x[mm]'] * 1e-3,
-                self.__input['RegionOfInterest']['Shape']['y[mm]'] * 1e-3,
-                self.__input['RegionOfInterest']['Shape']['z[mm]'] * 1e-3)
-        center = (self.__input['RegionOfInterest']['Center']['x[mm]'] * 1e-3,
-                  self.__input['RegionOfInterest']['Center']['y[mm]'] * 1e-3,
-                  self.__input['RegionOfInterest']['Center']['z[mm]'] * 1e-3)
+        shape = self.__input['RegionOfInterest']['Shape']
+        center = self.__input['RegionOfInterest']['Center']
+        size = (shape['x[mm]'], shape['y[mm]'], shape['z[mm]'])
+        center = (center['x[mm]'], center['y[mm]'], center['z[mm]'])
         start = center - np.divide(size, 2)
         end = start + size
         return BoundingBox(tuple(start), tuple(end))
@@ -167,19 +201,22 @@ class Controller:
 
         electrodes = []
         for input_par in self.__input['Electrodes']:
-            direction = (input_par['Direction']['x[mm]'] * 1e-3,
-                         input_par['Direction']['y[mm]'] * 1e-3,
-                         input_par['Direction']['z[mm]'] * 1e-3)
-            position = (input_par['TipPosition']['x[mm]'] * 1e-3,
-                        input_par['TipPosition']['y[mm]'] * 1e-3,
-                        input_par['TipPosition']['z[mm]'] * 1e-3)
+            dir = input_par['Direction']
+            pos = input_par['TipPosition']
+            direction = (dir['x[mm]'], dir['y[mm]'], dir['z[mm]'])
+            position = (pos['x[mm]'], pos['y[mm]'], pos['z[mm]'])
             rotation = input_par['Rotation[Degrees]']
-            electrode_par = ElectrodeParameters(name=input_par['Name'],
+            electrode = ElectrodeFactory.create(name=input_par['Name'],
                                                 direction=direction,
                                                 position=position,
                                                 rotation=rotation)
-            electrodes.append(ElectrodeFactory.create(electrode_par))
+            electrodes.append(electrode)
 
+        self.rename_boundaries(electrodes)
+
+        return electrodes
+
+    def rename_boundaries(self, electrodes):
         for index, electrode in enumerate(electrodes):
             boundary_names = {'Contact_1': "E{}C0".format(index),
                               'Contact_2': "E{}C1".format(index),
@@ -191,8 +228,6 @@ class Controller:
                               'Contact_8': "E{}C7".format(index),
                               'Body': 'E{}B'.format(index)}
             electrode.rename_boundaries(boundary_names)
-
-        return electrodes
 
     def solver(self):
         solver_type = self.__input['Solver']['Type']
@@ -208,3 +243,38 @@ class Controller:
                       printrates=self.__input['Solver']['PrintRates'],
                       maxsteps=self.__input['Solver']['MaximumSteps'],
                       precision=self.__input['Solver']['Precision'])
+
+    def points_in_encapsulating_layer(self, voxel_size, bounding_box) -> np.ndarray:
+
+        start_limit, end_limit = bounding_box
+        electrodes = self.__create_electrodes()
+
+        points = []
+
+        for electrode in electrodes:
+
+            geo = electrode.capsule_geometry(thickness=0.1)
+            start, end = geo.bounding_box
+            start = np.max([start_limit, tuple(start)], axis=0)
+            end = np.min([end_limit, tuple(end)], axis=0)
+            start = (start // voxel_size) * voxel_size
+            end = ((end // voxel_size) + (end % voxel_size > 0)) * voxel_size
+
+            x_values = np.arange(start[0], end[0], voxel_size[0])
+            y_values = np.arange(start[1], end[1], voxel_size[1])
+            z_values = np.arange(start[2], end[2], voxel_size[2])
+
+            points.append(np.array([(x, y, z)
+                                    for x in x_values
+                                    for y in y_values
+                                    for z in z_values]))
+
+        points = np.concatenate(points)
+        netgen_geometry = netgen.occ.OCCGeometry(geo)
+        ng_mesh = netgen_geometry.GenerateMesh()
+        ngsolve_mesh = ngsolve.Mesh(ngmesh=ng_mesh)
+        mesh = Mesh(ngsolve_mesh=ngsolve_mesh, order=2)
+        included = mesh.is_included(points)
+
+        return points[included]
+

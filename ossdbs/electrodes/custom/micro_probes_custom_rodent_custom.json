@@ -1,6 +1,6 @@
 {
-    "ContactLength[m]": 0.0001125,
-    "LeadDiameter[m]": 0.000225,
-    "LeadLength[m]": 0.0133,
-    "TubeThickness[m]": 0.00001
+    "ContactLength[mm]": 0.1125,
+    "LeadDiameter[mm]": 0.225,
+    "LeadLength[mm]": 13.3,
+    "TubeThickness[mm]": 0.01
 }

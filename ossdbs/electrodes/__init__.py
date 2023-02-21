@@ -19,25 +19,15 @@ from ossdbs.electrodes.pins_medical_L303 import PINSMedicalL303
 from ossdbs.electrodes.micro_probes_custom_rodent \
     import MicroProbesCustomRodent
 from ossdbs.electrodes.micro_probes_SNEX100 import MicroProbesSNEX_100
-from ossdbs.electrodes.electrode_creation import ElectrodeParameters
-from ossdbs.electrodes.electrode_creation import ElectrodeFactory
 
-from ossdbs.electrodes.custom.abbott_stjude_active_tip_custom \
-    import AbbottStjudeActiveCustom
-from ossdbs.electrodes.custom.abbott_stjude_directed_custom \
-    import AbbottStjudeDirectedCustom
-from ossdbs.electrodes.custom.boston_scientific_vercise_custom \
-    import BostonScientificVerciseCustom
-from ossdbs.electrodes.custom.boston_scientific_vercise_directed_custom \
-    import BostonScientificVerciseDirectedCustom
-from ossdbs.electrodes.custom.medtronic_custom \
-    import MedtronicCustom
-from ossdbs.electrodes.custom.micro_probes_custom_rodent_custom \
-    import MicroProbesCustomRodentCustom
-from ossdbs.electrodes.custom.micro_probes_SNEX100_custom \
-    import MicroProbesSNEX_100Custom
-from ossdbs.electrodes.custom.pins_medical_custom \
-    import PINSMedicalCustom
+from ossdbs.electrodes.custom import AbbottStjudeActiveCustom
+from ossdbs.electrodes.custom import AbbottStjudeDirectedCustom
+from ossdbs.electrodes.custom import BostonScientificVerciseCustom
+from ossdbs.electrodes.custom import BostonScientificVerciseDirectedCustom
+from ossdbs.electrodes.custom import MedtronicCustom
+from ossdbs.electrodes.custom import MicroProbesCustomRodentCustom
+from ossdbs.electrodes.custom import MicroProbesSNEX_100Custom
+from ossdbs.electrodes.custom import PINSMedicalCustom
 
 __all__ = ('Electrode',
            'AbbottStjudeActiveTip6142_6145',
@@ -54,8 +44,6 @@ __all__ = ('Electrode',
            'PINSMedicalL302',
            'PINSMedicalL303',
            'MicroProbesCustomRodent',
-           'ElectrodeFactory',
-           'ElectrodeParameters',
            'AbbottStjudeActiveCustom',
            'AbbottStjudeDirectedCustom',
            'BostonScientificVerciseCustom',
