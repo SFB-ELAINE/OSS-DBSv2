@@ -30,7 +30,7 @@ class Electrode(ABC):
         pass
 
     @abstractmethod
-    def generate_geometry() -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def geometry() -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of electrode.
 
         Returns
@@ -53,10 +53,10 @@ class Electrode(ABC):
         pass
 
     @abstractmethod
-    def encapsulating_geometry(self, thickness: float) \
+    def capsule_geometry(self, thickness: float) \
             -> netgen.libngpy._NgOCC.TopoDS_Shape:
         pass
 
     def bounding_box(self):
-        start, end = self.generate_geometry().bounding_box
+        start, end = self.geometry().bounding_box
         return tuple(start), tuple(end)

@@ -28,23 +28,25 @@ class OctaveBandMode(SpectrumMode):
 
         n_frequencies = (self.SPACING_FACTOR // 2) + 1
         frequencies = signal.frequency * np.arange(0, n_frequencies)
-        n_octaves = int(np.log2(len(frequencies) - 1)) + 1
-        octave_indices = 2 ** np.arange(0, n_octaves)
-        octave_frequencies = signal.frequency * octave_indices
-        octave_bands = [self.OctaveBand(freq) for freq in octave_frequencies]
+        octave_bands = self.__octave_bands(signal, len(frequencies))
 
         impedances = np.zeros((len(frequencies)))
         impedances[0] = self.__compute_impedance(volume_conductor, 0)
 
         for octave_band in octave_bands:
             start = int(octave_band.lower_limit() / signal.frequency + 1)
-            end_index = int(octave_band.upper_limit() / signal.frequency + 1)
-            end = min(end_index, len(frequencies))
+            end = int(octave_band.upper_limit() / signal.frequency + 1)
             impedance = self.__compute_impedance(volume_conductor,
                                                  octave_band.frequency)
             impedances[start:end] = impedance
 
         return Impedances(frequency=frequencies, imdedance=impedances)
+
+    def __octave_bands(self, signal, n_frequencies):
+        n_octaves = int(np.log2(n_frequencies - 1)) + 1
+        octave_indices = 2 ** np.arange(0, n_octaves)
+        octave_frequencies = signal.frequency * octave_indices
+        return [self.OctaveBand(freq) for freq in octave_frequencies]
 
     @staticmethod
     def __compute_impedance(volume_conductor, frequency):

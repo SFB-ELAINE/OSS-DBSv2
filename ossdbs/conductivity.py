@@ -1,7 +1,8 @@
 
 from ossdbs.materials import Material
-from ossdbs.brain_imaging.mri import MagneticResonanceImage
-from ossdbs.dielectric_model import ColeColeFourModelFactory
+from ossdbs.dielectric_model import CerebroSpinalFluidModel
+from ossdbs.dielectric_model import GrayMatterModel
+from ossdbs.dielectric_model import WhiteMatterModel
 import numpy as np
 import ngsolve
 
@@ -15,12 +16,12 @@ class Conductivity:
         Image which represents the distributiion of brain substances.
     """
 
-    __MATERIALS = [Material.CSF, Material.GRAY_MATTER, Material.WHITE_MATTER]
-
     def __init__(self,
-                 mri: MagneticResonanceImage,
+                 material_distribution: np.ndarray,
+                 bounding_box: tuple,
                  complex_datatype: bool = False) -> None:
-        self.__mri = mri
+        self.__material_distribution = material_distribution
+        self.__bounding_box = bounding_box
         self.__complex = complex_datatype
 
     def distribution(self, frequency: float) -> ngsolve.VoxelCoefficient:
@@ -38,16 +39,20 @@ class Conductivity:
         """
 
         omega = 2 * np.pi * frequency
-        colecole_model = ColeColeFourModelFactory.create(Material.GRAY_MATTER)
-        default = colecole_model.conductivity(omega)
-        data = np.full(self.__mri.xyz_shape(), default)
+        default = GrayMatterModel().conductivity(omega)
+        data = np.full(self.__material_distribution.shape, default)
 
-        for material in self.__MATERIALS:
-            position = self.__mri.material_distribution(material=material)
-            colecole_model = ColeColeFourModelFactory.create(material)
-            data[position.data] = colecole_model.conductivity(omega)
+        pos_csf = self.__material_distribution == Material.CSF
+        pos_wm = self.__material_distribution == Material.WHITE_MATTER
+        pos_gm = self.__material_distribution == Material.GRAY_MATTER
 
-        start, end = self.__mri.bounding_box()
+        data[pos_csf] = CerebroSpinalFluidModel().conductivity(omega)
+        data[pos_wm] = WhiteMatterModel().conductivity(omega)
+        data[pos_gm] = GrayMatterModel().conductivity(omega)
+
+        m_to_mm = 1e3
+        data = data / m_to_mm
+        start, end = self.__bounding_box
 
         if not self.__complex:
             return ngsolve.VoxelCoefficient(start, end, np.real(data), False)

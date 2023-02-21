@@ -60,10 +60,10 @@ def create_json(electrode_parameters, electrode_type, path):
 
 def draw_electrode():
 
-    electrode = PINSMedicalL303()
+    electrode = BostonScientificVerciseDirected(direction=(1,1,0))
 
-    electrode_geo = electrode.generate_geometry()
-    capsule = electrode.encapsulating_geometry(0.0001)
+    electrode_geo = electrode.geometry()
+    capsule = electrode.capsule_geometry(0.0001)
 
     box = netgen.occ.Box((-0.005, -0.005, -0.005,), (0.005, 0.005, 0.005))
 

@@ -31,7 +31,8 @@
   ],
   "EncapsulatingLayer": {
     "Thickness[mm]": 0.0,
-    "Material": "Blood"
+    "Material": "Blood",
+    "MaxH": 0.5
   },
   "EQSMode": false,
   "Floating": {

@@ -1,6 +1,7 @@
 # Abbott/St Jude Directed 6172
 from ossdbs.electrodes.electrode import Electrode
 import netgen
+import netgen.occ as occ
 import numpy as np
 import os
 import json
@@ -21,13 +22,12 @@ class AbbottStjudeDirectedCustom(Electrode):
         Translation vector (x,y,z) of electrode.
     """
 
-    # dimensions [m]
-    TIP_LENGTH = 1.1e-3
-    CONTACT_LENGTH = 1.5e-3
-    CONTACT_SPACING = 1.5e-3
-    CONTACT_SPACING_RADIAL = 0.25e-3
-    LEAD_DIAMETER = 1.3e-3
-    TOTAL_LENGTH = 20.0e-3
+    # dimensions [mm]
+    TIP_LENGTH = 1.1
+    CONTACT_LENGTH = 1.5
+    CONTACT_SPACING = 1.5
+    LEAD_DIAMETER = 1.3
+    TOTAL_LENGTH = 100.0
 
     def __init__(self,
                  rotation: float = 0.0,
@@ -51,7 +51,7 @@ class AbbottStjudeDirectedCustom(Electrode):
     def rename_boundaries(self, boundaries: dict) -> None:
         self.__boundaries.update(boundaries)
 
-    def generate_geometry(self) -> netgen.libngpy._meshing.Mesh:
+    def geometry(self) -> netgen.libngpy._meshing.Mesh:
         """Generate geometry of electrode.
 
         Returns
@@ -60,41 +60,38 @@ class AbbottStjudeDirectedCustom(Electrode):
         """
         contacts = self.__contacts()
         body = self.__body() - contacts
-        electrode = netgen.occ.Glue([body, contacts])
-        axis = netgen.occ.Axis(p=(0, 0, 0), d=self.__direction)
+        electrode = occ.Glue([body, contacts])
+        axis = occ.Axis(p=(0, 0, 0), d=self.__direction)
         rotated_electrode = electrode.Rotate(axis=axis, ang=self.__rotation)
-        return rotated_electrode.Move(self.__position)
+        return rotated_electrode.Move(v=self.__position)
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self.LEAD_DIAMETER * 0.5
         center = tuple(np.array(self.__direction) * radius)
-        tip = netgen.occ.Sphere(c=center, r=radius)
-        lead = netgen.occ.Cylinder(p=center,
-                                   d=self.__direction,
-                                   r=radius,
-                                   h=self.TOTAL_LENGTH - self.TIP_LENGTH)
+        tip = occ.Sphere(c=center, r=radius)
+        height = self.TOTAL_LENGTH - self.TIP_LENGTH
+        lead = occ.Cylinder(p=center, d=self.__direction, r=radius, h=height)
         body = tip + lead
         body.bc(self.__boundaries['Body'])
         return body
 
     def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
 
-        axis = netgen.occ.Axis(p=(0, 0, 0), d=self.__direction)
+        distance_1 = self.TIP_LENGTH
+        distance_2 = distance_1 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+        distance_3 = distance_2 + self.CONTACT_LENGTH + self.CONTACT_SPACING
+        distance_4 = distance_3 + self.CONTACT_LENGTH + self.CONTACT_SPACING
 
-        distance = self.CONTACT_LENGTH + self.CONTACT_SPACING
-        distance_2 = self.TIP_LENGTH + distance
-        distance_3 = self.TIP_LENGTH + 2 * distance
-        distance_4 = self.TIP_LENGTH + 3 * distance
-
-        vector_1 = tuple(np.array(self.__direction) * self.TIP_LENGTH)
+        vector_1 = tuple(np.array(self.__direction) * distance_1)
         vector_2 = tuple(np.array(self.__direction) * distance_2)
         vector_3 = tuple(np.array(self.__direction) * distance_3)
         vector_4 = tuple(np.array(self.__direction) * distance_4)
 
-        contact = netgen.occ.Cylinder(p=(0, 0, 0),
-                                      d=self.__direction,
-                                      r=self.LEAD_DIAMETER * 0.5,
-                                      h=self.CONTACT_LENGTH)
+        point = (0, 0, 0)
+        radius = self.LEAD_DIAMETER * 0.5
+        height = self.CONTACT_LENGTH
+        contact = occ.Cylinder(p=point, d=self.__direction, r=radius, h=height)
+        axis = occ.Axis(p=point, d=self.__direction)
 
         contact_directed = self.__contact_directed()
         contacts = [contact.Move(vector_1),
@@ -108,20 +105,23 @@ class AbbottStjudeDirectedCustom(Electrode):
                     ]
 
         for index, contact in enumerate(contacts, 1):
-            contact.bc(self.__boundaries['Contact_{}'.format(index)])
+            name = self.__boundaries['Contact_{}'.format(index)]
+            contact.bc(name)
+            for edge in contact.edges:
+                edge.name = name
 
-        return netgen.occ.Fuse(contacts)
+        return occ.Fuse(contacts)
 
     def __contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        body = netgen.occ.Cylinder(p=(0, 0, 0),
-                                   d=self.__direction,
-                                   r=self.LEAD_DIAMETER * 0.5,
-                                   h=self.CONTACT_LENGTH)
+        point = (0, 0, 0)
+        radius = self.LEAD_DIAMETER * 0.5
+        height = self.CONTACT_LENGTH
+        body = occ.Cylinder(p=point, d=self.__direction, r=radius, h=height)
         new_direction = tuple(np.cross(self.__direction_2(), self.__direction))
-        eraser = netgen.occ.HalfSpace(p=(0, 0, 0), n=new_direction)
-        delta = self.CONTACT_SPACING_RADIAL / self.LEAD_DIAMETER * 180 / np.pi
+        eraser = occ.HalfSpace(p=point, n=new_direction)
+        delta = 15
         angle = 30 + delta
-        axis = netgen.occ.Axis((0, 0, 0), self.__direction)
+        axis = occ.Axis(p=point, d=self.__direction)
         return body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
 
     def __direction_2(self):
@@ -138,6 +138,19 @@ class AbbottStjudeDirectedCustom(Electrode):
 
         return (x, y, not z)
 
+    def capsule_geometry(self, thickness: float, max_h: float = 0.1) \
+            -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        center = tuple(np.array(self.__direction) * self.LEAD_DIAMETER * 0.5)
+        radius = self.LEAD_DIAMETER * 0.5 + thickness
+        height = self.TOTAL_LENGTH - self.TIP_LENGTH
+        tip = occ.Sphere(c=center, r=radius)
+        lead = occ.Cylinder(p=center, d=self.__direction, r=radius, h=height)
+        capsule = tip + lead
+        capsule.bc('Capsule')
+        capsule.mat('Capsule')
+        capsule.maxh = max_h
+        return capsule.Move(v=self.__position)
+
     def __load_parameters(self) -> None:
         dir_name = os.path.dirname(os.path.abspath(__file__))
         path = os.path.join(dir_name, 'abbott_stjude_directed_custom.json')
@@ -145,9 +158,8 @@ class AbbottStjudeDirectedCustom(Electrode):
         with open(path, 'r') as json_file:
             parameters = json.load(json_file)
 
-        self.CONTACT_LENGTH = parameters['ContactLength[m]']
-        self.TIP_LENGTH = parameters['TipLength[m]']
-        self.CONTACT_SPACING = parameters['ContactSpacingAxial[m]']
-        self.CONTACT_SPACING_RADIAL = parameters['ContactSpacingRadial[m]']
-        self.LEAD_DIAMETER = parameters['LeadDiameter[m]']
-        self.TOTAL_LENGHTH = parameters['LeadLength[m]']
+        self.CONTACT_LENGTH = parameters['ContactLength[mm]']
+        self.TIP_LENGTH = parameters['TipLength[mm]']
+        self.CONTACT_SPACING = parameters['ContactSpacingAxial[mm]']
+        self.LEAD_DIAMETER = parameters['LeadDiameter[mm]']
+        self.TOTAL_LENGHTH = parameters['LeadLength[mm]']
