@@ -4,7 +4,7 @@ from ossdbs.brain_geometry import BrainGeometry
 from ossdbs.materials import Material
 from ossdbs.conductivity import Conductivity
 from ossdbs.electrodes import Electrode
-from ossdbs.electrode_creation import ElectrodeFactory
+from ossdbs.electrode_creation import ElectrodeFactory, Electrodes
 from ossdbs.mesh import Mesh
 from ossdbs.preconditioner import BDDCPreconditioner, LocalPreconditioner
 from ossdbs.preconditioner import MultigridPreconditioner
@@ -36,13 +36,25 @@ class Controller:
         self.__input = parameters
 
     def mesh(self):
-        electrodes = self.__create_electrodes()
+
+        elec = Electrodes(self.__input['Electrodes'])
+        contacts = elec.contacts()
+
+        active_contacts = [contact for contact in contacts if contact.active]
+        inactive = [contact.name for contact in active_contacts[2:]]
+        for contact in contacts:
+            if contact.name in inactive:
+                contact.active = False
+
+        electrodes = elec.electrodes()
         encapsulating_d = self.__input['EncapsulatingLayer']['Thickness[mm]']
         geometry = BrainGeometry(self.region_of_interest(),
                                  electrodes,
                                  encapsulating_d)
-        contacts = self.contacts()
-        edges = contacts.active() + contacts.floating()
+     
+        edges = [contact.name for contact in contacts
+                 if contact.active or contact.floating]
+
         geometry.edges_for_finer_meshing(edges)
         # geometry.set_edge_max_h()
         netgen_geometry = geometry.netgen_geometry()
@@ -109,7 +121,7 @@ class Controller:
                             complex_datatype=self.__input['EQSMode'])
 
     def contacts(self) -> List[ElectrodeContact]:
-        contacts = ContactCollection()
+        contacts = []
         for index, electrode in enumerate(self.__input['Electrodes']):
             for contact_par in electrode['Contacts']:
                 name = 'E{}C{}'.format(index, contact_par['Contact_ID'] - 1)
@@ -130,9 +142,13 @@ class Controller:
 
                 contacts.append(contact)
 
-        acvtive_contacts = contacts.active()
-        for contact_name in acvtive_contacts[2:]:
-            contacts.set_inactive(contact_name)
+        active_contacts = [contact for contact in contacts if contact.active]
+        inactive = [contact.name for contact in active_contacts[2:]]
+        for contact in contacts:
+            if contact.name in inactive:
+                contact.active = False
+
+        contacts = ContactCollection(contacts)
 
         return contacts
 
@@ -198,36 +214,7 @@ class Controller:
                                inter_pulse_width=0.0)
 
     def __create_electrodes(self) -> List[Electrode]:
-
-        electrodes = []
-        for input_par in self.__input['Electrodes']:
-            dir = input_par['Direction']
-            pos = input_par['TipPosition']
-            direction = (dir['x[mm]'], dir['y[mm]'], dir['z[mm]'])
-            position = (pos['x[mm]'], pos['y[mm]'], pos['z[mm]'])
-            rotation = input_par['Rotation[Degrees]']
-            electrode = ElectrodeFactory.create(name=input_par['Name'],
-                                                direction=direction,
-                                                position=position,
-                                                rotation=rotation)
-            electrodes.append(electrode)
-
-        self.rename_boundaries(electrodes)
-
-        return electrodes
-
-    def rename_boundaries(self, electrodes):
-        for index, electrode in enumerate(electrodes):
-            boundary_names = {'Contact_1': "E{}C0".format(index),
-                              'Contact_2': "E{}C1".format(index),
-                              'Contact_3': "E{}C2".format(index),
-                              'Contact_4': "E{}C3".format(index),
-                              'Contact_5': "E{}C4".format(index),
-                              'Contact_6': "E{}C5".format(index),
-                              'Contact_7': "E{}C6".format(index),
-                              'Contact_8': "E{}C7".format(index),
-                              'Body': 'E{}B'.format(index)}
-            electrode.rename_boundaries(boundary_names)
+        return Electrodes(self.__input['Electrodes']).electrodes()
 
     def solver(self):
         solver_type = self.__input['Solver']['Type']

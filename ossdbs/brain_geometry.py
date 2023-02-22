@@ -22,10 +22,10 @@ class BrainGeometry:
         self.__electrodes = electrodes
         self.__encapsulating_thickness = encapsulating_thickness
         self.__edges = []
-        self.__maxh = 0.5
+        self.__max_h = 0.5
 
-    def set_edge_max_h(self, maxh: float) -> None:
-        self.__maxh = maxh
+    def set_edge_max_h(self, max_h: float) -> None:
+        self.__max_h = max_h
 
     def edges_for_finer_meshing(self, edges: List[str]) -> None:
         self.__edges = edges
@@ -70,4 +70,4 @@ class BrainGeometry:
                          ) -> None:
         for edge in geometry.edges:
             if edge.name in self.__edges:
-                edge.maxh = self.__maxh
+                edge.maxh = self.__max_h

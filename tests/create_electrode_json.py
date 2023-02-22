@@ -66,7 +66,6 @@ def draw_electrode():
     capsule = electrode.capsule_geometry(0.0001)
 
     box = netgen.occ.Box((-0.005, -0.005, -0.005,), (0.005, 0.005, 0.005))
-
     cut = capsule - box
     geometry = netgen.occ.Glue([box - capsule, capsule - electrode_geo - cut]) 
 
@@ -74,7 +73,6 @@ def draw_electrode():
    # geometry = geometry - geometry + box
 
     geometry = electrode_geo
-
 
     with ngsolve.TaskManager():
         mesh = ngsolve.Mesh(netgen.occ.OCCGeometry(geometry).GenerateMesh())
