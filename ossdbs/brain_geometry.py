@@ -1,9 +1,7 @@
 
 from ossdbs.electrode_collection import Electrodes
-from ossdbs.electrodes.electrode import Electrode
 from ossdbs.encapsulatin_layer import EncapsulatingLayers
 from ossdbs.bounding_box import BoundingBox
-from typing import List
 import netgen
 import netgen.occ as occ
 import numpy as np
