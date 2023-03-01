@@ -39,6 +39,6 @@ class BoundingBox:
                 for x in x_values
                 for y in y_values
                 for z in z_values]
-   
+
     def __eq__(self, other: 'BoundingBox') -> bool:
         return self.start == other.start and self.end == other.end
