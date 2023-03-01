@@ -4,6 +4,8 @@ import numpy as np
 import pytest
 import nibabel
 
+from ossdbs.bounding_box import BoundingBox
+
 
 class TestNifti1Image:
     @pytest.fixture
@@ -40,26 +42,26 @@ class TestNifti1Image:
         np.testing.assert_equal(nifti1_image_3d.data_map(), desired)
 
     def test_boundingbox_units_default(self, nifti1_image_3d):
-        desired = (2, 2, 2), (3, 3, 3)
+        desired = BoundingBox((2, 2, 2), (3, 3, 3))
         np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
 
     def test_boundingbox_4d_shape(self, nifti1_image_4d):
-        desired = (2, 2, 2), (3, 3, 3)
+        desired = BoundingBox((2, 2, 2), (3, 3, 3))
         np.testing.assert_equal(nifti1_image_4d.bounding_box(), desired)
 
     def test_boundingbox_units_mm(self, nifti1_image_3d):
         nifti1_image_3d.header()['xyzt_units'] = 2
-        desired = (2, 2, 2), (3, 3, 3)
+        desired = BoundingBox((2, 2, 2), (3, 3, 3))
         np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
 
     def test_boundingbox_units_meter(self, nifti1_image_3d):
         nifti1_image_3d.header()['xyzt_units'] = 1
-        desired = (2e3, 2e3, 2e3), (3e3, 3e3, 3e3)
+        desired = BoundingBox((2e3, 2e3, 2e3), (3e3, 3e3, 3e3))
         np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
 
     def test_boundingbox_units_micron(self, nifti1_image_3d):
         nifti1_image_3d.header()['xyzt_units'] = 3
-        desired = (2e-3, 2e-3, 2e-3), (3e-3, 3e-3, 3e-3)
+        desired = BoundingBox((2e-3, 2e-3, 2e-3), (3e-3, 3e-3, 3e-3))
         np.testing.assert_equal(nifti1_image_3d.bounding_box(), desired)
 
     def test_voxel_size(self, nifti1_image_3d):

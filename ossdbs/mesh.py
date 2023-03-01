@@ -175,6 +175,9 @@ class Mesh:
             self.__mesh.SetRefinementFlag(ei=element, refine=to_refine)
         self.refine()
 
+    def datatype_complex(self, value: bool) -> None:
+        self.__complex = value
+
     def surfacel2_space(self, boundaries: List[str]) -> ngsolve.comp.SurfaceL2:
         """Return a number SurfaceL2 on the mesh.
 
