@@ -53,7 +53,7 @@ class Electrode(ABC):
         pass
 
     @abstractmethod
-    def capsule_geometry(self, thickness: float) \
+    def capsule_geometry(self, thickness: float, max_h: float) \
             -> netgen.libngpy._NgOCC.TopoDS_Shape:
         pass
 

@@ -1,7 +1,7 @@
 
+from ossdbs.electrode_collection import Electrodes
 from ossdbs.volume_conductor.volume_conductor_model import VolumeConductor
 from ossdbs.volume_conductor.volume_conductor_model import Solution
-from ossdbs.electrode_contacts import ContactCollection
 from ossdbs.conductivity import Conductivity
 from ossdbs.mesh import Mesh
 from ossdbs.solver import Solver
@@ -22,11 +22,11 @@ class VolumeConductorNonFloating(VolumeConductor):
     def __init__(self,
                  mesh: Mesh,
                  conductivity: Conductivity,
-                 contacts: ContactCollection,
+                 electrodes: Electrodes,
                  solver: Solver) -> None:
         self.conductivity = conductivity
         self.mesh = mesh
-        self.contacts = contacts
+        self.electrodes = electrodes
         self.solver = solver
 
     def compute_solution(self, frequency: float) -> ngsolve.comp.GridFunction:
@@ -45,11 +45,12 @@ class VolumeConductorNonFloating(VolumeConductor):
         """
 
         sigma = self.conductivity.distribution(frequency)
-        active_boundaries = self.contacts.active()
+        active_boundaries = self.electrodes.active_contacts()
         h1_space = self.mesh.h1_space(boundaries=active_boundaries)
         finite_elements_space = ngsolve.FESpace(spaces=[h1_space])
         space = ngsolve.CompressCompound(finite_elements_space)
-        boundary_values = self.contacts.voltage_values()
+        boundary_values = self.electrodes.voltage_values()
+
         coefficient = self.mesh.boundary_coefficients(boundary_values)
         solution = ngsolve.GridFunction(space=space)
         solution.components[0].Set(coefficient=coefficient,

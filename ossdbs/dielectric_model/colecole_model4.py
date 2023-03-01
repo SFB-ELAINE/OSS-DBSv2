@@ -79,3 +79,13 @@ class CerebroSpinalFluidModel(ColeColeModel):
         self.eps_inf = 4.0
         self.sigma = 2.0
         self.tau = np.array([7.96e-12, 1.592e-9, 159.155e-6, 5.305e-3])
+
+
+class BloodModel(ColeColeModel):
+
+    def __init__(self) -> None:
+        self.alpha = np.array([0.1, 0.1, 0.0, 0.0])
+        self.eps_delta = np.array([56.0, 5200.0, 0.0, 0.0])
+        self.eps_inf = 4.0
+        self.sigma = 0.7
+        self.tau = np.array([8.38e-12, 132.63e-9, 0, 0])

@@ -1,3 +1,4 @@
+from ossdbs.bounding_box import BoundingBox
 import nibabel
 import numpy as np
 
@@ -16,7 +17,7 @@ class Nifti1Image:
         start = self.offset()
         shape = np.array(self.xyz_shape(), dtype=np.float64)
         ends = start + shape * self.voxel_size()
-        return tuple(start), tuple(ends)
+        return BoundingBox(tuple(start), tuple(ends))
 
     def header(self) -> nibabel.nifti1.Nifti1Header:
         return self._image.header

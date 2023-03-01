@@ -30,9 +30,9 @@
     }
   ],
   "EncapsulatingLayer": {
-    "Thickness[mm]": 0.0,
+    "Thickness[mm]": 0.5,
     "Material": "Blood",
-    "MaxH": 0.5
+    "MaxMeshSizeHeight": 0.5
   },
   "EQSMode": false,
   "Floating": {
@@ -54,7 +54,7 @@
     "MeshElementOrder": 2,
     "MeshingHypothesis": {
       "Type": "Default",
-      "MaxH": 0.0
+      "MaxMeshSizeHeight": 0.0
     },
     "SavePath": ""
   },

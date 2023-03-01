@@ -6,9 +6,24 @@ import numpy as np
 class Signal(ABC):
     """Template for Signals."""
 
+    SPACING_FACTOR = 1e4
+
+    def __init__(self, frequency: float) -> None:
+        self.frequency = frequency
+
     @abstractmethod
     def generate_samples(self, sample_spacing: float) -> np.ndarray:
         pass
+
+    def fft_analysis(self) -> tuple:
+        sample_spacing = self.time_step()
+        samples = self.generate_samples(sample_spacing)
+        complex_values = np.fft.rfft(samples)
+        frequencies = np.fft.rfftfreq(len(samples), sample_spacing)
+        return complex_values, frequencies
+
+    def time_step(self) -> float:
+        return 1 / (self.frequency * self.SPACING_FACTOR)
 
 
 class RectangleSignal(Signal):

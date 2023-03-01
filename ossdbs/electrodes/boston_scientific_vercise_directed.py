@@ -24,7 +24,7 @@ class BostonScientificVerciseDirected(Electrode):
     CONTACT_LENGTH = 1.5
     CONTACT_SPACING = 0.5
     LEAD_DIAMETER = 1.3
-    TOTAL_LENGHTH = 100.0
+    TOTAL_LENGHTH = 20.0
 
     def __init__(self,
                  rotation: float = 0.0,
@@ -140,7 +140,7 @@ class BostonScientificVerciseDirected(Electrode):
     def capsule_geometry(self, thickness: float, max_h: float = 0.1) \
             -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self.LEAD_DIAMETER * 0.5 + thickness
-        center = tuple(np.array(self.__direction) * radius)
+        center = tuple(np.array(self.__direction) * self.LEAD_DIAMETER * 0.5)
         height = self.TOTAL_LENGHTH - self.TIP_LENGTH
         tip = netgen.occ.Sphere(c=center, r=radius)
         lead = occ.Cylinder(p=center, d=self.__direction, r=radius, h=height)

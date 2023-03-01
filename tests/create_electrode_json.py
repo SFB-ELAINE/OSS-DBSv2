@@ -63,16 +63,15 @@ def draw_electrode():
     electrode = BostonScientificVerciseDirected(direction=(1,1,0))
 
     electrode_geo = electrode.geometry()
-    capsule = electrode.capsule_geometry(0.0001)
+    capsule = electrode.capsule_geometry(0.1, max_h=1)
 
-    box = netgen.occ.Box((-0.005, -0.005, -0.005,), (0.005, 0.005, 0.005))
+    box = netgen.occ.Box((-5, -5, -5,), (5, 5, 5))
     cut = capsule - box
     geometry = netgen.occ.Glue([box - capsule, capsule - electrode_geo - cut]) 
 
     print(set([edge.name for edge in geometry.edges]))
-   # geometry = geometry - geometry + box
-
-    geometry = electrode_geo
+    geometry = capsule - electrode_geo
+   # geometry = electrode_geo
 
     with ngsolve.TaskManager():
         mesh = ngsolve.Mesh(netgen.occ.OCCGeometry(geometry).GenerateMesh())

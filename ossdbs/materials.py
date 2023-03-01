@@ -8,3 +8,4 @@ class Material(IntEnum):
     GRAY_MATTER = 1
     WHITE_MATTER = 2
     CSF = 3
+    BLOOD = 4

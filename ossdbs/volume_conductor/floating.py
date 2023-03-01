@@ -1,7 +1,7 @@
 
+from ossdbs.electrode_collection import Electrodes
 from ossdbs.volume_conductor.volume_conductor_model import VolumeConductor
 from ossdbs.volume_conductor.volume_conductor_model import Solution
-from ossdbs.electrode_contacts import ContactCollection
 from ossdbs.conductivity import Conductivity
 from ossdbs.mesh import Mesh
 from ossdbs.solver import Solver
@@ -22,11 +22,11 @@ class VolumeConductorFloating(VolumeConductor):
     def __init__(self,
                  mesh: Mesh,
                  conductivity: Conductivity,
-                 contacts: ContactCollection,
+                 electrodes: Electrodes,
                  solver: Solver) -> None:
         self.conductivity = conductivity
         self.mesh = mesh
-        self.contacts = contacts
+        self.electrodes = electrodes
         self.solver = solver
 
     def compute_solution(self, frequency: float) -> ngsolve.comp.GridFunction:
@@ -44,7 +44,7 @@ class VolumeConductorFloating(VolumeConductor):
             floating values of floating contacts.
         """
 
-        boundary_values = self.contacts.voltage_values()
+        boundary_values = self.electrodes.voltage_values()
         coefficient = self.mesh.boundary_coefficients(boundary_values)
         space = self.__create_space(self.contacts)
         solution = ngsolve.GridFunction(space=space)
@@ -55,7 +55,7 @@ class VolumeConductorFloating(VolumeConductor):
         linear_form = ngsolve.LinearForm(space=space)
 
         self.solver.bvp(bilinear_form, linear_form, solution)
-        floating_results = zip(self.contacts.floating(),
+        floating_results = zip(self.electrodes.floating_contacts(),
                                solution.components[2:])
         floating_values = {contact: component.vec[0]
                            for (contact, component) in floating_results}
@@ -70,11 +70,11 @@ class VolumeConductorFloating(VolumeConductor):
                         frequency=frequency)
 
     def __create_space(self):
-        active_contacts = self.contacts.active()
+        active_contacts = self.electrodes.active_contacts()
         spaces_active = [self.mesh.h1_space(active_contacts),
                          self.mesh.surfacel2_space(active_contacts)]
         spaces_floating = [self.mesh.number_space()
-                           for _ in self.contacts.floating()]
+                           for _ in self.electrodes.floating_contacts()]
         spaces = spaces_active + spaces_floating
         finite_elements_space = ngsolve.FESpace(spaces=spaces)
         return ngsolve.CompressCompound(fespace=finite_elements_space)
@@ -86,7 +86,7 @@ class VolumeConductorFloating(VolumeConductor):
         v, mu = test[:2]
         bilinear_form = ngsolve.BilinearForm(space)
         bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
-        boundaries = self.contacts.floating()
+        boundaries = self.electrodes.floating_contacts()
         for (ufix, vfix, boundary) in zip(trial[2:], test[2:], boundaries):
             bilinear_form += u * mu + v * lam * ngsolve.ds(boundary)
             bilinear_form += -(ufix * mu + vfix * lam) * ngsolve.ds(boundary)
