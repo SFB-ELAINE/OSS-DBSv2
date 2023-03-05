@@ -30,7 +30,7 @@ class AbbottStjudeDirected6173(Electrode):
     CONTACT_SPACING = 1.5
     LEAD_DIAMETER = 1.29
     TOTAL_LENGTH = 40.0 # Updated
-    CONTACT_SPACING_RADIAL = 0.337721210261 # UPDATED to 30°
+    CONTACT_SPACING_RADIAL = 0.25 # 0.337721210261 # UPDATED to 30°
 
     def __init__(self,
                  rotation: float = 0.0,
