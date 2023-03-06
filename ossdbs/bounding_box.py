@@ -22,8 +22,8 @@ class BoundingBox:
         y_s = max(self.start[1], bbox.start[1])
         z_s = max(self.start[2], bbox.start[2])
         x_e = min(self.end[0], bbox.end[0])
-        y_e = min(self.end[0], bbox.end[1])
-        z_e = min(self.end[1], bbox.end[2])
+        y_e = min(self.end[1], bbox.end[1])
+        z_e = min(self.end[2], bbox.end[2])
         return BoundingBox(start=(x_s, y_s, z_s), end=(x_e, y_e, z_e))
 
     def points(self, offset: tuple, voxel_size: tuple) -> List[tuple]:
