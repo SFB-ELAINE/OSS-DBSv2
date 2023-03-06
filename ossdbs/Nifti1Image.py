@@ -5,7 +5,7 @@ import numpy as np
 
 class Nifti1Image:
 
-    __VOXEL_DIMENSION = 3
+    __N_DIMENSION = 3
 
     def __init__(self, file_path: str) -> None:
         self._image = self.__load_image(file_path)
@@ -30,11 +30,11 @@ class Nifti1Image:
         return offset * self.__scaling()
 
     def voxel_size(self) -> tuple:
-        x, y, z = self._image.header.get_zooms()[:self.__VOXEL_DIMENSION]
+        x, y, z = self._image.header.get_zooms()[:self.__N_DIMENSION]
         return tuple(np.array((x, y, z), dtype=np.float64) * self.__scaling())
 
     def xyz_shape(self) -> tuple:
-        return self._image.header.get_data_shape()[:self.__VOXEL_DIMENSION]
+        return self._image.header.get_data_shape()[:self.__N_DIMENSION]
 
     @staticmethod
     def __load_image(file_path: str) -> nibabel.nifti1.Nifti1Image:

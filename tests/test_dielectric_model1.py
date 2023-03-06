@@ -12,8 +12,8 @@ class TestWhiteMatterModel:
                             (1000, 6.18117e-07 - 9.959125e-06j, 1e-8)]
 
     TESTDATA_CONDUCTIVITY = [(0, 0.02, 1e-5),
-                             (1, 0.020103 - 0.001941j, 1e-5),
-                             (1000, 0.062575 - 0.003884j, 1e-5)]
+                             (1, 0.020103 + 0.001941j, 1e-5),
+                             (1000, 0.062575 + 0.003884j, 1e-5)]
 
     @pytest.mark.parametrize('frequency, permitivity, tolerance',
                              TESTDATA_PERMITIVITY)
@@ -35,8 +35,8 @@ class TestGrayMatterModel:
                             (1000, 1.452645e-06 - 1.572557e-05j, 1e-7)]
 
     TESTDATA_CONDUCTIVITY = [(0, 0.02, 1e-5),
-                             (1, 0.020083 - 0.002512j, 1e-5),
-                             (1000, 0.098807-0.009127j, 1e-5)]
+                             (1, 0.020083 + 0.002512j, 1e-5),
+                             (1000, 0.098807 + 0.009127j, 1e-5)]
 
     @pytest.mark.parametrize('frequency, permitivity, tolerance',
                              TESTDATA_PERMITIVITY)
@@ -58,8 +58,8 @@ class TestCerebroSpinalFluidModel:
                             (1000, 9.651064e-10 - 0.000318j, 1e-5)]
 
     TESTDATA_CONDUCTIVITY = [(0, 2.0, 1e-5),
-                             (1, 2.0 - 6.063943e-09j, 1e-10),
-                             (1000, 2.0 - 6.063943e-06j, 1e-7)]
+                             (1, 2.0 + 6.063943e-09j, 1e-10),
+                             (1000, 2.0 + 6.063943e-06j, 1e-7)]
 
     @pytest.mark.parametrize('frequency, permitivity, tolerance',
                              TESTDATA_PERMITIVITY)

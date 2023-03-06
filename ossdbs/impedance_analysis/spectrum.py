@@ -1,4 +1,5 @@
 
+from ossdbs.contacts import Contacts
 from ossdbs.stimulation_signal import Signal
 from ossdbs.volume_conductor import VolumeConductor
 from abc import ABC, abstractmethod
@@ -24,19 +25,22 @@ class Impedances:
 class SpectrumMode(ABC):
 
     @abstractmethod
-    def compute(self, signal, volume_conductor, points) -> Impedances:
+    def compute(self, signal, volume_conductor, contacts) -> Impedances:
         pass
 
 
 class LogarithmScanning(SpectrumMode):
 
-    def compute(self, signal: Signal, volume_conductor: VolumeConductor,):
+    def compute(self,
+                signal: Signal,
+                volume_conductor: VolumeConductor,
+                contacts: Contacts):
         frequencies = self.__frequencies(signal)
         mesh = volume_conductor.mesh.ngsolvemesh()
         impedance = np.zeros(len(frequencies), dtype=complex)
 
         for index, frequency in enumerate(frequencies[:2]):
-            solution = volume_conductor.compute_solution(frequency)
+            solution = volume_conductor.compute_solution(frequency, contacts)
             field = ngsolve.grad(solution.potential)
             curr_dens_conj = ngsolve.Conj(solution.current_density)
             power = ngsolve.Integrate(field * curr_dens_conj, mesh)
@@ -72,12 +76,13 @@ class OctaveBandMode(SpectrumMode):
 
     def compute(self,
                 signal: Signal,
-                volume_conductor: VolumeConductor) -> Impedances:
+                volume_conductor: VolumeConductor,
+                contacts: Contacts) -> Impedances:
 
         frequencies = signal.fft_analysis()[1]
         octave_bands = self.__octave_bands(signal, len(frequencies))
         impedances = np.zeros((len(frequencies)))
-        impedances[0] = self.__compute_impedance(volume_conductor, 0)
+        impedances[0] = self.__compute_impedance(volume_conductor, 0, contacts)
 
         for octave_band in octave_bands:
             start = int(octave_band.lower_limit() / signal.frequency + 1)
@@ -95,8 +100,8 @@ class OctaveBandMode(SpectrumMode):
         return [self.OctaveBand(freq) for freq in octave_frequencies]
 
     @staticmethod
-    def __compute_impedance(volume_conductor, frequency):
-        solution = volume_conductor.compute_solution(frequency)
+    def __compute_impedance(volume_conductor, frequency, contacts ):
+        solution = volume_conductor.compute_solution(frequency, contacts)
         field = ngsolve.grad(solution.potential)
         curr_dens_conj = ngsolve.Conj(solution.current_density)
         mesh = volume_conductor.mesh.ngsolvemesh()

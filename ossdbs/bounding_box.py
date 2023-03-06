@@ -1,6 +1,6 @@
 
 from dataclasses import dataclass
-from typing import List
+from typing import List, Tuple
 import numpy as np
 
 
@@ -14,7 +14,7 @@ class BoundingBox:
         self.end = end
 
     @property
-    def shape(self):
+    def shape(self) -> Tuple[int]:
         return tuple(np.round(np.subtract(self.end, self.start)).astype(int))
 
     def intersection(self, bbox: 'BoundingBox') -> 'BoundingBox':
@@ -26,7 +26,7 @@ class BoundingBox:
         z_e = min(self.end[1], bbox.end[2])
         return BoundingBox(start=(x_s, y_s, z_s), end=(x_e, y_e, z_e))
 
-    def points(self, offset: tuple, voxel_size: tuple) -> List:
+    def points(self, offset: tuple, voxel_size: tuple) -> List[tuple]:
         start, end = self.start, self.end
         start_index = np.floor(np.subtract(start, offset) / voxel_size)
         end_index = np.ceil(np.subtract(end, offset) / voxel_size)

@@ -1,5 +1,5 @@
 
-from ossdbs.electrode_collection import Electrodes
+from ossdbs.contacts import Contacts
 from ossdbs.volume_conductor.volume_conductor_model import VolumeConductor
 from ossdbs.volume_conductor.volume_conductor_model import Solution
 from ossdbs.conductivity import Conductivity
@@ -22,14 +22,14 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
     def __init__(self,
                  mesh: Mesh,
                  conductivity: Conductivity,
-                 electrodes: Electrodes,
                  solver: Solver) -> None:
         self.conductivity = conductivity
         self.mesh = mesh
-        self.electrodes = electrodes
         self.solver = solver
 
-    def compute_solution(self, frequency: float) -> ngsolve.comp.GridFunction:
+    def compute_solution(self,
+                         frequency: float,
+                         contacts: Contacts) -> ngsolve.comp.GridFunction:
         """Evaluate electrical potential of volume conductor.
 
         Parameters
@@ -44,21 +44,21 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
             floating values of floating contacts.
         """
 
-        boundary_values = self.electrodes.voltage_values()
+        boundary_values = contacts.voltage_values()
         coefficient = self.mesh.boundary_coefficients(boundary_values)
         space = self.__create_space()
         solution = ngsolve.GridFunction(space=space)
         solution.components[0].Set(coefficient=coefficient,
                                    VOL_or_BND=ngsolve.BND)
         sigma = self.conductivity.distribution(frequency)
-        bilinear_form = self.__bilinear_form(sigma, space)
+        bilinear_form = self.__bilinear_form(sigma, space, contacts)
         linear_form = ngsolve.LinearForm(space=space)
 
         self.solver.bvp(bilinear_form, linear_form, solution)
-        floating_results = zip(self.electrodes.floating_contacts(),
-                               solution.components[1:])
-        floating_values = {contact: component.vec[0]
-                           for (contact, component) in floating_results}
+        components = solution.components[1:]
+        floating_values = {contact.name: component.vec[0]
+                           for (contact, component)
+                           in zip(contacts.floating_contacts(), components)}
 
         potential = solution.components[0]
         current_density = sigma * ngsolve.grad(potential)
@@ -69,23 +69,25 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
                         floating_values=floating_values,
                         frequency=frequency)
 
-    def __create_space(self):
-        h1_space = self.mesh.h1_space(self.contacts.active())
+    def __create_space(self, contacts):
+        boundaries = [contact.name for contact in contacts.active()]
+        h1_space = self.mesh.h1_space(boundaries=boundaries)
         number_spaces = [self.mesh.number_space()
-                         for _ in self.electrodes.floating_contacts()]
+                         for _ in contacts.floating_contacts()]
         spaces = [h1_space] + number_spaces
         finite_elements_space = ngsolve.FESpace(spaces=spaces)
         return ngsolve.CompressCompound(fespace=finite_elements_space)
 
-    def __bilinear_form(self, sigma, space):
+    @staticmethod
+    def __bilinear_form(sigma, space, contacts):
         bilinear_form = ngsolve.BilinearForm(space)
         trial = space.TrialFunction()
         test = space.TestFunction()
         u = trial[0]
         v = test[0]
         bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
-        surface_impedances = self.electrodes.floating_impedance_values()
-        boundaries = self.electrodes.floating_contacts()
+        surface_impedances = contacts.floating_impedance_values()
+        boundaries = [contact.name for contact in contacts.floating_contacts()]
         for (ufix, vfix, boundary) in zip(trial[1:], test[1:], boundaries):
             a = ngsolve.CoefficientFunction(1 / surface_impedances[boundary])
             bilinear_form += a * (u - ufix) * (v - vfix) * ngsolve.ds(boundary)

@@ -1,5 +1,5 @@
 
-from ossdbs.electrode_collection import Electrodes
+from ossdbs.electrodes import Electrodes
 from ossdbs.encapsulatin_layer import EncapsulatingLayers
 from ossdbs.bounding_box import BoundingBox
 import netgen

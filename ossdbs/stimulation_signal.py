@@ -1,5 +1,6 @@
 
 from abc import ABC, abstractmethod
+from typing import Tuple
 import numpy as np
 
 
@@ -8,22 +9,21 @@ class Signal(ABC):
 
     SPACING_FACTOR = 1e4
 
-    def __init__(self, frequency: float) -> None:
-        self.frequency = frequency
+    @property
+    @abstractmethod
+    def frequency(self) -> float:
+        pass
 
     @abstractmethod
     def generate_samples(self, sample_spacing: float) -> np.ndarray:
         pass
 
-    def fft_analysis(self) -> tuple:
-        sample_spacing = self.time_step()
+    def fft_analysis(self) -> Tuple[np.ndarray]:
+        sample_spacing = 1 / (self.frequency * self.SPACING_FACTOR)
         samples = self.generate_samples(sample_spacing)
         complex_values = np.fft.rfft(samples)
         frequencies = np.fft.rfftfreq(len(samples), sample_spacing)
         return complex_values, frequencies
-
-    def time_step(self) -> float:
-        return 1 / (self.frequency * self.SPACING_FACTOR)
 
 
 class RectangleSignal(Signal):
@@ -46,10 +46,14 @@ class RectangleSignal(Signal):
                  pulse_width: float,
                  counter_pulse_width: float,
                  inter_pulse_width: float) -> None:
-        self.frequency = frequency
-        self.pulse_width = pulse_width
-        self.space_width = inter_pulse_width
-        self.counter_pulse_width = counter_pulse_width
+        self.__frequency = abs(frequency)
+        self.__pulse_width = abs(pulse_width)
+        self.__space_width = abs(inter_pulse_width)
+        self.__counter_pulse_width = abs(counter_pulse_width)
+
+    @property
+    def frequency(self) -> float:
+        return self.__frequency
 
     def generate_samples(self, sample_spacing: float) -> np.ndarray:
         """Generate samples which follow the signal form.
@@ -64,20 +68,16 @@ class RectangleSignal(Signal):
         np.ndarray
             Samples for one period.
         """
-        frequency = abs(self.frequency)
-        pulse_width = abs(self.pulse_width)
-        counter_pulse_width = abs(self.counter_pulse_width)
-        space_width = abs(self.space_width)
 
-        spacing = sample_spacing * frequency
+        spacing = sample_spacing * self.__frequency
         n_samples = int(1 / spacing) if 0 < spacing < 1 else 1
 
-        pulse_length = int(pulse_width * n_samples)
+        pulse_length = int(self.__pulse_width * n_samples)
         pulse = np.array([1] * pulse_length)
 
-        space_length = int(space_width * n_samples)
+        space_length = int(self.__space_width * n_samples)
 
-        counter_length = int(counter_pulse_width * n_samples)
+        counter_length = int(self.__counter_pulse_width * n_samples)
         counter_value = -pulse_length / counter_length if counter_length else 0
         counter_pulse = np.array([counter_value] * counter_length)
         counter_start = pulse_length + space_length
@@ -109,10 +109,14 @@ class TriangleSignal(Signal):
                  pulse_width: float,
                  counter_pulse_width: float,
                  inter_pulse_width: float) -> None:
-        self.frequency = frequency
-        self.pulse_width = pulse_width
-        self.space_width = inter_pulse_width
-        self.counter_pulse_width = counter_pulse_width
+        self.__frequency = abs(frequency)
+        self.__pulse_width = abs(pulse_width)
+        self.__space_width = abs(inter_pulse_width)
+        self.__counter_pulse_width = abs(counter_pulse_width)
+
+    @property
+    def frequency(self) -> float:
+        return self.__frequency
 
     def generate_samples(self, sample_spacing: float) -> np.ndarray:
         """Generate samples which follow the signal form.
@@ -127,20 +131,16 @@ class TriangleSignal(Signal):
         np.ndarray
             Samples for one period.
         """
-        frequency = abs(self.frequency)
-        pulse_width = abs(self.pulse_width)
-        counter_pulse_width = abs(self.counter_pulse_width)
-        space_width = abs(self.space_width)
 
-        spacing = sample_spacing * frequency
+        spacing = sample_spacing * self.__frequency
         n_samples = int(1 / spacing) if 0 < spacing < 1 else 1
 
-        pulse_length = int(pulse_width * n_samples)
+        pulse_length = int(self.__pulse_width * n_samples)
         pulse = self.__create_pulse(pulse_length)
 
-        space_length = int(space_width * n_samples)
+        space_length = int(self.__space_width * n_samples)
 
-        counter_length = int(counter_pulse_width * n_samples)
+        counter_length = int(self.__counter_pulse_width * n_samples)
         counter_value = -pulse_length / counter_length if counter_length else 0
         counter_pulse = counter_value * self.__create_pulse(counter_length)
         counter_start = pulse_length + space_length
@@ -150,7 +150,6 @@ class TriangleSignal(Signal):
         signal[:pulse_length] = pulse
         n_counter_samples = n_samples - counter_start
         signal[counter_start:counter_end] = counter_pulse[:n_counter_samples]
-
         return signal
 
     @staticmethod
@@ -185,11 +184,15 @@ class TrapzoidSignal(Signal):
                  top_width: float,
                  counter_pulse_width: float,
                  inter_pulse_width: float) -> None:
-        self.frequency = frequency
-        self.pulse_width = pulse_width
-        self.top_width = top_width
-        self.space_width = inter_pulse_width
-        self.counter_pulse_width = counter_pulse_width
+        self.__frequency = abs(frequency)
+        self.__pulse_width = abs(pulse_width)
+        self.__top_width = abs(top_width)
+        self.__space_width = abs(inter_pulse_width)
+        self.__counter_pulse_width = abs(counter_pulse_width)
+
+    @property
+    def frequency(self):
+        return self.__frequency
 
     def generate_samples(self, sample_spacing: float) -> np.ndarray:
         """Generate samples which follow the signal form.
@@ -204,23 +207,18 @@ class TrapzoidSignal(Signal):
         np.ndarray
             Samples for one period.
         """
-        frequency = abs(self.frequency)
-        pulse_width = abs(self.pulse_width)
-        top_width = min(abs(self.top_width), pulse_width)
-        counter_pulse_width = abs(self.counter_pulse_width)
-        space_width = abs(self.space_width)
 
-        spacing = min(abs(sample_spacing), 1) * frequency
+        spacing = min(abs(sample_spacing), 1) * self.__frequency
         n_samples = int(1 / spacing) if 0 < spacing < 1 else 1
 
-        pulse_length = int(pulse_width * n_samples)
-        pulse_top_length = int(top_width * n_samples)
+        pulse_length = int(self.__pulse_width * n_samples)
+        pulse_top_length = int(self.__top_width * n_samples)
         pulse = self.__create_pulse(pulse_length, pulse_top_length)
 
-        space_length = int(space_width * n_samples)
-        counter_length = int(counter_pulse_width * n_samples)
-        ratio = top_width / pulse_width if pulse_width else 0
-        counter_top_length = int(ratio * counter_pulse_width * n_samples)
+        space_length = int(self.__space_width * n_samples)
+        counter_length = int(self.__counter_pulse_width * n_samples)
+        f = self.__top_width / self.__pulse_width if self.__pulse_width else 0
+        counter_top_length = int(f * self.__counter_pulse_width * n_samples)
         counter_value = -pulse_length / counter_length if counter_length else 0
         counter_pulse = counter_value * self.__create_pulse(counter_length,
                                                             counter_top_length)
@@ -231,7 +229,6 @@ class TrapzoidSignal(Signal):
         signal[:pulse_length] = pulse
         n_counter_samples = n_samples - counter_start
         signal[counter_start:counter_end] = counter_pulse[:n_counter_samples]
-
         return signal
 
     @staticmethod

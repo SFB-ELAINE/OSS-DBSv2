@@ -1,13 +1,13 @@
-from ossdbs.factories.bounding_box_creation import BoundingBoxFactory
-from ossdbs.factories.create_conductivity import ConductivityFactory
-from ossdbs.factories.electrode_creation import ElectrodeFactory
-from ossdbs.factories.electrode_creation import ElectrodesFactory
-from ossdbs.factories.mesh_creation import MeshFactory
-from ossdbs.factories.signal_creation import SignalFactory
-from ossdbs.factories.solver_creation import SolverFactory
-from ossdbs.factories.volume_conductor_creation import VolumeConductorFactory
-from ossdbs.factories.spectrum_creation import SpectrumFactory
-from ossdbs.factories.spectrum_impedance_creation import SpectrumImpedanceFactory
+from .bounding_box_construction import BoundingBoxFactory
+from .conductivity_construction import ConductivityFactory
+from .electrodes_construction import ElectrodeFactory
+from .electrodes_construction import ElectrodesFactory
+from .mesh_construction import MeshFactory
+from .signal_construction import SignalFactory
+from .solver_construction import SolverFactory
+from .volume_conductor_construction import VolumeConductorFactory
+from .spectrum_construction import SpectrumFactory
+from .spectrum_impedance_construction import SpectrumImpedanceFactory
 
 
 __all__ = ('BoundingBoxFactory',
