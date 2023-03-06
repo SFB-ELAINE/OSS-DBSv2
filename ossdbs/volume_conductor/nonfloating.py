@@ -1,5 +1,5 @@
 
-from ossdbs.electrode_collection import Electrodes
+from ossdbs.contacts import Contacts
 from ossdbs.volume_conductor.volume_conductor_model import VolumeConductor
 from ossdbs.volume_conductor.volume_conductor_model import Solution
 from ossdbs.conductivity import Conductivity
@@ -22,14 +22,14 @@ class VolumeConductorNonFloating(VolumeConductor):
     def __init__(self,
                  mesh: Mesh,
                  conductivity: Conductivity,
-                 electrodes: Electrodes,
                  solver: Solver) -> None:
         self.conductivity = conductivity
         self.mesh = mesh
-        self.electrodes = electrodes
         self.solver = solver
 
-    def compute_solution(self, frequency: float) -> ngsolve.comp.GridFunction:
+    def compute_solution(self,
+                         frequency: float,
+                         contacts: Contacts) -> ngsolve.comp.GridFunction:
         """Evaluate electrical potential of volume conductor.
 
         Parameters
@@ -45,11 +45,11 @@ class VolumeConductorNonFloating(VolumeConductor):
         """
 
         sigma = self.conductivity.distribution(frequency)
-        active_boundaries = self.electrodes.active_contacts()
-        h1_space = self.mesh.h1_space(boundaries=active_boundaries)
+        boundaries = [contact.name for contact in contacts.active_contacts()]
+        h1_space = self.mesh.h1_space(boundaries=boundaries)
         finite_elements_space = ngsolve.FESpace(spaces=[h1_space])
         space = ngsolve.CompressCompound(finite_elements_space)
-        boundary_values = self.electrodes.voltage_values()
+        boundary_values = contacts.voltage_values()
 
         coefficient = self.mesh.boundary_coefficients(boundary_values)
         solution = ngsolve.GridFunction(space=space)

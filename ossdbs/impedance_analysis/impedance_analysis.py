@@ -1,5 +1,6 @@
 from ossdbs.Nifti1Image import Nifti1Image
 from ossdbs.brain_geometry import BrainGeometry
+from ossdbs.contacts import Contacts
 
 from ossdbs.factories import BoundingBoxFactory
 from ossdbs.factories import ConductivityFactory
@@ -16,6 +17,7 @@ def impedance_analysis(input: dict) -> None:
     bounding_box = BoundingBoxFactory.create(input['RegionOfInterest'])
     nifti_image = Nifti1Image(input['MaterialDistribution']['MRIPath'])
     electrodes = ElectrodesFactory.create(input['Electrodes'])
+    contacts = electrodes.contacts()
 
     capsule_d = input['EncapsulatingLayer']['Thickness[mm]']
     capsule = electrodes.encapsulating_layer(capsule_d)
@@ -33,11 +35,11 @@ def impedance_analysis(input: dict) -> None:
 
     solver = SolverFactory.create(input['Solver'])
 
-    factory = VolumeConductorFactory(mesh, conductivity, electrodes, solver)
+    factory = VolumeConductorFactory(mesh, conductivity, solver)
     volume_conductor = factory.create(input['Floating'])
 
     signal = SignalFactory.create(input['StimulationSignal'])
 
     mode = SpectrumImpedanceFactory.create(input['SpectrumMode'])
-    impedances = mode.compute(signal, volume_conductor)
+    impedances = mode.compute(signal, volume_conductor, contacts)
     impedances.save('impedances.csv')

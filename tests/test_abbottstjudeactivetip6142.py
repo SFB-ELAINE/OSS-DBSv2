@@ -1,4 +1,4 @@
-from ossdbs.electrodes import AbbottStjudeActiveTip6142_6145
+from ossdbs.electrode_models import AbbottStjudeActiveTip6142_6145
 from tests.geometry_converter import GeometryConverter
 import pytest
 import netgen

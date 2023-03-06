@@ -1,16 +1,16 @@
 
-from ossdbs.electrodes import AbbottStjudeActiveTip6142_6145
-from ossdbs.electrodes import AbbottStjudeActiveTip6146_6149
-from ossdbs.electrodes import AbbottStjudeDirected6172
-from ossdbs.electrodes import AbbottStjudeDirected6173
-from ossdbs.electrodes import BostonScientificVercise
-from ossdbs.electrodes import BostonScientificVerciseDirected
-from ossdbs.electrodes import Medtronic3387, Medtronic3389, Medtronic3391
-from ossdbs.electrodes import MicroProbesSNEX_100
-from ossdbs.electrodes import PINSMedicalL301
-from ossdbs.electrodes import PINSMedicalL302
-from ossdbs.electrodes import PINSMedicalL303
-from ossdbs.electrodes import MicroProbesCustomRodent
+from ossdbs.electrode_models import AbbottStjudeActiveTip6142_6145
+from ossdbs.electrode_models import AbbottStjudeActiveTip6146_6149
+from ossdbs.electrode_models import AbbottStjudeDirected6172
+from ossdbs.electrode_models import AbbottStjudeDirected6173
+from ossdbs.electrode_models import BostonScientificVercise
+from ossdbs.electrode_models import BostonScientificVerciseDirected
+from ossdbs.electrode_models import Medtronic3387, Medtronic3389, Medtronic3391
+from ossdbs.electrode_models import MicroProbesSNEX_100
+from ossdbs.electrode_models import PINSMedicalL301
+from ossdbs.electrode_models import PINSMedicalL302
+from ossdbs.electrode_models import PINSMedicalL303
+from ossdbs.electrode_models import MicroProbesCustomRodent
 #from tests.geometry_converter import GeometryConverter
 import ngsolve
 import netgen

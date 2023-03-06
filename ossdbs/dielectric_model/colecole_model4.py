@@ -48,7 +48,7 @@ class ColeColeModel(DielectricModel):
         if omega == 0:
             return self.sigma + 0j
 
-        return np.conjugate(1j * omega * self.permitivity(omega=omega))
+        return 1j * omega * self.permitivity(omega=omega)
 
 
 class WhiteMatterModel(ColeColeModel):
