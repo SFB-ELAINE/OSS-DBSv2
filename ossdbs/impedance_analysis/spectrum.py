@@ -1,4 +1,5 @@
 
+from typing import List
 from ossdbs.contacts import Contacts
 from ossdbs.stimulation_signal import Signal
 from ossdbs.volume_conductor import VolumeConductor
@@ -12,14 +13,15 @@ import pandas as pd
 @dataclass
 class Impedances:
 
-    frequency: np.ndarray
-    imdedance: np.ndarray
+    frequencies: np.ndarray
+    imdedances: np.ndarray
 
     def save(self, path: str) -> None:
-        data_frame = pd.DataFrame({'frequencies [Hz]': self.frequency,
-                                   'Resistance [Ohm]': np.real(self.imdedance),
-                                   'Reactance [Ohm]': np.imag(self.imdedance)})
-        data_frame.to_csv(path, index=False, sep=',')
+        data = pd.DataFrame({'frequencies [Hz]': self.frequencies,
+                             'Resistance [Ohm]': np.real(self.imdedances),
+                             'Reactance [Ohm]': np.imag(self.imdedances)}
+                            )
+        data.to_csv(path, index=False, sep=',')
 
 
 class SpectrumMode(ABC):
@@ -34,7 +36,8 @@ class LogarithmScanning(SpectrumMode):
     def compute(self,
                 signal: Signal,
                 volume_conductor: VolumeConductor,
-                contacts: Contacts):
+                contacts: Contacts
+                ) -> Impedances:
         frequencies = self.__frequencies(signal)
         mesh = volume_conductor.mesh.ngsolvemesh()
         impedance = np.zeros(len(frequencies), dtype=complex)
@@ -47,7 +50,7 @@ class LogarithmScanning(SpectrumMode):
             impedance[index] = 1 / power if power else 0
             print(impedance[index])
 
-        return Impedances(frequency=frequencies, imdedance=impedance)
+        return Impedances(frequencies=frequencies, imdedances=impedance)
 
     def __frequencies(self, signal: Signal):
         n_fft_frequencies = len(signal.fft_analysis()[1])
@@ -68,39 +71,45 @@ class OctaveBandMode(SpectrumMode):
         def __init__(self, frequency: float) -> None:
             self.frequency = frequency
 
-        def lower_limit(self):
+        def lower_limit(self) -> float:
             return self.frequency / self.SQRT2
 
-        def upper_limit(self):
+        def upper_limit(self) -> float:
             return self.frequency * self.SQRT2
 
     def compute(self,
                 signal: Signal,
                 volume_conductor: VolumeConductor,
-                contacts: Contacts) -> Impedances:
+                contacts: Contacts
+                ) -> Impedances:
 
         frequencies = signal.fft_analysis()[1]
-        octave_bands = self.__octave_bands(signal, len(frequencies))
         impedances = np.zeros((len(frequencies)))
         impedances[0] = self.__compute_impedance(volume_conductor, 0, contacts)
 
-        for octave_band in octave_bands:
+        n_octaves = int(np.log2(len(frequencies) - 1)) + 1
+        for octave_band in self.__octave_bands(signal.frequency, n_octaves):
             start = int(octave_band.lower_limit() / signal.frequency + 1)
             end = int(octave_band.upper_limit() / signal.frequency + 1)
             impedance = self.__compute_impedance(volume_conductor,
                                                  octave_band.frequency)
             impedances[start:end] = impedance
 
-        return Impedances(frequency=frequencies, imdedance=impedances)
+        return Impedances(frequencies=frequencies, imdedances=impedances)
 
-    def __octave_bands(self, signal, n_frequencies):
-        n_octaves = int(np.log2(n_frequencies - 1)) + 1
+    def __octave_bands(self,
+                       frequency: float,
+                       n_octaves: int
+                       ) -> List[OctaveBand]:
         octave_indices = 2 ** np.arange(0, n_octaves)
-        octave_frequencies = signal.frequency * octave_indices
+        octave_frequencies = frequency * octave_indices
         return [self.OctaveBand(freq) for freq in octave_frequencies]
 
     @staticmethod
-    def __compute_impedance(volume_conductor, frequency, contacts ):
+    def __compute_impedance(volume_conductor: VolumeConductor,
+                            frequency: float,
+                            contacts: Contacts
+                            ) -> float:
         solution = volume_conductor.compute_solution(frequency, contacts)
         field = ngsolve.grad(solution.potential)
         curr_dens_conj = ngsolve.Conj(solution.current_density)

@@ -50,7 +50,8 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         solution = ngsolve.GridFunction(space=space)
         solution.components[0].Set(coefficient=coefficient,
                                    VOL_or_BND=ngsolve.BND)
-        sigma = self.conductivity.distribution(frequency)
+        complex_data = self.mesh.is_complex()
+        sigma = self.conductivity.distribution(frequency, complex_data)
         bilinear_form = self.__bilinear_form(sigma, space, contacts)
         linear_form = ngsolve.LinearForm(space=space)
 

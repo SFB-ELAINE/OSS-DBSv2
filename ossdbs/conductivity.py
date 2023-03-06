@@ -18,15 +18,14 @@ class Conductivity:
     def __init__(self,
                  material_distribution: np.ndarray,
                  bounding_box: BoundingBox,
-                 complex_datatype: bool = False) -> None:
+                 ) -> None:
         self.__material_distribution = material_distribution
         self.__bounding_box = bounding_box
-        self.__complex = complex_datatype
 
-    def datatype_complex(self, state: bool) -> None:
-        self.__complex = state
-
-    def distribution(self, frequency: float) -> ngsolve.VoxelCoefficient:
+    def distribution(self,
+                     frequency: float,
+                     complex_data: bool = False
+                     ) -> ngsolve.VoxelCoefficient:
         """Return the conductivity distribution by the given frequency.
 
         Parameters
@@ -59,7 +58,7 @@ class Conductivity:
         values = data * 1e-3
         start, end = self.__bounding_box.start, self.__bounding_box.end
 
-        if not self.__complex:
+        if not complex_data:
             return ngsolve.VoxelCoefficient(start, end, np.real(values), False)
 
         return ngsolve.VoxelCoefficient(start, end, values, False)

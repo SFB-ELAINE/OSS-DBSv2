@@ -38,6 +38,16 @@ class Mesh:
 
         return self.__mesh.BoundaryCF(values=boundaries)
 
+    def is_complex(self) -> bool:
+        """Return the state of the data type for spaces. True if complex,
+        False otherwise.
+
+        Returns
+        -------
+        bool
+        """
+        return self.__complex
+
     def flux_space(self) -> ngsolve.comp.HDiv:
         """Return a flux space based on the mesh.
 
@@ -61,6 +71,20 @@ class Mesh:
         return self.__mesh
 
     def is_included(self, points: np.ndarray) -> np.ndarray:
+        """Check each point in collection for collision with geometry.
+        True if point is included in geometry, false otherwise.
+
+        Parameters
+        ----------
+        points: np.ndarray
+            Array of point coordinates (x, y, z).
+
+        Returns
+        -------
+        np.ndarray
+            Array representing the state of collision for each point.
+            True if point is included in geometry, False otherwise.
+        """
         x, y, z = points.T
         mips = self.__mesh(x, y, z)
         return np.array([mip[5] != -1 for mip in mips])
@@ -84,6 +108,11 @@ class Mesh:
 
     def h1_space(self, boundaries: List[str]) -> ngsolve.comp.H1:
         """Return a h1 space based on the mesh.
+
+        Parameters
+        ----------
+        boundaries : list of str
+            List of boundary names.
 
         Returns
         -------
@@ -118,9 +147,14 @@ class Mesh:
 
         Parameters
         ----------
-        marked_locations : Voxels
-            Representation of the locations which are to be refined:
-            True if specific position has to be refined, False otherwise.
+        start : tuple
+            Lower coordinates of voxel space.
+
+        end : tuple
+            Upper coordinates of voxel space.
+
+        data : np.ndarray
+            Voxelvalues.
         """
 
         space = ngsolve.L2(self.__mesh, order=0)
@@ -176,6 +210,13 @@ class Mesh:
         self.refine()
 
     def datatype_complex(self, value: bool) -> None:
+        """Get the state of complex data. True if data is complex, false
+        otherwise.
+
+        Returns
+        -------
+        bool
+        """
         self.__complex = value
 
     def surfacel2_space(self, boundaries: List[str]) -> ngsolve.comp.SurfaceL2:
