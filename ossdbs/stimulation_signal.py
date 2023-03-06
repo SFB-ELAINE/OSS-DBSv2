@@ -12,13 +12,40 @@ class Signal(ABC):
     @property
     @abstractmethod
     def frequency(self) -> float:
+        """Return frequency of signal.
+
+        Returns
+        -------
+        float
+        """
         pass
 
     @abstractmethod
     def generate_samples(self, sample_spacing: float) -> np.ndarray:
+        """Generate samples which follow the signal form.
+
+        Parameters
+        ----------
+        sample_spacing : float
+            Timestep [s] between two samples.
+
+        Returns
+        -------
+        np.ndarray
+            Samples for one period.
+        """
         pass
 
     def fft_analysis(self) -> Tuple[np.ndarray]:
+        """Returns the complex values and the frequncies from the FFT of this
+        signal.
+
+        Returns
+        -------
+        tuple of np.ndarray
+            First value is the collection of complex values, second value is
+            collection of the corresponding frequencies.
+        """
         sample_spacing = 1 / (self.frequency * self.SPACING_FACTOR)
         samples = self.generate_samples(sample_spacing)
         complex_values = np.fft.rfft(samples)
@@ -116,6 +143,12 @@ class TriangleSignal(Signal):
 
     @property
     def frequency(self) -> float:
+        """Return frequency of signal.
+
+        Returns
+        -------
+        float
+        """
         return self.__frequency
 
     def generate_samples(self, sample_spacing: float) -> np.ndarray:
@@ -192,6 +225,12 @@ class TrapzoidSignal(Signal):
 
     @property
     def frequency(self):
+        """Return frequency of signal.
+
+        Returns
+        -------
+        float
+        """
         return self.__frequency
 
     def generate_samples(self, sample_spacing: float) -> np.ndarray:

@@ -27,7 +27,6 @@ def impedance_analysis(input: dict) -> None:
     conductivity = ConductivityFactory(nifti_image,
                                        bounding_box,
                                        capsule).create()
-    conductivity.datatype_complex(input['EQSMode'])
 
     geometry = BrainGeometry(bounding_box, electrodes, capsule)
     mesh = MeshFactory(geometry).create_mesh(input['Mesh'])

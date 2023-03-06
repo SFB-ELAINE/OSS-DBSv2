@@ -11,7 +11,6 @@ class Electrodes:
     def __init__(self,
                  electrodes: List[ElectrodeModel],
                  contacts: List[Contact]) -> None:
-
         self.__electrodes = electrodes
         self.__contacts = contacts
 

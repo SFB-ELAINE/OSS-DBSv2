@@ -20,16 +20,38 @@ class EncapsulatingLayers:
 
     @property
     def thickness(self) -> float:
+        """Return the thickness of the encapsulating layers."""
         return self.__thickness
 
     def set_max_h(self, max_h: float = 0.1) -> None:
+        """Set the maximum height for a mesh element in these encapsulating
+        layers.
+
+        Parameters
+        ----------
+        max_h : float
+            Maximum height for a mesh element.
+        """
         self.__max_h = max_h
 
     def geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        """"Return the geometry of the combined encapsulating layers.
+
+        Returns
+        -------
+        netgen.libngpy._NgOCC.TopoDS_Shape
+        """
         return sum([electrode.capsule_geometry(self.__thickness, self.__max_h)
                     for electrode in self.__electrodes])
 
     def bounding_boxes(self) -> List[BoundingBox]:
+        """Return a collection of bounding boxes. A bounding box for each
+        enapsulation layer.
+
+        Returns
+        -------
+        list of Bounding Boxes
+        """
         return [self.__bounding_box(elec) for elec in self.__electrodes]
 
     def __bounding_box(self, electrode: ElectrodeModel) -> BoundingBox:
@@ -38,6 +60,20 @@ class EncapsulatingLayers:
         return BoundingBox(tuple(start), tuple(end))
 
     def is_included(self, points: np.ndarray) -> np.ndarray:
+        """Check each point in collection for collision with geometry.
+        True if point is included in geometry, false otherwise.
+
+        Parameters
+        ----------
+        points: np.ndarray
+            Array of point coordinates (x, y, z).
+
+        Returns
+        -------
+        np.ndarray
+            Array representing the state of collision for each point.
+            True if point is included in geometry, False otherwise.
+        """
         netgen_geometry = netgen.occ.OCCGeometry(self.geometry())
         ng_mesh = netgen_geometry.GenerateMesh()
         ngsolve_mesh = ngsolve.Mesh(ngmesh=ng_mesh)

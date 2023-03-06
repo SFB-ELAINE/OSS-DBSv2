@@ -42,7 +42,7 @@ class TimeResult:
 
 
 @dataclass
-class Result:
+class FFTResult:
 
     points: np.ndarray
     frequency: np.ndarray
@@ -77,7 +77,8 @@ class FullSpectrum(SpectrumMode):
                 signal: Signal,
                 volume_conductor: VolumeConductor,
                 points: np.ndarray,
-                contacts: Contacts):
+                contacts: Contacts
+                ) -> TimeResult:
 
         sample_spacing = 1 / (signal.frequency * self.SPACING_FACTOR)
         samples = signal.generate_samples(sample_spacing)
@@ -148,7 +149,8 @@ class OctaveBandMode(SpectrumMode):
                 signal: Signal,
                 volume_conductor: VolumeConductor,
                 points: np.ndarray,
-                contacts: Contacts):
+                contacts: Contacts
+                ) -> TimeResult:
 
         sample_spacing = 1 / (signal.frequency * self.SPACING_FACTOR)
         samples = signal.generate_samples(sample_spacing)

@@ -43,8 +43,8 @@ class VolumeConductorNonFloating(VolumeConductor):
             Data object representing the potential of volume conductor and
             floating values of floating contacts.
         """
-
-        sigma = self.conductivity.distribution(frequency)
+        complex_data = self.mesh.is_complex()
+        sigma = self.conductivity.distribution(frequency, complex_data)
         boundaries = [contact.name for contact in contacts.active_contacts()]
         h1_space = self.mesh.h1_space(boundaries=boundaries)
         finite_elements_space = ngsolve.FESpace(spaces=[h1_space])
