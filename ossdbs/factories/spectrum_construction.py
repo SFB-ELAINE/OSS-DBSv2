@@ -1,7 +1,7 @@
 
 
-from ossdbs.voltage_control.spectrum import SpectrumMode
-from ossdbs.voltage_control.spectrum import FullSpectrum, OctaveBandMode
+from ossdbs.spectrum_point_analysis import SpectrumMode
+from ossdbs.spectrum_point_analysis import FullSpectrum, OctaveBandMode
 from ossdbs.voltage_setting import VoltageSetterCurrentControlled
 from ossdbs.voltage_setting import VoltageSetterVoltageControlled
 

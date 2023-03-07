@@ -1,3 +1,4 @@
+from typing import List
 import h5py
 import numpy as np
 
@@ -11,7 +12,7 @@ class PointsFactory:
         return np.concatenate(points, axis=0)
 
     @staticmethod
-    def categories(path: str) -> list:
+    def categories(path: str) -> List[str]:
         with h5py.File(path, "r") as file:
             categories = [(key, file[key].shape[0]) for key in file.keys()]
         return categories

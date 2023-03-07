@@ -10,7 +10,8 @@ from ossdbs.factories.points_construction import PointsFactory
 from ossdbs.factories.signal_construction import SignalFactory
 from ossdbs.factories.solver_construction import SolverFactory
 from ossdbs.factories.spectrum_construction import SpectrumFactory
-from ossdbs.factories.volume_conductor_construction import VolumeConductorFactory
+from ossdbs.factories.volume_conductor_construction \
+    import VolumeConductorFactory
 
 
 def point_analysis(input: dict) -> None:
@@ -42,8 +43,7 @@ def point_analysis(input: dict) -> None:
 
     points = PointsFactory.create(input['Points'])
 
-    mode = SpectrumFactory.create(input['SpectrumMode'],
-                                  input['CurrentControlled'])
+    mode = SpectrumFactory.create(input['SpectrumMode'], False)
     result = mode.compute(signal, volume_conductor, points, contacts)
 
     categories = PointsFactory.categories(input['Points'])

@@ -20,6 +20,7 @@ class VoltageSetter(ABC):
 
 class VoltageSetterVoltageControlled(VoltageSetter):
 
+    @classmethod
     def set_voltages(cls,
                      frequency: float,
                      contacts: Contacts,
