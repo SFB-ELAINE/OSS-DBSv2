@@ -1,6 +1,18 @@
-Electrodes
-================
-See different examples
+===========================
+MicroProbes Custom Rodent
+===========================
 
-.. image:: SNEX-100.svg
+* Manufacturer: Boston 
+* Custom Lead
 
+
+.. image:: electrode_pictures/SNEX-100.svg
+
+
+------
+Code
+------
+
+.. autoclass:: ossdbs.electrodes.micro_probes_custom_rodent.MicroProbesCustomRodent
+    :members:
+    :show-inheritance:

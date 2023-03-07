@@ -1,4 +1,4 @@
-Volum Conductor Model
+Volume Conductor Model
 =====================
 
 Read Docstrings from the code automaticly!
