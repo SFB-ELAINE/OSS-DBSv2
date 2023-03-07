@@ -1,8 +1,8 @@
 
 
-from ossdbs.impedance_analysis.spectrum import LogarithmScanning
-from ossdbs.impedance_analysis.spectrum import OctaveBandMode
-from ossdbs.impedance_analysis.spectrum import SpectrumMode
+from ossdbs.spectrum_impedance_analysis import LogarithmScanning
+from ossdbs.spectrum_impedance_analysis import OctaveBandMode
+from ossdbs.spectrum_impedance_analysis import SpectrumMode
 
 
 class SpectrumImpedanceFactory:

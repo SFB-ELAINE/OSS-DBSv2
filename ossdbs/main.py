@@ -2,8 +2,8 @@
 import ngsolve
 import sys
 import json
-from ossdbs.impedance_analysis.impedance_analysis import impedance_analysis
-from ossdbs.voltage_control.point_analysis import point_analysis
+from ossdbs.impedance_analysis import impedance_analysis
+from ossdbs.point_analysis import point_analysis
 
 
 def main() -> None:

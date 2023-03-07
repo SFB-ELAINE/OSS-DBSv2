@@ -48,9 +48,11 @@ class Signal(ABC):
         """
         sample_spacing = 1 / (self.frequency * self.SPACING_FACTOR)
         samples = self.generate_samples(sample_spacing)
-        complex_values = np.fft.rfft(samples)
-        frequencies = np.fft.rfftfreq(len(samples), sample_spacing)
-        return complex_values, frequencies
+        return np.fft.rfft(samples)
+
+    def fft_frequncies(self) -> np.ndarray:
+        sample_spacing = 1 / (self.frequency * self.SPACING_FACTOR)
+        return np.fft.rfftfreq(int(self.SPACING_FACTOR), sample_spacing)
 
 
 class RectangleSignal(Signal):
@@ -80,6 +82,12 @@ class RectangleSignal(Signal):
 
     @property
     def frequency(self) -> float:
+        """Return frequency of signal.
+
+        Returns
+        -------
+        float
+        """
         return self.__frequency
 
     def generate_samples(self, sample_spacing: float) -> np.ndarray:
