@@ -40,11 +40,12 @@ For first steps with OSS-DBS see the next section of this documentation.
 Table of contents
 =================
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 1
 
    start
    examples
    volume_conductor_model
+   electrodes
 
 
 Indices and tables

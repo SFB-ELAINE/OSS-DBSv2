@@ -3,7 +3,7 @@ Electrodes
 This is an overview about the electrode models used for simulation.
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 1
 
    Abbott_Active_Tip_6142_6145
    Abbott_Active_Tip_6146_6149
