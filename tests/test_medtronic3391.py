@@ -1,5 +1,5 @@
 from ossdbs.electrodes.electrode_models import Medtronic3391
-from tests.geometry_converter import GeometryConverter
+from .geometry_converter import GeometryConverter
 import pytest
 import netgen
 import ngsolve

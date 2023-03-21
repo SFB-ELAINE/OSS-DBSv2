@@ -89,8 +89,9 @@
     "CounterPulseWidth[µs]": 0.0,
     "InterPulseWidth[µs]": 0.0
   },
-  "Points": "./input_files/test.hdf5",
+  "PathwayActivationModelling": "./input_files/test.hdf5",
   "VTA": {
+    "Active": false,
     "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
     "Direction": { "x[mm]": 2.2314, "y[mm]": 5.0661, "z[mm]": 3.99 },
     "PointDistance[mm]": 0.1,
