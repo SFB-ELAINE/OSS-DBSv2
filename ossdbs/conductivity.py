@@ -55,11 +55,11 @@ class Conductivity:
         pos_csf = self.__material_distribution == Material.CSF
         pos_wm = self.__material_distribution == Material.WHITE_MATTER
         pos_gm = self.__material_distribution == Material.GRAY_MATTER
-        pos_blood = self.__material_distribution == Material.GRAY_MATTER
+        pos_blood = self.__material_distribution == Material.BLOOD
 
         data[pos_csf] = self.__model.conductivity(Material.CSF, omega)
         data[pos_wm] = self.__model.conductivity(Material.WHITE_MATTER, omega)
-        data[pos_gm] = self.__model.conductivity(Material.WHITE_MATTER, omega)
+        data[pos_gm] = self.__model.conductivity(Material.GRAY_MATTER, omega)
         data[pos_blood] = self.__model.conductivity(Material.BLOOD, omega)
 
         # transform conductivity [S/m] to [S/mm] since the geometry is
