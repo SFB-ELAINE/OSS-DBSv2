@@ -1,12 +1,14 @@
 
 from abc import ABC, abstractmethod
 
+from ossdbs.materials import Material
+
 
 class DielectricModel(ABC):
-    """Model for the dielectric spectrum of a tissue."""
+    """Model for the dielectric spectrum of tissues."""
 
     @abstractmethod
-    def permitivity(self, omega: float) -> complex:
+    def permitivity(self, material: Material, omega: float) -> complex:
         """Calculate the permitivity by the angular frequency omega.
 
         Returns
@@ -14,11 +16,10 @@ class DielectricModel(ABC):
         complex
             Complex permitivity.
         """
-
         pass
 
     @abstractmethod
-    def conductivity(self, omega: float) -> complex:
+    def conductivity(self, material: Material, omega: float) -> complex:
         """Calculate the conductivity by the angular frequency omega.
 
         Returns
@@ -26,5 +27,4 @@ class DielectricModel(ABC):
         complex
             Complex conductivity.
         """
-
         pass

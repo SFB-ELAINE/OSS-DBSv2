@@ -7,7 +7,7 @@ import numpy as np
 class Signal(ABC):
     """Template for Signals."""
 
-    SPACING_FACTOR = 1e4
+    SAMPLES_PER_PERIODE = 1e4
 
     @property
     @abstractmethod
@@ -46,17 +46,17 @@ class Signal(ABC):
             First value is the collection of complex values, second value is
             collection of the corresponding frequencies.
         """
-        sample_spacing = 1 / (self.frequency * self.SPACING_FACTOR)
+        sample_spacing = 1 / (self.frequency * self.SAMPLES_PER_PERIODE)
         samples = self.generate_samples(sample_spacing)
         return np.fft.rfft(samples)
 
     def fft_frequncies(self) -> np.ndarray:
-        sample_spacing = 1 / (self.frequency * self.SPACING_FACTOR)
-        return np.fft.rfftfreq(int(self.SPACING_FACTOR), sample_spacing)
+        sample_spacing = 1 / (self.frequency * self.SAMPLES_PER_PERIODE)
+        return np.fft.rfftfreq(int(self.SAMPLES_PER_PERIODE), sample_spacing)
 
 
 class RectangleSignal(Signal):
-    """Creates rectangular signal.
+    """Represents a rectangular signal.
 
     Parameters
     ----------
@@ -126,7 +126,7 @@ class RectangleSignal(Signal):
 
 
 class TriangleSignal(Signal):
-    """Creates triangular signal.
+    """Represents triangular signal.
 
     Parameters
     ----------
@@ -204,7 +204,7 @@ class TriangleSignal(Signal):
 
 
 class TrapzoidSignal(Signal):
-    """Creates trapzoid signal.
+    """Represents trapzoid signal.
 
     Parameters
     ----------

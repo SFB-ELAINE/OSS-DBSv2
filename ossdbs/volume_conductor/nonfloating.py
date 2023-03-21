@@ -1,5 +1,5 @@
 
-from ossdbs.contacts import Contacts
+from ossdbs.electrodes.contacts import Contacts
 from ossdbs.volume_conductor.volume_conductor_model import VolumeConductor
 from ossdbs.volume_conductor.volume_conductor_model import Solution
 from ossdbs.conductivity import Conductivity
@@ -45,7 +45,7 @@ class VolumeConductorNonFloating(VolumeConductor):
         """
         complex_data = self.mesh.is_complex()
         sigma = self.conductivity.distribution(frequency, complex_data)
-        boundaries = [contact.name for contact in contacts.active_contacts()]
+        boundaries = [contact.name for contact in contacts.active()]
         h1_space = self.mesh.h1_space(boundaries=boundaries)
         finite_elements_space = ngsolve.FESpace(spaces=[h1_space])
         space = ngsolve.CompressCompound(finite_elements_space)

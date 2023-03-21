@@ -1,12 +1,12 @@
-from ossdbs.dielectric_model.dielectric_model import DielectricModel
-from ossdbs.dielectric_model.colecole_model4 import WhiteMatterModel
-from ossdbs.dielectric_model.colecole_model4 import GrayMatterModel
-from ossdbs.dielectric_model.colecole_model4 import CerebroSpinalFluidModel
-from ossdbs.dielectric_model.colecole_model4 import BloodModel
+from .dielectric_model import DielectricModel
+from .colecole4 import ColeCole4Model
+from .constant import ConstantModel
+from .custom import ColeCole4ModelCustom
+from .custom import ConstantModelCustom
 
-__all__ = ('BloodModel',
-           'CerebroSpinalFluidModel',
-           'DielectricModel',
-           'GrayMatterModel',
-           'WhiteMatterModel',
+__all__ = ('DielectricModel',
+           'ColeCole4Model',
+           'ColeCole4ModelCustom',
+           'ConstantModel',
+           'ConstantModelCustom'
            )
