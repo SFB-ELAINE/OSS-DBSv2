@@ -104,7 +104,7 @@ class Mesh:
             File name of the mesh data.
         """
 
-        self.__mesh.ngmeshSave(file_name)
+        self.__mesh.ngmesh.Save(file_name)
 
     def h1_space(self, boundaries: List[str]) -> ngsolve.comp.H1:
         """Return a h1 space based on the mesh.

@@ -1,31 +1,31 @@
 
 from typing import List
-from ossdbs.electrode_models import ElectrodeModel
-from ossdbs.electrode_models import AbbottStjudeActiveTip6142_6145
-from ossdbs.electrode_models import AbbottStjudeActiveTip6146_6149
-from ossdbs.electrode_models import AbbottStjudeDirected6172
-from ossdbs.electrode_models import AbbottStjudeDirected6173
-from ossdbs.electrode_models import BostonScientificVercise
-from ossdbs.electrode_models import BostonScientificVerciseDirected
-from ossdbs.electrode_models import Medtronic3387
-from ossdbs.electrode_models import Medtronic3389
-from ossdbs.electrode_models import Medtronic3391
-from ossdbs.electrode_models import PINSMedicalL301
-from ossdbs.electrode_models import PINSMedicalL302
-from ossdbs.electrode_models import PINSMedicalL303
-from ossdbs.electrode_models import MicroProbesCustomRodent
-from ossdbs.electrode_models import MicroProbesSNEX_100
+from ossdbs.electrodes.contacts import Contact, Contacts
+from ossdbs.electrodes.electrode_models import ElectrodeModel
+from ossdbs.electrodes.electrode_models import AbbottStjudeActiveTip6142_6145
+from ossdbs.electrodes.electrode_models import AbbottStjudeActiveTip6146_6149
+from ossdbs.electrodes.electrode_models import AbbottStjudeDirected6172
+from ossdbs.electrodes.electrode_models import AbbottStjudeDirected6173
+from ossdbs.electrodes.electrode_models import BostonScientificVercise
+from ossdbs.electrodes.electrode_models import BostonScientificVerciseDirected
+from ossdbs.electrodes.electrode_models import Medtronic3387
+from ossdbs.electrodes.electrode_models import Medtronic3389
+from ossdbs.electrodes.electrode_models import Medtronic3391
+from ossdbs.electrodes.electrode_models import PINSMedicalL301
+from ossdbs.electrodes.electrode_models import PINSMedicalL302
+from ossdbs.electrodes.electrode_models import PINSMedicalL303
+from ossdbs.electrodes.electrode_models import MicroProbesCustomRodent
+from ossdbs.electrodes.electrode_models import MicroProbesSNEX_100
+from ossdbs.electrodes.electrode_models import AbbottStjudeActiveCustom
+from ossdbs.electrodes.electrode_models import AbbottStjudeDirectedCustom
+from ossdbs.electrodes.electrode_models import BostonScientificVerciseCustom
+from ossdbs.electrodes.electrode_models import BostonScientificVerciseDirectedCustom
+from ossdbs.electrodes.electrode_models import MedtronicCustom
+from ossdbs.electrodes.electrode_models import MicroProbesCustomRodentCustom
+from ossdbs.electrodes.electrode_models import MicroProbesSNEX_100Custom
+from ossdbs.electrodes.electrode_models import PINSMedicalCustom
 
-from ossdbs.electrode_models import AbbottStjudeActiveCustom
-from ossdbs.electrode_models import AbbottStjudeDirectedCustom
-from ossdbs.electrode_models import BostonScientificVerciseCustom
-from ossdbs.electrode_models import BostonScientificVerciseDirectedCustom
-from ossdbs.electrode_models import MedtronicCustom
-from ossdbs.electrode_models import MicroProbesCustomRodentCustom
-from ossdbs.electrode_models import MicroProbesSNEX_100Custom
-from ossdbs.electrode_models import PINSMedicalCustom
-
-from ossdbs.electrodes import Contact, Electrodes
+from ossdbs.electrodes.electrodes import Electrodes
 
 
 class ElectrodeFactory:
@@ -112,11 +112,12 @@ class ElectrodesFactory:
 
         for index, input_par in enumerate(electrode_paramters):
             electrode = cls.__create_electrode(input_par)
-            boundary_names = cls.__boundaries(index)
-            electrode.rename_boundaries(boundary_names)
-            electrode_contacts = cls.__create_contacts(index, input_par)
+            electrode.set_contact_names(cls.__boundaries(index))
             electrodes.append(electrode)
-            contacts.extend(electrode_contacts)
+            contacts.extend(cls.__create_contacts(index, input_par))
+
+        contacts = Contacts([contact for contact in contacts
+                             if contact.active or contact.floating])
 
         return Electrodes(electrodes=electrodes, contacts=contacts)
 

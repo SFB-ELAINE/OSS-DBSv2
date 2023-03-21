@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import ngsolve
 
-from ossdbs.contacts import Contacts
+from ossdbs.electrodes.contacts import Contacts
 
 
 @dataclass

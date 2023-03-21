@@ -1,8 +1,9 @@
 
 
+from ossdbs.dielectric_model import DielectricModel
 from ossdbs.bounding_box import BoundingBox
 from ossdbs.Nifti1Image import Nifti1Image
-from ossdbs.encapsulatin_layer import EncapsulatingLayers
+from ossdbs.electrodes.encapsulatin_layer import EncapsulatingLayers
 from ossdbs.materials import Material
 from ossdbs.conductivity import Conductivity
 import numpy as np
@@ -19,12 +20,15 @@ class ConductivityFactory:
     def __init__(self,
                  nifti: Nifti1Image,
                  bounding_box: BoundingBox,
+                 dielectrc_model: DielectricModel,
                  encap_layer: EncapsulatingLayers,
-                 encap_material: Material = Material.GRAY_MATTER) -> None:
+                 encap_material: Material = Material.GRAY_MATTER
+                 ) -> None:
         self.__nifti = nifti
         self.__bbox = bounding_box
         self.__encap_layer = encap_layer
         self.__encap_material = encap_material
+        self.__dielectric_model = dielectrc_model
 
     def create(self) -> Conductivity:
         """Return the conductivity.
@@ -49,7 +53,9 @@ class ConductivityFactory:
         new_end = tuple(end_index * voxel_size + offset)
         self.__set_encap_data(data, new_start)
 
-        return Conductivity(data, BoundingBox(start=new_start, end=new_end))
+        bounding_box = BoundingBox(start=new_start, end=new_end)
+
+        return Conductivity(data, bounding_box, self.__dielectric_model)
 
     def __set_encap_data(self, data: np.ndarray, offset: tuple) -> None:
 

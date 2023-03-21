@@ -4,6 +4,13 @@ import numpy as np
 
 
 class Nifti1Image:
+    """Intrerface for Nifti1 image.
+
+    Attributes
+    ----------
+    file_path : str
+        File path of a Nifti1 image.
+    """
 
     __N_DIMENSION = 3
 

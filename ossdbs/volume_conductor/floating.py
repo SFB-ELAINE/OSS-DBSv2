@@ -1,5 +1,5 @@
 
-from ossdbs.contacts import Contacts
+from ossdbs.electrodes.contacts import Contacts
 from ossdbs.volume_conductor.volume_conductor_model import VolumeConductor
 from ossdbs.volume_conductor.volume_conductor_model import Solution
 from ossdbs.conductivity import Conductivity
@@ -59,7 +59,7 @@ class VolumeConductorFloating(VolumeConductor):
         components = solution.components[2:]
         floating_values = {contact.name: component.vec[0]
                            for contact, component
-                           in zip(contacts.floating_contacts(), components)}
+                           in zip(contacts.floating(), components)}
 
         potential = solution.components[0]
         current_density = sigma * ngsolve.grad(potential)

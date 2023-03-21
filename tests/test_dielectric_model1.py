@@ -1,6 +1,5 @@
-from ossdbs.dielectric_model import WhiteMatterModel
-from ossdbs.dielectric_model import GrayMatterModel
-from ossdbs.dielectric_model import CerebroSpinalFluidModel
+from ossdbs.materials import Material
+from ossdbs.dielectric_model import ColeCole4Model
 import numpy as np
 import pytest
 
@@ -18,13 +17,15 @@ class TestWhiteMatterModel:
     @pytest.mark.parametrize('frequency, permitivity, tolerance',
                              TESTDATA_PERMITIVITY)
     def test_permitivity(self, frequency, permitivity, tolerance):
-        actual = WhiteMatterModel().permitivity(omega=2*np.pi*frequency)
+        omega = 2*np.pi*frequency
+        actual = ColeCole4Model().permitivity(Material.WHITE_MATTER, omega)
         np.testing.assert_allclose(actual, permitivity, atol=tolerance)
 
     @pytest.mark.parametrize('frequency, conductivity, tolerance',
                              TESTDATA_CONDUCTIVITY)
     def test_conductivity(self, frequency, conductivity, tolerance):
-        actual = WhiteMatterModel().conductivity(omega=2*np.pi*frequency)
+        omega = 2*np.pi*frequency
+        actual = ColeCole4Model().conductivity(Material.WHITE_MATTER, omega)
         np.testing.assert_allclose(actual, conductivity, atol=tolerance)
 
 
@@ -41,13 +42,15 @@ class TestGrayMatterModel:
     @pytest.mark.parametrize('frequency, permitivity, tolerance',
                              TESTDATA_PERMITIVITY)
     def test_permitivity(self, frequency, permitivity, tolerance):
-        actual = GrayMatterModel().permitivity(omega=2*np.pi*frequency)
+        omega = 2*np.pi*frequency
+        actual = ColeCole4Model().permitivity(Material.GRAY_MATTER, omega)
         np.testing.assert_allclose(actual, permitivity, atol=tolerance)
 
     @pytest.mark.parametrize('frequency, conductivity, tolerance',
                              TESTDATA_CONDUCTIVITY)
     def test_conductivity(self, frequency, conductivity, tolerance):
-        actual = GrayMatterModel().conductivity(omega=2*np.pi*frequency)
+        omega = 2*np.pi*frequency
+        actual = ColeCole4Model().conductivity(Material.GRAY_MATTER, omega)
         np.testing.assert_allclose(actual, conductivity, atol=tolerance)
 
 
@@ -65,12 +68,12 @@ class TestCerebroSpinalFluidModel:
                              TESTDATA_PERMITIVITY)
     def test_permitivity(self, frequency, permitivity, tolerance):
         omega = 2 * np.pi * frequency
-        actual = CerebroSpinalFluidModel().permitivity(omega=omega)
+        actual = ColeCole4Model().permitivity(Material.CSF, omega)
         np.testing.assert_allclose(actual, permitivity, atol=tolerance)
 
     @pytest.mark.parametrize('frequency, conductivity, tolerance',
                              TESTDATA_CONDUCTIVITY)
     def test_conductivity(self, frequency, conductivity, tolerance):
         omega = 2 * np.pi * frequency
-        actual = CerebroSpinalFluidModel().conductivity(omega=omega)
+        actual = ColeCole4Model().conductivity(Material.CSF, omega)
         np.testing.assert_allclose(actual, conductivity, atol=tolerance)
