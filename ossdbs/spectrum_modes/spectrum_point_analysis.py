@@ -89,6 +89,17 @@ class FullSpectrum(SpectrumMode):
         included_index = volume_conductor.mesh.is_included(points)
         mips = [ng_mesh(*point) for point in points[included_index]]
 
+        if not len(mips):
+            potentials_t = self.__ifft(potentials_fft)
+            current_densitys_t = self.__ifft(current_dens_fft)
+            sample_spacing = 1 / (signal.frequency * len(potentials_t))
+            time_steps = np.arange(self.SPACING_FACTOR) * sample_spacing
+
+            return TimeResult(points=points,
+                              potential=potentials_t,
+                              current_density=current_densitys_t,
+                              time_steps=time_steps)
+
         data_shape = len(points), len(frequencies)
         potentials_fft = np.zeros(data_shape, dtype=complex)
         current_dens_fft = np.zeros((*data_shape, 3), dtype=complex)
@@ -187,6 +198,17 @@ class OctaveBandMode(SpectrumMode):
         potentials_fft = np.zeros(data_shape, dtype=complex)
         current_dens_fft = np.zeros((*data_shape, 3), dtype=complex)
         conductivities = np.zeros(data_shape, dtype=complex)
+
+        if not len(mips):
+            potentials_t = self.__ifft(potentials_fft)
+            current_densitys_t = self.__ifft(current_dens_fft)
+            sample_spacing = 1 / (signal.frequency * len(potentials_t))
+            time_steps = np.arange(self.SPACING_FACTOR) * sample_spacing
+
+            return TimeResult(points=points,
+                              potential=potentials_t,
+                              current_density=current_densitys_t,
+                              time_steps=time_steps)
 
         new_contacts = self._voltage_setting.set_voltages(0.0,
                                                           contacts,

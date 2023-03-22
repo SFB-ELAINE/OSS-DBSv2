@@ -1,4 +1,4 @@
-from ossdbs.vta_creation import VTAPointMatrix
+from ossdbs.vta_points import VTAPointMatrix
 import numpy as np
 
 
@@ -12,5 +12,5 @@ class VTAPointsFactory:
         center = center_par['x[mm]'], center_par['y[mm]'], center_par['z[mm]']
         dir_par = vta_parameters['Direction']
         direction = dir_par['x[mm]'], dir_par['y[mm]'], dir_par['z[mm]']
-        distance = vta_parameters['Distance[mm]']
+        distance = vta_parameters['PointDistance[mm]']
         return VTAPointMatrix(shape, center, distance, direction).coordinates()

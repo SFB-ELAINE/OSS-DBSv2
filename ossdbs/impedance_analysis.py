@@ -1,7 +1,7 @@
 import os
 from ossdbs.Nifti1Image import Nifti1Image
 from ossdbs.brain_geometry import BrainGeometry
-from ossdbs.output import OutputDirectory
+from ossdbs.outputX import OutputDirectory
 
 from ossdbs.factories import BoundingBoxFactory
 from ossdbs.factories import ConductivityFactory

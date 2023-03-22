@@ -2,9 +2,7 @@
   "CaseGrounding": {
     "Active": true,
     "Current[A]": 0.0,
-    "Voltage[V]": 0.0,
-    "Floating": false,
-    "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+    "Voltage[V]": 0.0
   },
   "CurrentControled": true,
   "DielectricModel": "ColeCole4",
@@ -28,7 +26,7 @@
           "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
         }
       ]
-    }  
+    }
   ],
   "Contacts":{"MaxMeshSizeHeight": 0.1},
   "EncapsulatingLayer": {
