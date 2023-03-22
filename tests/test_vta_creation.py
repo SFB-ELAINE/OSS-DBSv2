@@ -1,4 +1,4 @@
-from ossdbs.vta_creation import VTAPointMatrix
+from ossdbs.vta_points import VTAPointMatrix
 import numpy as np
 
 

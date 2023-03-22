@@ -1,6 +1,6 @@
 
 from typing import List
-from ossdbs.electrodes.contacts import Contacts
+from ossdbs.electrodes.contacts import Contact, Contacts
 from ossdbs.stimulation_signal import Signal
 from ossdbs.volume_conductor import VolumeConductor
 from abc import ABC, abstractmethod
@@ -77,6 +77,14 @@ class LogarithmScanning(SpectrumMode):
         return frequencies
 
     def __contact_settings(self, contacts: Contacts):
+        settings = []
+        for index, contact_1 in enumerate(contacts.active()[:-1]):
+            for contact_2 in contacts.active()[index + 1:]:
+                contact_1.voltage = 1
+                contact_2.voltage = 0
+                new_contacts = [contact_1, contact_2] + contacts.floating()
+                settings.append(Contacts(new_contacts))
+
         return [Contacts([contact_1, contact_2] + contacts.floating())
                 for index, contact_1 in enumerate(contacts.active()[:-1])
                 for contact_2 in contacts.active()[index + 1:]]
@@ -127,7 +135,7 @@ class OctaveBandMode(SpectrumMode):
                         for contacts_setting in settings]
 
         return Impedances(frequencies=frequencies,
-                          imdedances=impedance,
+                          imdedances=impedances,
                           contact_sets=contact_sets)
 
     def __octave_bands(self,
@@ -152,6 +160,14 @@ class OctaveBandMode(SpectrumMode):
         return voltage / power if power else 0
 
     def __contact_settings(self, contacts: Contacts):
+        settings = []
+        for index, contact_1 in enumerate(contacts.active()[:-1]):
+            for contact_2 in contacts.active()[index + 1:]:
+                contact_1.voltage = 1
+                contact_2.voltage = 0
+                new_contacts = [contact_1, contact_2] + contacts.floating()
+                settings.append(Contacts(new_contacts))
+
         return [Contacts([contact_1, contact_2] + contacts.floating())
                 for index, contact_1 in enumerate(contacts.active()[:-1])
-                for contact_2 in contacts.active()[index + 1]]
+                for contact_2 in contacts.active()[index + 1:]]
