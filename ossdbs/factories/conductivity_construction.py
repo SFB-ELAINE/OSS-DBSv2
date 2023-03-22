@@ -51,7 +51,7 @@ class ConductivityFactory:
         data = self.__nifti.data_map()[x_s:x_e, y_s:y_e, z_s:z_e]
         new_start = tuple(start_index * voxel_size + offset)
         new_end = tuple(end_index * voxel_size + offset)
-        self.__set_encap_data(data, new_start)
+        # self.__set_encap_data(data, new_start)
 
         bounding_box = BoundingBox(start=new_start, end=new_end)
 

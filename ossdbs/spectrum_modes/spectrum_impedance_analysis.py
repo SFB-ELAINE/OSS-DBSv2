@@ -50,7 +50,7 @@ class LogarithmScanning(SpectrumMode):
         settings = self.__contact_settings(contacts)
         impedances = np.zeros((len(frequencies), len(settings)), dtype=complex)
 
-        for index, frequency in enumerate(frequencies[:2]):
+        for index, frequency in enumerate(frequencies):
             for set_index, contacts_setting in enumerate(settings):
                 solution = volume_conductor.compute_solution(frequency,
                                                              contacts_setting)
@@ -59,7 +59,7 @@ class LogarithmScanning(SpectrumMode):
                 power = ngsolve.Integrate(field * curr_dens_conj, mesh)
                 impedances[index, set_index] = 1 / power if power else 0
                 print(impedances[index])
-        
+
         contact_sets = [[contact.name for contact in contacts_setting.active()]
                         for contacts_setting in settings]
 
