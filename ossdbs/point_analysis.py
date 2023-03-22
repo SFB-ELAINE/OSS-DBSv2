@@ -2,7 +2,7 @@
 
 from ossdbs.Nifti1Image import Nifti1Image
 from ossdbs.brain_geometry import BrainGeometry
-from ossdbs.output import OutputDirectory
+from ossdbs.outputX import OutputDirectory
 
 from ossdbs.factories import BoundingBoxFactory
 from ossdbs.factories import ConductivityFactory
@@ -15,6 +15,7 @@ from ossdbs.factories import SignalFactory
 from ossdbs.factories import SolverFactory
 from ossdbs.factories import SpectrumFactory
 from ossdbs.factories import VolumeConductorFactory
+from ossdbs.factories import VTAPointsFactory
 
 import os
 
@@ -50,8 +51,9 @@ def point_analysis(input: dict) -> None:
 
     signal = SignalFactory.create(input['StimulationSignal'])
 
-    
     points = PointsFactory.create(input['Points'])
+
+    points = VTAPointsFactory.create(input['VTA'])
 
     mode = SpectrumFactory.create(input['SpectrumMode'], False, len(contacts.active()))
     result = mode.compute(signal, volume_conductor, points, contacts, output.output_directory())

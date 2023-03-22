@@ -7,10 +7,11 @@ from .electrodes_construction import ElectrodesFactory
 from .mesh_construction import MeshFactory
 from .signal_construction import SignalFactory
 from .solver_construction import SolverFactory
-from .volume_conductor_construction import VolumeConductorFactory
 from .spectrum_construction import SpectrumFactory
 from .spectrum_impedance_construction import SpectrumImpedanceFactory
 from .points_construction import PointsFactory
+from .volume_conductor_construction import VolumeConductorFactory
+from .vta_points_creation import VTAPointsFactory
 
 __all__ = ('BoundingBoxFactory',
            'ConductivityFactory',
@@ -25,4 +26,4 @@ __all__ = ('BoundingBoxFactory',
            'SpectrumFactory',
            'SpectrumImpedanceFactory',
            'VolumeConductorFactory',
-           )
+           'VTAPointsFactory')
