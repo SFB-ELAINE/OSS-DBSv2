@@ -50,6 +50,7 @@ def point_analysis(input: dict) -> None:
 
     signal = SignalFactory.create(input['StimulationSignal'])
 
+    
     points = PointsFactory.create(input['Points'])
 
     mode = SpectrumFactory.create(input['SpectrumMode'], False, len(contacts.active()))

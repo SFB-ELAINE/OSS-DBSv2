@@ -42,7 +42,8 @@ class ConductivityFactory:
         self.__check_mri_data_shape()
         voxel_size = self.__nifti.voxel_size()
         offset = self.__nifti.offset()
-        start, end = self.__bbox.start, self.__bbox.end
+        bbox = self.__bbox.intersection(self.__nifti.bounding_box())
+        start, end = bbox.start, bbox.end
         start_index = np.floor(np.subtract(start, offset) / voxel_size)
         x_s, y_s, z_s = start_index.astype(int)
         end_index = np.ceil(np.subtract(end, offset) / voxel_size)
