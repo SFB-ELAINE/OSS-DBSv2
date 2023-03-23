@@ -2,7 +2,7 @@
 
 from ossdbs.Nifti1Image import Nifti1Image
 from ossdbs.brain_geometry import BrainGeometry
-from ossdbs.outputX import OutputDirectory
+from ossdbs.output import OutputDirectory
 
 from ossdbs.factories import BoundingBoxFactory
 from ossdbs.factories import ConductivityFactory
@@ -18,6 +18,9 @@ from ossdbs.factories import VolumeConductorFactory
 from ossdbs.factories import VTAPointsFactory
 
 import os
+
+from ossdbs.points import Points, VTAPoints
+from ossdbs.vta_points import VTAPointMatrix
 
 
 def point_analysis(input: dict) -> None:
@@ -51,15 +54,18 @@ def point_analysis(input: dict) -> None:
 
     signal = SignalFactory.create(input['StimulationSignal'])
 
-    points = PointsFactory.create(input['Points'])
+    # points = PointsFactory.create(input['Points'])
 
     points = VTAPointsFactory.create(input['VTA'])
 
-    mode = SpectrumFactory.create(input['SpectrumMode'], False, len(contacts.active()))
+    mode = SpectrumFactory.create(input['SpectrumMode'],
+                                  input['CurrentControled'],
+                                  len(contacts.active()))
+    
     result = mode.compute(signal, volume_conductor, points, contacts, output.output_directory())
 
-    categories = PointsFactory.categories(input['Points'])
-    result.save_by_categories("test_result.hdf5", categories)
+    output_points = VTAPoints(points)
+    output_points.save(result, os.path.join(output.output_directory(), 'vta.h5'))
 
     if input['Mesh']['SaveMesh']:
         mesh_path = os.path.join(output.output_directory(), 'mesh')
