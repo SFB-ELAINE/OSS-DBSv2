@@ -26,7 +26,7 @@
           "Voltage[V]": 1.0,
           "Floating": false,
           "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
-        }        
+        },
         {
           "Contact_ID": 2,
           "Active": true,
@@ -36,11 +36,11 @@
           "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
         }
       ]
-    }  
+    }
   ],
   "Contacts":{"MaxMeshSizeHeight": 0.1},
   "EncapsulatingLayer": {
-    "Thickness[mm]": 0.3,
+    "Thickness[mm]": 0.1,
     "Material": "GrayMatter",
     "MaxMeshSizeHeight": 0.1
   },

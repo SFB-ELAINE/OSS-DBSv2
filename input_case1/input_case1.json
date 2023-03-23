@@ -36,7 +36,7 @@
           "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
         }
       ]
-    }  
+    }
   ],
   "Contacts":{"MaxMeshSizeHeight": 0.1},
   "EncapsulatingLayer": {
@@ -91,7 +91,7 @@
   },
   "Points": "./input_files/test.hdf5",
   "VTA": {
-    "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
+    "Center": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
     "Direction": { "x[mm]": 1, "y[mm]": 1, "z[mm]": 1 },
     "PointDistance[mm]": 0.1,
     "Shape": { "x": 3, "y": 3, "z": 3 }

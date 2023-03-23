@@ -2,11 +2,9 @@
   "CaseGrounding": {
     "Active": false,
     "Current[A]": 0.0,
-    "Voltage[V]": 0.0,
-    "Floating": false,
-    "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+    "Voltage[V]": 0.0
   },
-  "CurrentControled": true,
+  "CurrentControled": false,
   "DielectricModel": "ColeCole4",
   "DiffusionTensorImage": {
     "Path": ""
@@ -38,13 +36,13 @@
         {
           "Contact_ID": 3,
           "Active": true,
-          "Current[A]": 0.001,
-          "Voltage[V]": 0.0,
+          "Current[A]": 0.0,
+          "Voltage[V]": 1.0,
           "Floating": false,
           "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
         }
       ]
-    }  
+    }
   ],
   "Contacts":{"MaxMeshSizeHeight": 0.1},
   "EncapsulatingLayer": {
@@ -55,7 +53,7 @@
   "EQSMode": false,
   "Floating": {
     "Active": true,
-    "FloatingImpedance": true
+    "FloatingImpedance": false
   },
   "MaterialDistribution": {
     "MaterialCoding": {
@@ -99,7 +97,7 @@
   },
   "Points": "./input_files/test.hdf5",
   "VTA": {
-    "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
+    "Center":{ "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
     "Direction": { "x[mm]": 1, "y[mm]": 1, "z[mm]": 1 },
     "PointDistance[mm]": 0.1,
     "Shape": { "x": 3, "y": 3, "z": 3 }

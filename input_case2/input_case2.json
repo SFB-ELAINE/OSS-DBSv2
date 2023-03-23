@@ -36,7 +36,7 @@
           "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
         }
       ]
-    }  
+    }
   ],
   "Contacts":{"MaxMeshSizeHeight": 0.1},
   "EncapsulatingLayer": {
@@ -56,7 +56,7 @@
       "WhiteMatter": 2,
       "CerebrospinalFluid": 3
     },
-    "MRIPath": "./input_case2/new_segmented_Atlas_GMWMCSF.nii.gz"
+    "MRIPath": "./new_segmented_Atlas_GMWMCSF.nii.gz"
   },
   "Mesh": {
     "LoadMesh": false,
@@ -89,9 +89,9 @@
     "CounterPulseWidth[µs]": 0.0,
     "InterPulseWidth[µs]": 0.0
   },
-  "Points": "./input_files/test.hdf5",
+  "Points": "",
   "VTA": {
-    "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
+    "Center": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
     "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
     "PointDistance[mm]": 0.1,
     "Shape": { "x": 3, "y": 3, "z": 3 }
