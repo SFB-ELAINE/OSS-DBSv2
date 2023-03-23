@@ -70,12 +70,12 @@ class VolumeConductorFloating(VolumeConductor):
                         floating_values=floating_values,
                         frequency=frequency)
 
-    def __create_space(self, contacts):
-        boundaries = [contact.name for contact in contacts.active_contacts()]
+    def __create_space(self, contacts: Contacts):
+        boundaries = [contact.name for contact in contacts.active()]
         spaces_active = [self.mesh.h1_space(boundaries),
                          self.mesh.surfacel2_space(boundaries)]
         spaces_floating = [self.mesh.number_space()
-                           for _ in contacts.floating_contacts()]
+                           for _ in contacts.floating()]
         spaces = spaces_active + spaces_floating
         finite_elements_space = ngsolve.FESpace(spaces=spaces)
         return ngsolve.CompressCompound(fespace=finite_elements_space)
@@ -87,7 +87,7 @@ class VolumeConductorFloating(VolumeConductor):
         v, mu = test[:2]
         bilinear_form = ngsolve.BilinearForm(space)
         bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
-        boundaries = [contact.name for contact in contacts.floating_contacts()]
+        boundaries = [contact.name for contact in contacts.floating()]
         for (ufix, vfix, boundary) in zip(trial[2:], test[2:], boundaries):
             bilinear_form += u * mu + v * lam * ngsolve.ds(boundary)
             bilinear_form += -(ufix * mu + vfix * lam) * ngsolve.ds(boundary)
