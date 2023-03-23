@@ -18,17 +18,18 @@ class Impedances:
     contact_sets: list
 
     def save(self, path: str) -> None:
+        dataframe = pd.DataFrame(self.__create_data())
+        dataframe.to_csv(path, index=False, sep=',')
 
+    def __create_data(self) -> dict:
         data = {'frequencies [Hz]': self.frequencies}
         for index, contact_set in enumerate(self.contact_sets):
             name_1, name_2 = contact_set[0], contact_set[1]
-            resistance = '_'.join(['Resistance [Ohm]', name_1, name_2])
-            reactance = '_'.join(['Reactance [Ohm]', name_1, name_2])
+            resistance = '_'.join(['resistance', name_1, name_2, '[Ohm]'])
+            reactance = '_'.join(['reactance', name_1, name_2, '[Ohm]'])
             data.update({resistance: np.real(self.imdedances[:, index]),
                          reactance: np.imag(self.imdedances[:, index])})
-
-        dataframe = pd.DataFrame(data)
-        dataframe.to_csv(path, index=False, sep=',')
+        return data
 
 
 class SpectrumMode(ABC):
@@ -113,27 +114,27 @@ class OctaveBandMode(SpectrumMode):
 
         frequencies = signal.fft_frequncies()
         settings = self.__contact_settings(contacts)
-        impedances = np.zeros((len(frequencies), len(settings)), dtype=complex)
+        n_octaves = int(np.log2(len(frequencies) - 1)) + 1
+        impedances = np.zeros((n_octaves + 1, len(settings)), dtype=complex)
 
         for index, contact_setting in enumerate(settings):
             impedances[0, index] = self.__compute_impedance(volume_conductor,
                                                             0.0,
                                                             contact_setting)
 
-        n_octaves = int(np.log2(len(frequencies) - 1)) + 1
-        for octave_band in self.__octave_bands(signal.frequency, n_octaves):
-            for index, contact_setting in enumerate(settings):
+        octave_bands = self.__octave_bands(signal.frequency, n_octaves)
 
-                start = int(octave_band.lower_limit() / signal.frequency + 1)
-                end = int(octave_band.upper_limit() / signal.frequency + 1)
+        for freq_index, octave_band in enumerate(octave_bands, 1):
+            for index, contact_setting in enumerate(settings):
                 impedance = self.__compute_impedance(volume_conductor,
                                                      octave_band.frequency,
                                                      contact_setting)
-                impedances[start:end, index] = impedance
+                impedances[freq_index, index] = impedance
 
         contact_sets = [[contact.name for contact in contacts_setting.active()]
                         for contacts_setting in settings]
 
+        frequencies = [0] + list(signal.frequency * 2 ** np.arange(n_octaves))
         return Impedances(frequencies=frequencies,
                           imdedances=impedances,
                           contact_sets=contact_sets)

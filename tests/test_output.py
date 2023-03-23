@@ -1,4 +1,4 @@
-from ossdbs.outputX import OutputDirectory
+from ossdbs.output import OutputDirectory
 
 
 class TestOutput:

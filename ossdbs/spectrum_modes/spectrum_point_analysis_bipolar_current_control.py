@@ -78,7 +78,8 @@ class FullSpectrum(SpectrumMode):
                 signal: Signal,
                 volume_conductor: VolumeConductor,
                 points: np.ndarray,
-                contacts: Contacts
+                contacts: Contacts,
+                output: str
                 ) -> TimeResult:
 
         complex_values = signal.fft_analysis()
@@ -107,7 +108,6 @@ class FullSpectrum(SpectrumMode):
                               potential=potentials_t,
                               current_density=current_densitys_t,
                               time_steps=time_steps)
-
 
         for index, frequency in enumerate(frequencies[:2]):
             solution = volume_conductor.compute_solution(frequency, contacts)
@@ -170,7 +170,8 @@ class OctaveBandMode(SpectrumMode):
                 signal: Signal,
                 volume_conductor: VolumeConductor,
                 points: np.ndarray,
-                contacts: Contacts
+                contacts: Contacts,
+                output: str,
                 ) -> TimeResult:
 
         source_index = np.argmax([contact.current
