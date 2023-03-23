@@ -1,10 +1,1 @@
-{
-    "CoreElectrodeLength[mm]": 0.25,
-    "CoreElectrodeDiameter[mm]": 0.1,
-    "CoreTubingLength[mm]": 0.5,
-    "CoreTubingDiameter[mm]": 0.140,
-    "OuterElectrodeLength[mm]": 0.25,
-    "OuterElectrodeDiameter[mm]": 0.33,
-    "OuterTubingDiameter[mm]": 0.411,
-    "LeadLength[mm]": 100
-}
+{"CoreElectrodeLength[mm]": 0.258, "CoreElectrodeDiameter[mm]": 0.0768, "CoreTubingLength[mm]": 0.497, "CoreTubingDiameter[mm]": 0.1311, "OuterElectrodeLength[mm]": 0.26, "OuterElectrodeDiameter[mm]": 0.33880000000000005, "OuterTubingDiameter[mm]": 0.4078, "LeadLength[mm]": 100.0}

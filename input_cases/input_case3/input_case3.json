@@ -1,37 +1,27 @@
 {
   "CaseGrounding": {
-    "Active": false,
+    "Active": true,
     "Current[A]": 0.0,
-    "Voltage[V]": 0.0,
-    "Floating": false,
-    "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+    "Voltage[V]": 0.0
   },
-  "CurrentControled": false,
+  "CurrentControled": true,
   "DielectricModel": "ColeCole4",
   "DiffusionTensorImage": {
     "Path": ""
   },
   "Electrodes": [
     {
-      "Name": "BostonScientificVerciseDirected",
-      "Rotation[Degrees]": 30,
-      "Direction": { "x[mm]": 1, "y[mm]": 1, "z[mm]": 1 },
-      "TipPosition": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
+      "Name": "MicroProbesCustomRodent",
+      "Rotation[Degrees]": 0,
+      "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
+      "TipPosition": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
 
       "Contacts": [
         {
           "Contact_ID": 1,
           "Active": true,
-          "Current[A]": 0.0,
+          "Current[A]": 0.0002,
           "Voltage[V]": 0.0,
-          "Floating": false,
-          "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
-        },
-        {
-          "Contact_ID": 2,
-          "Active": true,
-          "Current[A]": 0.0,
-          "Voltage[V]": 0.1,
           "Floating": false,
           "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
         }
@@ -40,11 +30,11 @@
   ],
   "Contacts":{"MaxMeshSizeHeight": 0.1},
   "EncapsulatingLayer": {
-    "Thickness[mm]": 0.0,
+    "Thickness[mm]": 0.1,
     "Material": "GrayMatter",
     "MaxMeshSizeHeight": 0.1
   },
-  "EQSMode": true,
+  "EQSMode": false,
   "Floating": {
     "Active": false,
     "FloatingImpedance": false
@@ -56,7 +46,7 @@
       "WhiteMatter": 2,
       "CerebrospinalFluid": 3
     },
-    "MRIPath": "./input_case1/homogeneous.nii"
+    "MRIPath": "./input_case3/new_segmented_Atlas_GMWMCSF.nii.gz"
   },
   "Mesh": {
     "LoadMesh": false,
@@ -68,10 +58,10 @@
     },
     "SaveMesh": true
   },
-  "OutputPath": "case1",
+  "OutputPath": "case3",
   "RegionOfInterest": {
-    "Center": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
-    "Shape": { "x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0 }
+    "Center": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
+    "Shape": { "x[mm]": 10.0, "y[mm]": 10.0, "z[mm]": 20.0 }
   },
   "Solver": {
     "Type": "CG",
@@ -91,8 +81,8 @@
   },
   "Points": "./input_files/test.hdf5",
   "VTA": {
-    "Center": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
-    "Direction": { "x[mm]": 1, "y[mm]": 1, "z[mm]": 1 },
+    "Center": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
+    "Direction": { "x[mm]": 0, "y[mm]":0, "z[mm]": 1 },
     "PointDistance[mm]": 0.1,
     "Shape": { "x": 3, "y": 3, "z": 3 }
   }

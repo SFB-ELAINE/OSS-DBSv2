@@ -51,15 +51,16 @@ def point_analysis(input: dict) -> None:
 
     signal = SignalFactory.create(input['StimulationSignal'])
 
-    points = PointsFactory.create(input['Points'])
+    # points = PointsFactory.create(input['Points'])
 
     points = VTAPointsFactory.create(input['VTA'])
 
     mode = SpectrumFactory.create(input['SpectrumMode'], False, len(contacts.active()))
+
     result = mode.compute(signal, volume_conductor, points, contacts, output.output_directory())
 
-    categories = PointsFactory.categories(input['Points'])
-    result.save_by_categories("test_result.hdf5", categories)
+    # categories = PointsFactory.categories(input['Points'])
+    # result.save_by_categories("test_result.hdf5", categories)
 
     if input['Mesh']['SaveMesh']:
         mesh_path = os.path.join(output.output_directory(), 'mesh')

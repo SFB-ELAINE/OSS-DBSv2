@@ -46,7 +46,7 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
 
         boundary_values = contacts.voltage_values()
         coefficient = self.mesh.boundary_coefficients(boundary_values)
-        space = self.__create_space()
+        space = self.__create_space(contacts)
         solution = ngsolve.GridFunction(space=space)
         solution.components[0].Set(coefficient=coefficient,
                                    VOL_or_BND=ngsolve.BND)

@@ -21,7 +21,7 @@ class MicroProbesSNEX_100Custom(ElectrodeModel):
     position : tuple
         Position vector (x,y,z) of electrode tip.
     """
-    # dimensions [m]
+    # dimensions [mm]
     CORE_ELECTRODE_LENGTH = 0.25
     CORE_ELECTRODE_DIAMETER = 0.1
     CORE_TUBING_LENGTH = 0.5
@@ -91,6 +91,7 @@ class MicroProbesSNEX_100Custom(ElectrodeModel):
         capsule = part_0 + part_1 + part_2 + part_3 + part_4
         capsule.bc('Capsule')
         capsule.mat('Capsule')
+        print(self.CORE_ELECTRODE_DIAMETER, self.CORE_ELECTRODE_LENGTH, self.OUTER_ELECTRODE_DIAMETER)
         return capsule.Move(v=self.__position) - self.geometry()
 
     def geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:

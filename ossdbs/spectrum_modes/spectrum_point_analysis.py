@@ -1,5 +1,3 @@
-
-
 import os
 from ossdbs.electrodes.contacts import Contacts
 from ossdbs.stimulation_signal import Signal
@@ -194,7 +192,7 @@ class OctaveBandMode(SpectrumMode):
         included_index = volume_conductor.mesh.is_included(points)
         mips = [ng_mesh(*point) for point in points[included_index]]
 
-        data_shape = len(mips), len(frequencies)
+        data_shape = len(points), len(frequencies)
         potentials_fft = np.zeros(data_shape, dtype=complex)
         current_dens_fft = np.zeros((*data_shape, 3), dtype=complex)
         conductivities = np.zeros(data_shape, dtype=complex)
