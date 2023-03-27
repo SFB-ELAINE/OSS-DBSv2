@@ -1,26 +1,40 @@
 
+from ossdbs.dielectric_model import DielectricModel
 from ossdbs.materials import Material
-from ossdbs.brain_imaging.mri import MagneticResonanceImage
-from ossdbs.dielectric_model import ColeColeFourModelFactory
-from ossdbs.voxels import Voxels
 import numpy as np
+import ngsolve
+
+from ossdbs.bounding_box import BoundingBox
 
 
 class Conductivity:
     """Represents the conductivity distribution by magnetic resonance imaging.
 
-    Parameters
+    Attributes
     ----------
-    mri: MagneticResonanceImage
-        Image which represents the distributiion of brain substances.
+    material_distribution : np.ndarray
+        Matrix represents coding for the distribution of different materials.
+
+    bounding_box : BoundingBox
+        Represents a cuboid aligned with the cartesian axis.
+
+    dielectric_model : DielectricModel
+        Model for the dielectric spectrum of a tissues.
     """
 
-    __MATERIALS = [Material.CSF, Material.GRAY_MATTER, Material.WHITE_MATTER]
+    def __init__(self,
+                 material_distribution: np.ndarray,
+                 bounding_box: BoundingBox,
+                 dielectric_model: DielectricModel
+                 ) -> None:
+        self.__material_distribution = material_distribution
+        self.__bounding_box = bounding_box
+        self.__model = dielectric_model
 
-    def __init__(self, mri: MagneticResonanceImage) -> None:
-        self.__mri = mri
-
-    def conductivity(self, frequency: float) -> Voxels:
+    def distribution(self,
+                     frequency: float,
+                     complex_data: bool = False
+                     ) -> ngsolve.VoxelCoefficient:
         """Return the conductivity distribution by the given frequency.
 
         Parameters
@@ -29,20 +43,31 @@ class Conductivity:
 
         Returns
         -------
-        Voxels
+        ngsolve.VoxelCoefficient
             Data structure representing the conductivity distribution and the
             location in space.
         """
 
         omega = 2 * np.pi * frequency
-        colecole_model = ColeColeFourModelFactory.create(Material.GRAY_MATTER)
-        default = colecole_model.conductivity(omega)
-        data = np.full(self.__mri.xyz_shape(), default)
+        default = self.__model.conductivity(Material.GRAY_MATTER, omega)
+        data = np.full(self.__material_distribution.shape, default)
 
-        for material in self.__MATERIALS:
-            position = self.__mri.material_distribution(material=material)
-            colecole_model = ColeColeFourModelFactory.create(material)
-            data[position.data] = colecole_model.conductivity(omega)
+        pos_csf = self.__material_distribution == Material.CSF
+        pos_wm = self.__material_distribution == Material.WHITE_MATTER
+        pos_gm = self.__material_distribution == Material.GRAY_MATTER
+        pos_blood = self.__material_distribution == Material.BLOOD
 
-        start, end = self.__mri.bounding_box()
-        return Voxels(data=data, start=start, end=end)
+        data[pos_csf] = self.__model.conductivity(Material.CSF, omega)
+        data[pos_wm] = self.__model.conductivity(Material.WHITE_MATTER, omega)
+        data[pos_gm] = self.__model.conductivity(Material.GRAY_MATTER, omega)
+        data[pos_blood] = self.__model.conductivity(Material.BLOOD, omega)
+
+        # transform conductivity [S/m] to [S/mm] since the geometry is
+        # measured in mm
+        values = data * 1e-3
+        start, end = self.__bounding_box.start, self.__bounding_box.end
+
+        if not complex_data:
+            return ngsolve.VoxelCoefficient(start, end, np.real(values), False)
+
+        return ngsolve.VoxelCoefficient(start, end, values, False)

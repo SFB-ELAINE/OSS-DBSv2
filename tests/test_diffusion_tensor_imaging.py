@@ -1,4 +1,4 @@
-from ossdbs.brain_imaging.dti import DiffusionTensorImage
+from ossdbs.dti import DiffusionTensorImage
 import nibabel
 import pytest
 import numpy as np
