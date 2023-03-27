@@ -9,7 +9,7 @@ from ossdbs.dielectric_model import ConstantDielectricModel
 
 from ossdbs.dielectric_model import ConstantModelCustom
 from ossdbs.materials import Material
-
+import numpy as np
 
 class DielectricModelFactory:
 
@@ -31,35 +31,35 @@ class DielectricModelFactory:
     def create_cole_cole_model(cls, parameters):
 
         wm_paramters = parameters['WhiteMatter']
-        wm_model = ColeColeModel(eps_inf=wm_paramters['EpsilonInfinity'],
+        wm_model = ColeColeModel(eps_inf=wm_paramters['EpsilonInfinite'],
                                  sigma=wm_paramters['Sigma'],
-                                 alpha=wm_paramters['Alpha'],
-                                 eps_delta=wm_paramters['EpsilonDelta'],
-                                 tau=wm_paramters['Tau']
+                                 alpha=np.array(wm_paramters['Alpha']),
+                                 eps_delta=np.array(wm_paramters['EpsilonDelta']),
+                                 tau=np.array(wm_paramters['Tau'])
                                  )
 
         gm_paramters = parameters['GrayMatter']
-        gm_model = ColeColeModel(eps_inf=gm_paramters['EpsilonInfinity'],
+        gm_model = ColeColeModel(eps_inf=gm_paramters['EpsilonInfinite'],
                                  sigma=gm_paramters['Sigma'],
-                                 alpha=gm_paramters['Alpha'],
-                                 eps_delta=gm_paramters['EpsilonDelta'],
-                                 tau=gm_paramters['Tau']
+                                 alpha=np.array(gm_paramters['Alpha']),
+                                 eps_delta=np.array(gm_paramters['EpsilonDelta']),
+                                 tau=np.array(gm_paramters['Tau'])
                                  )
 
         csf_paramters = parameters['CerebroSpinalFluid']
-        csf_model = ColeColeModel(eps_inf=csf_paramters['EpsilonInfinity'],
+        csf_model = ColeColeModel(eps_inf=csf_paramters['EpsilonInfinite'],
                                   sigma=csf_paramters['Sigma'],
-                                  alpha=csf_paramters['Alpha'],
-                                  eps_delta=csf_paramters['EpsilonDelta'],
-                                  tau=csf_paramters['Tau']
+                                  alpha=np.array(csf_paramters['Alpha']),
+                                  eps_delta=np.array(csf_paramters['EpsilonDelta']),
+                                  tau=np.array(csf_paramters['Tau'])
                                   )
 
         blood_paramters = parameters['Blood']
-        blood_model = ColeColeModel(eps_inf=blood_paramters['EpsilonInfinity'],
+        blood_model = ColeColeModel(eps_inf=blood_paramters['EpsilonInfinite'],
                                     sigma=blood_paramters['Sigma'],
-                                    alpha=blood_paramters['Alpha'],
-                                    eps_delta=blood_paramters['EpsilonDelta'],
-                                    tau=blood_paramters['Tau']
+                                    alpha=np.array(blood_paramters['Alpha']),
+                                    eps_delta=np.array(blood_paramters['EpsilonDelta']),
+                                    tau=np.array(blood_paramters['Tau'])
                                     )
 
 

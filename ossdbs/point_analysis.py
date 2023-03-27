@@ -26,6 +26,7 @@ def point_analysis(input: dict) -> None:
 
     bounding_box = BoundingBoxFactory.create(input['RegionOfInterest'])
     nifti_image = Nifti1Image(input['MaterialDistribution']['MRIPath'])
+
     material_distribution = MaterialDistributionFactory(nifti_image,
                                                         bounding_box).create()
     dielectric_model = DielectricModelFactory().create(input['DielectricModel'])
