@@ -1,17 +1,19 @@
 {
   "CaseGrounding": {
-    "Active": true,
+    "Active": false,
     "Current[A]": 0.0,
-    "Voltage[V]": 0.0
+    "Voltage[V]": 0.0,
+    "Floating": false,
+    "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
   },
-  "CurrentControled": true,
+  "CurrentControled": false,
   "DielectricModel": "ColeCole4",
   "DiffusionTensorImage": {
     "Path": ""
   },
   "Electrodes": [
     {
-      "Name": "MicroProbesCustomRodent",
+      "Name": "MicroProbesSNEX_100Custom",
       "Rotation[Degrees]": 0,
       "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
       "TipPosition": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
@@ -20,7 +22,15 @@
         {
           "Contact_ID": 1,
           "Active": true,
-          "Current[A]": 0.0002,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.2,
+          "Floating": false,
+          "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+        },
+        {
+          "Contact_ID": 2,
+          "Active": true,
+          "Current[A]": 0.0,
           "Voltage[V]": 0.0,
           "Floating": false,
           "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
@@ -46,7 +56,7 @@
       "WhiteMatter": 2,
       "CerebrospinalFluid": 3
     },
-    "MRIPath": "./input_case3/new_segmented_Atlas_GMWMCSF.nii.gz"
+    "MRIPath": "./new_segmented_Atlas_GMWMCSF.nii.gz"
   },
   "Mesh": {
     "LoadMesh": false,
@@ -58,7 +68,7 @@
     },
     "SaveMesh": true
   },
-  "OutputPath": "case3",
+  "OutputPath": "case2",
   "RegionOfInterest": {
     "Center": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
     "Shape": { "x[mm]": 10.0, "y[mm]": 10.0, "z[mm]": 20.0 }
@@ -79,10 +89,10 @@
     "CounterPulseWidth[µs]": 0.0,
     "InterPulseWidth[µs]": 0.0
   },
-  "Points": "./input_files/test.hdf5",
+  "Points": "",
   "VTA": {
     "Center": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
-    "Direction": { "x[mm]": 0, "y[mm]":0, "z[mm]": 1 },
+    "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
     "PointDistance[mm]": 0.1,
     "Shape": { "x": 3, "y": 3, "z": 3 }
   }
