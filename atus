@@ -1,0 +1,198 @@
+[33mcommit 43420d6df74b4159f14e067e22c5d83c5ea0aa83[m[33m ([m[1;36mHEAD -> [m[1;32mdevelopment[m[33m, [m[1;31morigin/development[m[33m)[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Thu Nov 17 15:03:55 2022 +0100
+
+    Extended Signal Tests and Refactoring
+
+[33mcommit 46fc80b125af915f9bc4d5a2a438c72c527cab17[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Wed Nov 16 16:57:51 2022 +0100
+
+    Implement signal class
+
+[33mcommit f9ee8fe872baf3ffaaf152dc68bbc1c7049d49e8[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Tue Nov 15 17:05:52 2022 +0100
+
+    implement QS and EQS
+
+[33mcommit 68ac2a5759d3d203120643c73970eade38c8fd9c[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Mon Nov 14 17:56:56 2022 +0100
+
+    Extended Code for multiple electrodes and boundary setting for 'Brain'
+
+[33mcommit e293dd10621ef6551a3cc37446e0de8f3a33f0ec[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Thu Nov 10 16:02:46 2022 +0100
+
+    Linting
+
+[33mcommit e94cd3dd1a0c2df5d208c4fad2db17cad64a1cb7[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Thu Nov 10 15:52:20 2022 +0100
+
+    extended main
+
+[33mcommit 6c59c9e4b9cf118ec336bea61ec9d8b259f0244c[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Wed Nov 9 16:46:02 2022 +0100
+
+    Correct Electrode geometries
+
+[33mcommit 9231f789a45094b639f910df9dfa1789c5faa690[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Tue Nov 8 16:23:58 2022 +0100
+
+    Fixing BrainModel class
+
+[33mcommit a3ab678fd1372a8c2059d3f715ea6eb40351cd84[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Mon Nov 7 14:57:49 2022 +0100
+
+    Fixed test
+
+[33mcommit 402520669db6ac717a164ca60ef95e32e53d383a[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Mon Nov 7 14:44:31 2022 +0100
+
+    Added directed Electrodes
+
+[33mcommit 5aaaf261096a1037f34c03057caae714b5f0ddaf[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Fri Nov 4 14:49:15 2022 +0100
+
+    Restructuring Code Dependencies
+
+[33mcommit e4c8524f4ba1ef03c30981fd384de9d3644b032c[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Thu Nov 3 16:14:39 2022 +0100
+
+    ElectrodeCreator
+
+[33mcommit 065e89d3ea267f09f6c77a7695e8d609378362ae[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Thu Nov 3 11:08:18 2022 +0100
+
+    Correct Electrode Parameter FREE_TUBE_LENGTH
+
+[33mcommit af28736cc34fc11e77d79f5ccfaf2296fe06b378[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Wed Nov 2 15:05:17 2022 +0100
+
+    Implemented additional electrodes and brain model
+
+[33mcommit b3e487009071d301740d88630c9d639943d0cdb1[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Fri Oct 28 15:23:17 2022 +0200
+
+    first draft of elecrode class
+
+[33mcommit 94529bcdbe3068ad07b4c3ea576576f277d21e3b[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Thu Oct 27 09:56:38 2022 +0200
+
+    Extended Dielectric Models with material CSF
+
+[33mcommit 07c52851c91cf1c5018382e1826e0a13839727ef[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Wed Oct 26 16:26:28 2022 +0200
+
+    add missing __init__.py in subdirectory 'dielectric_model'
+
+[33mcommit 8c4c29812662a6d5a5345eaa796985ec1095e2f8[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Wed Oct 26 15:54:03 2022 +0200
+
+    add dielectric models
+
+[33mcommit dbc09d6611ecdcedbd2749f4d8b15625ea7f10bc[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Mon Oct 24 17:09:39 2022 +0200
+
+    TypeHint Changes
+     #  Bitte geben Sie eine Commit-Beschreibung für Ihre Änderungen ein. Zeilen,
+
+[33mcommit fd5050673d96587767d14ee2f15aa88b7500ad4e[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Mon Oct 24 17:01:09 2022 +0200
+
+    Removed methods fron Nift1Image
+
+[33mcommit f815e1ebdd9398834638ba4e37a4e36152ac2491[m
+Merge: 9e6adfc d92cdb6
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Mon Oct 24 10:35:45 2022 +0200
+
+    Merge remote-tracking branch 'origin' into development
+
+[33mcommit d92cdb669c21eadbf56f80ddd381634378721629[m
+Merge: f98b2bc 59f2eb0
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Mon Oct 24 10:30:06 2022 +0200
+
+    Merge branch 'tox' into 'main'
+    
+    Add version, package name, gitlab CI, tox, setup.py, license and make code...
+    
+    See merge request jr626/oss_dbs!1
+
+[33mcommit 9e6adfc819b012e52aeb5e6f7d112d59733c4b6f[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Mon Oct 24 10:21:12 2022 +0200
+
+    test VoxelCoefficient-Function by ngsolve
+
+[33mcommit 59f2eb077f0d57ba846a003e3970e3e419bf1e5b[m[33m ([m[1;31morigin/tox[m[33m, [m[1;32mtox[m[33m)[m
+Author: Julius Zimmermann <julius.zimmermann@uni-rostock.de>
+Date:   Fri Oct 21 16:01:49 2022 +0200
+
+    Add version, package name, gitlab CI, tox, setup.py, license and make code compatible with Python 3.8
+
+[33mcommit dbc699d5e92c88ffafdb0fc90b33c9af9398b45a[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Wed Oct 19 13:49:21 2022 +0200
+
+    Extended unittests for testing mesh
+
+[33mcommit 066e32076248260eaf28fda080b238547561a17a[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Wed Oct 19 12:53:41 2022 +0200
+
+    Extended Mesh class and DiffusionTensorImage class
+
+[33mcommit f98b2bc6b86ff3ea4e52608a387791ea56720e37[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Mon Oct 17 13:36:34 2022 +0200
+
+    MRI Interface
+
+[33mcommit d0324aaf3bbab52dd97c0db288c2e533d6446f7c[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Tue Oct 4 15:55:04 2022 +0200
+
+    Add type hints.
+
+[33mcommit 0925ec883a41763fc930d3d50d9c76a68e972657[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Fri Sep 30 16:19:28 2022 +0200
+
+    first draft of oss_dbs rebuild
+
+[33mcommit 55c346de08c58d1383613d48a2f26a5b2078919a[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Wed Sep 21 10:47:30 2022 +0200
+
+    Rename folder env to .env and Updated .gitignore
+
+[33mcommit a7cbd94497b0a50bfeaecbf2184eea87edc9107d[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Wed Sep 21 10:26:17 2022 +0200
+
+    .gitignore is now working
+
+[33mcommit ad1b1651d3e508c688fa43d5f66373594c1a4acc[m
+Author: Johannes Reding <johannes.reding@uni-rostock.de>
+Date:   Wed Sep 21 10:12:17 2022 +0200
+
+    add README

@@ -1,87 +1,100 @@
 {
-    "BrainSurface":
-        {
-            "Active": false,
-            "Value": 0
-        },
-    "DiffusionTensorImage":
-        {
-            "Path": ""
-        },
-    "Electrodes": [
-        {
-            "Name": "BostonScientificVerciseDirected",
-            "Rotation": 6.412,
-            "Direction": [2.2314, 5.0661, 3.990],
-            "Translation": [14.5884, -14.7434, -9.0634],
-            "Contact_1": {"Active": true,
-                          "Value": 1.0},
-            "Contact_2": {"Active": false,
-                          "Value": 0.0},
-            "Contact_3": {"Active": false,
-                          "Value": 0.0},
-            "Contact_4": {"Active": false,
-                          "Value": 0.0},
-            "Contact_5": {"Active": false,
-                          "Value": 0.0},
-            "Contact_6": {"Active": false,
-                          "Value": 0.0},
-            "Contact_7": {"Active": false,
-                          "Value": 0.0},
-            "Contact_8": {"Active": true,
-                          "Value": 0.0},
+  "CaseGrounding": {
+    "Active": false,
+    "Current[A]": 0.0,
+    "Voltage[V]": 1.0,
+    "Floating": false,
+    "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+  },
+  "CurrentControled": false,
+  "DielectricModel": "ColeCole4",
+  "DiffusionTensorImage": {
+    "Path": ""
+  },
+  "Electrodes": [
+    {
+      "Name": "BostonScientificVerciseDirected",
+      "Rotation[Degrees]": 6.412,
+      "Direction": { "x[mm]": 2.2314, "y[mm]": 5.0661, "z[mm]": 3.99 },
+      "TipPosition": { "x[mm]": 14.5884, "y[mm]": -14.7434, "z[mm]": -9.0634 },
 
-            "Contacts": {
-                "Active": [true,
-                           false,
-                           false,
-                           false,
-                           false,
-                           false,
-                           false,
-                           true],
-                "Value": [1.0,
-                          0.0,
-                          0.0,
-                          0.0,
-                          0.0,
-                          0.0,
-                          0.0,
-                          0.0]
-            }
-        }
-    ],
-    "FEMMode": "QS",
-    "MagneticResonanceImage":
+      "Contacts": [
         {
-            "MaterialCoding": {
-                "Unknown": 0,
-                "GrayMatter": 1,
-                "WhiteMatter": 2,
-                "CerebrospinalFluid": 3
-            },
-            "Path": "./input_files/segmask.nii"
+          "Contact_ID": 1,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 1.0,
+          "Floating": false,
+          "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
         },
-    "Mesh": {
-        "LoadMesh": false,
-        "LoadPath": "./input_files/mesh.vol",
-        "MeshElementOrder": 2,
-        "SavePath": ""
+        {
+          "Contact_ID": 8,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
+          "Floating": false,
+          "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+        }
+      ]
+    }
+  ],
+  "Contacts":{"MaxMeshSizeHeight": 0.1},
+  "EncapsulatingLayer": {
+    "Thickness[mm]": 0.5,
+    "Material": "Blood",
+    "MaxMeshSizeHeight": 0.5
+  },
+  "EQSMode": false,
+  "Floating": {
+    "Active": false,
+    "FloatingImpedance": false
+  },
+  "MaterialDistribution": {
+    "MaterialCoding": {
+      "Unknown": 0,
+      "GrayMatter": 1,
+      "WhiteMatter": 2,
+      "CerebrospinalFluid": 3
     },
+    "MRIPath": "./input_files/segmask.nii"
+  },
+  "Mesh": {
+    "LoadMesh": false,
+    "LoadPath": "./input_files/mesh.vol",
     "MeshElementOrder": 2,
-    "OutputPath": "test_result",
-    "RegionOfInterest":
-        {
-            "Active": true,
-            "Center": [14.937, -13.613, -5.123],
-            "Shape": [80, 80, 80]
-        },
-    "SpectrumMode": "NoTruncation",
-    "StimulationSignal":
-        {
-            "Type": "Rectangle",
-            "Frequency": 130.0,
-            "PulseWidthMicroSeconds": 60.0,
-            "TopWidthMicroSeconds": 0.0
-        }
+    "MeshingHypothesis": {
+      "Type": "Default",
+      "MaxMeshSizeHeight": 0.0
+    },
+    "SaveMesh": false
+  },
+  "OutputPath": "",
+  "RegionOfInterest": {
+    "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
+    "Shape": { "x[mm]": 80.0, "y[mm]": 80.0, "z[mm]": 80.0 }
+  },
+  "Solver": {
+    "Type": "CG",
+    "Preconditioner": "bddc",
+    "PrintRates": false,
+    "MaximumSteps": 10000,
+    "Precision": 1e-12
+  },
+  "SpectrumMode": "FullSpectrum",
+  "StimulationSignal": {
+    "Type": "Rectangle",
+    "Frequency[Hz]": 130.0,
+    "PulseWidth[µs]": 60.0,
+    "PulseTopWidth[µs]": 0.0,
+    "CounterPulseWidth[µs]": 0.0,
+    "InterPulseWidth[µs]": 0.0
+  },
+  "PathwayActivationModelling": "./input_files/test.hdf5",
+  "VTA": {
+    "Active": false,
+    "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
+    "Direction": { "x[mm]": 2.2314, "y[mm]": 5.0661, "z[mm]": 3.99 },
+    "PointDistance[mm]": 0.1,
+    "Shape": { "x": 1, "y": 1, "z": 1 }
+  }
 }

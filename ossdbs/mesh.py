@@ -1,7 +1,7 @@
 
 from typing import List
-from ossdbs.voxels import Voxels
 import ngsolve
+import numpy as np
 
 
 class Mesh:
@@ -13,24 +13,19 @@ class Mesh:
 
     order : int
         Order of mesh elements.
+
+    complex_datatype : bool
+            True for complex data type, False otherwise.
     """
 
-    def __init__(self, ngsolve_mesh: ngsolve.comp.Mesh, order: int) -> None:
+    def __init__(self,
+                 ngsolve_mesh: ngsolve.comp.Mesh,
+                 order: int,
+                 complex_datatype: bool = False) -> None:
         self.__mesh = ngsolve_mesh
         self.__mesh.Curve(order=order)
         self.__order = order
-        self.__complex = False
-
-    def get_boundaries(self) -> List:
-        """Return all boundary names.
-
-        Returns
-        -------
-        list
-            Collection of strings.
-        """
-
-        return list(set(self.__mesh.GetBoundaries()) - set(['default']))
+        self.__complex = complex_datatype
 
     def boundary_coefficients(self, boundaries) \
             -> ngsolve.fem.CoefficientFunction:
@@ -42,6 +37,16 @@ class Mesh:
         """
 
         return self.__mesh.BoundaryCF(values=boundaries)
+
+    def is_complex(self) -> bool:
+        """Return the state of the data type for spaces. True if complex,
+        False otherwise.
+
+        Returns
+        -------
+        bool
+        """
+        return self.__complex
 
     def flux_space(self) -> ngsolve.comp.HDiv:
         """Return a flux space based on the mesh.
@@ -65,6 +70,25 @@ class Mesh:
 
         return self.__mesh
 
+    def is_included(self, points: np.ndarray) -> np.ndarray:
+        """Check each point in collection for collision with geometry.
+        True if point is included in geometry, false otherwise.
+
+        Parameters
+        ----------
+        points: np.ndarray
+            Array of point coordinates (x, y, z).
+
+        Returns
+        -------
+        np.ndarray
+            Array representing the state of collision for each point.
+            True if point is included in geometry, False otherwise.
+        """
+        x, y, z = points.T
+        mips = self.__mesh(x, y, z)
+        return np.array([mip[5] != -1 for mip in mips])
+
     def refine(self) -> None:
         """Refine the mesh."""
 
@@ -80,61 +104,64 @@ class Mesh:
             File name of the mesh data.
         """
 
-        self.__mesh.ngmeshSave(file_name)
+        self.__mesh.ngmesh.Save(file_name)
 
-    def set_complex(self, state: bool) -> None:
-        """Set the data type to complex.
+    def h1_space(self, boundaries: List[str]) -> ngsolve.comp.H1:
+        """Return a h1 space based on the mesh.
 
         Parameters
         ----------
-        state : bool
-            True for complex data type, False otherwise.
-        """
-
-        self.__complex = state
-
-    def is_complex(self) -> bool:
-        """Check complex data type.
-
-        Returns
-        -------
-        bool
-            True if complex, False otherwise.
-        """
-
-        return self.__complex
-
-    def h1_space(self) -> ngsolve.comp.H1:
-        """Return a h1 space based on the mesh.
+        boundaries : list of str
+            List of boundary names.
 
         Returns
         -------
         ngsolve.comp.H1
         """
 
-        dirichlet = '|'.join(boundary for boundary in self.get_boundaries())
+        dirichlet = '|'.join(boundary for boundary in boundaries)
         return ngsolve.H1(mesh=self.__mesh,
                           order=self.__order,
                           dirichlet=dirichlet,
                           complex=self.__complex,
                           wb_withedges=False)
 
-    def refine_at_voxel(self, marked_voxels: Voxels) -> None:
+    def number_space(self) -> ngsolve.comp.NumberSpace:
+        """Return a number space based on the mesh.
+
+        Returns
+        -------
+        ngsolve.comp.NumberSpace
+            Space with only one single (global) DOF.
+        """
+
+        return ngsolve.NumberSpace(mesh=self.__mesh,
+                                   order=0,
+                                   complex=self.__complex)
+
+    def refine_at_voxel(self,
+                        start: tuple,
+                        end: tuple,
+                        data: np.ndarray) -> None:
         """Refine the mesh at the marked locations.
 
         Parameters
         ----------
-        marked_locations : Voxels
-            Representation of the locations which are to be refined:
-            True if specific position has to be refined, False otherwise.
+        start : tuple
+            Lower coordinates of voxel space.
+
+        end : tuple
+            Upper coordinates of voxel space.
+
+        data : np.ndarray
+            Voxelvalues.
         """
 
         space = ngsolve.L2(self.__mesh, order=0)
         grid_function = ngsolve.GridFunction(space=space)
-        values = marked_voxels.data.astype(float)
-        cf = ngsolve.VoxelCoefficient(start=marked_voxels.start,
-                                      end=marked_voxels.end,
-                                      values=values,
+        cf = ngsolve.VoxelCoefficient(start=start,
+                                      end=end,
+                                      values=data.astype(float),
                                       linear=False)
         grid_function.Set(cf)
         flags = grid_function.vec.FV().NumPy()
@@ -157,21 +184,52 @@ class Mesh:
             self.__mesh.SetRefinementFlag(ei=element, refine=to_refine)
         self.refine()
 
-    def refine_by_error(self, error: ngsolve.fem.CoefficientFunction) -> List:
+    def refine_by_error(self, gridfunction: ngsolve.GridFunction) -> List:
         """Refine the mesh by the error at each mesh element.
 
         Parameters
         ----------
-        error : ngsolve.fem.CoefficientFunction
-            Function holding all errors for each mesh element.
+        gridfunction : ngsolve.GridFunction
         """
 
-        errors = ngsolve.Integrate(cf=error,
-                                   mesh=self.__mesh,
-                                   VOL_or_BND=ngsolve.VOL,
-                                   element_wise=True).real
-        limit = 0.5 * max(errors)
+        flux = ngsolve.grad(gridfunction)
+        space = self.mesh.flux_space()
+        flux_potential = ngsolve.GridFunction(space=space)
+        flux_potential.Set(coefficient=flux)
+        difference = flux - flux_potential
+        error = difference * ngsolve.Conj(difference)
+
+        element_errors = ngsolve.Integrate(cf=error,
+                                           mesh=self.__mesh,
+                                           VOL_or_BND=ngsolve.VOL,
+                                           element_wise=True).real
+        limit = 0.5 * max(element_errors)
         for element in self.__mesh.Elements(ngsolve.BND):
-            to_refine = errors[element.nr] > limit
+            to_refine = element_errors[element.nr] > limit
             self.__mesh.SetRefinementFlag(ei=element, refine=to_refine)
         self.refine()
+
+    def datatype_complex(self, value: bool) -> None:
+        """Get the state of complex data. True if data is complex, false
+        otherwise.
+
+        Returns
+        -------
+        bool
+        """
+        self.__complex = value
+
+    def surfacel2_space(self, boundaries: List[str]) -> ngsolve.comp.SurfaceL2:
+        """Return a number SurfaceL2 on the mesh.
+
+        Returns
+        -------
+        ngsolve.comp.SurfaceL2
+            SurfaceL2 space with minimum order of 1.
+        """
+
+        dirichlet = '|'.join(boundary for boundary in boundaries)
+        return ngsolve.SurfaceL2(mesh=self.__mesh,
+                                 order=max(1, self.__order - 1),
+                                 dirichlet=dirichlet,
+                                 complex=self.__complex)

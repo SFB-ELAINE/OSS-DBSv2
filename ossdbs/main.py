@@ -1,33 +1,24 @@
 
 import ngsolve
 import sys
-
-from ossdbs.volume_conductor_model import VolumeConductor
-from ossdbs.input import Input
+import json
+from ossdbs.impedance_analysis import impedance_analysis
+from ossdbs.point_analysis import point_analysis
 
 
 def main() -> None:
+
+    path = sys.argv[1]
+    with open(path, 'r') as json_file:
+        input = json.load(json_file)
+
+    if 'impedance' in sys.argv:
+        with ngsolve.TaskManager():
+            impedance_analysis(input)
+        return
+
     with ngsolve.TaskManager():
-        ossdbs_fem(sys.argv[1])
-
-
-def ossdbs_fem(json_path: str) -> None:
-
-    input = Input(json_path=json_path)
-    mesh = input.mesh()
-    boundaries = list(input.boundary_values().keys())
-    mesh.refine_by_boundaries(boundaries)
-
-    conductivity = input.conductivity()
-    volume_conductor = VolumeConductor(conductivity=conductivity, mesh=mesh)
-    strategy = input.spectrum_mode()
-
-    output = strategy.result(boundary_values=input.boundary_values(),
-                             signal=input.stimulation_signal(),
-                             volume_conductor=volume_conductor
-                             )
-    output.save(input.output_path())
-    output.save_mesh()
+        point_analysis(input)
 
 
 if __name__ == '__main__':
