@@ -1,11 +1,21 @@
 
-from .electrode import ElectrodeModel
+from dataclasses import dataclass
+from .electrode_model import ElectrodeModel
 import netgen
 import netgen.occ as occ
 import numpy as np
 
 
-class MicroProbesCustomRodent(ElectrodeModel):
+@dataclass
+class MicroProbesRodentElectrodeParameters():
+    # dimensions [mm]
+    tube_thickness: float
+    contact_length: float
+    lead_diameter: float
+    total_length: float
+
+
+class MicroProbesRodentElectrodeModel(ElectrodeModel):
     """MicroProbes Custom Rodent electrode.
 
     Attributes
@@ -20,20 +30,19 @@ class MicroProbesCustomRodent(ElectrodeModel):
         Position vector (x,y,z) of electrode tip.
     """
 
-    # dimensions [m]
-    CONTACT_LENGTH = 0.1125
-    LEAD_DIAMETER = 0.225
-    TOTAL_LENGHTH = 13.3
-    TUBE_THICKNESS = .01
-
     def __init__(self,
+                 parameters: MicroProbesRodentElectrodeParameters,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
                  position: tuple = (0, 0, 0)) -> None:
-        self.__position = tuple(position)
+        self._position = tuple(position)
         norm = np.linalg.norm(direction)
-        self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
-        self.__boundaries = {'Body': 'Body', 'Contact_1': 'Contact_1'}
+        self._direction = tuple(direction / norm) if norm else (0, 0, 1)
+        self._boundaries = {'Body': 'Body', 'Contact_1': 'Contact_1'}
+        self._contact_length = parameters.contact_length
+        self._lead_diameter = parameters.lead_diameter
+        self._total_length = parameters.total_length
+        self._tube_thickness = parameters.tube_thickness
 
     def capsule_geometry(self, thickness: float) \
             -> netgen.libngpy._NgOCC.TopoDS_Shape:
@@ -48,15 +57,15 @@ class MicroProbesCustomRodent(ElectrodeModel):
         -------
         netgen.libngpy._NgOCC.TopoDS_Shape
         """
-        center = tuple(np.array(self.__direction) * self.LEAD_DIAMETER * 0.5)
-        radius = self.LEAD_DIAMETER * 0.5 + thickness
-        height = self.TOTAL_LENGHTH - self.LEAD_DIAMETER * 0.5
-        lead = occ.Cylinder(p=center, d=self.__direction, r=radius, h=height)
+        center = tuple(np.array(self._direction) * self._lead_diameter * 0.5)
+        radius = self._lead_diameter * 0.5 + thickness
+        height = self._total_length - self._lead_diameter * 0.5
+        lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         tip = occ.Sphere(c=center, r=radius + thickness,)
         capsule = tip + lead
         capsule.bc('Capsule')
         capsule.mat('Capsule')
-        return capsule.Move(v=self.__position) - self.geometry()
+        return capsule.Move(v=self._position) - self.geometry()
 
     def geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of electrode.
@@ -67,7 +76,7 @@ class MicroProbesCustomRodent(ElectrodeModel):
         """
         contacts = self.__contacts()
         electrode = netgen.occ.Glue([self.__body() - contacts, contacts])
-        return electrode.Move(v=self.__position)
+        return electrode.Move(v=self._position)
 
     def set_contact_names(self, boundaries: dict) -> None:
         """Set the names of electrode contacts.
@@ -79,37 +88,37 @@ class MicroProbesCustomRodent(ElectrodeModel):
              'Contact_1': 'contact_name',
              'Contact_2': ...}
         """
-        self.__boundaries.update(boundaries)
+        self._boundaries.update(boundaries)
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        radius = self.LEAD_DIAMETER * 0.5
-        direction = self.__direction
-        tube_radius = radius + self.TUBE_THICKNESS
-        center = tuple(np.array(self.__direction) * radius)
+        radius = self._lead_diameter * 0.5
+        direction = self._direction
+        tube_radius = radius + self._tube_thickness
+        center = tuple(np.array(self._direction) * radius)
         tip = occ.Sphere(c=center, r=tube_radius)
-        height = self.TOTAL_LENGHTH - radius
+        height = self._total_length - radius
         lead = occ.Cylinder(p=center, d=direction, r=tube_radius, h=height)
-        point = tuple(np.array(direction) * self.CONTACT_LENGTH)
+        point = tuple(np.array(direction) * self._contact_length)
         space = occ.HalfSpace(p=point, n=direction)
         body = tip + lead - space
-        body.bc(self.__boundaries['Body'])
+        body.bc(self._boundaries['Body'])
         return body
 
     def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        radius = self.LEAD_DIAMETER * 0.5
-        point = tuple(np.array(self.__direction) * self.CONTACT_LENGTH)
-        space = netgen.occ.HalfSpace(p=point, n=self.__direction)
-        center = tuple(np.array(self.__direction) * radius)
+        radius = self._lead_diameter * 0.5
+        point = tuple(np.array(self._direction) * self._contact_length)
+        space = netgen.occ.HalfSpace(p=point, n=self._direction)
+        center = tuple(np.array(self._direction) * radius)
         tip = occ.Sphere(c=center, r=radius) * space
-        height = self.CONTACT_LENGTH - radius
-        lead = occ.Cylinder(p=center, d=self.__direction, r=radius, h=height)
+        height = self._contact_length - radius
+        lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
 
-        if self.CONTACT_LENGTH <= radius:
+        if self._contact_length <= radius:
             contact = tip
         else:
             contact = tip + lead
 
-        contact.bc(self.__boundaries['Contact_1'])
+        contact.bc(self._boundaries['Contact_1'])
         for edge in contact.edges:
-            edge.name = self.__boundaries['Contact_1']
+            edge.name = self._boundaries['Contact_1']
         return contact

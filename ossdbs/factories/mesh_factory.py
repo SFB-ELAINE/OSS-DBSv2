@@ -10,14 +10,14 @@ class MeshFactory:
         self.__geometry = geometry
 
     def create_mesh(self, mesh_parameters: dict) -> Mesh:
-        netgen_geometry = self.__geometry.netgen_geometry()
+        netgen_geometry = self.__geometry.geometry()
         parameters = self.__meshing_parameters(mesh_parameters)
         ng_mesh = netgen_geometry.GenerateMesh(parameters)
         ngsolve_mesh = ngsolve.Mesh(ngmesh=ng_mesh)
         return Mesh(ngsolve_mesh, mesh_parameters["MeshElementOrder"])
 
     def load_mesh(self, mesh_parameters: dict) -> Mesh:
-        netgen_geometry = self.__geometry.netgen_geometry()
+        netgen_geometry = self.__geometry.geometry()
         file_path = mesh_parameters['LoadPath']
         ngsolve_mesh = ngsolve.Mesh(filename=file_path)
         ngsolve_mesh.ngmesh.SetGeometry(netgen_geometry)

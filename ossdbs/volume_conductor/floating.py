@@ -89,7 +89,7 @@ class VolumeConductorFloating(VolumeConductor):
         bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
         boundaries = [contact.name for contact in contacts.floating()]
         for (ufix, vfix, boundary) in zip(trial[2:], test[2:], boundaries):
-            bilinear_form += u * mu + v * lam * ngsolve.ds(boundary)
+            bilinear_form += (u * mu + v * lam) * ngsolve.ds(boundary)
             bilinear_form += -(ufix * mu + vfix * lam) * ngsolve.ds(boundary)
 
         return bilinear_form

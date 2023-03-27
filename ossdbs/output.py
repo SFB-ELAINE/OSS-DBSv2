@@ -15,7 +15,7 @@ class OutputDirectory:
     def __init__(self, directory) -> None:
         self.__directory = directory
 
-    def output_directory(self):
+    def directory(self):
         """Return output directory and generates directory if given directory
         does not exist.
         """
