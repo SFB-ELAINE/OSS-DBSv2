@@ -1,116 +1,41 @@
 
+from dataclasses import dataclass
 from ossdbs.dielectric_model import DielectricModel
-import numpy as np
-
 from ossdbs.materials import Material
 
 
-class WhiteMatterModel():
-
-    @staticmethod
-    def permitivity() -> complex:
-        """Return the permitivity.
-
-        Returns
-        -------
-        complex
-            Complex permitivity.
-        """
-        return 6.98e4
-
-    @staticmethod
-    def conductivity() -> complex:
-        """Calculate the conductivity.
-
-        Returns
-        -------
-        complex
-            Complex conductivity.
-        """
-        return 6.26e-2
+@dataclass
+class ConstantDielectricModel:
+    permitivity: complex
+    conductivity: complex
 
 
-class GrayMatterModel():
-
-    @staticmethod
-    def permitivity() -> complex:
-        """Calculate the permitivity.
-
-        Returns
-        -------
-        complex
-            Complex permitivity.
-        """
-        return 1.64e5
-
-    @staticmethod
-    def conductivity() -> complex:
-        """Calculate the conductivity.
-
-        Returns
-        -------
-        complex
-            Complex conductivity.
-        """
-        return 9.88e-2
+class WhiteMatterModel(ConstantDielectricModel):
+    permitivity: complex = 6.98e4
+    conductivity: complex = 6.26e-2
 
 
-class CerebroSpinalFluidModel():
-
-    @staticmethod
-    def permitivity() -> complex:
-        """Calculate the permitivity.
-
-        Returns
-        -------
-        complex
-            Complex permitivity.
-        """
-        return 1.09e2
-
-    @staticmethod
-    def conductivity() -> complex:
-        """Calculate the conductivity.
-
-        Returns
-        -------
-        complex
-            Complex conductivity.
-        """
-        return 2.0
+class GrayMatterModel(ConstantDielectricModel):
+    permitivity: complex = 1.64e5
+    conductivity: complex = 9.88e-2
 
 
-class BloodModel():
+class CerebroSpinalFluidModel(ConstantDielectricModel):
+    permitivity: complex = 1.09e2
+    conductivity: complex = 2.0
 
-    @staticmethod
-    def permitivity() -> complex:
-        """Calculate the permitivity.
 
-        Returns
-        -------
-        complex
-            Complex permitivity.
-        """
-        return 5.26e3
-
-    @staticmethod
-    def conductivity() -> complex:
-        """Calculate the conductivity.
-
-        Returns
-        -------
-        complex
-            Complex conductivity.
-        """
-        return 7e-1
+class BloodModel(ConstantDielectricModel):
+    permitivity: complex = 5.26e3
+    conductivity: complex = 7e-1
 
 
 class ConstantModel(DielectricModel):
     """Constant model for the dielectric spectrum of tissues."""
-    MODELS = {Material.BLOOD: BloodModel(),
-              Material.WHITE_MATTER: WhiteMatterModel(),
-              Material.GRAY_MATTER: GrayMatterModel(),
-              Material.CSF: CerebroSpinalFluidModel()
+    MODELS = {Material.BLOOD: BloodModel,
+              Material.WHITE_MATTER: WhiteMatterModel,
+              Material.GRAY_MATTER: GrayMatterModel,
+              Material.CSF: CerebroSpinalFluidModel
               }
 
     def conductivity(self, material: Material, omega: float) -> complex:

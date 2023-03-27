@@ -1,29 +1,31 @@
-from .bounding_box_construction import BoundingBoxFactory
-from .conductivity_construction import ConductivityFactory
-from .contacts_construction import ContactsFactory
-from .dielectric_model_construction import DielectricModelFactory
-from .electrodes_construction import ElectrodeFactory
-from .electrodes_construction import ElectrodesFactory
-from .mesh_construction import MeshFactory
-from .signal_construction import SignalFactory
-from .solver_construction import SolverFactory
-from .spectrum_construction import SpectrumFactory
-from .spectrum_impedance_construction import SpectrumImpedanceFactory
-from .points_construction import PointsFactory
-from .volume_conductor_construction import VolumeConductorFactory
-from .vta_points_creation import VTAPointsFactory
 
-__all__ = ('BoundingBoxFactory',
+from .pointmodel_factory import ActivationModelFactory
+from .boundingbox_factory import BoundingBoxFactory
+from .conductivity_factory import ConductivityFactory
+from .contacts_factory import ContactsFactory
+from .dielectricmodel_factory import DielectricModelFactory
+from .electrodes_factory import ElectrodeFactory
+from .electrodes_factory import ElectrodesFactory
+from .materialdistribution_factory import MaterialDistributionFactory
+from .mesh_factory import MeshFactory
+from .signal_factory import SignalFactory
+from .solver_factory import SolverFactory
+from .spectrum_factory import SpectrumFactory
+from .spectrumimpedance_factory import SpectrumImpedanceFactory
+from .volumeconductor_factory import VolumeConductorFactory
+
+__all__ = ('ActivationModelFactory',
+           'BoundingBoxFactory',
            'ConductivityFactory',
            'ContactsFactory',
            'DielectricModelFactory',
            'ElectrodeFactory',
            'ElectrodesFactory',
            'MeshFactory',
-           'PointsFactory',
+           'MaterialDistributionFactory',
            'SignalFactory',
            'SolverFactory',
            'SpectrumFactory',
            'SpectrumImpedanceFactory',
            'VolumeConductorFactory',
-           'VTAPointsFactory')
+           )

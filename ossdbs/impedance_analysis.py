@@ -1,5 +1,5 @@
 import os
-from ossdbs.Nifti1Image import Nifti1Image
+from ossdbs.nifti1ImageX import Nifti1Image
 from ossdbs.brain_geometry import BrainGeometry
 from ossdbs.output import OutputDirectory
 
@@ -47,8 +47,8 @@ def impedance_analysis(input: dict) -> None:
 
     mode = SpectrumImpedanceFactory.create(input['SpectrumMode'])
     impedances = mode.compute(signal, volume_conductor, contacts)
-    impedances.save(os.path.join(output.output_directory(), 'impedances.csv'))
+    impedances.save(os.path.join(output.directory(), 'impedances.csv'))
 
     if input['Mesh']['SaveMesh']:
-        mesh_path = os.path.join(output.output_directory(), 'mesh')
+        mesh_path = os.path.join(output.directory(), 'mesh')
         mesh.save(mesh_path)

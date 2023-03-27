@@ -141,14 +141,12 @@ class FullSpectrum(SpectrumMode):
 
     @staticmethod
     def __ifft(fft_spectrum: np.ndarray) -> np.ndarray:
-        time_signals = []
         # inverse fft for only 1000 spectrums at a time
         # to reduce memory stress
-        for start in range(0, fft_spectrum.shape[0], 1000):
-            time_signal = np.fft.irfft(fft_spectrum[start:start+1000], axis=1)
-            time_signals.append(time_signal)
-
-        return np.concatenate(time_signals, axis=0)
+        step = 1000
+        n_points = fft_spectrum.shape[0]
+        return np.concatenate([np.fft.irfft(fft_spectrum[idx:idx+step], axis=1)
+                               for idx in range(0, n_points, step)])
 
 
 class OctaveBandMode(SpectrumMode):
@@ -261,11 +259,9 @@ class OctaveBandMode(SpectrumMode):
 
     @staticmethod
     def __ifft(fft_spectrum: np.ndarray) -> np.ndarray:
-        time_signals = []
         # inverse fft for only 1000 spectrums at a time
         # to reduce memory stress
-        for start in range(0, fft_spectrum.shape[0], 1000):
-            time_signal = np.fft.irfft(fft_spectrum[start:start+1000], axis=1)
-            time_signals.append(time_signal)
-
-        return np.concatenate(time_signals, axis=0)
+        step = 1000
+        n_points = fft_spectrum.shape[0]
+        return np.concatenate([np.fft.irfft(fft_spectrum[idx:idx+step], axis=1)
+                               for idx in range(0, n_points, step)])

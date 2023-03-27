@@ -23,8 +23,7 @@ class TimeResult:
             file.create_dataset('TimeSteps[s]', data=self.time_steps)
             file.create_dataset('Points[mm]', data=self.points)
             file.create_dataset('Potential[V]', data=self.potential)
-            file.create_dataset(
-                'Current_density[A/m2]', data=self.current_density)
+            file.create_dataset('Current_density[A/m2]', data=self.current_density)
 
     def save_by_categories(self, path: str, categories: list) -> None:
         with h5py.File(path, "w") as file:
@@ -40,24 +39,6 @@ class TimeResult:
                 h5_group.create_dataset('Potential', data=potential)
                 current_density = self.current_density[start:end]
                 h5_group.create_dataset('CurrentDensity', data=current_density)
-
-
-@dataclass
-class FFTResult:
-
-    points: np.ndarray
-    frequency: np.ndarray
-    potential: np.ndarray
-    current_density: np.ndarray
-    conductivity: np.ndarray
-
-    def save(self, path: str) -> None:
-        with h5py.File(path, "w") as file:
-            file.create_dataset("points", data=self.points)
-            file.create_dataset("frequencies", data=self.frequency)
-            file.create_dataset("potential", data=self.potential)
-            file.create_dataset("current_density", data=self.current_density)
-            file.create_dataset("conductivity", data=self.conductivity)
 
 
 class SpectrumMode(ABC):
@@ -150,14 +131,12 @@ class FullSpectrum(SpectrumMode):
 
     @staticmethod
     def __ifft(fft_spectrum: np.ndarray) -> np.ndarray:
-        time_signals = []
         # inverse fft for only 1000 spectrums at a time
         # to reduce memory stress
-        for start in range(0, fft_spectrum.shape[0], 1000):
-            time_signal = np.fft.irfft(fft_spectrum[start:start+1000], axis=1)
-            time_signals.append(time_signal)
-
-        return np.concatenate(time_signals, axis=0)
+        step = 1000
+        n_points = fft_spectrum.shape[0]
+        return np.concatenate([np.fft.irfft(fft_spectrum[idx:idx+step], axis=1)
+                               for idx in range(0, n_points, step)])
 
 
 class OctaveBandMode(SpectrumMode):
@@ -274,11 +253,9 @@ class OctaveBandMode(SpectrumMode):
 
     @staticmethod
     def __ifft(fft_spectrum: np.ndarray) -> np.ndarray:
-        time_signals = []
         # inverse fft for only 1000 spectrums at a time
         # to reduce memory stress
-        for start in range(0, fft_spectrum.shape[0], 1000):
-            time_signal = np.fft.irfft(fft_spectrum[start:start+1000], axis=1)
-            time_signals.append(time_signal)
-
-        return np.concatenate(time_signals, axis=0)
+        step = 1000
+        n_points = fft_spectrum.shape[0]
+        return np.concatenate([np.fft.irfft(fft_spectrum[idx:idx+step], axis=1)
+                               for idx in range(0, n_points, step)])

@@ -2,8 +2,8 @@
 
 from ossdbs.dielectric_model import DielectricModel
 from ossdbs.bounding_box import BoundingBox
-from ossdbs.Nifti1Image import Nifti1Image
-from ossdbs.electrodes.encapsulatin_layer import EncapsulatingLayers
+from ossdbs.nifti1ImageX import Nifti1Image
+from ossdbs.electrodes.encapsulation_layer import EncapsulatingLayers
 from ossdbs.materials import Material
 from ossdbs.conductivity import Conductivity
 import numpy as np

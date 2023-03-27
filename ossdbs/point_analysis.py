@@ -1,43 +1,40 @@
 
 
-from ossdbs.Nifti1Image import Nifti1Image
+from ossdbs.nifti1ImageX import Nifti1Image
 from ossdbs.brain_geometry import BrainGeometry
+from ossdbs.materials import Material
 from ossdbs.output import OutputDirectory
 
+from ossdbs.factories import ActivationModelFactory
 from ossdbs.factories import BoundingBoxFactory
 from ossdbs.factories import ConductivityFactory
 from ossdbs.factories import ContactsFactory
 from ossdbs.factories import DielectricModelFactory
 from ossdbs.factories import ElectrodesFactory
 from ossdbs.factories import MeshFactory
-from ossdbs.factories import PointsFactory
+from ossdbs.factories import MaterialDistributionFactory
 from ossdbs.factories import SignalFactory
 from ossdbs.factories import SolverFactory
 from ossdbs.factories import SpectrumFactory
 from ossdbs.factories import VolumeConductorFactory
-from ossdbs.factories import VTAPointsFactory
 
 import os
-
-from ossdbs.points import Points, VTAPoints
-from ossdbs.vta_points import VTAPointMatrix
+import numpy as np
 
 
 def point_analysis(input: dict) -> None:
 
     bounding_box = BoundingBoxFactory.create(input['RegionOfInterest'])
     nifti_image = Nifti1Image(input['MaterialDistribution']['MRIPath'])
-    electrodes = ElectrodesFactory.create(input['Electrodes'])
-    contacts = electrodes.contacts()
-    contacts = ContactsFactory(electrodes).create(input['CaseGrounding'])
-    output = OutputDirectory(directory=input['OutputPath'])
+    material_distribution = MaterialDistributionFactory(nifti_image,
+                                                        bounding_box).create()
+    dielectric_model = DielectricModelFactory().create(input['DielectricModel'])
 
+    electrodes = ElectrodesFactory.create(input['Electrodes'])
     capsule_d = input['EncapsulatingLayer']['Thickness[mm]']
     capsule = electrodes.encapsulating_layer(capsule_d)
     max_h = input['EncapsulatingLayer']['MaxMeshSizeHeight']
     capsule.set_max_h(max_h=max_h)
-
-    dielectric_model = DielectricModelFactory().create(input['DielectricModel'])
     conductivity = ConductivityFactory(nifti_image,
                                        bounding_box,
                                        dielectric_model,
@@ -54,19 +51,43 @@ def point_analysis(input: dict) -> None:
 
     signal = SignalFactory.create(input['StimulationSignal'])
 
-    # points = PointsFactory.create(input['Points'])
+    acivation_model = ActivationModelFactory().create(input['ActivationModel'])
+    points = acivation_model.coordinates()
 
-    points = VTAPointsFactory.create(input['VTA'])
-
+    contacts = electrodes.contacts()
+    contacts = ContactsFactory(electrodes).create(input['CaseGrounding'])
     mode = SpectrumFactory.create(input['SpectrumMode'],
                                   input['CurrentControled'],
                                   len(contacts.active()))
-    
-    result = mode.compute(signal, volume_conductor, points, contacts, output.output_directory())
+    output = OutputDirectory(directory=input['OutputPath'])
 
-    output_points = VTAPoints(points)
-    output_points.save(result, os.path.join(output.output_directory(), 'vta.h5'))
+    result = mode.compute(signal, volume_conductor, points, contacts, output.directory())
+    location = define_locations(electrodes, capsule, mesh, points, material_distribution)
+    acivation_model.set_location_names(location)
+    acivation_model.save(result, os.path.join(output.directory(), 'vta.h5'))
 
     if input['Mesh']['SaveMesh']:
-        mesh_path = os.path.join(output.output_directory(), 'mesh')
+        mesh_path = os.path.join(output.directory(), 'mesh')
         mesh.save(mesh_path)
+
+
+def define_locations(electrodes, capsule, mesh, points, material_distribution):
+    location = np.full(len(points), '')
+    in_mesh = mesh.is_included(points=points)
+    in_capsule = capsule.is_included(points=points)
+    in_electrode = electrodes.is_included(points=points)
+    is_tissue = np.logical_and(in_mesh, np.invert(in_capsule))
+    is_outside = np.invert(np.logical_or(in_mesh, in_electrode))
+
+    location[is_tissue] = 'Tissue'
+    location[is_outside] = 'Outside'
+    location[in_capsule] = 'Encapsulation'
+    location[in_electrode] = 'Electrode'
+
+    starts, ends = material_distribution.where(Material.CSF)
+    for index, point in enumerate(points):
+        in_voxel = np.logical_and(np.all(starts <= point, axis=1),
+                                  np.all(point < ends, axis=1))
+        location[index] = np.any(in_voxel)
+
+    return location
