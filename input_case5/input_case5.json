@@ -7,13 +7,16 @@
     "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
   },
   "CurrentControled": false,
-  "DielectricModel": "ColeCole4",
+  "DielectricModel": {"Type": "ColeCole4Custom",
+                      "PathToCustomParameters": "./ColeCole4ModelCustom.json"
+                    },
   "DiffusionTensorImage": {
     "Path": ""
   },
   "Electrodes": [
     {
       "Name": "AbbottStjudeActiveTip6146_6149",
+      "PathToCustomParameters": "",
       "Rotation[Degrees]": 0,
       "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
       "TipPosition": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
@@ -89,12 +92,18 @@
     "CounterPulseWidth[µs]": 0.0,
     "InterPulseWidth[µs]": 0.0
   },
-  "Points": "",
-  "VTA": {
-    "Center":  { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
-    "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
-    "PointDistance[mm]": 0.1,
-    "Shape": { "x": 3, "y": 3, "z": 3 }
+  "ActivationModel":{
+    "PathwayActivationModelling": {
+      "Active": false,
+      "FileName": "./input_files/test.hdf5"
+    },
+    "Points": "",
+    "VTA": {
+      "Center":  { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
+      "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
+      "PointDistance[mm]": 0.1,
+      "Shape": { "x": 3, "y": 3, "z": 3 }
+    }
   }
 }
 

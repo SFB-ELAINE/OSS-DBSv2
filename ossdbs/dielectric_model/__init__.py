@@ -1,12 +1,13 @@
 from .dielectric_model import DielectricModel
+from .colecole4 import ColeColeModel
 from .colecole4 import ColeCole4Model
 from .constant import ConstantModel
-from .custom import ColeCole4ModelCustom
-from .custom import ConstantModelCustom
+from .constant import ConstantDielectricModel
+
 
 __all__ = ('DielectricModel',
            'ColeCole4Model',
-           'ColeCole4ModelCustom',
+           'ColeColeModel',
            'ConstantModel',
-           'ConstantModelCustom'
+           'ConstantDielectricModel',
            )

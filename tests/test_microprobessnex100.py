@@ -1,4 +1,4 @@
-from ossdbs.electrodes.electrode_models import MicroProbesSNEX_100
+from ossdbs.electrodes.electrode_models import MicroProbesSNEX100
 from .geometry_converter import GeometryConverter
 import pytest
 import netgen
@@ -34,7 +34,7 @@ class TestMicroProbesSNEX_100():
     @pytest.mark.parametrize('electrode_parameters, path', TESTDATA)
     def test_geometry(self, electrode_parameters, path) -> None:
         rotation, position, direction = electrode_parameters
-        electrode = MicroProbesSNEX_100(rotation=rotation,
+        electrode = MicroProbesSNEX100(rotation=rotation,
                                                    direction=direction,
                                                    position=position)
         geometry = electrode.geometry()
@@ -42,13 +42,13 @@ class TestMicroProbesSNEX_100():
         assert desired == GeometryConverter(geometry).to_dictionary()
 
     def test_geometry_default(self):
-        electrode = MicroProbesSNEX_100()
+        electrode = MicroProbesSNEX100()
         geometry = electrode.geometry()
         desired = self.load_geometry_data(path=self.FILE_PREFIX+'_0.json')
         assert desired == GeometryConverter(geometry).to_dictionary()
 
     def test_rename_boundaries(self):
-        electrode = MicroProbesSNEX_100()
+        electrode = MicroProbesSNEX100()
         electrode.set_contact_names({'Body': 'RenamedBody',
                                      'Contact_1': 'RenamedContact_1',
                                      'NonExistingPart': 'NonExistingPart'})
@@ -84,7 +84,7 @@ class TestMicroProbesSNEX_100_Capsule():
     @pytest.mark.parametrize('electrode_parameters, path', TESTDATA)
     def test_capsule_geometry(self, electrode_parameters, path) -> None:
         thickness, position, direction = electrode_parameters
-        electrode = MicroProbesSNEX_100(rotation=0.0,
+        electrode = MicroProbesSNEX100(rotation=0.0,
                                                    direction=direction,
                                                    position=position)
         geometry = electrode.capsule_geometry(thickness=thickness)

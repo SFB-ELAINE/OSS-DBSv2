@@ -1,5 +1,5 @@
 
-from ossdbs.Nifti1Image import Nifti1Image
+from ossdbs.nifti1Image import Nifti1Image
 import numpy as np
 import pytest
 import nibabel
