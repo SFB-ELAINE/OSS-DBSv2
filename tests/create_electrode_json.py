@@ -111,7 +111,7 @@ def draw_electrode():
     cut_capsule = capsule - box
     cut_capsule.bc('Capsule')
     cut_electrode = electrode_geo - box
-    # geometry = netgen.occ.Glue([box - capsule - electrode_geo, capsule - cut]) 
+    # geometry = netgen.occ.Glue([box - capsule - electrode_geo, capsule - cut])
 
     capsule_part = capsule - electrode_geo - cut_capsule
 
