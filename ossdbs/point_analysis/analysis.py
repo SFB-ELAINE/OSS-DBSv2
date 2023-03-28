@@ -1,6 +1,6 @@
 
 
-from ossdbs.nifti1Image import Nifti1Image
+from ossdbs.nifti1ImageX import Nifti1Image
 from ossdbs.brain_geometry import BrainGeometry
 from ossdbs.materials import Material
 from ossdbs.output import OutputDirectory
