@@ -1,8 +1,8 @@
 
-from ossdbs.preconditioner import BDDCPreconditioner
-from ossdbs.preconditioner import LocalPreconditioner
-from ossdbs.preconditioner import MultigridPreconditioner
-from ossdbs.solver import Solver, CGSolver, GMRESSolver
+from ossdbs.fem import BDDCPreconditioner
+from ossdbs.fem import LocalPreconditioner
+from ossdbs.fem import MultigridPreconditioner
+from ossdbs.fem import Solver, CGSolver, GMRESSolver
 
 
 class SolverFactory:

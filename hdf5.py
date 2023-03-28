@@ -18,7 +18,8 @@ with h5py.File("test.hdf5", "w") as f:
     group = f.create_group('Population_2')
     group.create_dataset('Axon_1', data=np.array([[1, 2, 3], [4, 5, 6]]))
     group.create_dataset('Axon_2', data=np.array([[4, 5, 6]]))
-
+    group = f.create_group('Population_3')
+    group.create_dataset('Axon_1', data=np.array(['Hello', 'World'], dtype='S'))
 
 f = h5py.File("test.hdf5", 'r')
 print(list(f.keys()))

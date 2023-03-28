@@ -1,9 +1,9 @@
 
 
-from ossdbs.stimulation_signal import Signal
-from ossdbs.stimulation_signal import RectangleSignal
-from ossdbs.stimulation_signal import TrapzoidSignal
-from ossdbs.stimulation_signal import TriangleSignal
+from ossdbs.stimmulation_signals import Signal
+from ossdbs.stimmulation_signals import RectangleSignal
+from ossdbs.stimmulation_signals import TrapzoidSignal
+from ossdbs.stimmulation_signals import TriangleSignal
 
 
 class SignalFactory:

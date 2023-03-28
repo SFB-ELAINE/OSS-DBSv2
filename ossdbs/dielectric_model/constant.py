@@ -10,32 +10,13 @@ class ConstantDielectricModel:
     conductivity: complex
 
 
-class WhiteMatterModel(ConstantDielectricModel):
-    permitivity: complex = 6.98e4
-    conductivity: complex = 6.26e-2
-
-
-class GrayMatterModel(ConstantDielectricModel):
-    permitivity: complex = 1.64e5
-    conductivity: complex = 9.88e-2
-
-
-class CerebroSpinalFluidModel(ConstantDielectricModel):
-    permitivity: complex = 1.09e2
-    conductivity: complex = 2.0
-
-
-class BloodModel(ConstantDielectricModel):
-    permitivity: complex = 5.26e3
-    conductivity: complex = 7e-1
-
-
 class ConstantModel(DielectricModel):
     """Constant model for the dielectric spectrum of tissues."""
-    MODELS = {Material.BLOOD: BloodModel,
-              Material.WHITE_MATTER: WhiteMatterModel,
-              Material.GRAY_MATTER: GrayMatterModel,
-              Material.CSF: CerebroSpinalFluidModel
+    MODELS = {Material.BLOOD: ConstantDielectricModel(5.26e3, 7e-1),
+              Material.WHITE_MATTER: ConstantDielectricModel(6.98e4, 6.26e-2),
+              Material.GRAY_MATTER: ConstantDielectricModel(1.64e5, 9.88e-2),
+              Material.CSF: ConstantDielectricModel(1.09e2, 2.0),
+              Material.UNKNOWN: ConstantDielectricModel(1.64e5, 9.88e-2),
               }
 
     def conductivity(self, material: Material, omega: float) -> complex:
@@ -46,7 +27,7 @@ class ConstantModel(DielectricModel):
         complex
             Complex conductivity.
         """
-        return self.MODELS[material].conductivity()
+        return self.MODELS[material].conductivity
 
     def permitivity(self, material: Material, omega: float) -> complex:
         """Return the permitivity independent of the angular frequency omega.
@@ -56,4 +37,4 @@ class ConstantModel(DielectricModel):
         complex
             Complex permitivity.
         """
-        return self.MODELS[material].permitivity()
+        return self.MODELS[material].permitivity

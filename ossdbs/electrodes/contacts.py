@@ -20,6 +20,12 @@ class Contacts:
         self.__floating = [contact for contact in contacts
                            if contact.floating and not contact.active]
 
+    def append(self, contact: Contact) -> None:
+        if contact.active:
+            self.__active.append(contact)
+        if contact.floating:
+            self.__floating.append(contact)
+
     def set_voltage(self, contact_id: str, value: float) -> None:
         """Set voltage value of a named contact.
 

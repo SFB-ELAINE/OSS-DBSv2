@@ -24,4 +24,5 @@ class ContactsFactory:
                           surface_impedance=surface_impedance)
 
         contacts = self.__electrodes.contacts()
-        return Contacts(contacts.active() + contacts.floating() + [contact])
+        contacts.append(contact)
+        return contacts

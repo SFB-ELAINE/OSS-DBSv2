@@ -1,7 +1,7 @@
 import netgen
 import ngsolve
 from ossdbs.brain_geometry import BrainGeometry
-from ossdbs.mesh import Mesh
+from ossdbs.fem import Mesh
 
 
 class MeshFactory:
@@ -9,14 +9,21 @@ class MeshFactory:
     def __init__(self, geometry: BrainGeometry) -> None:
         self.__geometry = geometry
 
-    def create_mesh(self, mesh_parameters: dict) -> Mesh:
+    def create(self, mesh_parameters: dict) -> Mesh:
+
+        if mesh_parameters['LoadMesh']:
+            return self.__load_mesh(mesh_parameters)
+
+        return self.__create_mesh(mesh_parameters)
+
+    def __create_mesh(self, mesh_parameters: dict) -> Mesh:
         netgen_geometry = self.__geometry.geometry()
         parameters = self.__meshing_parameters(mesh_parameters)
         ng_mesh = netgen_geometry.GenerateMesh(parameters)
         ngsolve_mesh = ngsolve.Mesh(ngmesh=ng_mesh)
         return Mesh(ngsolve_mesh, mesh_parameters["MeshElementOrder"])
 
-    def load_mesh(self, mesh_parameters: dict) -> Mesh:
+    def __load_mesh(self, mesh_parameters: dict) -> Mesh:
         netgen_geometry = self.__geometry.geometry()
         file_path = mesh_parameters['LoadPath']
         ngsolve_mesh = ngsolve.Mesh(filename=file_path)
