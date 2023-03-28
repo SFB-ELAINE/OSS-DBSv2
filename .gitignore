@@ -16,4 +16,5 @@ docs/._*
 .coverage
 .coveragerc
 *.vtu
+.DS_Store
 
