@@ -1,8 +1,13 @@
-from ossdbs.dielectric_model.dielectric_model import DielectricModel
-from ossdbs.dielectric_model.dielectric_model import DielectricParamters
-from ossdbs.dielectric_model.colecole_model4 import ColeColeFourModelCreator
+from .dielectric_model import DielectricModel
+from .colecole4 import ColeColeModel
+from .colecole4 import ColeCole4Model
+from .constant import ConstantModel
+from .constant import ConstantDielectricModel
+
 
 __all__ = ('DielectricModel',
-           'DielectricParamters',
-           'ColeColeFourModelCreator',
+           'ColeCole4Model',
+           'ColeColeModel',
+           'ConstantModel',
+           'ConstantDielectricModel',
            )

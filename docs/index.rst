@@ -11,19 +11,25 @@ Welcome to OSS-DBS's documentation!
 =========
 Overview
 =========
-Deep Brain Stimulation} (DBS) is a widely used treatment for several motor and non-motor disorders.
-Since the mechanism of action are not fully understood, computational models help us to predict the outcome of different treatments and optimize them.
+Deep Brain Stimulation (DBS) is a widely used treatment for several motor and non-motor disorders.
+Since the mechanism of action are not fully understood, computational models help us to predict the
+outcome of different treatments and optimize them.
 
 
 OSS-DBS is a comprehensive tool to performe several DBS specific studies for humans, but also for animal studies in a highly automated workflow.
-Therefore, the user can provide data like MRI and DTI data or selcet predefined datasets from the libary.
-Also, the DBS electrodes can be selected from a predefined database which contains the most common electrode types, but could also be added manually.
+Therefore, the user can provide data like MRI and DTI data or use the data from the example files.
+Further, there is a set of predifined DBS electrodes which contains the most common electrode types,
+but you can add addidtional electrodes easily.
 
-The software performs calculations of the electric field within the inhomogenius and anisotropic brain tissue based on the given inputs.
-Further, the activation of automaticly generated axons is clculated to estimate a volume of activated tissue (VAT) or specific realistic fiber tracts can be loaded to performe detailed pathway activation modeling (PAM).
+The software performs calculations of the electric field within the inhomogenius and anisotropic brain
+tissue based on the given data and parameters.
 
-A detailed overview over the implemented concepts can be find in the specific sections of this documentation.
-For more details about the first veriosn of OSS-DBS you can also refer to [Butenko2019]_.
+In the steps of postprocessing the software calculates the volume of activated tissue (VAT) or the
+activation of specific axons and realistic fiber tracts to performe detailed pathway activation
+modeling (PAM).
+
+A detailed overview over the implemented concepts can be find in the related sections of this
+documentation. For more details about the first veriosn of OSS-DBS you can refer to [Butenko2019]_.
 
 ==============
 Installation
@@ -35,6 +41,15 @@ The software OSS-DBS can be easily installed using pip:
     $ pip install oss_dbs
 
 For first steps with OSS-DBS see the next section of this documentation.
+Some examples to run you can find in the 'ref_examples'_.
+
+.. note::
+   To edit Sphinx documentation you need to install the following packages:
+
+.. code-block:: console
+
+   $ pip install sphinx
+   $ pip install sphinx-rtd-theme
 
 =================
 Table of contents
@@ -44,6 +59,9 @@ Table of contents
 
    start
    examples
+   brain_geometry
+   meshing
+   signals
    volume_conductor_model
    electrodes
 

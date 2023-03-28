@@ -35,26 +35,11 @@ class GeometryConverter:
     def __edge_to_dict(edge: netgen.libngpy._NgOCC.Edge) -> dict:
         edge_data = json.loads("{" + str(edge) + "}")
         curve_data = edge_data['TShape']['CurveRepresentation']
-        uv1 = curve_data['UV1'] if 'UV1' in  curve_data.keys() else None
-        uv2 = curve_data['UV2'] if 'UV2' in curve_data.keys() else None
-        pcurve = curve_data['PCurve'] if  'PCurve' in curve_data.keys() else None
-        surface = curve_data['Surface'] if 'Surface' in curve_data.keys() else None
-        last = curve_data['Last'] if 'Last' in curve_data.keys() else None
-        first = curve_data['First'] if 'First' in curve_data.keys() else None
-        ccurve = curve_data['curve'] if 'curve' in curve_data.keys() else None
-        curve = {'className': curve_data['className'],
-                 'Matrix': curve_data['Location']['Transformation']['Matrix']}
-        if uv1 != None: curve.setdefault('UV1', uv1)
-        if uv2 != None: curve.setdefault('UV2', uv2)
-        if surface != None: curve.setdefault('Surface', surface)
-        if pcurve != None: curve.setdefault('PCurve', pcurve)
-        if last != None: curve.setdefault('Last', last)
-        if first != None: curve.setdefault('First', last)
-        if ccurve != None: curve.setdefault('curve', ccurve)
+
         return {'Flags': edge_data['TShape']['Flags'],
                 'Orientable': edge_data['TShape']['Orientable'],
                 'Tolerance': edge_data['TShape']['Tolerance'],
-                'Curve': curve}
+                'Curve': curve_data}
 
     @staticmethod
     def __face_to_dict(face: netgen.libngpy._NgOCC.Face) -> dict:
@@ -85,20 +70,3 @@ class GeometryConverter:
                 'Flags': wire_data['TShape']['Flags'],
                 'Location': wire_data['Location'],
                 'Orient': wire_data['Orient']}
-
-
-from netgen.occ import Sphere, Pnt, Vec
-
-
-def test_foo():
-    sp1 = Sphere(Pnt(0, 0, 0), 0.2)
-    sp2 = Sphere(Pnt(0.5, 0, 0), 0.2)
-    sp3 = Sphere(Pnt(0, 0, 0.5), 0.2)
-    sp4 = Sphere(Pnt(0, 0.2, 0.7), 0.2)
-
-    vector = Vec(1, 1, 1)
-    all = sp1 + sp2 + sp3 + sp4
-    compound = all.Move(vector)
-    result = GeometryConverter().to_dictionary(compound)
-    with open("sample.json", "w") as outfile:
-        outfile.write(json.dumps(result))

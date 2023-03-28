@@ -1,44 +1,57 @@
 
-from ossdbs.electrodes.abstract_electrode import Electrode
-from ossdbs.input import Region
-from ossdbs.mesh import Mesh
-from typing import List
+from ossdbs.electrodes.electrodes import Electrodes
+from ossdbs.electrodes.encapsulation_layer import EncapsulatingLayers
+from ossdbs.bounding_box import BoundingBox
 import netgen
+import ngsolve
 import numpy as np
+
+from ossdbs.fem.mesh import Mesh
 
 
 class BrainGeometry:
     """Represents a simplification of the brain form.
 
-    region : Region
-        Location in 3D space of the geometry
+    bounding_box : BoundingBox
+        Localization in 3D space of the geometry
+
+    electrodes : Electrodes
+        Collection of electode models
+
+    encapsulation : EncapsulatingLayers
+        Encapsulation of electrodes.
     """
-    def __init__(self, region: Region) -> None:
-        self.__region = region
-        self.__electrodes = []
+    def __init__(self,
+                 bounding_box: BoundingBox,
+                 electrodes: Electrodes,
+                 encapsulation: EncapsulatingLayers) -> None:
+        self.__bbox = bounding_box
+        self.__electrodes = electrodes
+        self.__encapsulating_layer = encapsulation
 
-    def set_electrodes(self, electrodes: List[Electrode]) -> None:
-        """Set the electrodes, which are implemented in the brain.
+    def geometry(self) -> netgen.libngpy._NgOCC.OCCGeometry:
+        """Create a netgen geometry of this brain model.
 
-        electrodes : list of Electrode objects
-            Collection of electrodes.
+        Returns
+        -------
+        netgen.libngpy._NgOCC.OCCGeometry
         """
-        self.__electrodes = [electrode for electrode in electrodes]
+        body = self.__create_ellipsoid()
+        body.bc('BrainSurface')
+        electrodes_geometry = self.__electrodes.geometry()
 
-    def generate_mesh(self, order: int = 2) -> Mesh:
-        """Generate a mesh based on the geometry and given mesh element order.
+        if not self.__encapsulating_layer.thickness:
+            return netgen.occ.OCCGeometry(body - electrodes_geometry)
 
-        order : int
-            Order of mesh elements.
-        """
-        geometry = self.__create_ellipsoid()
-        geometry.bc('Brain')
-        for electrode in self.__electrodes:
-            geometry = geometry - electrode.generate_geometry()
-        return Mesh(netgen.occ.OCCGeometry(geometry), order=order)
+        capsule_geometry = self.__encapsulating_layer.geometry()
+        cut = capsule_geometry + electrodes_geometry - body
+        part_1 = body - capsule_geometry - electrodes_geometry
+        part_2 = capsule_geometry - electrodes_geometry - cut
+        geometry = netgen.occ.Glue([part_1, part_2])
+        return netgen.occ.OCCGeometry(geometry)
 
     def __create_ellipsoid(self) -> netgen.libngpy._NgOCC.Solid:
-        x, y, z = np.subtract(self.__region.end, self.__region.start) / 2
+        x, y, z = np.subtract(self.__bbox.end, self.__bbox.start) / 2
         trasformator = netgen.occ.gp_GTrsf(mat=[x, 0, 0, 0, y, 0, 0, 0, z])
         sphere = netgen.occ.Sphere(c=netgen.occ.Pnt(1, 1, 1), r=1)
-        return trasformator(sphere).Move(self.__region.start)
+        return trasformator(sphere).Move(self.__bbox.start)
