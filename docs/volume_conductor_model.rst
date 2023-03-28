@@ -1,10 +1,23 @@
 Volume Conductor Model
-=====================
+======================
+
+Theory behind volume conductor model:
+
+* EQS equation
+
+API reference
+-------------
 
 Read Docstrings from the code automaticly!
 
-ossdbs.volume\_conductor\_model module
---------------------------------------
+Imaging
+^^^^^^^
+
+Mesh
+^^^^
+
+Physics
+^^^^^^^
 
 .. automodule:: ossdbs.volume_conductor_model
     :members:

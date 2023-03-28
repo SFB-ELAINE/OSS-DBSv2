@@ -1,0 +1,100 @@
+{
+  "CaseGrounding": {
+    "Active": false,
+    "Current[A]": 0.0,
+    "Voltage[V]": 0.0,
+    "Floating": false,
+    "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+  },
+  "CurrentControled": false,
+  "DielectricModel": "Constant",
+  "DiffusionTensorImage": {
+    "Path": ""
+  },
+  "Electrodes": [
+    {
+      "Name": "AbbottStjudeActiveTip6146_6149",
+      "Rotation[Degrees]": 0,
+      "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
+      "TipPosition": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
+
+      "Contacts": [
+        {
+          "Contact_ID": 1,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 1.0,
+          "Floating": false,
+          "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+        },
+        {
+          "Contact_ID": 2,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
+          "Floating": false,
+          "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+        }
+      ]
+    }
+  ],
+  "Contacts":{"MaxMeshSizeHeight": 0.1},
+  "EncapsulatingLayer": {
+    "Thickness[mm]": 0.1,
+    "Material": "GrayMatter",
+    "MaxMeshSizeHeight": 0.1
+  },
+  "EQSMode": false,
+  "Floating": {
+    "Active": false,
+    "FloatingImpedance": false
+  },
+  "MaterialDistribution": {
+    "MaterialCoding": {
+      "Unknown": 0,
+      "GrayMatter": 1,
+      "WhiteMatter": 2,
+      "CerebrospinalFluid": 3
+    },
+    "MRIPath": "./input_case4/icbm_avg_152_segmented.nii.gz"
+  },
+  "Mesh": {
+    "LoadMesh": false,
+    "LoadPath": "",
+    "MeshElementOrder": 2,
+    "MeshingHypothesis": {
+      "Type": "Default",
+      "MaxMeshSizeHeight": 0.0
+    },
+    "SaveMesh": true
+  },
+  "OutputPath": "case4",
+  "RegionOfInterest": {
+    "Center": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
+    "Shape": { "x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0 }
+  },
+  "Solver": {
+    "Type": "CG",
+    "Preconditioner": "bddc",
+    "PrintRates": false,
+    "MaximumSteps": 10000,
+    "Precision": 1e-12
+  },
+  "SpectrumMode": "OctaveBand",
+  "StimulationSignal": {
+    "Type": "Rectangle",
+    "Frequency[Hz]": 130.0,
+    "PulseWidth[µs]": 60.0,
+    "PulseTopWidth[µs]": 0.0,
+    "CounterPulseWidth[µs]": 0.0,
+    "InterPulseWidth[µs]": 0.0
+  },
+  "Points": "./input_files/test.hdf5",
+  "VTA": {
+    "Center":  { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
+    "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
+    "PointDistance[mm]": 0.1,
+    "Shape": { "x": 3, "y": 3, "z": 3 }
+  }
+}
+
