@@ -1,6 +1,6 @@
-from ossdbs.stimulation_signal import RectangleSignal
-from ossdbs.stimulation_signal import TriangleSignal
-from ossdbs.stimulation_signal import TrapzoidSignal
+from ossdbs.stimmulation_signals.rectangle_signal import RectangleSignal
+from ossdbs.stimmulation_signals.triangle_signal import TriangleSignal
+from ossdbs.stimmulation_signals.trapzoid_signal import TrapzoidSignal
 import numpy as np
 
 

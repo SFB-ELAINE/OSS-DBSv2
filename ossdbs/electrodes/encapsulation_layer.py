@@ -1,7 +1,7 @@
 
 from ossdbs.bounding_box import BoundingBox
 from .electrode_models import ElectrodeModel
-from ossdbs.mesh import Mesh
+from ossdbs.fem.mesh import Mesh
 from typing import List
 import numpy as np
 import netgen
@@ -70,6 +70,9 @@ class EncapsulatingLayers:
             Array representing the state of collision for each point.
             True if point is included in geometry, False otherwise.
         """
+        if not self.thickness:
+            return np.full(len(points), False)
+
         netgen_geometry = netgen.occ.OCCGeometry(self.geometry())
         ng_mesh = netgen_geometry.GenerateMesh()
         ngsolve_mesh = ngsolve.Mesh(ngmesh=ng_mesh)

@@ -1,11 +1,11 @@
 
 from ossdbs.conductivity import Conductivity
-from ossdbs.mesh import Mesh
-from ossdbs.solver import Solver
-from ossdbs.volume_conductor import VolumeConductor
-from ossdbs.volume_conductor import VolumeConductorFloating
-from ossdbs.volume_conductor import VolumeConductorFloatingImpedance
-from ossdbs.volume_conductor import VolumeConductorNonFloating
+from ossdbs.fem.mesh import Mesh
+from ossdbs.fem import Solver
+from ossdbs.fem import VolumeConductor
+from ossdbs.fem import VolumeConductorFloating
+from ossdbs.fem import VolumeConductorFloatingImpedance
+from ossdbs.fem import VolumeConductorNonFloating
 
 
 class VolumeConductorFactory:

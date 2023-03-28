@@ -51,13 +51,9 @@
     "FloatingImpedance": false
   },
   "MaterialDistribution": {
-    "MaterialCoding": {
-      "Unknown": 0,
-      "GrayMatter": 1,
-      "WhiteMatter": 2,
-      "CerebrospinalFluid": 3
-    },
-    "MRIPath": "./input_files/segmask.nii"
+    "MRIPath": "./input_files/segmask.nii",
+    "DiffusionTensorActive": false,
+    "DTIPath": ""
   },
   "Mesh": {
     "LoadMesh": false,
@@ -72,7 +68,7 @@
   "OutputPath": "",
   "RegionOfInterest": {
     "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
-    "Shape": { "x[mm]": 80.0, "y[mm]": 80.0, "z[mm]": 80.0 }
+    "Dimension": { "x[mm]": 80.0, "y[mm]": 80.0, "z[mm]": 80.0 }
   },
   "Solver": {
     "Type": "CG",
@@ -90,13 +86,12 @@
     "CounterPulseWidth[µs]": 0.0,
     "InterPulseWidth[µs]": 0.0
   },
-  "ActivationModel":{
-    "PathwayActivationModelling": {
+  "PointModel":{
+    "Pathway": {
       "Active": false,
       "FileName": "./input_files/test.hdf5"
     },
-    "VTA": {
-      "Active": false,
+    "Lattice": {
       "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
       "Direction": { "x[mm]": 2.2314, "y[mm]": 5.0661, "z[mm]": 3.99 },
       "PointDistance[mm]": 0.1,

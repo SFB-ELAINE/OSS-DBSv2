@@ -17,26 +17,19 @@ class ElectrodesFactory:
         contacts = []
 
         for index, input_par in enumerate(electrode_paramters):
-            electrode = cls.__create_electrode(input_par)
+            electrode = cls.__create_electrode(index, input_par)
             electrode.set_contact_names(cls.__boundaries(index))
             electrodes.append(electrode)
-            contacts.extend(cls.__create_contacts(index, input_par))
+            contacts.extend([cls.__create_contact(index, contact_par)
+                             for contact_par in input_par['Contacts']])
 
         contacts = Contacts([contact for contact in contacts
                              if contact.active or contact.floating])
 
         return Electrodes(electrodes=electrodes, contacts=contacts)
 
-    @classmethod
-    def __create_contacts(cls,
-                          index: int,
-                          electrode_parameters: dict
-                          ) -> List[Contact]:
-        return [cls.create_contact(index, contact_par)
-                for contact_par in electrode_parameters['Contacts']]
-
     @staticmethod
-    def create_contact(index: int, contact_par: dict) -> Contact:
+    def __create_contact(index: int, contact_par: dict) -> Contact:
         name = 'E{}C{}'.format(index, contact_par['Contact_ID'] - 1)
         active = contact_par['Active']
         floating = contact_par['Floating'] and not active
@@ -52,8 +45,7 @@ class ElectrodesFactory:
                        voltage=voltage,
                        surface_impedance=surface_impedance)
 
-    @staticmethod
-    def __create_electrode(electrode_parameters: dict) -> ElectrodeModel:
+    def __create_electrode(cls, electrode_parameters: dict) -> ElectrodeModel:
         dir = electrode_parameters['Direction']
         pos = electrode_parameters['TipPosition']
         direction = (dir['x[mm]'], dir['y[mm]'], dir['z[mm]'])
@@ -61,10 +53,7 @@ class ElectrodesFactory:
         rotation = electrode_parameters['Rotation[Degrees]']
 
         if 'Custom' in electrode_parameters['Name']:
-            path = electrode_parameters['PathToCustomParameters']
-            with open(path, 'r') as json_file:
-                model_parameters = json.load(json_file)
-
+            model_parameters = cls.read_json(electrode_parameters)
             return CustomElectrodeFactory(name=electrode_parameters['Name'],
                                           model_parameters=model_parameters,
                                           direction=direction,
@@ -75,6 +64,13 @@ class ElectrodesFactory:
                                        direction=direction,
                                        position=position,
                                        rotation=rotation)
+
+    @staticmethod
+    def read_json(electrode_parameters):
+        path = electrode_parameters['PathToCustomParameters']
+        with open(path, 'r') as json_file:
+            model_parameters = json.load(json_file)
+        return model_parameters
 
     @staticmethod
     def __boundaries(index: int) -> dict:

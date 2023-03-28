@@ -1,6 +1,6 @@
 
 from typing import List
-from ossdbs.mesh import Mesh
+from ossdbs.fem.mesh import Mesh
 from .contacts import Contacts
 from .electrode_models.electrode_model import ElectrodeModel
 from .encapsulation_layer import EncapsulatingLayers
