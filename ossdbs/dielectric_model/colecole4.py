@@ -53,52 +53,46 @@ class ColeColeModel():
         return 1j * omega * self.permitivity(omega=omega)
 
 
-class WhiteMatterModel(ColeColeModel):
+WhiteMatterModel = ColeColeModel(
+                    alpha=np.array([0.1, 0.1, 0.3, 0.02]),
+                    eps_delta=np.array([32.0, 100.0, 4.0e4, 3.5e7]),
+                    eps_inf=4.0,
+                    sigma=0.02,
+                    tau=np.array([7.958e-12, 7.958e-9, 53.052e-6, 7.958e-3])
+                    )
 
-    def __init__(self) -> None:
-        self.alpha = np.array([0.1, 0.1, 0.3, 0.02])
-        self.eps_delta = np.array([32.0, 100.0, 4.0e4, 3.5e7])
-        self.eps_inf = 4.0
-        self.sigma = 0.02
-        self.tau = np.array([7.958e-12, 7.958e-9, 53.052e-6, 7.958e-3])
+GrayMatterModel = ColeColeModel(
+                    alpha=np.array([0.1, 0.15, 0.22, 0.0]),
+                    eps_delta=np.array([45.0, 400.0, 2.0e5, 4.5e7]),
+                    eps_inf=4.0,
+                    sigma=0.02,
+                    tau=np.array([7.958e-12, 15.915e-9, 106.103e-6, 5.305e-3])
+                    )
 
-
-class GrayMatterModel(ColeColeModel):
-
-    def __init__(self) -> None:
-        self.alpha = np.array([0.1, 0.15, 0.22, 0.0])
-        self.eps_delta = np.array([45.0, 400.0, 2.0e5, 4.5e7])
-        self.eps_inf = 4.0
-        self.sigma = 0.02
-        self.tau = np.array([7.958e-12, 15.915e-9, 106.103e-6, 5.305e-3])
-
-
-class CerebroSpinalFluidModel(ColeColeModel):
-
-    def __init__(self) -> None:
-        self.alpha = np.array([0.1, 0.0, 0.0, 0.0])
-        self.eps_delta = np.array([65.0, 40.0, 0.0, 0.0])
-        self.eps_inf = 4.0
-        self.sigma = 2.0
-        self.tau = np.array([7.96e-12, 1.592e-9, 159.155e-6, 5.305e-3])
+CSFModel = ColeColeModel(
+                    alpha=np.array([0.1, 0.0, 0.0, 0.0]),
+                    eps_delta=np.array([65.0, 40.0, 0.0, 0.0]),
+                    eps_inf=4.0,
+                    sigma=2.0,
+                    tau=np.array([7.96e-12, 1.592e-9, 159.155e-6, 5.305e-3]),
+                    )
 
 
-class BloodModel(ColeColeModel):
-
-    def __init__(self) -> None:
-        self.alpha = np.array([0.1, 0.1, 0.0, 0.0])
-        self.eps_delta = np.array([56.0, 5200.0, 0.0, 0.0])
-        self.eps_inf = 4.0
-        self.sigma = 0.7
-        self.tau = np.array([8.38e-12, 132.63e-9, 0, 0])
+BloodModel = ColeColeModel(alpha=np.array([0.1, 0.1, 0.0, 0.0]),
+                           eps_delta=np.array([56.0, 5200.0, 0.0, 0.0]),
+                           eps_inf=4.0,
+                           sigma=0.7,
+                           tau=np.array([8.38e-12, 132.63e-9, 0, 0])
+                           )
 
 
 class ColeCole4Model(DielectricModel):
     """Cole Cole model for the dielectric spectrum of tissues."""
-    MODELS = {Material.BLOOD: BloodModel(),
-              Material.WHITE_MATTER: WhiteMatterModel(),
-              Material.GRAY_MATTER: GrayMatterModel(),
-              Material.CSF: CerebroSpinalFluidModel()
+    MODELS = {Material.BLOOD: BloodModel,
+              Material.WHITE_MATTER: WhiteMatterModel,
+              Material.GRAY_MATTER: GrayMatterModel,
+              Material.CSF: CSFModel,
+              Material.UNKNOWN: GrayMatterModel
               }
 
     def conductivity(self, material: Material, omega: float) -> complex:

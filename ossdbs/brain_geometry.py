@@ -1,10 +1,12 @@
 
 from ossdbs.electrodes.electrodes import Electrodes
-from ossdbs.electrodes.encapsulatin_layer import EncapsulatingLayers
+from ossdbs.electrodes.encapsulation_layer import EncapsulatingLayers
 from ossdbs.bounding_box import BoundingBox
 import netgen
-import netgen.occ as occ
+import ngsolve
 import numpy as np
+
+from ossdbs.fem.mesh import Mesh
 
 
 class BrainGeometry:
@@ -27,7 +29,7 @@ class BrainGeometry:
         self.__electrodes = electrodes
         self.__encapsulating_layer = encapsulation
 
-    def netgen_geometry(self) -> netgen.libngpy._NgOCC.OCCGeometry:
+    def geometry(self) -> netgen.libngpy._NgOCC.OCCGeometry:
         """Create a netgen geometry of this brain model.
 
         Returns
@@ -39,13 +41,13 @@ class BrainGeometry:
         electrodes_geometry = self.__electrodes.geometry()
 
         if not self.__encapsulating_layer.thickness:
-            return occ.OCCGeometry(body - electrodes_geometry)
+            return netgen.occ.OCCGeometry(body - electrodes_geometry)
 
         capsule_geometry = self.__encapsulating_layer.geometry()
         cut = capsule_geometry + electrodes_geometry - body
         part_1 = body - capsule_geometry - electrodes_geometry
         part_2 = capsule_geometry - electrodes_geometry - cut
-        geometry = occ.Glue([part_1, part_2])
+        geometry = netgen.occ.Glue([part_1, part_2])
         return netgen.occ.OCCGeometry(geometry)
 
     def __create_ellipsoid(self) -> netgen.libngpy._NgOCC.Solid:

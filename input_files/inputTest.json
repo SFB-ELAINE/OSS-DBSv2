@@ -2,18 +2,19 @@
   "CaseGrounding": {
     "Active": false,
     "Current[A]": 0.0,
-    "Voltage[V]": 1.0,
-    "Floating": false,
-    "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+    "Voltage[V]": 1.0
   },
   "CurrentControled": false,
-  "DielectricModel": "ColeCole4",
+  "DielectricModel": {"Type": "ColeCole4",
+                      "PathToCustomParameters": ""
+                    },
   "DiffusionTensorImage": {
     "Path": ""
   },
   "Electrodes": [
     {
       "Name": "BostonScientificVerciseDirected",
+      "PathToCustomParameters": "",
       "Rotation[Degrees]": 6.412,
       "Direction": { "x[mm]": 2.2314, "y[mm]": 5.0661, "z[mm]": 3.99 },
       "TipPosition": { "x[mm]": 14.5884, "y[mm]": -14.7434, "z[mm]": -9.0634 },
@@ -50,13 +51,9 @@
     "FloatingImpedance": false
   },
   "MaterialDistribution": {
-    "MaterialCoding": {
-      "Unknown": 0,
-      "GrayMatter": 1,
-      "WhiteMatter": 2,
-      "CerebrospinalFluid": 3
-    },
-    "MRIPath": "./input_files/segmask.nii"
+    "MRIPath": "./input_files/segmask.nii",
+    "DiffusionTensorActive": false,
+    "DTIPath": ""
   },
   "Mesh": {
     "LoadMesh": false,
@@ -71,7 +68,7 @@
   "OutputPath": "",
   "RegionOfInterest": {
     "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
-    "Shape": { "x[mm]": 80.0, "y[mm]": 80.0, "z[mm]": 80.0 }
+    "Dimension": { "x[mm]": 80.0, "y[mm]": 80.0, "z[mm]": 80.0 }
   },
   "Solver": {
     "Type": "CG",
@@ -89,12 +86,16 @@
     "CounterPulseWidth[µs]": 0.0,
     "InterPulseWidth[µs]": 0.0
   },
-  "PathwayActivationModelling": "./input_files/test.hdf5",
-  "VTA": {
-    "Active": false,
-    "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
-    "Direction": { "x[mm]": 2.2314, "y[mm]": 5.0661, "z[mm]": 3.99 },
-    "PointDistance[mm]": 0.1,
-    "Shape": { "x": 1, "y": 1, "z": 1 }
+  "PointModel":{
+    "Pathway": {
+      "Active": false,
+      "FileName": "./input_files/test.hdf5"
+    },
+    "Lattice": {
+      "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
+      "Direction": { "x[mm]": 2.2314, "y[mm]": 5.0661, "z[mm]": 3.99 },
+      "PointDistance[mm]": 0.1,
+      "Shape": { "x": 1, "y": 1, "z": 1 }
+    }
   }
 }

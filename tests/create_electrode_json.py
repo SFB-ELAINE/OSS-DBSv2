@@ -7,11 +7,11 @@ from ossdbs.electrodes.electrode_models import AbbottStjudeDirected6173
 from ossdbs.electrodes.electrode_models import BostonScientificVercise
 from ossdbs.electrodes.electrode_models import BostonScientificVerciseDirected
 from ossdbs.electrodes.electrode_models import Medtronic3387, Medtronic3389, Medtronic3391
-from ossdbs.electrodes.electrode_models import MicroProbesSNEX_100
+from ossdbs.electrodes.electrode_models import MicroProbesSNEX100
 from ossdbs.electrodes.electrode_models import PINSMedicalL301
 from ossdbs.electrodes.electrode_models import PINSMedicalL302
 from ossdbs.electrodes.electrode_models import PINSMedicalL303
-from ossdbs.electrodes.electrode_models import MicroProbesCustomRodent
+from ossdbs.electrodes.electrode_models import MicroProbesRodentElectrode
 from tests.geometry_converter import GeometryConverter
 import ngsolve
 import netgen
@@ -31,14 +31,14 @@ class TestFileCreator:
                 #   AbbottStjudeDirected6173,
                 #   'BostonScientificVercise':
                 #   BostonScientificVercise,
-                  'BostonScientificVerciseDirected':
-                  BostonScientificVerciseDirected,
+                #  'BostonScientificVerciseDirected':
+                #  BostonScientificVerciseDirected,
                 #   'Medtronic3387':
                 #   Medtronic3387,
                 #   'Medtronic3389':
                 #   Medtronic3389,
-                #   'Medtronic3391':
-                #   Medtronic3391,
+                  'Medtronic3391':
+                  Medtronic3391,
                 #   'MicroProbesSNEX_100':
                 #   MicroProbesSNEX_100,
                 #   'PINSMedicalL301':
@@ -47,8 +47,8 @@ class TestFileCreator:
                 #   PINSMedicalL302,
                 #   'PINSMedicalL303':
                 #   PINSMedicalL303,
-                #   'MicroProbesCustomRodent':
-                #   MicroProbesCustomRodent
+                #   'MicroProbesRodentElectrode':
+                #   MicroProbesRodentElectrode,
                   }
 
     TESTDATA = [
@@ -101,7 +101,7 @@ def create_json(electrode_parameters, electrode_type, path):
 
 def draw_electrode():
 
-    electrode = BostonScientificVerciseDirected(direction=(0, 0, 1))
+    electrode = MicroProbesSNEX100(direction=(0, 0, 1))
 
     electrodes = Electrodes([electrode], Contacts([]))
     electrode_geo = electrodes.geometry()
@@ -132,5 +132,5 @@ def draw_electrode():
 
 
 if __name__ == '__main__':
-    draw_electrode()
-    # TestFileCreator().create_json()
+    # draw_electrode()
+    TestFileCreator().create_json()
