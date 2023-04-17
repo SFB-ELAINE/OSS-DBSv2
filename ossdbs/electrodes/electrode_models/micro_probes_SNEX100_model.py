@@ -24,6 +24,9 @@ class MicroProbesSNEX100Model(ElectrodeModel):
 
     Attributes
     ----------
+    parameters : MicroProbesSNEX100Parameters
+        Parameters for MicroProbesSNEX100 geometry.
+
     rotation : float
         Rotation angle in degree of electrode.
 

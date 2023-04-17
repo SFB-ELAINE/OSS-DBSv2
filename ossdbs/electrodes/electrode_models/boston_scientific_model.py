@@ -21,6 +21,10 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
 
     Attributes
     ----------
+
+    parameters : BostonScientificVerciseParamerts
+        Parameters for the Boston Scientific Vercise geometry.
+
     rotation : float
         Rotation angle in degree of electrode.
 

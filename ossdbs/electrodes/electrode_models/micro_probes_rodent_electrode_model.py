@@ -20,6 +20,9 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
 
     Attributes
     ----------
+    parameters : MicroProbesRodentElectrodeParameters
+        Parameters for MicroProbes Rodent Electrode geometry.
+
     rotation : float
         Rotation angle in degree of electrode.
 
