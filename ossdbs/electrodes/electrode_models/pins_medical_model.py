@@ -22,6 +22,9 @@ class PINSMedicalModel(ElectrodeModel):
 
     Attributes
     ----------
+    parameters : PINSMedicalParameters
+        Parameters for PINS Medical geometry.
+
     rotation : float
         Rotation angle in degree of electrode.
 

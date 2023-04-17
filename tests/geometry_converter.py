@@ -35,16 +35,6 @@ class GeometryConverter:
     def __edge_to_dict(edge: netgen.libngpy._NgOCC.Edge) -> dict:
         edge_data = json.loads("{" + str(edge) + "}")
         curve_data = edge_data['TShape']['CurveRepresentation']
-
-        # curve = {'className': curve_data['className'],
-        #          'First': curve_data['First'],
-        #          'Last': curve_data['Last'],
-        #          'UV1': curve_data['UV1'],
-        #          'UV2': curve_data['UV2'],
-        #          'PCurve': curve_data['PCurve'],
-        #          'Surface': curve_data['Surface'],
-        #          'Matrix': curve_data['Location']['Transformation']['Matrix']}
-
         return {'Flags': edge_data['TShape']['Flags'],
                 'Orientable': edge_data['TShape']['Orientable'],
                 'Tolerance': edge_data['TShape']['Tolerance'],

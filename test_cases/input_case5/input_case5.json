@@ -5,15 +5,15 @@
     "Voltage[V]": 0.0
   },
   "CurrentControled": false,
-  "DielectricModel": "ColeCole4",
-  "DiffusionTensorImage": {
-    "Path": ""
-  },
+  "DielectricModel": {"Type": "ColeCole4Custom",
+                      "PathToCustomParameters": "./input_case5/ColeCole4ModelCustom.json"
+                    },
   "Electrodes": [
     {
-      "Name": "BostonScientificVerciseDirected",
+      "Name": "AbbottStjudeActiveTip6146_6149",
+      "PathToCustomParameters": "",
       "Rotation[Degrees]": 0,
-      "Direction": { "x[mm]": 1, "y[mm]": 1, "z[mm]": 1 },
+      "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
       "TipPosition": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
 
       "Contacts": [
@@ -21,23 +21,15 @@
           "Contact_ID": 1,
           "Active": true,
           "Current[A]": 0.0,
-          "Voltage[V]": 0.0,
+          "Voltage[V]": 1.0,
           "Floating": false,
           "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
         },
         {
           "Contact_ID": 2,
-          "Active": false,
-          "Current[A]": 0.0,
-          "Voltage[V]": 0.0,
-          "Floating": true,
-          "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
-        },
-        {
-          "Contact_ID": 3,
           "Active": true,
           "Current[A]": 0.0,
-          "Voltage[V]": 1.0,
+          "Voltage[V]": 0.0,
           "Floating": false,
           "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
         }
@@ -52,17 +44,13 @@
   },
   "EQSMode": false,
   "Floating": {
-    "Active": true,
+    "Active": false,
     "FloatingImpedance": false
   },
   "MaterialDistribution": {
-    "MaterialCoding": {
-      "Unknown": 0,
-      "GrayMatter": 1,
-      "WhiteMatter": 2,
-      "CerebrospinalFluid": 3
-    },
-    "MRIPath": "./input_case6/icbm_avg_152_segmented.nii.gz"
+    "DiffusionTensorActive": false,
+    "DTIPath": "",
+    "MRIPath": "./input_case5/icbm_avg_152_segmented.nii.gz"
   },
   "Mesh": {
     "LoadMesh": false,
@@ -74,10 +62,10 @@
     },
     "SaveMesh": true
   },
-  "OutputPath": "case6",
+  "OutputPath": "case5",
   "RegionOfInterest": {
     "Center": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
-    "Shape": { "x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0 }
+    "Dimension": { "x[mm]": 10.0, "y[mm]": 10.0, "z[mm]": 20.0 }
   },
   "Solver": {
     "Type": "CG",
@@ -95,12 +83,17 @@
     "CounterPulseWidth[µs]": 0.0,
     "InterPulseWidth[µs]": 0.0
   },
-  "Points": "./input_files/test.hdf5",
-  "VTA": {
-    "Center":{ "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
-    "Direction": { "x[mm]": 1, "y[mm]": 1, "z[mm]": 1 },
-    "PointDistance[mm]": 0.1,
-    "Shape": { "x": 3, "y": 3, "z": 3 }
+  "PointModel":{
+    "Pathway": {
+      "Active": false,
+      "FileName": ""
+    },
+    "Lattice": {
+      "Center":  { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
+      "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
+      "PointDistance[mm]": 0.1,
+      "Shape": { "x": 3, "y": 3, "z": 3 }
+    }
   }
 }
 
