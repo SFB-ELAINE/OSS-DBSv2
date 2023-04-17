@@ -5,22 +5,30 @@ from ossdbs.materials import Material
 
 
 @dataclass
-class ConstantDielectricModel:
+class MaterialConstantModel:
     permitivity: complex
     conductivity: complex
 
 
 class ConstantModel(DielectricModel):
     """Constant model for the dielectric spectrum of tissues."""
-    MODELS = {Material.BLOOD: ConstantDielectricModel(5.26e3, 7e-1),
-              Material.WHITE_MATTER: ConstantDielectricModel(6.98e4, 6.26e-2),
-              Material.GRAY_MATTER: ConstantDielectricModel(1.64e5, 9.88e-2),
-              Material.CSF: ConstantDielectricModel(1.09e2, 2.0),
-              Material.UNKNOWN: ConstantDielectricModel(1.64e5, 9.88e-2),
+    MODELS = {Material.BLOOD: MaterialConstantModel(5.26e3, 7e-1),
+              Material.WHITE_MATTER: MaterialConstantModel(6.98e4, 6.26e-2),
+              Material.GRAY_MATTER: MaterialConstantModel(1.64e5, 9.88e-2),
+              Material.CSF: MaterialConstantModel(1.09e2, 2.0),
+              Material.UNKNOWN: MaterialConstantModel(1.64e5, 9.88e-2),
               }
 
     def conductivity(self, material: Material, omega: float) -> complex:
         """Return the conductivity independent of the angular frequency omega.
+
+        Parameters
+        ----------
+        material : Material
+            Corresponding material.
+
+        omega : float
+            Angular frequency [1/s].
 
         Returns
         -------
@@ -31,6 +39,14 @@ class ConstantModel(DielectricModel):
 
     def permitivity(self, material: Material, omega: float) -> complex:
         """Return the permitivity independent of the angular frequency omega.
+
+        Parameters
+        ----------
+        material : Material
+            Corresponding material.
+
+        omega : float
+            Angular frequency [1/s].
 
         Returns
         -------
