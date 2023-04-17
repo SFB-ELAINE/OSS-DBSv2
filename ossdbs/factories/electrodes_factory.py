@@ -53,7 +53,8 @@ class ElectrodesFactory:
         rotation = electrode_parameters['Rotation[Degrees]']
 
         if 'Custom' in electrode_parameters['Name']:
-            model_parameters = cls.read_json(electrode_parameters)
+            path = electrode_parameters['PathToCustomParameters']
+            model_parameters = cls.read_json(path)
             return CustomElectrodeFactory(name=electrode_parameters['Name'],
                                           model_parameters=model_parameters,
                                           direction=direction,
@@ -66,8 +67,7 @@ class ElectrodesFactory:
                                        rotation=rotation)
 
     @staticmethod
-    def read_json(electrode_parameters):
-        path = electrode_parameters['PathToCustomParameters']
+    def read_json(path):
         with open(path, 'r') as json_file:
             model_parameters = json.load(json_file)
         return model_parameters
