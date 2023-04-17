@@ -7,9 +7,6 @@
   "CurrentControled": false,
   "DielectricModel": {"Type": "ColeCole4",
                       "PathToCustomParameters": ""
-                    },
-  "DiffusionTensorImage": {
-    "Path": ""
   },
   "Electrodes": [
     {
@@ -50,12 +47,8 @@
     "FloatingImpedance": false
   },
   "MaterialDistribution": {
-    "MaterialCoding": {
-      "Unknown": 0,
-      "GrayMatter": 1,
-      "WhiteMatter": 2,
-      "CerebrospinalFluid": 3
-    },
+    "DiffusionTensorActive": false,
+    "DTIPath": "",
     "MRIPath": "./input_case1/homogeneous.nii"
   },
   "Mesh": {
@@ -96,9 +89,10 @@
     },
     "Lattice": {
       "Center": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
-      "Direction": { "x[mm]": 1, "y[mm]": 1, "z[mm]": 1 },
+      "Direction": { "x[mm]": 1.0, "y[mm]": 1.0, "z[mm]": 1.0},
       "PointDistance[mm]": 0.1,
-      "Shape": { "x": 3, "y": 3, "z": 3 }
+      "Shape": { "x": 1, "y": 1, "z": 1 }
     }
   }
 }
+

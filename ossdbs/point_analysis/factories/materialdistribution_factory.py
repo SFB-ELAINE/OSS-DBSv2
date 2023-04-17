@@ -1,6 +1,6 @@
 
 
-from ossdbs.nifti1ImageX import Nifti1Image
+from ossdbs.nifti1Image import Nifti1Image
 from ossdbs.bounding_box import BoundingBox
 from ossdbs.point_analysis.material_disribution import MaterialDistribution
 import numpy as np
