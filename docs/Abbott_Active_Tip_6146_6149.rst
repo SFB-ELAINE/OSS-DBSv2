@@ -1,7 +1,9 @@
 .. abbott-active-tip-6146-6149
+
 ====================================
 Abbott St. Jude Active Tip 6146-6149
 ====================================
+
 This is a file, that contains information about 
 the Active Tip 6142-6149 electrode.
 
@@ -21,6 +23,6 @@ The electrode is described together with the models
 Code
 ------
 
-.. autoclass:: ossdbs.electrodes.abbott_stjude_active_tip_6146_6149.AbbottStjudeActiveTip6146_6149
+.. autoclass:: ossdbs.electrodes.electrode_models.abbott_stjude.AbbottStjudeActiveTip6146_6149
     :members:
     :show-inheritance:

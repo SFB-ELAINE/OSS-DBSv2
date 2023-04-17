@@ -11,5 +11,4 @@ You can find all the data need to run these studies in the examples folder in th
 
    example_benchmark
    example_rat
-
-
+   example1

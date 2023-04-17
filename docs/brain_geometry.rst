@@ -31,10 +31,3 @@ Conductivity
     :members:
     :undoc-members:
     :show-inheritance:
-
-Brainsubstance
-^^^^^^^^^^^^^^
-.. automodule:: ossdbs.brainsubstance
-    :members:
-    :undoc-members:
-    :show-inheritance:

@@ -19,7 +19,7 @@ You can start the simulation by running
 
 .. code-block:: bash
 
-    $ python main.py
+    $ ossdbs input_file.json 
 
 inside the project folder.
 
@@ -34,8 +34,3 @@ API references
 
 Input
 ^^^^^^^
-
-.. automodule:: ossdbs.input
-    :members:
-    :undoc-members:
-    :show-inheritance:

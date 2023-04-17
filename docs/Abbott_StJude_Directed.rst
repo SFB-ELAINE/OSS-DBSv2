@@ -10,16 +10,17 @@ Source documentation: `Source <https://manuals.sjm.com/~/media/manuals/product-m
 The source documentation also contains information 
 about :doc:`Active Tip 6142-6145 <./Abbott_Active_Tip_6146_6149>`
 and  :doc:`Active Tip 6172 <./Abbott_StJude_Directed>`.
-.. images:: electrode_pictures/Abbott\ St.\ Jude\ 6172.svg
 
-------
-Codeasdfa
-------
+.. image:: electrode_pictures/Abott_St_Jude_6172.svg
 
-------
-Codef
-------
+-----
+Code
+-----
 
-.. autoclass:: ossdbs.electrodes.abbott_stjude_directed_6173.AbbottStjudeDirected6173
+.. autoclass:: ossdbs.electrodes.electrode_models.abbott_stjude.AbbottStjudeDirected6172
+    :members:
+    :show-inheritance:
+
+.. autoclass:: ossdbs.electrodes.electrode_models.abbott_stjude.AbbottStjudeDirected6173
     :members:
     :show-inheritance:

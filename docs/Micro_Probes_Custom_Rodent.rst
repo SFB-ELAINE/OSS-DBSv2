@@ -13,6 +13,6 @@ MicroProbes Custom Rodent
 Code
 ------
 
-.. autoclass:: ossdbs.electrodes.micro_probes_custom_rodent.MicroProbesCustomRodent
+.. autoclass:: ossdbs.electrodes.electrode_models.micro_probes.MicroProbesRodentElectrode
     :members:
     :show-inheritance:

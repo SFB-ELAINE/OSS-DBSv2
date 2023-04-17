@@ -26,12 +26,16 @@ Source documentation for model 3391: `Source 3391 <https://manuals.medtronic.com
 
 -----
 Code
-------
+-----
 
-.. autoclass:: ossdbs.electrodes.medtronic_3387.Medtronic3387
+.. autoclass:: ossdbs.electrodes.electrode_models.medtronic.Medtronic3387
     :members:
     :show-inheritance:
 
-.. autoclass:: ossdbs.electrodes.medtronic_3389.Medtronic3389
+.. autoclass:: ossdbs.electrodes.electrode_models.medtronic.Medtronic3389
+    :members:
+    :show-inheritance:
+
+.. autoclass:: ossdbs.electrodes.electrode_models.medtronic.Medtronic3391
     :members:
     :show-inheritance:

@@ -16,8 +16,8 @@ The source documentation also contains information about
 
 -----
 Code
-------
+-----
 
-.. autoclass:: ossdbs.electrodes.boston_scientific_vercise_directed.BostonScientificVerciseDirected
+.. autoclass:: ossdbs.electrodes.electrode_models.boston_scientific_vercise.BostonScientificVerciseDirected
     :members:
     :show-inheritance:

@@ -19,7 +19,3 @@ Mesh
 Physics
 ^^^^^^^
 
-.. automodule:: ossdbs.volume_conductor_model
-    :members:
-    :undoc-members:
-    :show-inheritance:
