@@ -2,18 +2,16 @@
   "CaseGrounding": {
     "Active": false,
     "Current[A]": 0.0,
-    "Voltage[V]": 0.0,
-    "Floating": false,
-    "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+    "Voltage[V]": 0.0
   },
   "CurrentControled": false,
-  "DielectricModel": "ColeCole4",
-  "DiffusionTensorImage": {
-    "Path": ""
+  "DielectricModel": {"Type": "ColeCole4",
+                      "PathToCustomParameters": ""
   },
   "Electrodes": [
     {
-      "Name": "MicroProbesSNEX_100Custom",
+      "Name": "MicroProbesSNEX100Custom",
+      "PathToCustomParameters": "",
       "Rotation[Degrees]": 0,
       "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
       "TipPosition": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
@@ -50,13 +48,9 @@
     "FloatingImpedance": false
   },
   "MaterialDistribution": {
-    "MaterialCoding": {
-      "Unknown": 0,
-      "GrayMatter": 1,
-      "WhiteMatter": 2,
-      "CerebrospinalFluid": 3
-    },
-    "MRIPath": "./new_segmented_Atlas_GMWMCSF.nii.gz"
+    "DiffusionTensorActive": false,
+    "DTIPath": "",
+    "MRIPath": "./input_case2/new_segmented_Atlas_GMWMCSF.nii.gz"
   },
   "Mesh": {
     "LoadMesh": false,
@@ -71,7 +65,7 @@
   "OutputPath": "case2",
   "RegionOfInterest": {
     "Center": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
-    "Shape": { "x[mm]": 10.0, "y[mm]": 10.0, "z[mm]": 20.0 }
+    "Dimension": { "x[mm]": 10.0, "y[mm]": 10.0, "z[mm]": 20.0 }
   },
   "Solver": {
     "Type": "CG",
@@ -89,12 +83,17 @@
     "CounterPulseWidth[µs]": 0.0,
     "InterPulseWidth[µs]": 0.0
   },
-  "Points": "",
-  "VTA": {
-    "Center": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
-    "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
-    "PointDistance[mm]": 0.1,
-    "Shape": { "x": 3, "y": 3, "z": 3 }
+  "PointModel":{
+    "Pathway": {
+      "Active": false,
+      "FileName": ""
+    },
+    "Lattice": {
+      "Center": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
+      "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
+      "PointDistance[mm]": 0.1,
+      "Shape": { "x": 3, "y": 3, "z": 3 }
+    }
   }
 }
 
