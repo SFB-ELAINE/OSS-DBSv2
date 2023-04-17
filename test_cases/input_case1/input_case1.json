@@ -49,7 +49,7 @@
   "MaterialDistribution": {
     "DiffusionTensorActive": false,
     "DTIPath": "",
-    "MRIPath": "./input_case1/homogeneous.nii"
+    "MRIPath": "homogeneous.nii"
   },
   "Mesh": {
     "LoadMesh": false,

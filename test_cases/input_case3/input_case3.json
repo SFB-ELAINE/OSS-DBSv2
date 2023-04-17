@@ -42,7 +42,7 @@
   "MaterialDistribution": {
     "DiffusionTensorActive": false,
     "DTIPath": "",
-    "MRIPath": "./input_case3/new_segmented_Atlas_GMWMCSF.nii.gz"
+    "MRIPath": "new_segmented_Atlas_GMWMCSF.nii.gz"
   },
   "Mesh": {
     "LoadMesh": false,

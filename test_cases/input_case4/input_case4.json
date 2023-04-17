@@ -50,7 +50,7 @@
   "MaterialDistribution": {
     "DiffusionTensorActive": false,
     "DTIPath": "",
-    "MRIPath": "./input_case4/icbm_avg_152_segmented.nii.gz"
+    "MRIPath": "icbm_avg_152_segmented.nii.gz"
   },
   "Mesh": {
     "LoadMesh": false,

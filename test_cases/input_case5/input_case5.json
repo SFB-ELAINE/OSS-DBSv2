@@ -6,7 +6,7 @@
   },
   "CurrentControled": false,
   "DielectricModel": {"Type": "ColeCole4Custom",
-                      "PathToCustomParameters": "./input_case5/ColeCole4ModelCustom.json"
+                      "PathToCustomParameters": "ColeCole4ModelCustom.json"
                     },
   "Electrodes": [
     {
@@ -50,7 +50,7 @@
   "MaterialDistribution": {
     "DiffusionTensorActive": false,
     "DTIPath": "",
-    "MRIPath": "./input_case5/icbm_avg_152_segmented.nii.gz"
+    "MRIPath": "icbm_avg_152_segmented.nii.gz"
   },
   "Mesh": {
     "LoadMesh": false,
