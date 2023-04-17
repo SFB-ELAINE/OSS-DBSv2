@@ -18,7 +18,6 @@ class ElectrodeModel(ABC):
     position : tuple
         Position vector (x,y,z) of electrode tip.
     """
-    @abstractmethod
     def __init__(self,
                  rotation: float = 0,
                  direction: tuple = (0, 0, 1),

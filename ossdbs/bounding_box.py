@@ -48,6 +48,10 @@ class BoundingBox:
         x_e = min(self.end[0], other.end[0])
         y_e = min(self.end[1], other.end[1])
         z_e = min(self.end[2], other.end[2])
+
+        if x_s > x_e or y_s > y_e or z_s > z_e:
+            return BoundingBox(start=(0, 0, 0), end=(0, 0, 0))
+
         return BoundingBox(start=(x_s, y_s, z_s), end=(x_e, y_e, z_e))
 
     def points(self, offset: tuple, voxel_size: tuple) -> List[tuple]:

@@ -1,10 +1,10 @@
 
 import json
 from ossdbs.dielectric_model import DielectricModel
-from ossdbs.dielectric_model import ColeColeModel
+from ossdbs.dielectric_model import MaterialColeColeModel
 from ossdbs.dielectric_model import ColeCole4Model
 from ossdbs.dielectric_model import ConstantModel
-from ossdbs.dielectric_model import ConstantDielectricModel
+from ossdbs.dielectric_model import MaterialConstantModel
 
 from ossdbs.materials import Material
 import numpy as np
@@ -42,7 +42,7 @@ class DielectricModelFactory:
             if key not in parameters:
                 continue
 
-            model = ColeColeModel(
+            model = MaterialColeColeModel(
                         eps_inf=parameters[key]['EpsilonInfinite'],
                         sigma=parameters[key]['Sigma'],
                         alpha=np.array(parameters[key]['Alpha']),
@@ -51,7 +51,7 @@ class DielectricModelFactory:
                         )
             cc4_model.MODELS.update({material: model})
 
-        return model
+        return cc4_model
 
     def __create_constant_model(cls, parameters):
 
@@ -60,7 +60,7 @@ class DielectricModelFactory:
             if key not in parameters:
                 continue
 
-            model = ConstantDielectricModel(
+            model = MaterialConstantModel(
                                 permitivity=parameters[key]['Permitivity'],
                                 conductivity=parameters[key]['Conductivity'],
                                 )

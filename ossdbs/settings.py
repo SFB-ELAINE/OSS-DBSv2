@@ -113,12 +113,6 @@ class Settings:
             else:
                 target[key] = settings[key]
 
-    def __update_contacts(self, contacts: list) -> None:
-        for index, contact in enumerate(contacts):
-            for key, value in self.CONTACT_SETTING.items():
-                if key not in contact:
-                    contacts[index][key] = value
-
     def __update_electrodes(self, settings: dict) -> None:
         for index, electrode in enumerate(settings['Electrodes']):
             for key, value in self.ELECTRODE_SETTING.items():
@@ -128,3 +122,9 @@ class Settings:
                     contacts = settings['Electrodes'][index][key]
                     self.__update_contacts(contacts)
                     settings['Electrodes'][index][key] = contacts
+
+    def __update_contacts(self, contacts: list) -> None:
+        for index, contact in enumerate(contacts):
+            for key, value in self.CONTACT_SETTING.items():
+                if key not in contact:
+                    contacts[index][key] = value

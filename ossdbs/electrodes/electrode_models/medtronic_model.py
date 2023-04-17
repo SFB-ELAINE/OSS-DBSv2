@@ -21,6 +21,9 @@ class MedtronicModel(ElectrodeModel):
 
     Attributes
     ----------
+    parameters : MedtronicParameters
+        Parameters for the Medtronic geometry.
+
     rotation : float
         Rotation angle in degree of electrode.
 

@@ -5,17 +5,15 @@
     "Voltage[V]": 0.0
   },
   "CurrentControled": false,
-  "DielectricModel": {"Type": "ColeCole4",
+  "DielectricModel": {"Type": "Constant",
                       "PathToCustomParameters": ""
-                    },
-  "DiffusionTensorImage": {
-    "Path": ""
   },
   "Electrodes": [
     {
-      "Name": "BostonScientificVerciseDirected",
-      "Rotation[Degrees]": 30,
-      "Direction": { "x[mm]": 1, "y[mm]": 1, "z[mm]": 1 },
+      "Name": "AbbottStjudeActiveTip6146_6149",
+      "PathToCustomParameters": "",
+      "Rotation[Degrees]": 0,
+      "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
       "TipPosition": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
 
       "Contacts": [
@@ -23,7 +21,7 @@
           "Contact_ID": 1,
           "Active": true,
           "Current[A]": 0.0,
-          "Voltage[V]": 0.0,
+          "Voltage[V]": 1.0,
           "Floating": false,
           "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
         },
@@ -31,7 +29,7 @@
           "Contact_ID": 2,
           "Active": true,
           "Current[A]": 0.0,
-          "Voltage[V]": 0.1,
+          "Voltage[V]": 0.0,
           "Floating": false,
           "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
         }
@@ -40,23 +38,19 @@
   ],
   "Contacts":{"MaxMeshSizeHeight": 0.1},
   "EncapsulatingLayer": {
-    "Thickness[mm]": 0.0,
+    "Thickness[mm]": 0.1,
     "Material": "GrayMatter",
     "MaxMeshSizeHeight": 0.1
   },
-  "EQSMode": true,
+  "EQSMode": false,
   "Floating": {
     "Active": false,
     "FloatingImpedance": false
   },
   "MaterialDistribution": {
-    "MaterialCoding": {
-      "Unknown": 0,
-      "GrayMatter": 1,
-      "WhiteMatter": 2,
-      "CerebrospinalFluid": 3
-    },
-    "MRIPath": "./input_case1/homogeneous.nii"
+    "DiffusionTensorActive": false,
+    "DTIPath": "",
+    "MRIPath": "./input_case4/icbm_avg_152_segmented.nii.gz"
   },
   "Mesh": {
     "LoadMesh": false,
@@ -68,7 +62,7 @@
     },
     "SaveMesh": true
   },
-  "OutputPath": "case1",
+  "OutputPath": "case4",
   "RegionOfInterest": {
     "Center": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
     "Dimension": { "x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0 }
@@ -95,10 +89,11 @@
       "FileName": ""
     },
     "Lattice": {
-      "Center": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
-      "Direction": { "x[mm]": 1, "y[mm]": 1, "z[mm]": 1 },
+      "Center":  { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
+      "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
       "PointDistance[mm]": 0.1,
       "Shape": { "x": 3, "y": 3, "z": 3 }
     }
   }
 }
+
