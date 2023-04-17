@@ -1,11 +1,10 @@
 
 from ossdbs.dielectric_model import DielectricModel
+from ossdbs.materials import Material
 import numpy as np
 
-from ossdbs.materials import Material
 
-
-class ColeColeModel():
+class MaterialColeColeModel():
     """Model for the dielectric spectrum of a tissue using the
     Cole-Cole equation"""
 
@@ -26,6 +25,11 @@ class ColeColeModel():
     def permitivity(self, omega: float) -> complex:
         """Calculate the permitivity by the angular frequency omega.
 
+        Parameters
+        ----------
+        omega : float
+            Angular frequency [1/s].
+
         Returns
         -------
         complex
@@ -42,6 +46,11 @@ class ColeColeModel():
     def conductivity(self, omega: float) -> complex:
         """Calculate the conductivity by the angular frequency omega.
 
+        Parameters
+        ----------
+        omega : float
+            Angular frequency [1/s].
+
         Returns
         -------
         complex
@@ -53,7 +62,7 @@ class ColeColeModel():
         return 1j * omega * self.permitivity(omega=omega)
 
 
-WhiteMatterModel = ColeColeModel(
+WhiteMatterModel = MaterialColeColeModel(
                     alpha=np.array([0.1, 0.1, 0.3, 0.02]),
                     eps_delta=np.array([32.0, 100.0, 4.0e4, 3.5e7]),
                     eps_inf=4.0,
@@ -61,7 +70,7 @@ WhiteMatterModel = ColeColeModel(
                     tau=np.array([7.958e-12, 7.958e-9, 53.052e-6, 7.958e-3])
                     )
 
-GrayMatterModel = ColeColeModel(
+GrayMatterModel = MaterialColeColeModel(
                     alpha=np.array([0.1, 0.15, 0.22, 0.0]),
                     eps_delta=np.array([45.0, 400.0, 2.0e5, 4.5e7]),
                     eps_inf=4.0,
@@ -69,7 +78,7 @@ GrayMatterModel = ColeColeModel(
                     tau=np.array([7.958e-12, 15.915e-9, 106.103e-6, 5.305e-3])
                     )
 
-CSFModel = ColeColeModel(
+CSFModel = MaterialColeColeModel(
                     alpha=np.array([0.1, 0.0, 0.0, 0.0]),
                     eps_delta=np.array([65.0, 40.0, 0.0, 0.0]),
                     eps_inf=4.0,
@@ -78,7 +87,7 @@ CSFModel = ColeColeModel(
                     )
 
 
-BloodModel = ColeColeModel(alpha=np.array([0.1, 0.1, 0.0, 0.0]),
+BloodModel = MaterialColeColeModel(alpha=np.array([0.1, 0.1, 0.0, 0.0]),
                            eps_delta=np.array([56.0, 5200.0, 0.0, 0.0]),
                            eps_inf=4.0,
                            sigma=0.7,
@@ -98,6 +107,14 @@ class ColeCole4Model(DielectricModel):
     def conductivity(self, material: Material, omega: float) -> complex:
         """Calculate the conductivity by the angular frequency omega.
 
+        Parameters
+        ----------
+        material : Material
+            Corresponding material.
+
+        omega : float
+            Angular frequency [1/s].
+
         Returns
         -------
         complex
@@ -107,6 +124,14 @@ class ColeCole4Model(DielectricModel):
 
     def permitivity(self, material: Material, omega: float) -> complex:
         """Calculate the permitivity by the angular frequency omega.
+
+        Parameters
+        ----------
+        material : Material
+            Corresponding material.
+
+        omega : float
+            Angular frequency [1/s].
 
         Returns
         -------
