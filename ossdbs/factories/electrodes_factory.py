@@ -11,13 +11,13 @@ from ossdbs.factories.electrode_factory import ElectrodeFactory
 class ElectrodesFactory:
 
     @classmethod
-    def create(cls, electrode_paramters: dict) -> Electrodes:
+    def create(cls, electrode_paramters: List) -> Electrodes:
 
         electrodes = []
         contacts = []
 
         for index, input_par in enumerate(electrode_paramters):
-            electrode = cls.__create_electrode(index, input_par)
+            electrode = cls.__create_electrode(input_par)
             electrode.set_contact_names(cls.__boundaries(index))
             electrodes.append(electrode)
             contacts.extend([cls.__create_contact(index, contact_par)
@@ -45,6 +45,7 @@ class ElectrodesFactory:
                        voltage=voltage,
                        surface_impedance=surface_impedance)
 
+    @classmethod
     def __create_electrode(cls, electrode_parameters: dict) -> ElectrodeModel:
         dir = electrode_parameters['Direction']
         pos = electrode_parameters['TipPosition']
@@ -55,11 +56,11 @@ class ElectrodesFactory:
         if 'Custom' in electrode_parameters['Name']:
             path = electrode_parameters['PathToCustomParameters']
             model_parameters = cls.read_json(path)
-            return CustomElectrodeFactory(name=electrode_parameters['Name'],
-                                          model_parameters=model_parameters,
-                                          direction=direction,
-                                          position=position,
-                                          rotation=rotation)
+            return CustomElectrodeFactory.create(name=electrode_parameters['Name'],
+                                                 model_parameters=model_parameters,
+                                                 direction=direction,
+                                                 position=position,
+                                                 rotation=rotation)
 
         return ElectrodeFactory.create(name=electrode_parameters['Name'],
                                        direction=direction,

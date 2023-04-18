@@ -44,7 +44,7 @@ class CustomElectrodeFactory:
                             PINSMedicalParameters
                             }
 
-    ELECTRODEs = {'AbbottStjudeActiveTipCustom':
+    ELECTRODES = {'AbbottStjudeActiveTipCustom':
                   AbbottStjudeActiveTipModel,
                   'AbbottStjudeDirectedCustom':
                   AbbottStjudeDirectedModel,
@@ -84,8 +84,8 @@ class CustomElectrodeFactory:
 
         electrode_type = cls.ELECTRODES[name]
 
-        if isinstance(electrode_type, (AbbottStjudeActiveTipModel,
-                                       AbbottStjudeDirectedModel)):
+        if electrode_type in (AbbottStjudeActiveTipModel,
+                              AbbottStjudeDirectedModel):
             parameters = AbbottStjudeParameters(
                                         model_parameters['TipLength[mm]'],
                                         model_parameters['ContactLength[mm]'],
@@ -94,8 +94,8 @@ class CustomElectrodeFactory:
                                         model_parameters['TotalLength[mm]']
                                         )
 
-        if isinstance(electrode_type, (BostonScientificVerciseModel,
-                                       BostonScientificVerciseDirectedModel)):
+        elif electrode_type in (BostonScientificVerciseModel,
+                               BostonScientificVerciseDirectedModel):
             parameters = BostonScientificVerciseParamerts(
                                         model_parameters['TipLength[mm]'],
                                         model_parameters['ContactLength[mm]'],
@@ -104,7 +104,7 @@ class CustomElectrodeFactory:
                                         model_parameters['TotalLength[mm]']
                                         )
 
-        if isinstance(electrode_type, MedtronicModel):
+        elif electrode_type == MedtronicModel:
             parameters = MedtronicParameters(
                                         model_parameters['TipLength[mm]'],
                                         model_parameters['ContactLength[mm]'],
@@ -113,7 +113,7 @@ class CustomElectrodeFactory:
                                         model_parameters['TotalLength[mm]']
                                         )
 
-        if isinstance(electrode_type, PINSMedicalModel):
+        elif electrode_type == PINSMedicalModel:
             parameters = PINSMedicalParameters(
                                         model_parameters['TipLength[mm]'],
                                         model_parameters['ContactLength[mm]'],
@@ -122,7 +122,7 @@ class CustomElectrodeFactory:
                                         model_parameters['TotalLength[mm]']
                                         )
 
-        if isinstance(electrode_type, MicroProbesRodentElectrodeModel):
+        elif electrode_type == MicroProbesRodentElectrodeModel:
             parameters = MicroProbesRodentElectrodeParameters(
                                         model_parameters['TubeThickness[mm]'],
                                         model_parameters['ContactLength[mm]'],
@@ -130,7 +130,7 @@ class CustomElectrodeFactory:
                                         model_parameters['TotalLength[mm]']
                                         )
 
-        if isinstance(electrode_type, MicroProbesSNEX100Model):
+        elif electrode_type == MicroProbesSNEX100Model:
             parameters = MicroProbesSNEX100Parameters(
                                 model_parameters['CoreElectrodeDiameter[mm]'],
                                 model_parameters['CoreTubingDiameter[mm]'],
@@ -141,6 +141,8 @@ class CustomElectrodeFactory:
                                 model_parameters['OuterTubingDiameter[mm]'],
                                 model_parameters['TotalLength[mm]']
                                 )
+        else:
+            raise NotImplementedError("Electrode model has not been implemented.")
 
         return electrode_type(parameters=parameters,
                               direction=direction,
