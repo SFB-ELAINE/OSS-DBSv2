@@ -18,3 +18,4 @@ docs/._*
 *.vtu
 .DS_Store
 
+case*/

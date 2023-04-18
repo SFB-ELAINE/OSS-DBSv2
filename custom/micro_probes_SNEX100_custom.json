@@ -6,5 +6,5 @@
     "OuterElectrodeLength[mm]": 0.25,
     "OuterElectrodeDiameter[mm]": 0.33,
     "OuterTubingDiameter[mm]": 0.411,
-    "LeadLength[mm]": 100
+    "TotalLength[mm]": 100
 }
