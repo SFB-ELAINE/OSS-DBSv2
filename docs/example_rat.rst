@@ -68,7 +68,7 @@ For the explanation of further parameters you can ferfer to the general introduc
 
 .. note::
 
-    add links to introduction and the example files.
+    Format of the input needs to be updated!
 
 An example of a full input directorie can be find below.
 
