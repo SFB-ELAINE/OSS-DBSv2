@@ -21,10 +21,10 @@ class EncapsulatingLayers:
     """
 
     def __init__(self,
-                 electrodes: List[ElectrodeModel],
+                 electrode_models: List[ElectrodeModel],
                  thickness: float
                  ) -> None:
-        self.__electrodes = electrodes
+        self.__electrodes = electrode_models
         self.__thickness = thickness
         self.__max_h = 0.1
 

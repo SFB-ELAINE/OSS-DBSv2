@@ -22,11 +22,15 @@ class Electrodes:
     """
 
     def __init__(self,
-                 electrodes: List[ElectrodeModel],
-                 contacts: Contacts) -> None:
-        self.__electrodes = electrodes
+                 electrode_models: List[ElectrodeModel],
+                 contacts: Contacts,
+                 encapsulation_thickness: float = 0.0
+                 ) -> None:
+        self.__electrodes = electrode_models
         self.__contacts = contacts
+        self.__encapsulation_thickness = encapsulation_thickness
         self.__max_h = 0.1
+        self.__encapsulation_max_h = 0.1
 
     def geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate Geometry of all electrodes.
@@ -44,14 +48,17 @@ class Electrodes:
                 edge.maxh = self.__max_h
         return geometry
 
-    def encapsulating_layer(self, thickness: float) -> EncapsulatingLayers:
+    def encapsulation(self) -> EncapsulatingLayers:
         """Return Collection of electrode encapsulating layers.
 
         Returns
         -------
         EncapsulatingLayers
         """
-        return EncapsulatingLayers(self.__electrodes, thickness)
+        thickness = self.__encapsulation_thickness
+        encapsulation = EncapsulatingLayers(self.__electrodes, thickness)
+        encapsulation.set_max_h(self.__encapsulation_max_h)
+        return encapsulation
 
     def contacts(self) -> Contacts:
         """Return collection of active contacts and contacts of property
@@ -83,6 +90,17 @@ class Electrodes:
         ngsolve_mesh = ngsolve.Mesh(ngmesh=ng_mesh)
         mesh = Mesh(ngsolve_mesh=ngsolve_mesh, order=2)
         return mesh.is_included(points)
+
+    def set_encapsulation_max_h(self, max_h: float = 0.1) -> None:
+        """Set the maximum height for a mesh element in these geometry of
+        electrodes.
+
+        Parameters
+        ----------
+        max_h : float
+            Maximum height for a mesh element.
+        """
+        self.__encapsulation_max_h = max_h
 
     def set_max_h(self, max_h: float = 0.1) -> None:
         """Set the maximum height for a mesh element in these geometry of

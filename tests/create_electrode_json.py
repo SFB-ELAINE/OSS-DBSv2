@@ -105,7 +105,7 @@ def draw_electrode():
 
     electrodes = Electrodes([electrode], Contacts([]))
     electrode_geo = electrodes.geometry()
-    capsule = electrodes.encapsulating_layer(0.1).geometry()
+    capsule = electrodes.encapsulation(0.1).geometry()
 
     box = netgen.occ.Box((-10, -10, -10,), (10, 10, 10))
     cut_capsule = capsule - box
