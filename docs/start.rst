@@ -148,5 +148,6 @@ Once the simulation is complete, the output files will be saved in the specified
 Evaluating simulation results
 ------------------------------
 
-To check your results you can navigate to the output folder specified in the input JSON. 
-All outputs are stored there and can evaluated by the user.
+To review and analyze your simulation results, simply navigate to the output folder specified in the input JSON. 
+This is where all outputs are stored, and the user can easily access and evaluate them. 
+From this folder, you can import the data into other analysis programs for further processing.

@@ -1,10 +1,11 @@
-.. _ref_examples:
-
 Examples
 =========
 
-Here you can find a list of differnt cases you can simulate with the software.
-You can find all the data need to run these studies in the examples folder in the OSS-DBS repository.
+Welcome to the example section of our software documentation! 
+In this section, we provide a variety of examples to help you understand how to use our software for specific applications. 
+Each example includes a detailed walkthrough of the input file, simulation parameters, and output files, 
+along with explanations of the key concepts and algorithms used. 
+Whether you are new to the software or an experienced user, these examples can provide valuable insight and guidance for your own simulations. 
 
 .. toctree::
    :maxdepth: 1
