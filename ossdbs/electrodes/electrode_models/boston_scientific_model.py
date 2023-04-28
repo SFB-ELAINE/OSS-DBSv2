@@ -1,6 +1,6 @@
 # Boston Scientific (Marlborough, Massachusetts, USA) vercise
 from dataclasses import dataclass
-from .electrode_model import ElectrodeModel
+from .electrode_model_template import ElectrodeModel
 import netgen
 import netgen.occ as occ
 import numpy as np

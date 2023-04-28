@@ -61,7 +61,7 @@ class Pathway(PointModel):
             potential = data.potential[start:end]
             sub_group.create_dataset('Potential[V]', data=potential)
             current_density = data.current_density[start:end]
-            sub_group.create_dataset('CurrentDensity[A/m2]',
+            sub_group.create_dataset('CurrentDensity[A|m2]',
                                      data=current_density)
             start = start + end
         return start
