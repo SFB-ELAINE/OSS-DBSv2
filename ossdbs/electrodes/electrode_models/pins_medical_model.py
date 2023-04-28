@@ -1,7 +1,7 @@
 # PINS Medical L301
 from abc import ABC
 from dataclasses import dataclass
-from .electrode_model import ElectrodeModel
+from .electrode_model_template import ElectrodeModel
 import netgen
 import netgen.occ as occ
 import numpy as np

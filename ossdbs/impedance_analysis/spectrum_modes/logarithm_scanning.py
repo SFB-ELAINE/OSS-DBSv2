@@ -47,7 +47,8 @@ class LogarithmScanning(SpectrumMode):
             frequencies.extend(interval__freq)
         return frequencies
 
-    def __contact_settings(self, contacts: Contacts):
+    @staticmethod
+    def __contact_settings(contacts: Contacts):
         settings = []
         for index, contact_1 in enumerate(contacts.active()[:-1]):
             for contact_2 in contacts.active()[index + 1:]:

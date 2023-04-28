@@ -77,7 +77,7 @@
     "MaximumSteps": 10000,
     "Precision": 1e-12
   },
-  "SpectrumMode": "FullSpectrum",
+  "SpectrumMode": "OctaveBand",
   "StimulationSignal": {
     "Type": "Rectangle",
     "Frequency[Hz]": 130.0,

@@ -7,7 +7,6 @@ from ossdbs.point_analysis.point_models.point_model import PointModel
 from ossdbs.point_analysis.time_results import TimeResult
 
 
-
 class Lattice(PointModel):
     """Matrix of point coordinates.
 
@@ -92,4 +91,4 @@ class Lattice(PointModel):
         file.create_dataset('Points[mm]', data=data.points)
         file.create_dataset('Location', data=self.__location.astype('S'))
         file.create_dataset('Potential[V]', data=data.potential)
-        file.create_dataset('Current_density[A/m2]', data=data.current_density)
+        file.create_dataset('Current_density[A|m2]', data=data.current_density)

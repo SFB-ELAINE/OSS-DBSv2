@@ -38,7 +38,7 @@ class FullSpectrum(SpectrumMode):
         current_dens_fft = np.zeros((*data_shape, 3), dtype=complex)
         conductivities = np.zeros(data_shape, dtype=complex)
 
-        for index, frequency in enumerate(frequencies[:2]):
+        for index, frequency in enumerate(frequencies):
             new_contacts = self._voltage_setting.set_voltages(frequency,
                                                               contacts,
                                                               volume_conductor)
