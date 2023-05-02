@@ -66,3 +66,11 @@ Standard human MRI (`icbm_avg_152_segmented.nii.gz`).
 Position of the Boston Scientific Vercise elektroce: (X: 5, Y: 14, Z: -4.5).
 Current-controlled stimulation with 1 mA on the lowest contact and ground at the contact above.
 **TODO: What is the point of this configuration? Change!**
+
+## Input case 7: Diffusion Tensor Image (DTI)
+
+Use MRI and DTI data in MNI space from MNI_ICBM_2009b_NLIN_ASYM atlas from Lead-DBS templates.
+Position of the Boston Scientific Vercise elektroce: (X: 5, Y: 14, Z: -4.5).
+Voltage-controlled stimulation with 1V on the lowest contact and ground at the contact above.
+
+**TODO: Implement processing of DTI data.**
