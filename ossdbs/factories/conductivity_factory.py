@@ -3,7 +3,7 @@
 from ossdbs.dielectric_model import DielectricModel
 from ossdbs.bounding_box import BoundingBox
 from ossdbs.nifti1Image import Nifti1Image
-from ossdbs.electrodes.encapsulation_layer import EncapsulatingLayers
+from ossdbs.electrodes import Electrodes
 from ossdbs.materials import Material
 from ossdbs.conductivity import Conductivity
 import numpy as np
@@ -17,17 +17,23 @@ class ConductivityFactory:
     json_path : str
     """
 
+    __MATERIALS = {'Blood': Material.BLOOD,
+                   'CSF': Material.CSF,
+                   'GrayMatter': Material.GRAY_MATTER,
+                   'WhiteMAtter': Material.WHITE_MATTER,
+                   'Unknown': Material.UNKNOWN}
+
     def __init__(self,
                  nifti: Nifti1Image,
                  bounding_box: BoundingBox,
                  dielectrc_model: DielectricModel,
-                 encap_layer: EncapsulatingLayers,
-                 encap_material: Material = Material.GRAY_MATTER
+                 electrodes: Electrodes,
+                 encap_material: str = 'GrayMatter',
                  ) -> None:
         self.__nifti = nifti
         self.__bbox = bounding_box
-        self.__encap_layer = encap_layer
-        self.__encap_material = encap_material
+        self.__electrodes = electrodes
+        self.__encap_material = self.__MATERIALS[encap_material]
         self.__dielectric_model = dielectrc_model
 
     def create(self) -> Conductivity:
@@ -52,21 +58,26 @@ class ConductivityFactory:
         data = self.__nifti.data_map()[x_s:x_e, y_s:y_e, z_s:z_e]
         new_start = tuple(start_index * voxel_size + offset)
         new_end = tuple(end_index * voxel_size + offset)
-        # self.__set_encap_data(data, new_start)
+        # TODO
+        # self.__set_encapapsulation(data, new_start)
 
         bounding_box = BoundingBox(start=new_start, end=new_end)
 
         return Conductivity(data, bounding_box, self.__dielectric_model)
 
-    def __set_encap_data(self, data: np.ndarray, offset: tuple) -> None:
+    def __set_encapapsulation(self, data: np.ndarray, offset: tuple) -> None:
+        """
+        TODO
+        """
 
+        encapsulation = self.__electrodes.encapsulation()
         voxel_size = self.__nifti.voxel_size()
         bounding_boxes = [bbox.intersection(self.__bbox)
-                          for bbox in self.__encap_layer.bounding_boxes()]
+                          for bbox in encapsulation.bounding_boxes()]
         points = np.concatenate([bbox.points(offset, voxel_size)
                                  for bbox in bounding_boxes])
 
-        included = self.__encap_layer.is_included(points=points)
+        included = encapsulation.is_included(points=points)
         encap_points = points[included]
         point_indices = (encap_points - offset) / self.__nifti.voxel_size()
 
