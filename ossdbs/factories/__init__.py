@@ -1,7 +1,7 @@
 
 from .regionofinterest_factory import RegionOfInterestFactory
 from .conductivity_factory import ConductivityFactory
-from .contacts_factory import ContactsFactory
+from .contacts_factory import CaseGroundContactFactory
 from .dielectricmodel_factory import DielectricModelFactory
 from .electrodes_factory import ElectrodeFactory
 from .electrodes_factory import ElectrodesFactory
@@ -12,7 +12,7 @@ from .volumeconductor_factory import VolumeConductorFactory
 
 __all__ = ('RegionOfInterestFactory',
            'ConductivityFactory',
-           'ContactsFactory',
+           'CaseGroundContactFactory',
            'DielectricModelFactory',
            'ElectrodeFactory',
            'ElectrodesFactory',

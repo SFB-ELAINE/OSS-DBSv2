@@ -24,10 +24,9 @@ class BrainGeometry:
     def __init__(self,
                  bounding_box: BoundingBox,
                  electrodes: Electrodes,
-                 encapsulation: EncapsulatingLayers) -> None:
+                 ) -> None:
         self.__bbox = bounding_box
         self.__electrodes = electrodes
-        self.__encapsulating_layer = encapsulation
 
     def geometry(self) -> netgen.libngpy._NgOCC.OCCGeometry:
         """Create a netgen geometry of this brain model.
@@ -39,11 +38,12 @@ class BrainGeometry:
         body = self.__create_ellipsoid()
         body.bc('BrainSurface')
         electrodes_geometry = self.__electrodes.geometry()
+        encapsulation = self.__electrodes.encapsulation()
 
-        if not self.__encapsulating_layer.thickness:
+        if not encapsulation.thickness:
             return netgen.occ.OCCGeometry(body - electrodes_geometry)
 
-        capsule_geometry = self.__encapsulating_layer.geometry()
+        capsule_geometry = encapsulation.geometry()
         cut = capsule_geometry + electrodes_geometry - body
         part_1 = body - capsule_geometry - electrodes_geometry
         part_2 = capsule_geometry - electrodes_geometry - cut

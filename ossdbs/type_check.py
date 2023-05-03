@@ -1,12 +1,12 @@
 
 
-class Settings:
+class TypeChecker:
 
     TYPES = {
              'CaseGrounding': {
                  'Active': bool,
-                 'Current[A]': float,
-                 'Voltage[V]': float
+                 'Current[A]': (int, float),
+                 'Voltage[V]': (int, float)
                  },
              'CurrentControled': bool,
              'DielectricModel': {
@@ -18,9 +18,9 @@ class Settings:
                  'MaxMeshSizeHeight': float
                  },
              'EncapsulatingLayer': {
-                 'Thickness[mm]': float,
+                 'Thickness[mm]': (int, float),
                  'Material': str,
-                 'MaxMeshSizeHeight': float
+                 'MaxMeshSizeHeight': (int, float)
                  },
              'EQSMode': bool,
              'Floating': {
@@ -38,34 +38,34 @@ class Settings:
                  'MeshElementOrder': int,
                  'MeshingHypothesis': {
                      'Type': str,
-                     'MaxMeshSizeHeight': float
+                     'MaxMeshSizeHeight': (int, float)
                      },
                  'SaveMesh': bool
              },
              'OutputPath': str,
              'RegionOfInterest': {
-                 'Center': {'x[mm]': float,
-                            'y[mm]': float,
-                            'z[mm]': float},
-                 'Dimension': {'x[mm]': float,
-                               'y[mm]': float,
-                               'z[mm]': float}
+                 'Center': {'x[mm]': (int, float),
+                            'y[mm]': (int, float),
+                            'z[mm]': (int, float)},
+                 'Dimension': {'x[mm]': (int, float),
+                               'y[mm]': (int, float),
+                               'z[mm]': (int, float)}
                  },
              'Solver': {
                  'Type': str,
                  'Preconditioner': str,
                  'PrintRates': bool,
                  'MaximumSteps': int,
-                 'Precision': float
+                 'Precision': (int, float)
              },
              'SpectrumMode': str,
              'StimulationSignal': {
                  'Type': str,
-                 'Frequency[Hz]': float,
-                 'PulseWidth[µs]': float,
-                 'PulseTopWidth[µs]': float,
-                 'CounterPulseWidth[µs]': float,
-                 'InterPulseWidth[µs]': float
+                 'Frequency[Hz]': (int, float),
+                 'PulseWidth[µs]': (int, float),
+                 'PulseTopWidth[µs]': (int, float),
+                 'CounterPulseWidth[µs]': (int, float),
+                 'InterPulseWidth[µs]': (int, float)
              },
              'PointModel': {
                  'Pathway': {
@@ -73,13 +73,13 @@ class Settings:
                      'FileName': str
                      },
                  'Lattice': {
-                     'Center': {'x[mm]': float,
-                                'y[mm]': float,
-                                'z[mm]': float},
-                     'Direction': {'x[mm]': float,
-                                   'y[mm]': float,
-                                   'z[mm]': float},
-                     'PointDistance[mm]': float,
+                     'Center': {'x[mm]': (int, float),
+                                'y[mm]': (int, float),
+                                'z[mm]': (int, float)},
+                     'Direction': {'x[mm]': (int, float),
+                                   'y[mm]': (int, float),
+                                   'z[mm]': (int, float)},
+                     'PointDistance[mm]': (int, float),
                      'Shape': {'x': int,
                                'y': int,
                                'z': int}
@@ -89,65 +89,60 @@ class Settings:
 
     ELECTRODE_SETTING = {'Name': str,
                          'PathToCustomParameters': str,
-                         'Rotation[Degrees]': float,
-                         'Direction': {'x[mm]': float,
-                                       'y[mm]': float,
-                                       'z[mm]': float},
-                         'TipPosition': {'x[mm]': float,
-                                         'y[mm]': float,
-                                         'z[mm]': float},
+                         'Rotation[Degrees]': (int, float),
+                         'Direction': {'x[mm]': (int, float),
+                                       'y[mm]': (int, float),
+                                       'z[mm]': (int, float)},
+                         'TipPosition': {'x[mm]': (int, float),
+                                         'y[mm]': (int, float),
+                                         'z[mm]': (int, float)},
                          'Contacts': list,
                          }
 
     CONTACT_SETTING = {'Contact_ID': int,
                        'Active': bool,
-                       'Current[A]': float,
-                       'Voltage[V]': float,
+                       'Current[A]': (int, float),
+                       'Voltage[V]': (int, float),
                        'Floating': bool,
-                       'SurfaceImpedance[Ωm]': {'real': float,
-                                                'imag': float}
+                       'SurfaceImpedance[Ωm]': {'real': (int, float),
+                                                'imag': (int, float)}
                        }
 
-    def __init__(self, partial_settings: dict) -> None:
-        self.__partial_settings = partial_settings
+    @classmethod
+    def check(cls, settings: dict) -> None:
+        cls.__check(cls.TYPES, settings)
+        cls.__check_electrodes(settings)
 
-    def complete_settings(self) -> None:
-        settings = self.TYPES.copy()
-        self.__check(settings, self.__partial_settings)
-        self.__check_electrodes(settings)
-
-    def __check(self, target: dict, settings: dict) -> dict:
+    @classmethod
+    def __check(cls, target: dict, settings: dict) -> dict:
         for key in [key for key in target.keys() if key in settings.keys()]:
             if isinstance(target[key], dict):
                 try:
-                    self.__check(target[key], settings[key])
+                    cls.__check(target[key], settings[key])
                 except TypeError as e:
-                    message = '[{type}]'.format(type=target[key]) + e.message
-                    raise TypeError(message)
+                    message = '[\'{key}\']'.format(key=key) + str(e)
+                    raise TypeError(message) from None
             else:
                 if not isinstance(settings[key], target[key]):
-                    message = '[{key}] is not of instance {type}'.format(
-                                                key=settings[key], type=[key])
+                    message = '[\'{key}\'] is not of instance {type}'.format(
+                                                key=key, type=target[key])
                     raise TypeError(message)
 
-    def __check_contacts(self, contacts: list) -> None:
+    @classmethod
+    def __check_contacts(cls, contacts: list) -> None:
         for index, contact in enumerate(contacts):
             try:
-                self.__check(self.CONTACT_SETTING, contact)
+                cls.__check(cls.CONTACT_SETTING, contact)
             except TypeError as e:
-                message = 'Contact {index}'.format(index=index) + e.message
-                raise TypeError(message)
+                message = '[\'Contacts\'][{index}]'.format(index=index)
+                raise TypeError(message + str(e)) from None
 
-    def __check_electrodes(self, settings: dict) -> None:
+    @classmethod
+    def __check_electrodes(cls, settings: dict) -> None:
         for index, electrode in enumerate(settings['Electrodes']):
-            for key in electrode.keys():
-                try:
-                    if not isinstance(electrode[key],
-                                      self.ELECTRODE_SETTING[key]):
-                        pass
-                    if key == 'Contacts':
-                        self.__check_contacts(electrode['Contacts'])
-                except TypeError as e:
-                    message = 'Electrode {index}'.format(index=index) \
-                              + e.message
-                    raise TypeError(message)
+            try:
+                cls.__check(cls.ELECTRODE_SETTING, electrode)
+                cls.__check_contacts(electrode['Contacts'])
+            except TypeError as e:
+                message = '[\'Electrodes\'][{index}]'.format(index=index)
+                raise TypeError(message + str(e)) from None
