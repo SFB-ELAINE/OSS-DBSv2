@@ -1,12 +1,7 @@
-
 from ossdbs.electrodes.electrodes import Electrodes
-from ossdbs.electrodes.encapsulation_layer import EncapsulatingLayers
 from ossdbs.bounding_box import BoundingBox
 import netgen
-import ngsolve
 import numpy as np
-
-from ossdbs.fem.mesh import Mesh
 
 
 class BrainGeometry:

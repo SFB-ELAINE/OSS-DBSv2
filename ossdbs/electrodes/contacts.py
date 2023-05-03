@@ -94,4 +94,4 @@ class Contacts:
         -------
         Contacts
         """
-        return Contacts(contacts=self.__active+self.__floating)
+        return Contacts(contacts=self.__active + self.__floating)

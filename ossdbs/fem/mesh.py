@@ -57,7 +57,7 @@ class Mesh:
         """
 
         return ngsolve.HDiv(mesh=self.__mesh,
-                            order=self.__order-1,
+                            order=self.__order - 1,
                             complex=self.__complex)
 
     def ngsolvemesh(self) -> ngsolve.comp.Mesh:

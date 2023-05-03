@@ -1,5 +1,4 @@
 
-
 from ossdbs.electrodes.electrode_models import ElectrodeModel
 
 from ossdbs.electrodes.electrode_models import AbbottStjudeActiveTipModel
@@ -20,8 +19,6 @@ from ossdbs.electrodes.electrode_models \
 from ossdbs.electrodes.electrode_models import MicroProbesSNEX100Parameters
 from ossdbs.electrodes.electrode_models import PINSMedicalParameters
 
-
-from ossdbs.electrodes.electrodes import Electrodes
 
 class CustomElectrodeFactory:
     """Creates a list of Electrode objects."""
@@ -95,7 +92,7 @@ class CustomElectrodeFactory:
                                         )
 
         elif electrode_type in (BostonScientificVerciseModel,
-                               BostonScientificVerciseDirectedModel):
+                                BostonScientificVerciseDirectedModel):
             parameters = BostonScientificVerciseParamerts(
                                         model_parameters['TipLength[mm]'],
                                         model_parameters['ContactLength[mm]'],
@@ -142,7 +139,7 @@ class CustomElectrodeFactory:
                                 model_parameters['TotalLength[mm]']
                                 )
         else:
-            raise NotImplementedError("Electrode model has not been implemented.")
+            raise NotImplementedError("Electrode model not implemented.")
 
         return electrode_type(parameters=parameters,
                               direction=direction,

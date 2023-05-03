@@ -75,5 +75,5 @@ class FullSpectrum(SpectrumMode):
         # to reduce memory stress
         step = 1000
         n_points = fft_spectrum.shape[0]
-        return np.concatenate([np.fft.irfft(fft_spectrum[idx:idx+step], axis=1)
+        return np.concatenate([np.fft.irfft(fft_spectrum[idx:idx + step], axis=1)
                                for idx in range(0, n_points, step)])

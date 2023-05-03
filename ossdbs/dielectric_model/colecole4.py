@@ -63,12 +63,12 @@ class MaterialColeColeModel():
 
 
 WhiteMatterModel = MaterialColeColeModel(
-                    alpha=np.array([0.1, 0.1, 0.3, 0.02]),
-                    eps_delta=np.array([32.0, 100.0, 4.0e4, 3.5e7]),
-                    eps_inf=4.0,
-                    sigma=0.02,
-                    tau=np.array([7.958e-12, 7.958e-9, 53.052e-6, 7.958e-3])
-                    )
+                     alpha=np.array([0.1, 0.1, 0.3, 0.02]),
+                     eps_delta=np.array([32.0, 100.0, 4.0e4, 3.5e7]),
+                     eps_inf=4.0,
+                     sigma=0.02,
+                     tau=np.array([7.958e-12, 7.958e-9, 53.052e-6, 7.958e-3])
+                     )
 
 GrayMatterModel = MaterialColeColeModel(
                     alpha=np.array([0.1, 0.15, 0.22, 0.0]),

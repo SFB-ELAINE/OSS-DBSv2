@@ -46,14 +46,14 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         norm = np.linalg.norm(direction)
         self._direction = tuple(direction / norm) if norm else (0, 0, 1)
         self._boundaries = {'Body': 'Body',
-                             'Contact_1': 'Contact_1',
-                             'Contact_2': 'Contact_2',
-                             'Contact_3': 'Contact_3',
-                             'Contact_4': 'Contact_4',
-                             'Contact_5': 'Contact_5',
-                             'Contact_6': 'Contact_6',
-                             'Contact_7': 'Contact_7',
-                             'Contact_8': 'Contact_8'}
+                            'Contact_1': 'Contact_1',
+                            'Contact_2': 'Contact_2',
+                            'Contact_3': 'Contact_3',
+                            'Contact_4': 'Contact_4',
+                            'Contact_5': 'Contact_5',
+                            'Contact_6': 'Contact_6',
+                            'Contact_7': 'Contact_7',
+                            'Contact_8': 'Contact_8'}
         self._core_electrode_length = parameters.core_electrode_length
         self._core_electrode_diameter = parameters.core_electrode_diameter
         self._core_tubing_length = parameters.core_tubing_length

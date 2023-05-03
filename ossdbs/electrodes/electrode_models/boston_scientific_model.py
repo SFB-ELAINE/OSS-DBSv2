@@ -45,14 +45,14 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         norm = np.linalg.norm(direction)
         self._direction = tuple(direction / norm) if norm else (0, 0, 1)
         self._boundaries = {'Body': 'Body',
-                             'Contact_1': 'Contact_1',
-                             'Contact_2': 'Contact_2',
-                             'Contact_3': 'Contact_3',
-                             'Contact_4': 'Contact_4',
-                             'Contact_5': 'Contact_5',
-                             'Contact_6': 'Contact_6',
-                             'Contact_7': 'Contact_7',
-                             'Contact_8': 'Contact_8'}
+                            'Contact_1': 'Contact_1',
+                            'Contact_2': 'Contact_2',
+                            'Contact_3': 'Contact_3',
+                            'Contact_4': 'Contact_4',
+                            'Contact_5': 'Contact_5',
+                            'Contact_6': 'Contact_6',
+                            'Contact_7': 'Contact_7',
+                            'Contact_8': 'Contact_8'}
         self._tip_length = parameters.tip_length
         self._contact_length = parameters.contact_length
         self._contact_spacing = parameters.contact_spacing
@@ -209,14 +209,14 @@ class BostonScientificVerciseModel(ElectrodeModel):
         norm = np.linalg.norm(direction)
         self._direction = tuple(direction / norm) if norm else (0, 0, 1)
         self._boundaries = {'Body': 'Body',
-                             'Contact_1': 'Contact_1',
-                             'Contact_2': 'Contact_2',
-                             'Contact_3': 'Contact_3',
-                             'Contact_4': 'Contact_4',
-                             'Contact_5': 'Contact_5',
-                             'Contact_6': 'Contact_6',
-                             'Contact_7': 'Contact_7',
-                             'Contact_8': 'Contact_8'}
+                            'Contact_1': 'Contact_1',
+                            'Contact_2': 'Contact_2',
+                            'Contact_3': 'Contact_3',
+                            'Contact_4': 'Contact_4',
+                            'Contact_5': 'Contact_5',
+                            'Contact_6': 'Contact_6',
+                            'Contact_7': 'Contact_7',
+                            'Contact_8': 'Contact_8'}
         self._tip_length = parameters.tip_length
         self._contact_length = parameters.contact_length
         self._contact_spacing = parameters.contact_spacing

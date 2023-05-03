@@ -1,6 +1,5 @@
 
 import json
-from typing import List
 from ossdbs.electrodes.contacts import Contact, Contacts
 from ossdbs.electrodes.electrode_models import ElectrodeModel
 from ossdbs.electrodes.electrodes import Electrodes
