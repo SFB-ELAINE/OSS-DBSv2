@@ -44,10 +44,10 @@ class PINSMedicalModel(ElectrodeModel):
         norm = np.linalg.norm(direction)
         self._direction = tuple(direction / norm) if norm else (0, 0, 1)
         self._boundaries = {'Body': 'Body',
-                             'Contact_1': 'Contact_1',
-                             'Contact_2': 'Contact_2',
-                             'Contact_3': 'Contact_3',
-                             'Contact_4': 'Contact_4'}
+                            'Contact_1': 'Contact_1',
+                            'Contact_2': 'Contact_2',
+                            'Contact_3': 'Contact_3',
+                            'Contact_4': 'Contact_4'}
         self._tip_length = parameters.tip_length
         self._contact_length = parameters.contact_length
         self._contact_spacing = parameters.contact_spacing
