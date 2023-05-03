@@ -11,7 +11,10 @@ from ossdbs.factories.electrode_factory import ElectrodeFactory
 class ElectrodesFactory:
 
     @classmethod
-    def create(cls, electrode_paramters: List) -> Electrodes:
+    def create(cls,
+               electrode_paramters: dict,
+               encapsulation_parameters: dict
+               ) -> Electrodes:
 
         electrodes = []
         contacts = []
@@ -25,8 +28,13 @@ class ElectrodesFactory:
 
         contacts = Contacts([contact for contact in contacts
                              if contact.active or contact.floating])
-
-        return Electrodes(electrodes=electrodes, contacts=contacts)
+        capsule_d = encapsulation_parameters['Thickness[mm]']
+        electrodes = Electrodes(electrode_models=electrodes,
+                                contacts=contacts,
+                                encapsulation_thickness=capsule_d)
+        max_h = encapsulation_parameters['MaxMeshSizeHeight']
+        electrodes.set_encapsulation_max_h(max_h=max_h if max_h else 0.1)
+        return electrodes
 
     @staticmethod
     def __create_contact(index: int, contact_par: dict) -> Contact:
