@@ -22,18 +22,19 @@ class Pathway(PointModel):
     def __init__(self, path) -> None:
         self.__path = path
         with h5py.File(self.__path, "r") as file:
-            populations = [self.Population(group, self.__axons(file, group))
+            populations = [self.Population(group,
+                                           self.__create_axons(file, group))
                            for group in file.keys()]
 
         self.__populations = populations
         n_points = sum([len(axon.points)
                         for population in self.__populations
-                        for axon in population])
+                        for axon in population.axons])
         self.__location = np.full(n_points, '')
 
-    def __axons(self, file, group) -> list:
+    def __create_axons(self, file, group) -> list:
         return [self.Axon(sub_group, np.array(file[group][sub_group]))
-                for sub_group in file.keys[group]]
+                for sub_group in file[group].keys()]
 
     def coordinates(self) -> np.ndarray:
         return np.concatenate([axon.points
@@ -45,7 +46,7 @@ class Pathway(PointModel):
             self.__write_file(data, file)
 
     def __write_file(self, data, file):
-        file.create_dataset('TimeSteps[s]', data=self.time_steps)
+        file.create_dataset('TimeSteps[s]', data=data.time_steps)
         start = 0
         for population in self.__populations:
             group = file.create_group(population.name)
@@ -65,3 +66,6 @@ class Pathway(PointModel):
                                      data=current_density)
             start = start + end
         return start
+
+    def set_location_names(self, names: np.ndarray) -> None:
+        self.__location = names
