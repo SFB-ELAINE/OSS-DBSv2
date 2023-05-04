@@ -41,10 +41,10 @@ Last test geometry currently fails.
 
 ## Input case 3: monopolar electrode
 
-A counterelectrode is placed at (X: 22.95, Y: 11.35, Z: 7.95) in the rat MRI `new_segmented_Atlas_GMWMCS`.
-The monopolar electrode `MicroProbesCustomRodent` is implanted there.
+The monopolar electrode `MicroProbesCustomRodent` is implanted at (X: 22.95, Y: 11.35, Z: 7.95) in the rat MRI `new_segmented_Atlas_GMWMCS`.
 Case grounding is used. **TODO: This contradicts the above point!** 
-Simulation is run using QS at 130Hz and 60 us pulsewidth in current-controlled mode with 200 muA.
+Simulation is run using QS at 130Hz and 60 us pulsewidth. **TODO: current-controlled mode with 200 muA not working!**
+Results are calculated for one artificial neuron placed below the electrode tip.
 
 ## Input case 4: dielectric models
 
