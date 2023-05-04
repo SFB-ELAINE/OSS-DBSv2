@@ -1,9 +1,8 @@
-
-import ngsolve
 import sys
 import json
 from ossdbs.impedance_analysis import impedance_analysis
 from ossdbs.point_analysis import point_analysis
+from ossdbs import set_logger
 
 
 def main() -> None:
@@ -13,13 +12,13 @@ def main() -> None:
         input = json.load(json_file)
 
     if 'impedance' in sys.argv:
-        with ngsolve.TaskManager():
-            impedance_analysis(input)
+        impedance_analysis(input)
         return
 
-    with ngsolve.TaskManager():
-        point_analysis(input)
+    point_analysis(input)
 
 
 if __name__ == '__main__':
+    # default logger
+    set_logger()
     main()

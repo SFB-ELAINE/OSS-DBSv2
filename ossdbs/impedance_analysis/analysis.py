@@ -1,4 +1,4 @@
-from ossdbs.brain_geometry import BrainGeometry
+from ossdbs.model_geometry import BrainGeometry
 from ossdbs.nifti1Image import Nifti1Image
 from ossdbs.output_directory import OutputDirectory
 from ossdbs.factories import RegionOfInterestFactory
@@ -15,6 +15,9 @@ from ossdbs.type_check import TypeChecker
 from ossdbs.impedance_analysis.factories import SpectrumFactory
 
 import os
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 def impedance_analysis(settings: dict) -> None:

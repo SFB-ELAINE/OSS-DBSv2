@@ -6,19 +6,35 @@ from ossdbs.electrodes.electrodes import Electrodes
 from ossdbs.factories.custom_electrode_factory import CustomElectrodeFactory
 from ossdbs.factories.electrode_factory import ElectrodeFactory
 
+import logging
+_logger = logging.getLogger(__name__)
+
 
 class ElectrodesFactory:
+    """Preparation of the electrode geometry
+
+    Notes
+    -----
+
+    All electrodes are generated and fused in one geometry.
+    The contacts are named accordingly.
+    The encapsulation layers are contained in the `Electrodes`
+    objects but not yet part of the geometry.
+
+    """
 
     @classmethod
     def create(cls,
-               electrode_paramters: dict,
+               electrode_parameters: dict,
                encapsulation_parameters: dict
                ) -> Electrodes:
 
+        _logger.info("Creating electrode geometries")
         electrodes = []
         contacts = []
 
-        for index, input_par in enumerate(electrode_paramters):
+        for index, input_par in enumerate(electrode_parameters):
+            _logger.debug("Create electrode #{}".format(index))
             electrode = cls.__create_electrode(input_par)
             electrode.set_contact_names(cls.__boundaries(index))
             electrodes.append(electrode)
@@ -31,8 +47,9 @@ class ElectrodesFactory:
         electrodes = Electrodes(electrode_models=electrodes,
                                 contacts=contacts,
                                 encapsulation_thickness=capsule_d)
-        max_h = encapsulation_parameters['MaxMeshSizeHeight']
-        electrodes.set_encapsulation_max_h(max_h=max_h if max_h else 0.1)
+        if 'MaxMeshSizeHeight' in encapsulation_parameters:
+            max_h = encapsulation_parameters['MaxMeshSizeHeight']
+            electrodes.set_encapsulation_max_h(max_h=max_h if max_h else 0.1)
         return electrodes
 
     @staticmethod
