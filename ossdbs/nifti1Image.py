@@ -10,6 +10,12 @@ class Nifti1Image:
     ----------
     file_path : str
         File path of a Nifti1 image.
+
+    Notes
+    -----
+
+    TODO: add link to Nibabel documentation
+
     """
 
     __N_DIMENSION = 3

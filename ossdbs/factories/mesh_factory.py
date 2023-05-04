@@ -1,6 +1,6 @@
 import netgen
 import ngsolve
-from ossdbs.brain_geometry import BrainGeometry
+from ossdbs.model_geometry import BrainGeometry
 from ossdbs.fem import Mesh
 
 

@@ -19,20 +19,20 @@ class DielectricModelFactory:
                  'Unknown': Material.UNKNOWN
                  }
 
-    def create(cls, dielectricum_parameters: str) -> DielectricModel:
+    def create(cls, dielectric_parameters: str) -> DielectricModel:
 
-        if 'Custom' in dielectricum_parameters['Type']:
-            path = dielectricum_parameters['PathToCustomParameters']
+        if 'Custom' in dielectric_parameters['Type']:
+            path = dielectric_parameters['PathToCustomParameters']
             with open(path, 'r') as json_file:
                 model_parameters = json.load(json_file)
-            if 'ColeCole4' in dielectricum_parameters['Type']:
+            if 'ColeCole4' in dielectric_parameters['Type']:
                 return cls.__create_cc4_model(model_parameters)
-            if 'Constant' in dielectricum_parameters['Type']:
+            if 'Constant' in dielectric_parameters['Type']:
                 return cls.__create_constant_model()
 
         return {'ColeCole4': ColeCole4Model(),
                 'Constant': ConstantModel(),
-                }[dielectricum_parameters['Type']]
+                }[dielectric_parameters['Type']]
 
     def __create_cc4_model(cls, parameters):
 

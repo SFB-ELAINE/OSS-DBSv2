@@ -1,7 +1,7 @@
 
 
 from ossdbs.nifti1Image import Nifti1Image
-from ossdbs.brain_geometry import BrainGeometry
+from ossdbs.model_geometry import BrainGeometry
 from ossdbs.materials import Material
 from ossdbs.output_directory import OutputDirectory
 from ossdbs.settings import Settings
@@ -22,6 +22,9 @@ from ossdbs.point_analysis.factories import SpectrumFactory
 
 import os
 import numpy as np
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 def point_analysis(settings: dict) -> None:
