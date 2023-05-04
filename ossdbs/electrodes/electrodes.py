@@ -2,7 +2,7 @@
 from typing import List
 from ossdbs.fem.mesh import Mesh
 from .contacts import Contacts
-from .electrode_models.electrode_model import ElectrodeModel
+from .electrode_models import ElectrodeModel
 from .encapsulation_layer import EncapsulatingLayers
 import netgen
 import ngsolve

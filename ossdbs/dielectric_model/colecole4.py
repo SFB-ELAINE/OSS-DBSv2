@@ -87,12 +87,13 @@ CSFModel = MaterialColeColeModel(
                     )
 
 
-BloodModel = MaterialColeColeModel(alpha=np.array([0.1, 0.1, 0.0, 0.0]),
-                           eps_delta=np.array([56.0, 5200.0, 0.0, 0.0]),
-                           eps_inf=4.0,
-                           sigma=0.7,
-                           tau=np.array([8.38e-12, 132.63e-9, 0, 0])
-                           )
+BloodModel = MaterialColeColeModel(
+                                alpha=np.array([0.1, 0.1, 0.0, 0.0]),
+                                eps_delta=np.array([56.0, 5200.0, 0.0, 0.0]),
+                                eps_inf=4.0,
+                                sigma=0.7,
+                                tau=np.array([8.38e-12, 132.63e-9, 0, 0])
+                                )
 
 
 class ColeCole4Model(DielectricModel):

@@ -2,22 +2,18 @@
   "CaseGrounding": {
     "Active": false,
     "Current[A]": 0.0,
-    "Voltage[V]": 1.0
+    "Voltage[V]": 0.0
   },
   "CurrentControled": false,
   "DielectricModel": {"Type": "ColeCole4",
                       "PathToCustomParameters": ""
-                    },
-  "DiffusionTensorImage": {
-    "Path": ""
   },
   "Electrodes": [
     {
       "Name": "BostonScientificVerciseDirected",
-      "PathToCustomParameters": "",
-      "Rotation[Degrees]": 6.412,
-      "Direction": { "x[mm]": 2.2314, "y[mm]": 5.0661, "z[mm]": 3.99 },
-      "TipPosition": { "x[mm]": 14.5884, "y[mm]": -14.7434, "z[mm]": -9.0634 },
+      "Rotation[Degrees]": 0,
+      "Direction": { "x[mm]": 1, "y[mm]": 1, "z[mm]": 1 },
+      "TipPosition": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
 
       "Contacts": [
         {
@@ -29,7 +25,7 @@
           "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
         },
         {
-          "Contact_ID": 8,
+          "Contact_ID": 2,
           "Active": true,
           "Current[A]": 0.0,
           "Voltage[V]": 0.0,
@@ -41,9 +37,9 @@
   ],
   "Contacts":{"MaxMeshSizeHeight": 0.1},
   "EncapsulatingLayer": {
-    "Thickness[mm]": 0.5,
-    "Material": "Blood",
-    "MaxMeshSizeHeight": 0.5
+    "Thickness[mm]": 0.3,
+    "Material": "GrayMatter",
+    "MaxMeshSizeHeight": 0.1
   },
   "EQSMode": false,
   "Floating": {
@@ -51,24 +47,24 @@
     "FloatingImpedance": false
   },
   "MaterialDistribution": {
-    "MRIPath": "./input_files/segmask.nii",
     "DiffusionTensorActive": false,
-    "DTIPath": ""
+    "DTIPath": "IITmean_tensor.nii.gz",
+    "MRIPath": "segmask.nii"
   },
   "Mesh": {
     "LoadMesh": false,
-    "LoadPath": "./input_files/mesh.vol",
+    "LoadPath": "",
     "MeshElementOrder": 2,
     "MeshingHypothesis": {
       "Type": "Default",
       "MaxMeshSizeHeight": 0.0
     },
-    "SaveMesh": false
+    "SaveMesh": true
   },
-  "OutputPath": "",
+  "OutputPath": "case7",
   "RegionOfInterest": {
-    "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
-    "Dimension": { "x[mm]": 80.0, "y[mm]": 80.0, "z[mm]": 80.0 }
+    "Center": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
+    "Dimension": { "x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0 }
   },
   "Solver": {
     "Type": "CG",
@@ -89,13 +85,14 @@
   "PointModel":{
     "Pathway": {
       "Active": false,
-      "FileName": "./input_files/test.hdf5"
+      "FileName": ""
     },
     "Lattice": {
-      "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
-      "Direction": { "x[mm]": 2.2314, "y[mm]": 5.0661, "z[mm]": 3.99 },
+      "Center":  { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
+      "Direction": { "x[mm]": 1, "y[mm]": 1, "z[mm]": 1 },
       "PointDistance[mm]": 0.1,
-      "Shape": { "x": 1, "y": 1, "z": 1 }
+      "Shape": { "x": 3, "y": 3, "z": 3 }
     }
   }
 }
+

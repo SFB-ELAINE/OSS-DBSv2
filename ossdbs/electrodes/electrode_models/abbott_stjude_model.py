@@ -1,6 +1,6 @@
 # Abbott/St Jude Active Tip 6142-6145
 from dataclasses import dataclass
-from .electrode_model import ElectrodeModel
+from .electrode_model_template import ElectrodeModel
 import netgen.occ as occ
 import netgen
 import numpy as np
@@ -21,6 +21,9 @@ class AbbottStjudeActiveTipModel(ElectrodeModel):
 
     Attributes
     ----------
+    parameters : AbbottStjudeParameters
+        Parameters for Abbott Stjude Geometry.
+
     rotation : float
         Rotation angle in degree of electrode.
 
