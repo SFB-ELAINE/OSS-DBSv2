@@ -7,8 +7,6 @@ from ossdbs.point_analysis.time_results import TimeResult
 from ossdbs.fem import VolumeConductor
 
 import numpy as np
-import ngsolve
-import os
 
 
 class OctaveBand(SpectrumMode):

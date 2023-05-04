@@ -1,6 +1,6 @@
 from ossdbs.brain_geometry import BrainGeometry
 from ossdbs.nifti1Image import Nifti1Image
-from ossdbs.output import OutputDirectory
+from ossdbs.output_directory import OutputDirectory
 from ossdbs.factories import RegionOfInterestFactory
 from ossdbs.factories import ConductivityFactory
 from ossdbs.factories import ContactsFactory

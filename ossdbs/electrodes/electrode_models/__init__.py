@@ -1,4 +1,4 @@
-from .electrode_model import ElectrodeModel
+from .electrode_model_template import ElectrodeModel
 from .abbott_stjude import AbbottStjudeParameters
 from .abbott_stjude import AbbottStjudeActiveTipModel
 from .abbott_stjude import AbbottStjudeActiveTip6142_6145

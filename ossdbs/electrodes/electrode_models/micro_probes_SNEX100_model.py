@@ -1,6 +1,6 @@
 # MicroProbes SNEX 100 Concentric Bipolar Electrodes
 from dataclasses import dataclass
-from .electrode_model import ElectrodeModel
+from .electrode_model_template import ElectrodeModel
 import netgen
 import netgen.occ as occ
 import numpy as np
