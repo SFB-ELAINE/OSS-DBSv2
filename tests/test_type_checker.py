@@ -65,6 +65,10 @@ setting = {
                 'SaveMesh': False
             },
             'OutputPath': 'result',
+            'BrainRegion': {
+                'Center': {'x[mm]': 0, 'y[mm]': 0, 'z[mm]': 0},
+                'Dimension': {'x[mm]': 0, 'y[mm]': 0, 'z[mm]': 8}
+                },
             'RegionOfInterest': {
                 'Center': {'x[mm]': 0, 'y[mm]': 0, 'z[mm]': 0},
                 'Dimension': {'x[mm]': 0, 'y[mm]': 0, 'z[mm]': 8}

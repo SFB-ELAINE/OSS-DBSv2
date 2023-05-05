@@ -3,6 +3,8 @@ from .__version__ import __version__
 
 from ossdbs.factories import ElectrodesFactory
 from .brain_geometry import BrainGeometry
+from .model_geometry import BrainGeometry as ModelGeometry
+from .nifti1Image import Nifti1Image
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())

@@ -6,7 +6,7 @@ from ossdbs.materials import Material
 from ossdbs.output_directory import OutputDirectory
 from ossdbs.settings import Settings
 from ossdbs.type_check import TypeChecker
-from ossdbs.factories import RegionOfInterestFactory
+from ossdbs.factories import BrainRegionFactory
 from ossdbs.factories import ConductivityFactory
 from ossdbs.factories import CaseGroundContactFactory
 from ossdbs.factories import DielectricModelFactory
@@ -24,29 +24,30 @@ import os
 import numpy as np
 
 import logging
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 def point_analysis(settings: dict) -> None:
-
+    _logger.info("Loading settings from input file")
     settings = Settings(settings).complete_settings()
     TypeChecker.check(settings)
 
     nifti_image = Nifti1Image(settings['MaterialDistribution']['MRIPath'])
     electrodes = ElectrodesFactory.create(settings['Electrodes'],
                                           settings['EncapsulatingLayer'])
-    region_parameters = settings['RegionOfInterest']
-    region_of_interest = RegionOfInterestFactory.create(region_parameters)
+    # TODO set MRI image as default choice
+    region_parameters = settings['BrainRegion']
+    brain_region = BrainRegionFactory.create(region_parameters)
     dielectric_parameters = settings['DielectricModel']
     dielectric_model = DielectricModelFactory().create(dielectric_parameters)
     encapsulation_material = settings['EncapsulatingLayer']['Material']
     conductivity = ConductivityFactory(nifti_image,
-                                       region_of_interest,
+                                       brain_region,
                                        dielectric_model,
                                        electrodes,
                                        encapsulation_material).create()
 
-    geometry = BrainGeometry(region_of_interest, electrodes)
+    geometry = BrainGeometry(brain_region, electrodes)
     mesh = MeshFactory(geometry).create(settings['Mesh'])
     mesh.datatype_complex(settings['EQSMode'])
 
@@ -64,7 +65,7 @@ def point_analysis(settings: dict) -> None:
     points = point_model.coordinates()
 
     material_distribution = MaterialDistributionFactory(nifti_image,
-                                                        region_of_interest
+                                                        brain_region
                                                         ).create()
 
     location = define_locations(electrodes, mesh, points, material_distribution)
@@ -86,10 +87,12 @@ def point_analysis(settings: dict) -> None:
         mesh.save(mesh_path)
 
 
+"""
+# TODO what to do with this part?
 def create_point_model(settings, mesh):
     nifti_image = Nifti1Image(settings['MaterialDistribution']['MRIPath'])
-    region_parameters = settings['RegionOfInterest']
-    region_of_interest = RegionOfInterestFactory.create(region_parameters)
+    region_parameters = settings['BrainRegion']
+    region_of_interest = BrainRegionFactory.create(region_parameters)
     material_distribution = MaterialDistributionFactory(nifti_image,
                                                         region_of_interest).create()
     point_model = PointModelFactory().create(settings['PointModel'])
@@ -104,6 +107,7 @@ def create_point_model(settings, mesh):
     location = define_locations(electrodes, capsule, mesh, points, material_distribution)
     point_model.set_location_names(location)
     return point_model
+"""
 
 
 def define_locations(electrodes, mesh, points, material_distribution):

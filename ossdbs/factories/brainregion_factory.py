@@ -3,7 +3,7 @@ from ossdbs.bounding_box import BoundingBox
 import numpy as np
 
 
-class RegionOfInterestFactory:
+class BrainRegionFactory:
 
     @classmethod
     def create(cls, box_parameters: dict) -> BoundingBox:

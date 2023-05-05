@@ -15,6 +15,8 @@ class BrainGeometry:
 
     encapsulation : EncapsulatingLayers
         Encapsulation of electrodes.
+
+    TODO refactor
     """
     def __init__(self,
                  bounding_box: BoundingBox,

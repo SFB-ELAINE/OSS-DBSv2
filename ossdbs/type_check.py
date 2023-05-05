@@ -43,6 +43,14 @@ class TypeChecker:
                  'SaveMesh': bool
              },
              'OutputPath': str,
+             'BrainRegion': {
+                 'Center': {'x[mm]': (int, float),
+                            'y[mm]': (int, float),
+                            'z[mm]': (int, float)},
+                 'Dimension': {'x[mm]': (int, float),
+                               'y[mm]': (int, float),
+                               'z[mm]': (int, float)}
+                 },
              'RegionOfInterest': {
                  'Center': {'x[mm]': (int, float),
                             'y[mm]': (int, float),
