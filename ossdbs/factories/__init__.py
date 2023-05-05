@@ -1,5 +1,5 @@
 
-from .regionofinterest_factory import RegionOfInterestFactory
+from .brainregion_factory import BrainRegionFactory
 from .conductivity_factory import ConductivityFactory
 from .contacts_factory import CaseGroundContactFactory
 from .dielectricmodel_factory import DielectricModelFactory
@@ -10,7 +10,7 @@ from .signal_factory import SignalFactory
 from .solver_factory import SolverFactory
 from .volumeconductor_factory import VolumeConductorFactory
 
-__all__ = ('RegionOfInterestFactory',
+__all__ = ('BrainRegionFactory',
            'ConductivityFactory',
            'CaseGroundContactFactory',
            'DielectricModelFactory',

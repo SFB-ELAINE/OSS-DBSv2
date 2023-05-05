@@ -63,7 +63,7 @@
     "SaveMesh": true
   },
   "OutputPath": "case5",
-  "RegionOfInterest": {
+  "BrainRegion": {
     "Center": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
     "Dimension": { "x[mm]": 10.0, "y[mm]": 10.0, "z[mm]": 20.0 }
   },

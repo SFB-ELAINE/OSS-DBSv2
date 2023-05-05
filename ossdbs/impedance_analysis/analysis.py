@@ -1,7 +1,7 @@
 from ossdbs.model_geometry import BrainGeometry
 from ossdbs.nifti1Image import Nifti1Image
 from ossdbs.output_directory import OutputDirectory
-from ossdbs.factories import RegionOfInterestFactory
+from ossdbs.factories import BrainRegionFactory
 from ossdbs.factories import ConductivityFactory
 from ossdbs.factories import CaseGroundContactFactory
 from ossdbs.factories import DielectricModelFactory
@@ -17,16 +17,18 @@ from ossdbs.impedance_analysis.factories import SpectrumFactory
 import os
 
 import logging
-logger = logging.getLogger(__name__)
+_logger = logging.getLogger(__name__)
 
 
 def impedance_analysis(settings: dict) -> None:
+    _logger.info("Loading settings from input file")
     settings = Settings(settings).complete_settings()
     TypeChecker.check(settings)
 
     nifti_image = Nifti1Image(settings['MaterialDistribution']['MRIPath'])
-    region_parameters = settings['RegionOfInterest']
-    region_of_interest = RegionOfInterestFactory.create(region_parameters)
+    # TODO set MRI bounding box as default choice
+    region_parameters = settings['BrainRegion']
+    region_of_interest = BrainRegionFactory.create(region_parameters)
     dielectric_parameters = settings['DielectricModel']
     dielectric_model = DielectricModelFactory().create(dielectric_parameters)
     electrodes = ElectrodesFactory.create(settings['Electrodes'],
