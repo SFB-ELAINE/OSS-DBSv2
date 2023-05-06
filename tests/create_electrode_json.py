@@ -1,9 +1,9 @@
 
 from ossdbs.electrodes.contacts import Contacts
-from ossdbs.electrodes.electrode_models import AbbottStjudeActiveTip6142_6145
-from ossdbs.electrodes.electrode_models import AbbottStjudeActiveTip6146_6149
-from ossdbs.electrodes.electrode_models import AbbottStjudeDirected6172
-from ossdbs.electrodes.electrode_models import AbbottStjudeDirected6173
+from ossdbs.electrodes.electrode_models import AbbottStJudeActiveTip6142_6145
+from ossdbs.electrodes.electrode_models import AbbottStJudeActiveTip6146_6149
+from ossdbs.electrodes.electrode_models import AbbottStJudeDirected6172
+from ossdbs.electrodes.electrode_models import AbbottStJudeDirected6173
 from ossdbs.electrodes.electrode_models import BostonScientificVercise
 from ossdbs.electrodes.electrode_models import BostonScientificVerciseDirected
 from ossdbs.electrodes.electrode_models import Medtronic3387, Medtronic3389, Medtronic3391
@@ -21,14 +21,14 @@ from ossdbs.electrodes import Electrodes
 class TestFileCreator:
 
     ELECTRODES = {
-                #   'AbbottStjudeActiveTip6142_6145':
-                #   AbbottStjudeActiveTip6142_6145,
-                #   'AbbottStjudeActiveTip6146_6149':
-                #   AbbottStjudeActiveTip6146_6149,
-                #   'AbbottStjudeDirected6172':
-                #   AbbottStjudeDirected6172,
-                #   'AbbottStjudeDirected6173':
-                #   AbbottStjudeDirected6173,
+                #   'AbbottStJudeActiveTip6142_6145':
+                #   AbbottStJudeActiveTip6142_6145,
+                #   'AbbottStJudeActiveTip6146_6149':
+                #   AbbottStJudeActiveTip6146_6149,
+                #   'AbbottStJudeDirected6172':
+                #   AbbottStJudeDirected6172,
+                #   'AbbottStJudeDirected6173':
+                #   AbbottStJudeDirected6173,
                 #   'BostonScientificVercise':
                 #   BostonScientificVercise,
                 #  'BostonScientificVerciseDirected':
@@ -91,8 +91,8 @@ class TestFileCreator:
 def create_json(electrode_parameters, electrode_type, path):
 
     electrode_parameters = (0.0, (0, 0, 0), (0, 0, 1))
-    electrode_type = AbbottStjudeActiveTip6142_6145
-    path = "test_data/AbbottStjudeActiveTip6142_6145_0.json"
+    electrode_type = AbbottStJudeActiveTip6142_6145
+    path = "test_data/AbbottStJudeActiveTip6142_6145_0.json"
 
     rotation, translation, direction = electrode_parameters
     electrode = electrode_type(rotation, direction, translation)

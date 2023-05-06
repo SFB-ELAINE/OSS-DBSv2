@@ -1,12 +1,12 @@
 from .electrode_model_template import ElectrodeModel
-from .abbott_stjude import AbbottStjudeParameters
-from .abbott_stjude import AbbottStjudeActiveTipModel
-from .abbott_stjude import AbbottStjudeActiveTip6142_6145
-from .abbott_stjude import AbbottStjudeActiveTip6146_6149
-from .abbott_stjude import AbbottStjudeDirectedModel
-from .abbott_stjude import AbbottStjudeDirected6172
-from .abbott_stjude import AbbottStjudeDirected6173
-from .boston_scientific_vercise import BostonScientificVerciseParamerts
+from .abbott_stjude import AbbottStJudeParameters
+from .abbott_stjude import AbbottStJudeActiveTipModel
+from .abbott_stjude import AbbottStJudeActiveTip6142_6145
+from .abbott_stjude import AbbottStJudeActiveTip6146_6149
+from .abbott_stjude import AbbottStJudeDirectedModel
+from .abbott_stjude import AbbottStJudeDirected6172
+from .abbott_stjude import AbbottStJudeDirected6173
+from .boston_scientific_vercise import BostonScientificVerciseParameters
 from .boston_scientific_vercise import BostonScientificVerciseModel
 from .boston_scientific_vercise import BostonScientificVercise
 from .boston_scientific_vercise import BostonScientificVerciseDirectedModel
@@ -30,18 +30,18 @@ from .pins_medical import PINSMedicalL303
 
 
 __all__ = ('ElectrodeModel',
-           'AbbottStjudeActiveTip6142_6145',
-           'AbbottStjudeActiveTip6146_6149',
-           'AbbottStjudeActiveTipModel',
-           'AbbottStjudeDirected6172',
-           'AbbottStjudeDirected6173',
-           'AbbottStjudeDirectedModel',
-           'AbbottStjudeParameters',
+           'AbbottStJudeActiveTip6142_6145',
+           'AbbottStJudeActiveTip6146_6149',
+           'AbbottStJudeActiveTipModel',
+           'AbbottStJudeDirected6172',
+           'AbbottStJudeDirected6173',
+           'AbbottStJudeDirectedModel',
+           'AbbottStJudeParameters',
            'BostonScientificVercise',
            'BostonScientificVerciseDirected',
            'BostonScientificVerciseModel',
            'BostonScientificVerciseDirectedModel',
-           'BostonScientificVerciseParamerts',
+           'BostonScientificVerciseParameters',
            'Medtronic3387',
            'Medtronic3389',
            'Medtronic3391',

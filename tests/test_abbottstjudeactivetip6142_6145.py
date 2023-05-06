@@ -1,4 +1,4 @@
-from ossdbs.electrodes.electrode_models import AbbottStjudeActiveTip6142_6145
+from ossdbs.electrodes.electrode_models import AbbottStJudeActiveTip6142_6145
 from .geometry_converter import GeometryConverter
 import pytest
 import netgen
@@ -11,8 +11,8 @@ class TestAbbottStJudeActiveTip6142_6145():
 
     FILE_PREFIX = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                'test_data',
-                               'AbbottStjude',
-                               'AbbottStjudeActiveTip6142_6145')
+                               'AbbottStJude',
+                               'AbbottStJudeActiveTip6142_6145')
 
     TESTDATA = [
         # electrode_parameters (Rotation, Position, Direction), file_path
@@ -34,7 +34,7 @@ class TestAbbottStJudeActiveTip6142_6145():
     @pytest.mark.parametrize('electrode_parameters, path', TESTDATA)
     def test_geometry(self, electrode_parameters, path) -> None:
         rotation, position, direction = electrode_parameters
-        electrode = AbbottStjudeActiveTip6142_6145(rotation=rotation,
+        electrode = AbbottStJudeActiveTip6142_6145(rotation=rotation,
                                                    direction=direction,
                                                    position=position)
         geometry = electrode.geometry()
@@ -42,13 +42,13 @@ class TestAbbottStJudeActiveTip6142_6145():
         assert desired == GeometryConverter(geometry).to_dictionary()
 
     def test_geometry_default(self):
-        electrode = AbbottStjudeActiveTip6142_6145()
+        electrode = AbbottStJudeActiveTip6142_6145()
         geometry = electrode.geometry()
         desired = self.load_geometry_data(path=self.FILE_PREFIX+'_0.json')
         assert desired == GeometryConverter(geometry).to_dictionary()
 
     def test_rename_boundaries(self):
-        electrode = AbbottStjudeActiveTip6142_6145()
+        electrode = AbbottStJudeActiveTip6142_6145()
         electrode.set_contact_names({'Body': 'RenamedBody',
                                      'Contact_1': 'RenamedContact_1',
                                      'NonExistingPart': 'NonExistingPart'})
@@ -67,8 +67,8 @@ class TestAbbottStJudeActiveTip6142_6145_Capsule():
 
     FILE_PREFIX = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                'test_data',
-                               'AbbottStjude',
-                               'AbbottStjudeActiveTip6142_6145_Capsule')
+                               'AbbottStJude',
+                               'AbbottStJudeActiveTip6142_6145_Capsule')
 
     TESTDATA = [
         # electrode_parameters (Thickness, Position, Direction), file_path
@@ -85,7 +85,7 @@ class TestAbbottStJudeActiveTip6142_6145_Capsule():
     @pytest.mark.parametrize('electrode_parameters, path', TESTDATA)
     def test_capsule_geometry(self, electrode_parameters, path) -> None:
         thickness, position, direction = electrode_parameters
-        electrode = AbbottStjudeActiveTip6142_6145(rotation=0.0,
+        electrode = AbbottStJudeActiveTip6142_6145(rotation=0.0,
                                                    direction=direction,
                                                    position=position)
         geometry = electrode.capsule_geometry(thickness=thickness)

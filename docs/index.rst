@@ -64,6 +64,7 @@ Table of contents
    signals
    volume_conductor_model
    electrodes
+   add_electrode
 
 
 Indices and tables
