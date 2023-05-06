@@ -7,7 +7,7 @@ import numpy as np
 
 
 @dataclass
-class BostonScientificVerciseParamerts():
+class BostonScientificVerciseParameters():
     # dimensions [mm]
     tip_length: float
     contact_length: float
@@ -22,7 +22,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
     Attributes
     ----------
 
-    parameters : BostonScientificVerciseParamerts
+    parameters : BostonScientificVerciseParameters
         Parameters for the Boston Scientific Vercise geometry.
 
     rotation : float
@@ -36,7 +36,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
     """
 
     def __init__(self,
-                 parameters: BostonScientificVerciseParamerts,
+                 parameters: BostonScientificVerciseParameters,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
                  position: tuple = (0, 0, 0)) -> None:
@@ -201,7 +201,7 @@ class BostonScientificVerciseModel(ElectrodeModel):
     """
 
     def __init__(self,
-                 parameters: BostonScientificVerciseParamerts,
+                 parameters: BostonScientificVerciseParameters,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
                  position: tuple = (0, 0, 0)) -> None:

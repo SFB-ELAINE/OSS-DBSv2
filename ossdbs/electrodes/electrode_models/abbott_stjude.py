@@ -1,15 +1,15 @@
-from .abbott_stjude_model import AbbottStjudeParameters
-from .abbott_stjude_model import AbbottStjudeActiveTipModel
-from .abbott_stjude_model import AbbottStjudeDirectedModel
+from .abbott_stjude_model import AbbottStJudeParameters
+from .abbott_stjude_model import AbbottStJudeActiveTipModel
+from .abbott_stjude_model import AbbottStJudeDirectedModel
 
 
-class AbbottStjudeActiveTip6146_6149(AbbottStjudeActiveTipModel):
+class AbbottStJudeActiveTip6146_6149(AbbottStJudeActiveTipModel):
 
     def __init__(self,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
                  position: tuple = (0, 0, 0)) -> None:
-        parameters = AbbottStjudeParameters(tip_length=1.1,
+        parameters = AbbottStJudeParameters(tip_length=1.1,
                                             contact_length=1.5,
                                             contact_spacing=1.5,
                                             lead_diameter=1.3,
@@ -17,13 +17,13 @@ class AbbottStjudeActiveTip6146_6149(AbbottStjudeActiveTipModel):
         super().__init__(parameters, rotation, direction, position)
 
 
-class AbbottStjudeActiveTip6142_6145(AbbottStjudeActiveTipModel):
+class AbbottStJudeActiveTip6142_6145(AbbottStJudeActiveTipModel):
 
     def __init__(self,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
                  position: tuple = (0, 0, 0)) -> None:
-        parameters = AbbottStjudeParameters(tip_length=2.6,
+        parameters = AbbottStJudeParameters(tip_length=2.6,
                                             contact_length=1.5,
                                             contact_spacing=0.5,
                                             lead_diameter=1.3,
@@ -31,13 +31,13 @@ class AbbottStjudeActiveTip6142_6145(AbbottStjudeActiveTipModel):
         super().__init__(parameters, rotation, direction, position)
 
 
-class AbbottStjudeDirected6172(AbbottStjudeDirectedModel):
+class AbbottStJudeDirected6172(AbbottStJudeDirectedModel):
 
     def __init__(self,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
                  position: tuple = (0, 0, 0)) -> None:
-        parameters = AbbottStjudeParameters(tip_length=1.1,
+        parameters = AbbottStJudeParameters(tip_length=1.1,
                                             contact_length=1.5,
                                             contact_spacing=0.5,
                                             lead_diameter=1.3,
@@ -45,13 +45,13 @@ class AbbottStjudeDirected6172(AbbottStjudeDirectedModel):
         super().__init__(parameters, rotation, direction, position)
 
 
-class AbbottStjudeDirected6173(AbbottStjudeDirectedModel):
+class AbbottStJudeDirected6173(AbbottStJudeDirectedModel):
 
     def __init__(self,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
                  position: tuple = (0, 0, 0)) -> None:
-        parameters = AbbottStjudeParameters(tip_length=1.1,
+        parameters = AbbottStJudeParameters(tip_length=1.1,
                                             contact_length=1.5,
                                             contact_spacing=1.5,
                                             lead_diameter=1.3,

@@ -1,8 +1,8 @@
 
 from ossdbs.electrodes.electrode_models import ElectrodeModel
 
-from ossdbs.electrodes.electrode_models import AbbottStjudeActiveTipModel
-from ossdbs.electrodes.electrode_models import AbbottStjudeDirectedModel
+from ossdbs.electrodes.electrode_models import AbbottStJudeActiveTipModel
+from ossdbs.electrodes.electrode_models import AbbottStJudeDirectedModel
 from ossdbs.electrodes.electrode_models import BostonScientificVerciseModel
 from ossdbs.electrodes.electrode_models \
                                     import BostonScientificVerciseDirectedModel
@@ -11,8 +11,8 @@ from ossdbs.electrodes.electrode_models import MicroProbesRodentElectrodeModel
 from ossdbs.electrodes.electrode_models import MicroProbesSNEX100Model
 from ossdbs.electrodes.electrode_models import PINSMedicalModel
 
-from ossdbs.electrodes.electrode_models import AbbottStjudeParameters
-from ossdbs.electrodes.electrode_models import BostonScientificVerciseParamerts
+from ossdbs.electrodes.electrode_models import AbbottStJudeParameters
+from ossdbs.electrodes.electrode_models import BostonScientificVerciseParameters
 from ossdbs.electrodes.electrode_models import MedtronicParameters
 from ossdbs.electrodes.electrode_models \
                                     import MicroProbesRodentElectrodeParameters
@@ -23,28 +23,10 @@ from ossdbs.electrodes.electrode_models import PINSMedicalParameters
 class CustomElectrodeFactory:
     """Creates a list of Electrode objects."""
 
-    ELECTRODE_PARAMETERS = {'AbbottStjudeActiveTip':
-                            AbbottStjudeParameters,
-                            'AbbottStjudeDirected':
-                            AbbottStjudeParameters,
-                            'BostonScientificVercise':
-                            BostonScientificVerciseParamerts,
-                            'BostonScientificVerciseDirected':
-                            BostonScientificVerciseParamerts,
-                            'Medtronic':
-                            MedtronicParameters,
-                            'MicroProbesRodentElectrode':
-                            MicroProbesRodentElectrodeParameters,
-                            'MicroProbesSNEX100':
-                            MicroProbesSNEX100Parameters,
-                            'PINSMedical':
-                            PINSMedicalParameters
-                            }
-
-    ELECTRODES = {'AbbottStjudeActiveTipCustom':
-                  AbbottStjudeActiveTipModel,
-                  'AbbottStjudeDirectedCustom':
-                  AbbottStjudeDirectedModel,
+    ELECTRODES = {'AbbottStJudeActiveTipCustom':
+                  AbbottStJudeActiveTipModel,
+                  'AbbottStJudeDirectedCustom':
+                  AbbottStJudeDirectedModel,
                   'BostonScientificVerciseCustom':
                   BostonScientificVerciseModel,
                   'BostonScientificVerciseDirectedCustom':
@@ -81,9 +63,9 @@ class CustomElectrodeFactory:
 
         electrode_type = cls.ELECTRODES[name]
 
-        if electrode_type in (AbbottStjudeActiveTipModel,
-                              AbbottStjudeDirectedModel):
-            parameters = AbbottStjudeParameters(
+        if electrode_type in (AbbottStJudeActiveTipModel,
+                              AbbottStJudeDirectedModel):
+            parameters = AbbottStJudeParameters(
                                         model_parameters['TipLength[mm]'],
                                         model_parameters['ContactLength[mm]'],
                                         model_parameters['ContactSpacing[mm]'],
@@ -93,7 +75,7 @@ class CustomElectrodeFactory:
 
         elif electrode_type in (BostonScientificVerciseModel,
                                 BostonScientificVerciseDirectedModel):
-            parameters = BostonScientificVerciseParamerts(
+            parameters = BostonScientificVerciseParameters(
                                         model_parameters['TipLength[mm]'],
                                         model_parameters['ContactLength[mm]'],
                                         model_parameters['ContactSpacing[mm]'],

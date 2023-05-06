@@ -1,10 +1,10 @@
 
 
 from ossdbs.electrodes.electrode_models import ElectrodeModel
-from ossdbs.electrodes.electrode_models import AbbottStjudeActiveTip6142_6145
-from ossdbs.electrodes.electrode_models import AbbottStjudeActiveTip6146_6149
-from ossdbs.electrodes.electrode_models import AbbottStjudeDirected6172
-from ossdbs.electrodes.electrode_models import AbbottStjudeDirected6173
+from ossdbs.electrodes.electrode_models import AbbottStJudeActiveTip6142_6145
+from ossdbs.electrodes.electrode_models import AbbottStJudeActiveTip6146_6149
+from ossdbs.electrodes.electrode_models import AbbottStJudeDirected6172
+from ossdbs.electrodes.electrode_models import AbbottStJudeDirected6173
 from ossdbs.electrodes.electrode_models import BostonScientificVercise
 from ossdbs.electrodes.electrode_models import BostonScientificVerciseDirected
 from ossdbs.electrodes.electrode_models import Medtronic3387
@@ -18,16 +18,23 @@ from ossdbs.electrodes.electrode_models import MicroProbesSNEX100
 
 
 class ElectrodeFactory:
-    """Creates a list of Electrode objects."""
+    """Creates an Electrode object.
 
-    ELECTRODES = {'AbbottStjudeActiveTip6142_6145':
-                  AbbottStjudeActiveTip6142_6145,
-                  'AbbottStjudeActiveTip6146_6149':
-                  AbbottStjudeActiveTip6146_6149,
-                  'AbbottStjudeDirected6172':
-                  AbbottStjudeDirected6172,
-                  'AbbottStjudeDirected6173':
-                  AbbottStjudeDirected6173,
+    See also
+    --------
+
+    :class:`ossdbs.electrodes.ElectrodeModel`
+
+    """
+
+    ELECTRODES = {'AbbottStJudeActiveTip6142_6145':
+                  AbbottStJudeActiveTip6142_6145,
+                  'AbbottStJudeActiveTip6146_6149':
+                  AbbottStJudeActiveTip6146_6149,
+                  'AbbottStJudeDirected6172':
+                  AbbottStJudeDirected6172,
+                  'AbbottStJudeDirected6173':
+                  AbbottStJudeDirected6173,
                   'BostonScientificVercise':
                   BostonScientificVercise,
                   'BostonScientificVerciseDirected':
@@ -57,16 +64,19 @@ class ElectrodeFactory:
                position: tuple,
                rotation: float
                ) -> ElectrodeModel:
-        """create a list of Electrode objects.
+        """Creates an Electrode object.
 
         Parameters
         ----------
-        parameters : ElectrodeParameters
+
+        name: str
+            Name of the electrode type
 
         Returns
         -------
-        Electrode
-            Electrode objects.
+
+        :class:`ossdbs.electrodes.ElectrodeModel`
+
         """
 
         electrode_type = cls.ELECTRODES[name]

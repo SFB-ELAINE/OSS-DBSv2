@@ -7,7 +7,7 @@ import numpy as np
 
 
 @dataclass
-class AbbottStjudeParameters():
+class AbbottStJudeParameters():
     # dimensions [mm]
     tip_length: float
     contact_length: float
@@ -16,12 +16,12 @@ class AbbottStjudeParameters():
     total_length: float
 
 
-class AbbottStjudeActiveTipModel(ElectrodeModel):
+class AbbottStJudeActiveTipModel(ElectrodeModel):
     """Abbott/St Jude Active Tip electrode.
 
     Attributes
     ----------
-    parameters : AbbottStjudeParameters
+    parameters : AbbottStJudeParameters
         Parameters for Abbott Stjude Geometry.
 
     rotation : float
@@ -35,7 +35,7 @@ class AbbottStjudeActiveTipModel(ElectrodeModel):
     """
 
     def __init__(self,
-                 parameters: AbbottStjudeParameters,
+                 parameters: AbbottStJudeParameters,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
                  position: tuple = (0, 0, 0)
@@ -144,7 +144,7 @@ class AbbottStjudeActiveTipModel(ElectrodeModel):
         return occ.Glue(contacts)
 
 
-class AbbottStjudeDirectedModel(ElectrodeModel):
+class AbbottStJudeDirectedModel(ElectrodeModel):
     """Abbott/St Jude Directed electrode.
 
     Attributes
@@ -160,7 +160,7 @@ class AbbottStjudeDirectedModel(ElectrodeModel):
     """
 
     def __init__(self,
-                 parameters: AbbottStjudeParameters,
+                 parameters: AbbottStJudeParameters,
                  rotation: float = 0.0,
                  direction: tuple = (0, 0, 1),
                  position: tuple = (0, 0, 0)
