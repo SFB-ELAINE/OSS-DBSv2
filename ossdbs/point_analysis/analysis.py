@@ -1,5 +1,3 @@
-
-
 from ossdbs.nifti1Image import Nifti1Image
 from ossdbs.model_geometry import BrainGeometry
 from ossdbs.materials import Material
@@ -55,10 +53,13 @@ def point_analysis(settings: dict) -> None:
     factory = VolumeConductorFactory(mesh, conductivity, solver)
     volume_conductor = factory.create(settings['Floating'])
     signal = SignalFactory.create(settings['StimulationSignal'])
+
     contacts = electrodes.contacts()
     contacts.append(CaseGroundContactFactory.create(settings['CaseGrounding']))
+
+    # From here on different from impedance analysis
     spectrum_mode = SpectrumFactory.create(settings['SpectrumMode'],
-                                           settings['CurrentControled'],
+                                           settings['CurrentControlled'],
                                            len(contacts.active()))
 
     point_model = PointModelFactory().create(settings['PointModel'])

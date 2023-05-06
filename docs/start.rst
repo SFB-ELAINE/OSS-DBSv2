@@ -19,7 +19,7 @@ An standard input file without imaging data will have the following structure:
     "Current[A]": 0.0,
     "Voltage[V]": 0.0
   },
-  "CurrentControled": false,
+  "CurrentControlled": false,
   "DielectricModel": {"Type": "",
                       "PathToCustomParameters": ""
                     },
