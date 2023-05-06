@@ -8,7 +8,7 @@ class Settings:
                     'Current[A]': 0.0,
                     'Voltage[V]': 0.0
                     },
-                'CurrentControled': False,
+                'CurrentControlled': False,
                 'DielectricModel': {
                     'Type': 'ColeCole4',
                     'PathToCustomParameters': ''

@@ -8,7 +8,7 @@ class TypeChecker:
                  'Current[A]': (int, float),
                  'Voltage[V]': (int, float)
                  },
-             'CurrentControled': bool,
+             'CurrentControlled': bool,
              'DielectricModel': {
                  'Type': str,
                  'PathToCustomParameters': str

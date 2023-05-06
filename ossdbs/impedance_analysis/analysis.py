@@ -26,23 +26,21 @@ def impedance_analysis(settings: dict) -> None:
     TypeChecker.check(settings)
 
     nifti_image = Nifti1Image(settings['MaterialDistribution']['MRIPath'])
-    # TODO set MRI bounding box as default choice
-    region_parameters = settings['BrainRegion']
-    region_of_interest = BrainRegionFactory.create(region_parameters)
-    dielectric_parameters = settings['DielectricModel']
-    dielectric_model = DielectricModelFactory().create(dielectric_parameters)
     electrodes = ElectrodesFactory.create(settings['Electrodes'],
                                           settings['EncapsulatingLayer'])
+    # TODO set MRI bounding box as default choice
+    region_parameters = settings['BrainRegion']
+    brain_region = BrainRegionFactory.create(region_parameters)
+    dielectric_parameters = settings['DielectricModel']
+    dielectric_model = DielectricModelFactory().create(dielectric_parameters)
     encapsulation_material = settings['EncapsulatingLayer']['Material']
     conductivity = ConductivityFactory(nifti_image,
-                                       region_of_interest,
+                                       brain_region,
                                        dielectric_model,
                                        electrodes,
                                        encapsulation_material).create()
 
-    max_h = settings['Contacts']['MaxMeshSizeHeight']
-    electrodes.set_max_h(max_h=max_h if max_h else 0.1)
-    geometry = BrainGeometry(region_of_interest, electrodes)
+    geometry = BrainGeometry(brain_region, electrodes)
     mesh = MeshFactory(geometry).create(settings['Mesh'])
     mesh.datatype_complex(settings['EQSMode'])
 
@@ -54,7 +52,9 @@ def impedance_analysis(settings: dict) -> None:
     contacts = electrodes.contacts()
     contacts.append(CaseGroundContactFactory.create(settings['CaseGrounding']))
 
+    # From here on different from point analysis
     spectrum_mode = SpectrumFactory.create(settings['SpectrumMode'])
+
     impedances = spectrum_mode.compute(signal, volume_conductor, contacts)
 
     output = OutputDirectory(directory=settings['OutputPath'])

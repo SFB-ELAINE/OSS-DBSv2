@@ -4,7 +4,7 @@
     "Current[A]": 0.0,
     "Voltage[V]": 0.0
   },
-  "CurrentControled": false,
+  "CurrentControlled": false,
   "DielectricModel": {"Type": "ColeCole4",
                       "PathToCustomParameters": ""
   },
