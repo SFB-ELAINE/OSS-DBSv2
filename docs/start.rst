@@ -46,11 +46,11 @@ An standard input file without imaging data will have the following structure:
       ]
     }
   ],
-  "Contacts":{"MaxMeshSizeHeight": 0.1},
-  "EncapsulatingLayer": {
+  "Contacts":{"MaxMeshSize": 0.1},
+  "EncapsulationLayer": {
     "Thickness[mm]": 0.0,
     "Material": "",
-    "MaxMeshSizeHeight": 0.0
+    "MaxMeshSize": 0.0
   },
   "EQSMode": false,
   "Floating": {
@@ -68,7 +68,7 @@ An standard input file without imaging data will have the following structure:
     "MeshElementOrder": 0,
     "MeshingHypothesis": {
       "Type": "Default",
-      "MaxMeshSizeHeight": 0.0
+      "MaxMeshSize": 0.0
     },
     "SaveMesh": false
   },

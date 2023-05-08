@@ -23,6 +23,6 @@ The electrode is described together with the models
 Code
 ------
 
-.. autoclass:: ossdbs.electrodes.electrode_models.abbott_stjude.AbbottStJudeActiveTip6146_6149
+.. autoclass:: ossdbs.electrodes.abbott_stjude.AbbottStJudeActiveTip6146_6149
     :members:
     :show-inheritance:

@@ -1,11 +1,10 @@
-
 from dataclasses import dataclass
 from typing import List
 
 
 @dataclass
 class Contact:
-    name: str = ''
+    name: str
     active: bool = False
     current: float = 0.0
     floating: bool = False
@@ -19,6 +18,8 @@ class Contacts:
         self.__active = [contact for contact in contacts if contact.active]
         self.__floating = [contact for contact in contacts
                            if contact.floating and not contact.active]
+        self.__unused = [contact for contact in contacts
+                         if not contact.floating and not contact.active]
 
     def append(self, contact: Contact) -> None:
         if contact.active:
@@ -41,8 +42,9 @@ class Contacts:
             if contact.name is contact_id:
                 contact.voltage = value
 
+    @property
     def active(self) -> List[Contact]:
-        """Returns a collection of all active contacts.
+        """List of all active contacts.
 
         Returns
         -------
@@ -50,14 +52,25 @@ class Contacts:
         """
         return self.__active
 
+    @property
     def floating(self) -> List[Contact]:
-        """Returns a collection of all floating contacts.
+        """List of all floating contacts.
 
         Returns
         -------
         list of Contacts
         """
         return self.__floating
+
+    @property
+    def unused(self) -> List[Contact]:
+        """List of all unused (i.e. not active and not floating) contacts.
+
+        Returns
+        -------
+        list of Contacts
+        """
+        return self.__unused
 
     def current_values(self) -> dict:
         """Returns the current values of each active contact.

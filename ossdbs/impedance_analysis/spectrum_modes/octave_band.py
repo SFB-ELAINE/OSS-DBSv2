@@ -73,7 +73,7 @@ class OctaveBand(SpectrumMode):
         solution = volume_conductor.compute_solution(frequency, contacts)
         field = ngsolve.grad(solution.potential)
         curr_dens_conj = ngsolve.Conj(solution.current_density)
-        mesh = volume_conductor.mesh.ngsolvemesh()
+        mesh = volume_conductor.mesh.ngsolvemesh
         power = ngsolve.Integrate(field * curr_dens_conj, mesh)
         voltage = 1
         return voltage / power if power else 0
