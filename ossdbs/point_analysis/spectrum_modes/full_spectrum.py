@@ -22,7 +22,7 @@ class FullSpectrum(SpectrumMode):
         complex_values = signal.fft_analysis()
         frequencies = signal.fft_frequncies()
 
-        ng_mesh = volume_conductor.mesh.ngsolvemesh()
+        ng_mesh = volume_conductor.mesh.ngsolvemesh
         included_index = volume_conductor.mesh.is_included(points)
         mips = [ng_mesh(*point) for point in points[included_index]]
 

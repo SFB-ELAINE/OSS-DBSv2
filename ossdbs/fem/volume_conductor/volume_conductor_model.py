@@ -2,8 +2,10 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import ngsolve
-
-from ossdbs.electrodes.contacts import Contacts
+from ossdbs.conductivity import Conductivity
+from ossdbs.fem.mesh import Mesh
+from ossdbs.fem.solver import Solver
+from ossdbs.model_geometry import ModelGeometry
 
 
 @dataclass
@@ -16,9 +18,29 @@ class Solution:
 
 
 class VolumeConductor(ABC):
+    """Template class of a volume conductor
+
+    Parameters
+    ----------
+    mesh : Mesh
+    conductivity : Conductivity
+    model_geometry : ModelGeometry
+    solver : Solver
+
+    # TODO add more abstractmethod ?
+    """
+
+    def __init__(self,
+                 mesh: Mesh,
+                 conductivity: Conductivity,
+                 solver: Solver,
+                 model_geometry: ModelGeometry) -> None:
+        self.conductivity = conductivity
+        self.mesh = mesh
+        self.solver = solver
+        self.model_geometry = model_geometry
 
     @abstractmethod
     def compute_solution(self,
-                         frequency: float,
-                         contacts: Contacts) -> Solution:
+                         frequency: float) -> Solution:
         pass

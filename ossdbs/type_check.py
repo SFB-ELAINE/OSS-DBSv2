@@ -15,12 +15,12 @@ class TypeChecker:
                  },
              'Electrodes': list,
              'Contacts': {
-                 'MaxMeshSizeHeight': float
+                 'MaxMeshSize': float
                  },
-             'EncapsulatingLayer': {
+             'EncapsulationLayer': {
                  'Thickness[mm]': (int, float),
                  'Material': str,
-                 'MaxMeshSizeHeight': (int, float)
+                 'MaxMeshSize': (int, float)
                  },
              'EQSMode': bool,
              'Floating': {
@@ -38,7 +38,7 @@ class TypeChecker:
                  'MeshElementOrder': int,
                  'MeshingHypothesis': {
                      'Type': str,
-                     'MaxMeshSizeHeight': (int, float)
+                     'MaxMeshSize': (int, float)
                      },
                  'SaveMesh': bool
              },
@@ -49,7 +49,8 @@ class TypeChecker:
                             'z[mm]': (int, float)},
                  'Dimension': {'x[mm]': (int, float),
                                'y[mm]': (int, float),
-                               'z[mm]': (int, float)}
+                               'z[mm]': (int, float)},
+                 'Shape': str
                  },
              'RegionOfInterest': {
                  'Center': {'x[mm]': (int, float),

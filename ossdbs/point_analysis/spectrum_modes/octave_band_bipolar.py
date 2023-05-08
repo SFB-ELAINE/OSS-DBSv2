@@ -44,7 +44,7 @@ class OctaveBandBipolar(SpectrumMode):
         octave_frequencies = signal.frequency * octave_indices
         octave_bands = [self.OctaveBand(freq) for freq in octave_frequencies]
 
-        ng_mesh = volume_conductor.mesh.ngsolvemesh()
+        ng_mesh = volume_conductor.mesh.ngsolvemesh
         included_index = volume_conductor.mesh.is_included(points)
         mips = [ng_mesh(*point) for point in points[included_index]]
 
@@ -90,7 +90,7 @@ class OctaveBandBipolar(SpectrumMode):
 
             field = ngsolve.grad(solution.potential)
             curr_dens_conj = ngsolve.Conj(solution.current_density)
-            mesh = volume_conductor.mesh.ngsolvemesh()
+            mesh = volume_conductor.mesh.ngsolvemesh
             power = ngsolve.Integrate(field * curr_dens_conj, mesh)
             voltage = 1
             impedance = voltage / power if power else 0

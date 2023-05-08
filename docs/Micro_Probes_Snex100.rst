@@ -20,6 +20,6 @@ This model were designed to replicated the peter-rhodes-produced SNEX-100 concen
 Code
 ------
 
-.. autoclass:: ossdbs.electrodes.electrode_models.micro_probes.MicroProbesSNEX100
+.. autoclass:: ossdbs.electrodes.micro_probes.MicroProbesSNEX100
     :members:
     :show-inheritance:

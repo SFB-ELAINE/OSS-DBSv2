@@ -38,7 +38,7 @@ class OctaveBand(SpectrumMode):
         octave_frequencies = signal.frequency * octave_indices
         octave_bands = [self.OctaveBand(freq) for freq in octave_frequencies]
 
-        ng_mesh = volume_conductor.mesh.ngsolvemesh()
+        ng_mesh = volume_conductor.mesh.ngsolvemesh
         included_index = volume_conductor.mesh.is_included(points)
         mips = [ng_mesh(*point) for point in points[included_index]]
 

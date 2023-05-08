@@ -1,27 +1,22 @@
-
-from ossdbs.electrodes.electrode_models import ElectrodeModel
-
-from ossdbs.electrodes.electrode_models import AbbottStJudeActiveTipModel
-from ossdbs.electrodes.electrode_models import AbbottStJudeDirectedModel
-from ossdbs.electrodes.electrode_models import BostonScientificVerciseModel
-from ossdbs.electrodes.electrode_models \
-                                    import BostonScientificVerciseDirectedModel
-from ossdbs.electrodes.electrode_models import MedtronicModel
-from ossdbs.electrodes.electrode_models import MicroProbesRodentElectrodeModel
-from ossdbs.electrodes.electrode_models import MicroProbesSNEX100Model
-from ossdbs.electrodes.electrode_models import PINSMedicalModel
-
-from ossdbs.electrodes.electrode_models import AbbottStJudeParameters
-from ossdbs.electrodes.electrode_models import BostonScientificVerciseParameters
-from ossdbs.electrodes.electrode_models import MedtronicParameters
-from ossdbs.electrodes.electrode_models \
-                                    import MicroProbesRodentElectrodeParameters
-from ossdbs.electrodes.electrode_models import MicroProbesSNEX100Parameters
-from ossdbs.electrodes.electrode_models import PINSMedicalParameters
+from ossdbs.electrodes import (ElectrodeModel,
+                               AbbottStJudeActiveTipModel,
+                               AbbottStJudeDirectedModel,
+                               BostonScientificVerciseModel,
+                               BostonScientificVerciseDirectedModel,
+                               MedtronicModel,
+                               MicroProbesRodentElectrodeModel,
+                               MicroProbesSNEX100Model,
+                               PINSMedicalModel,
+                               AbbottStJudeParameters,
+                               BostonScientificVerciseParameters,
+                               MedtronicParameters,
+                               MicroProbesRodentElectrodeParameters,
+                               MicroProbesSNEX100Parameters,
+                               PINSMedicalParameters)
 
 
 class CustomElectrodeFactory:
-    """Creates a list of Electrode objects."""
+    """Create an Electrode object using custom parameters."""
 
     ELECTRODES = {'AbbottStJudeActiveTipCustom':
                   AbbottStJudeActiveTipModel,
@@ -44,7 +39,7 @@ class CustomElectrodeFactory:
     @classmethod
     def create(cls,
                name: str,
-               model_parameters: dict,
+               parameters: dict,
                direction: tuple,
                position: tuple,
                rotation: float
@@ -65,61 +60,61 @@ class CustomElectrodeFactory:
 
         if electrode_type in (AbbottStJudeActiveTipModel,
                               AbbottStJudeDirectedModel):
-            parameters = AbbottStJudeParameters(
-                                        model_parameters['TipLength[mm]'],
-                                        model_parameters['ContactLength[mm]'],
-                                        model_parameters['ContactSpacing[mm]'],
-                                        model_parameters['LeadDiameter[mm]'],
-                                        model_parameters['TotalLength[mm]']
-                                        )
+            parameters = \
+                AbbottStJudeParameters(parameters['TipLength[mm]'],
+                                       parameters['ContactLength[mm]'],
+                                       parameters['ContactSpacing[mm]'],
+                                       parameters['LeadDiameter[mm]'],
+                                       parameters['TotalLength[mm]']
+                                       )
 
         elif electrode_type in (BostonScientificVerciseModel,
                                 BostonScientificVerciseDirectedModel):
-            parameters = BostonScientificVerciseParameters(
-                                        model_parameters['TipLength[mm]'],
-                                        model_parameters['ContactLength[mm]'],
-                                        model_parameters['ContactSpacing[mm]'],
-                                        model_parameters['LeadDiameter[mm]'],
-                                        model_parameters['TotalLength[mm]']
-                                        )
+            parameters = \
+                BostonScientificVerciseParameters(parameters['TipLength[mm]'],
+                                                  parameters['ContactLength[mm]'],
+                                                  parameters['ContactSpacing[mm]'],
+                                                  parameters['LeadDiameter[mm]'],
+                                                  parameters['TotalLength[mm]']
+                                                  )
 
         elif electrode_type == MedtronicModel:
-            parameters = MedtronicParameters(
-                                        model_parameters['TipLength[mm]'],
-                                        model_parameters['ContactLength[mm]'],
-                                        model_parameters['ContactSpacing[mm]'],
-                                        model_parameters['LeadDiameter[mm]'],
-                                        model_parameters['TotalLength[mm]']
-                                        )
+            parameters = \
+                MedtronicParameters(parameters['TipLength[mm]'],
+                                    parameters['ContactLength[mm]'],
+                                    parameters['ContactSpacing[mm]'],
+                                    parameters['LeadDiameter[mm]'],
+                                    parameters['TotalLength[mm]']
+                                    )
 
         elif electrode_type == PINSMedicalModel:
-            parameters = PINSMedicalParameters(
-                                        model_parameters['TipLength[mm]'],
-                                        model_parameters['ContactLength[mm]'],
-                                        model_parameters['ContactSpacing[mm]'],
-                                        model_parameters['LeadDiameter[mm]'],
-                                        model_parameters['TotalLength[mm]']
-                                        )
+            parameters = \
+                PINSMedicalParameters(parameters['TipLength[mm]'],
+                                      parameters['ContactLength[mm]'],
+                                      parameters['ContactSpacing[mm]'],
+                                      parameters['LeadDiameter[mm]'],
+                                      parameters['TotalLength[mm]']
+                                      )
 
         elif electrode_type == MicroProbesRodentElectrodeModel:
-            parameters = MicroProbesRodentElectrodeParameters(
-                                        model_parameters['TubeThickness[mm]'],
-                                        model_parameters['ContactLength[mm]'],
-                                        model_parameters['LeadDiameter[mm]'],
-                                        model_parameters['TotalLength[mm]']
-                                        )
+            parameters = \
+                MicroProbesRodentElectrodeParameters(parameters['TubeThickness[mm]'],
+                                                     parameters['ContactLength[mm]'],
+                                                     parameters['LeadDiameter[mm]'],
+                                                     parameters['TotalLength[mm]']
+                                                     )
 
         elif electrode_type == MicroProbesSNEX100Model:
-            parameters = MicroProbesSNEX100Parameters(
-                                model_parameters['CoreElectrodeDiameter[mm]'],
-                                model_parameters['CoreTubingDiameter[mm]'],
-                                model_parameters['CoreTubingLength[mm]'],
-                                model_parameters['CoreTubingDiameter[mm]'],
-                                model_parameters['OuterElectrodeLength[mm]'],
-                                model_parameters['OuterElectrodeDiameter[mm]'],
-                                model_parameters['OuterTubingDiameter[mm]'],
-                                model_parameters['TotalLength[mm]']
-                                )
+            parameters = \
+                MicroProbesSNEX100Parameters(parameters['CoreElectrodeDiameter[mm]'],
+                                             parameters['CoreTubingDiameter[mm]'],
+                                             parameters['CoreTubingLength[mm]'],
+                                             parameters['CoreTubingDiameter[mm]'],
+                                             parameters['OuterElectrodeLength[mm]'],
+                                             parameters['OuterElectrodeDiameter[mm]'],
+                                             parameters['OuterTubingDiameter[mm]'],
+                                             parameters['TotalLength[mm]']
+                                             )
         else:
             raise NotImplementedError("Electrode model not implemented.")
 

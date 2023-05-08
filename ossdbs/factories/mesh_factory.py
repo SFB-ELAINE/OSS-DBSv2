@@ -1,12 +1,12 @@
 import netgen
 import ngsolve
-from ossdbs.model_geometry import BrainGeometry
+from ossdbs.model_geometry import ModelGeometry
 from ossdbs.fem import Mesh
 
 
 class MeshFactory:
 
-    def __init__(self, geometry: BrainGeometry) -> None:
+    def __init__(self, geometry: ModelGeometry) -> None:
         self.__geometry = geometry
 
     def create(self, mesh_parameters: dict) -> Mesh:
@@ -24,15 +24,16 @@ class MeshFactory:
         return Mesh(ngsolve_mesh, mesh_parameters["MeshElementOrder"])
 
     def __load_mesh(self, mesh_parameters: dict) -> Mesh:
-        netgen_geometry = self.__geometry.geometry()
+        netgen_geometry = self.__geometry.geometry
         file_path = mesh_parameters['LoadPath']
         ngsolve_mesh = ngsolve.Mesh(filename=file_path)
         ngsolve_mesh.ngmesh.SetGeometry(netgen_geometry)
         return Mesh(ngsolve_mesh, mesh_parameters["MeshElementOrder"])
 
     def __meshing_parameters(self, mesh_parameters: dict):
+        # TODO refactor
         mesh_type = mesh_parameters['MeshingHypothesis']['Type']
-        max_h = mesh_parameters['MeshingHypothesis']['MaxMeshSizeHeight']
+        max_h = mesh_parameters['MeshingHypothesis']['MaxMeshSize']
         return {'Coarse': netgen.meshing.meshsize.coarse,
                 'Fine': netgen.meshing.meshsize.fine,
                 'Moderate': netgen.meshing.meshsize.moderate,

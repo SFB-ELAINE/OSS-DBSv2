@@ -1,10 +1,8 @@
-
 from .brainregion_factory import BrainRegionFactory
 from .conductivity_factory import ConductivityFactory
-from .contacts_factory import CaseGroundContactFactory
 from .dielectricmodel_factory import DielectricModelFactory
-from .electrodes_factory import ElectrodeFactory
-from .electrodes_factory import ElectrodesFactory
+from .electrode_factory import ElectrodeFactory
+from .custom_electrode_factory import CustomElectrodeFactory
 from .mesh_factory import MeshFactory
 from .signal_factory import SignalFactory
 from .solver_factory import SolverFactory
@@ -15,7 +13,7 @@ __all__ = ('BrainRegionFactory',
            'CaseGroundContactFactory',
            'DielectricModelFactory',
            'ElectrodeFactory',
-           'ElectrodesFactory',
+           'CustomElectrodeFactory',
            'MeshFactory',
            'SignalFactory',
            'SolverFactory',

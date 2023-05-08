@@ -1,4 +1,4 @@
-from ossdbs.model_geometry import BrainGeometry
+from ossdbs.model_geometry import ModelGeometry
 from ossdbs.nifti1Image import Nifti1Image
 from ossdbs.output_directory import OutputDirectory
 from ossdbs.factories import BrainRegionFactory
@@ -27,20 +27,20 @@ def impedance_analysis(settings: dict) -> None:
 
     nifti_image = Nifti1Image(settings['MaterialDistribution']['MRIPath'])
     electrodes = ElectrodesFactory.create(settings['Electrodes'],
-                                          settings['EncapsulatingLayer'])
+                                          settings['EncapsulationLayer'])
     # TODO set MRI bounding box as default choice
     region_parameters = settings['BrainRegion']
     brain_region = BrainRegionFactory.create(region_parameters)
     dielectric_parameters = settings['DielectricModel']
     dielectric_model = DielectricModelFactory().create(dielectric_parameters)
-    encapsulation_material = settings['EncapsulatingLayer']['Material']
+    encapsulation_material = settings['EncapsulationLayer']['Material']
     conductivity = ConductivityFactory(nifti_image,
                                        brain_region,
                                        dielectric_model,
                                        electrodes,
                                        encapsulation_material).create()
 
-    geometry = BrainGeometry(brain_region, electrodes)
+    geometry = ModelGeometry(brain_region, electrodes)
     mesh = MeshFactory(geometry).create(settings['Mesh'])
     mesh.datatype_complex(settings['EQSMode'])
 
