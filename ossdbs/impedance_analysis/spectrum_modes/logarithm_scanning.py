@@ -17,7 +17,7 @@ class LogarithmScanning(SpectrumMode):
                 contacts: Contacts
                 ) -> Impedances:
         frequencies = self.__frequencies(signal)
-        mesh = volume_conductor.mesh.ngsolvemesh()
+        mesh = volume_conductor.mesh.ngsolvemesh
         settings = self.__contact_settings(contacts)
         impedances = np.zeros((len(frequencies), len(settings)), dtype=complex)
 
