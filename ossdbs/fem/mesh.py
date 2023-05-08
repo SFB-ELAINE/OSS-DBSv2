@@ -27,7 +27,7 @@ class Mesh:
         self.__order = order
         self.__complex = complex_datatype
 
-    def boundary_coefficients(self, boundaries) \
+    def boundary_coefficients(self, boundaries: dict) \
             -> ngsolve.fem.CoefficientFunction:
         """Return a boundary coefficient function.
 
@@ -38,6 +38,18 @@ class Mesh:
 
         return self.__mesh.BoundaryCF(values=boundaries)
 
+    def material_coefficients(self, materials: dict) \
+            -> ngsolve.fem.CoefficientFunction:
+        """Return a boundary coefficient function.
+
+        Returns
+        -------
+        ngsolve.fem.CoefficientFunction
+        """
+
+        return self.__mesh.MaterialCF(values=materials)
+
+    @property
     def is_complex(self) -> bool:
         """Return the state of the data type for spaces. True if complex,
         False otherwise.
@@ -60,6 +72,7 @@ class Mesh:
                             order=self.__order - 1,
                             complex=self.__complex)
 
+    @property
     def ngsolvemesh(self) -> ngsolve.comp.Mesh:
         """Return mesh as a ngsolve object.
 

@@ -3,7 +3,6 @@
 from ossdbs.dielectric_model import DielectricModel
 from ossdbs.bounding_box import BoundingBox
 from ossdbs.nifti1Image import Nifti1Image
-from ossdbs.electrodes import Electrodes
 from ossdbs.materials import Material
 from ossdbs.conductivity import Conductivity
 import numpy as np
@@ -26,15 +25,11 @@ class ConductivityFactory:
     def __init__(self,
                  nifti: Nifti1Image,
                  bounding_box: BoundingBox,
-                 dielectrc_model: DielectricModel,
-                 electrodes: Electrodes,
-                 encap_material: str = 'GrayMatter',
+                 dielectric_model: DielectricModel,
                  ) -> None:
         self.__nifti = nifti
         self.__bbox = bounding_box
-        self.__electrodes = electrodes
-        self.__encap_material = self.__MATERIALS[encap_material]
-        self.__dielectric_model = dielectrc_model
+        self.__dielectric_model = dielectric_model
 
     def create(self) -> Conductivity:
         """Return the conductivity.
@@ -65,25 +60,10 @@ class ConductivityFactory:
 
         return Conductivity(data, bounding_box, self.__dielectric_model)
 
-    def __set_encapapsulation(self, data: np.ndarray, offset: tuple) -> None:
+    def __set_encapsulation(self) -> None:
         """
-        TODO
+        TODO: set dielectric properties of encapsulation layer
         """
-
-        encapsulation = self.__electrodes.encapsulation()
-        voxel_size = self.__nifti.voxel_size()
-        bounding_boxes = [bbox.intersection(self.__bbox)
-                          for bbox in encapsulation.bounding_boxes()]
-        points = np.concatenate([bbox.points(offset, voxel_size)
-                                 for bbox in bounding_boxes])
-
-        included = encapsulation.is_included(points=points)
-        encap_points = points[included]
-        point_indices = (encap_points - offset) / self.__nifti.voxel_size()
-
-        for index in point_indices:
-            x, y, z = index.astype(int)
-            data[x, y, z] = self.__encap_material
 
     def __check_mri_data_shape(self):
         if not self.__nifti.data_map().ndim == 3:

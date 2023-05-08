@@ -37,12 +37,12 @@ setting = {
                         }
                     ],
             'Contacts': {
-                'MaxMeshSizeHeight': 0.1
+                'MaxMeshSize': 0.1
                 },
-            'EncapsulatingLayer': {
+            'EncapsulationLayer': {
                 'Thickness[mm]': 0.0,
                 'Material': 'Blood',
-                'MaxMeshSizeHeight': 0.5
+                'MaxMeshSize': 0.5
                 },
             'EQSMode': False,
             'Floating': {
@@ -60,7 +60,7 @@ setting = {
                 'MeshElementOrder': 2,
                 'MeshingHypothesis': {
                     'Type': 'Default',
-                    'MaxMeshSizeHeight': 0.0
+                    'MaxMeshSize': 0.0
                     },
                 'SaveMesh': False
             },

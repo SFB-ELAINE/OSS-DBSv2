@@ -15,12 +15,12 @@ class Settings:
                     },
                 'Electrodes': [],
                 'Contacts': {
-                    'MaxMeshSizeHeight': 0.1
+                    'MaxMeshSize': 0.1
                     },
-                'EncapsulatingLayer': {
+                'EncapsulationLayer': {
                     'Thickness[mm]': 0.0,
                     'Material': 'Blood',
-                    'MaxMeshSizeHeight': 0.5
+                    'MaxMeshSize': 0.5
                     },
                 'EQSMode': False,
                 'Floating': {
@@ -38,14 +38,15 @@ class Settings:
                     'MeshElementOrder': 2,
                     'MeshingHypothesis': {
                         'Type': 'Default',
-                        'MaxMeshSizeHeight': 0.0
+                        'MaxMeshSize': 0.0
                         },
                     'SaveMesh': False
                 },
                 'OutputPath': 'result',
                 'BrainRegion': {
                     'Center': {'x[mm]': 0, 'y[mm]': 0, 'z[mm]': 0},
-                    'Dimension': {'x[mm]': 0, 'y[mm]': 0, 'z[mm]': 8}
+                    'Dimension': {'x[mm]': 0, 'y[mm]': 0, 'z[mm]': 8},
+                    'Shape': "Ellipsoid"
                     },
 
                 'RegionOfInterest': {

@@ -57,7 +57,7 @@ class VoltageSetterCurrentControlled(VoltageSetter):
                    ) -> List[float]:
         solution = volume_conductor.compute_solution(frequency, contacts)
         density = ngsolve.BoundaryFromVolumeCF(solution.current_density)
-        ng_mesh = volume_conductor.mesh.ngsolvemesh()
+        ng_mesh = volume_conductor.mesh.ngsolvemesh
         return [cls.__contact_current(ng_mesh, density, contact)
                 for contact in contacts.active()]
 

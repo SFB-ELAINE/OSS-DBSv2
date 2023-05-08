@@ -1,5 +1,5 @@
 from ossdbs.nifti1Image import Nifti1Image
-from ossdbs.model_geometry import BrainGeometry
+from ossdbs.model_geometry import ModelGeometry
 from ossdbs.materials import Material
 from ossdbs.output_directory import OutputDirectory
 from ossdbs.settings import Settings
@@ -32,20 +32,20 @@ def point_analysis(settings: dict) -> None:
 
     nifti_image = Nifti1Image(settings['MaterialDistribution']['MRIPath'])
     electrodes = ElectrodesFactory.create(settings['Electrodes'],
-                                          settings['EncapsulatingLayer'])
+                                          settings['EncapsulationLayer'])
     # TODO set MRI image as default choice
     region_parameters = settings['BrainRegion']
     brain_region = BrainRegionFactory.create(region_parameters)
     dielectric_parameters = settings['DielectricModel']
     dielectric_model = DielectricModelFactory().create(dielectric_parameters)
-    encapsulation_material = settings['EncapsulatingLayer']['Material']
+    encapsulation_material = settings['EncapsulationLayer']['Material']
     conductivity = ConductivityFactory(nifti_image,
                                        brain_region,
                                        dielectric_model,
                                        electrodes,
                                        encapsulation_material).create()
 
-    geometry = BrainGeometry(brain_region, electrodes)
+    geometry = ModelGeometry(brain_region, electrodes)
     mesh = MeshFactory(geometry).create(settings['Mesh'])
     mesh.datatype_complex(settings['EQSMode'])
 
@@ -100,9 +100,9 @@ def create_point_model(settings, mesh):
     points = point_model.coordinates()
 
     electrodes = ElectrodesFactory.create(settings['Electrodes'])
-    capsule_d = settings['EncapsulatingLayer']['Thickness[mm]']
+    capsule_d = settings['EncapsulationLayer']['Thickness[mm]']
     capsule = electrodes.encapsulation(capsule_d)
-    max_h = settings['EncapsulatingLayer']['MaxMeshSizeHeight']
+    max_h = settings['EncapsulationLayer']['MaxMeshSizeHeight']
     capsule.set_max_h(max_h=max_h if max_h else 0.1)
 
     location = define_locations(electrodes, capsule, mesh, points, material_distribution)

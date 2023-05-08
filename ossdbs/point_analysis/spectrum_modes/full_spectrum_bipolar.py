@@ -27,7 +27,7 @@ class FullSpectrumBipolar(SpectrumMode):
                                   for contact in contacts.active()])
         current_set = contacts.active()[source_index].current
 
-        ng_mesh = volume_conductor.mesh.ngsolvemesh()
+        ng_mesh = volume_conductor.mesh.ngsolvemesh
         included_index = volume_conductor.mesh.is_included(points)
         mips = [ng_mesh(*point) for point in points[included_index]]
 
@@ -54,7 +54,7 @@ class FullSpectrumBipolar(SpectrumMode):
 
             field = ngsolve.grad(solution.potential)
             curr_dens_conj = ngsolve.Conj(solution.current_density)
-            mesh = volume_conductor.mesh.ngsolvemesh()
+            mesh = volume_conductor.mesh.ngsolvemesh
             power = ngsolve.Integrate(field * curr_dens_conj, mesh)
             voltage = 1
             impedance = voltage / power if power else 0

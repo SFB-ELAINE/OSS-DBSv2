@@ -12,6 +12,6 @@ This model pictures the estimated lengths used for the model.
 --------
 Code
 --------
-.. autoclass:: ossdbs.electrodes.electrode_models.pins_medical.PINSMedicalL303
+.. autoclass:: ossdbs.electrodes.pins_medical.PINSMedicalL303
     :members:
     :show-inheritance:
