@@ -5,8 +5,7 @@
     "Voltage[V]": 0.0
   },
   "CurrentControlled": false,
-  "DielectricModel": {"Type": "ColeCole4",
-                      "PathToCustomParameters": ""
+  "DielectricModel": {"Type": "ColeCole4"
   },
   "Electrodes": [
     {
@@ -22,7 +21,7 @@
           "Current[A]": 0.0,
           "Voltage[V]": 0.0,
           "Floating": false,
-          "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+          "SurfaceImpedance[Ohmm]": { "real": 0.0, "imag": 0.0 }
         },
         {
           "Contact_ID": 2,
@@ -30,17 +29,15 @@
           "Current[A]": 0.0,
           "Voltage[V]": 0.1,
           "Floating": false,
-          "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+          "SurfaceImpedance[Ohmm]": { "real": 0.0, "imag": 0.0 }
         }
-      ]
+      ],
+     "EncapsulationLayer": {
+     	"Thickness[mm]": 0.0
+ 	}
     }
   ],
   "Contacts":{"MaxMeshSizeHeight": 0.1},
-  "EncapsulatingLayer": {
-    "Thickness[mm]": 0.0,
-    "Material": "GrayMatter",
-    "MaxMeshSizeHeight": 0.1
-  },
   "EQSMode": true,
   "Floating": {
     "Active": false,
@@ -49,7 +46,7 @@
   "MaterialDistribution": {
     "DiffusionTensorActive": false,
     "DTIPath": "",
-    "MRIPath": "homogeneous.nii"
+    "MRIPath": "segmask.nii.gz"
   },
   "Mesh": {
     "LoadMesh": false,
@@ -77,10 +74,10 @@
   "StimulationSignal": {
     "Type": "Rectangle",
     "Frequency[Hz]": 130.0,
-    "PulseWidth[µs]": 60.0,
-    "PulseTopWidth[µs]": 0.0,
-    "CounterPulseWidth[µs]": 0.0,
-    "InterPulseWidth[µs]": 0.0
+    "PulseWidth[us]": 60.0,
+    "PulseTopWidth[us]": 0.0,
+    "CounterPulseWidth[us]": 0.0,
+    "InterPulseWidth[us]": 0.0
   },
   "PointModel":{
     "Pathway": {
@@ -95,4 +92,3 @@
     }
   }
 }
-

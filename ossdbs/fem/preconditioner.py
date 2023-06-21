@@ -11,9 +11,9 @@ class Preconditioner(ABC):
 
 class BDDCPreconditioner(Preconditioner):
 
-    def __init__(self) -> None:
+    def __init__(self, coarsetype: str = "h1amg") -> None:
         self.type = 'bddc'
-        self.coarsetype = 'local'
+        self.coarsetype = coarsetype
 
     def to_dictionary(self) -> dict:
         return {'type': self.type, 'coarsetype': self.coarsetype}
@@ -33,3 +33,22 @@ class MultigridPreconditioner(Preconditioner):
 
     def to_dictionary(self) -> dict:
         return {'type': self.type}
+
+
+class AMGPreconditioner(Preconditioner):
+    def __init__(self) -> None:
+        self.type = 'h1amg'
+
+    def to_dictionary(self) -> dict:
+        return {'type': self.type}
+
+
+class DirectPreconditioner(Preconditioner):
+    def __init__(self, inverse: str = "") -> None:
+        self.type = 'direct'
+        self.inverse = inverse
+
+    def to_dictionary(self) -> dict:
+        if self.inverse == "":
+            return {'type': self.type}
+        return {'type': self.type, 'inverse': self.inverse}

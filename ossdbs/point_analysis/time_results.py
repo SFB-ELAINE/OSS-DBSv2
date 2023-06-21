@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 import numpy as np
-from ossdbs.point_analysis.field_solution import FieldSolution
+from ossdbs.utils.vtk_export import FieldSolution
 
 
 @dataclass
 class TimeResult:
+    # TODO check what is really needed
     points: np.ndarray
     time_steps: np.ndarray
     potential: np.ndarray

@@ -5,7 +5,6 @@ import numpy as np
 from dataclasses import dataclass
 
 _logger = logging.getLogger(__name__)
-_logger.addHandler(logging.NullHandler())
 
 
 class ElectrodeModel(ABC):
@@ -152,3 +151,23 @@ class ElectrodeModel(ABC):
     @index.setter
     def index(self, index: int) -> None:
         self._index = index
+
+    def get_max_mesh_size_contacts(self, ratio: float) -> float:
+        """Use electrode's contact size to estimate maximal mesh size.
+
+        Parameters
+        ----------
+
+        ratio: float
+            Ratio between characteristic contact size and maximal mesh size.
+
+        Notes
+        -----
+
+        For most of the electrodes, the electrode diameter is used.
+        Exemptions are:
+        * :class:`ossdbs.electrodes.MicroProbesSNEX100Model`
+
+        """
+
+        return self._parameters.lead_diameter / ratio

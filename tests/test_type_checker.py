@@ -1,4 +1,4 @@
-from ossdbs.type_check import TypeChecker
+from ossdbs.utils.type_check import TypeChecker
 
 
 setting = {
@@ -9,12 +9,10 @@ setting = {
                 },
             'CurrentControlled': False,
             'DielectricModel': {
-                'Type': 'ColeCole4',
-                'PathToCustomParameters': ''
+                'Type': 'ColeCole4'
                 },
             'Electrodes': [{
                             'Name': 'Electrode',
-                            'PathToCustomParameters': '',
                             'Rotation[Degrees]': 120,
                             'Direction': {'x[mm]': 0,
                                           'y[mm]': 0,
@@ -84,10 +82,10 @@ setting = {
             'StimulationSignal': {
                 'Type': 'Rectangle',
                 'Frequency[Hz]': 130.0,
-                'PulseWidth[µs]': 60.0,
-                'PulseTopWidth[µs]': 0.0,
-                'CounterPulseWidth[µs]': 0.0,
-                'InterPulseWidth[µs]': 0.0
+                'PulseWidth[us]': 60.0,
+                'PulseTopWidth[us]': 0.0,
+                'CounterPulseWidth[us]': 0.0,
+                'InterPulseWidth[us]': 0.0
             },
             'PointModel': {
                 'Pathway': {

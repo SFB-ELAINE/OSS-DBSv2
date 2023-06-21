@@ -4,43 +4,74 @@ from typing import List
 
 @dataclass
 class Contact:
+    """Electrode contact settings
+
+    Notes
+    -----
+
+    This class stores the main parameters of the
+    electrode contacts.
+
+    General property:
+
+        * `name`: Will be set during the geometry creation process.
+
+    Mesh related properties:
+
+        * `max_h`: Maximum element size on surface
+        * `edge_max_h`: Maximum element size on contact edges
+
+    Volume conductor model related properties:
+
+        * `active`: Whether it needs a Dirichlet BC.
+        * `floating`: Whether the voltage shall be fixed but unknown.
+        * `current`: Assigned or computed current value.
+        * `voltage`: Assigned or computed voltage value.
+        * `surface_impedance`: Assigned surface impedance value.
+    """
+
     name: str
+    max_h: float = 1e10  # Netgen default
+    edge_max_h: float = 1e10
     active: bool = False
-    current: float = 0.0
     floating: bool = False
+    current: float = 0.0
     voltage: float = 0.0
     surface_impedance: complex = 0.0j
 
 
+def check_contact(contact: Contact):
+    if contact.active and contact.floating:
+        raise ValueError("The contact {} has multiple roles. Please make sure that contacts are either active, floating or none of the two.".format(contact.name))
+
+
 class Contacts:
+    """Wrapper class to classify contacts.
+
+    Notes
+    -----
+
+    This class is intended to take the list of contacts of the model geometry and
+    detect active, floating and unused contacts.
+    """
 
     def __init__(self, contacts: List[Contact]) -> None:
-        self.__active = [contact for contact in contacts if contact.active]
-        self.__floating = [contact for contact in contacts
-                           if contact.floating and not contact.active]
-        self.__unused = [contact for contact in contacts
-                         if not contact.floating and not contact.active]
+        for contact in contacts:
+            check_contact(contact)
+        self._all_contacts = contacts
+        self._active = [contact for contact in contacts if contact.active]
+        self._floating = [contact for contact in contacts if contact.floating]
+        self._unused = [contact for contact in contacts
+                        if not contact.floating and not contact.active]
 
     def append(self, contact: Contact) -> None:
+        self._all_contacts.append(contact)
         if contact.active:
-            self.__active.append(contact)
-        if contact.floating:
-            self.__floating.append(contact)
-
-    def set_voltage(self, contact_id: str, value: float) -> None:
-        """Set voltage value of a named contact.
-
-        Parameters
-        ----------
-        contact_id : str
-            Name of the contact.
-
-        value : float
-            Voltage value.
-        """
-        for contact in self.__active:
-            if contact.name is contact_id:
-                contact.voltage = value
+            self._active.append(contact)
+        elif contact.floating:
+            self._floating.append(contact)
+        else:
+            self._unused.append(contact)
 
     @property
     def active(self) -> List[Contact]:
@@ -50,7 +81,7 @@ class Contacts:
         -------
         list of Contacts
         """
-        return self.__active
+        return self._active
 
     @property
     def floating(self) -> List[Contact]:
@@ -60,7 +91,7 @@ class Contacts:
         -------
         list of Contacts
         """
-        return self.__floating
+        return self._floating
 
     @property
     def unused(self) -> List[Contact]:
@@ -70,41 +101,83 @@ class Contacts:
         -------
         list of Contacts
         """
-        return self.__unused
+        return self._unused
 
-    def current_values(self) -> dict:
-        """Returns the current values of each active contact.
-
-        Returns
-        -------
-        dict
-        """
-        return {contact.name: contact.current for contact in self.__active}
-
-    def voltage_values(self) -> dict:
-        """Returns the voltage values of each active contact.
+    @property
+    def currents(self) -> dict:
+        """Returns the current values of each contact.
 
         Returns
         -------
         dict
         """
-        return {contact.name: contact.voltage for contact in self.__active}
+        return {contact.name: contact.current for contact in self._all_contacts}
 
-    def floating_impedance_values(self) -> dict:
-        """Returns the floating impedance values of each floating contact.
+    @currents.setter
+    def currents(self, current_values: dict) -> None:
+        """Set current values of contacts.
+
+        Parameters
+        ----------
+        current_values : dict
+            Current values. Not all contacts have to be present in the
+            dictionary.
+
+        """
+        for contact in self._all_contacts:
+            if contact.name in current_values:
+                contact.current = current_values[contact.name]
+
+    @property
+    def voltages(self) -> dict:
+        """Returns the voltage values of each contact.
+
+        Returns
+        -------
+        dict
+        """
+        return {contact.name: contact.voltage for contact in self._all_contacts}
+
+    @voltages.setter
+    def voltages(self, voltage_values: dict) -> None:
+        """Set voltage value contacts.
+
+        Parameters
+        ----------
+        voltage_values : dict
+            Voltage values. Not all contacts have to be present in the
+            dictionary.
+        """
+        for contact in self._all_contacts:
+            if contact.name in voltage_values:
+                contact.voltage = voltage_values[contact.name]
+
+    @property
+    def surface_impedances(self) -> dict:
+        """Returns the floating impedance values of each contact.
 
         Returns
         -------
         dict
         """
         return {contact.name: contact.surface_impedance
-                for contact in self.__floating}
+                for contact in self._all_contacts}
 
-    def copy(self) -> 'Contacts':
-        """Returns a copy of this collection.
+    @surface_impedances.setter
+    def surface_impedances(self, impedance_values: dict) -> None:
+        """Set surface impedance value contacts.
 
-        Returns
-        -------
-        Contacts
+        Parameters
+        ----------
+        impedance_values : dict
+            Surface impedance values. Not all contacts have to be present in the
+            dictionary.
         """
-        return Contacts(contacts=self.__active + self.__floating)
+        for contact in self._all_contacts:
+            if contact.name in impedance_values:
+                contact.impedance = impedance_values[contact.name]
+
+    def __getitem__(self, name):
+        for contact in self._all_contacts:
+            if name == contact.name:
+                return contact

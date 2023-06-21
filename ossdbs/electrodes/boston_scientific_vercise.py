@@ -237,6 +237,7 @@ class BostonScientificVerciseModel(ElectrodeModel):
         for index, contact in enumerate(contacts, 1):
             name = self._boundaries['Contact_{}'.format(index)]
             contact.bc(name)
+            # TODO currently also a wrong edge is labelled
             for edge in contact.edges:
                 edge.name = name
 

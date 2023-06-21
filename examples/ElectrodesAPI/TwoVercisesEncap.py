@@ -43,6 +43,7 @@ occgeo = occ.OCCGeometry(geo)
 with TaskManager():
     mesh = Mesh(occgeo.GenerateMesh())
 Draw(mesh)
+print(mesh.GetBoundaries())
 print(mesh.GetMaterials())
 # Clip in the center and show the scalar function to see the layer
 Draw(mesh.MaterialCF({"EncapsulationLayer": 1.0}, default=0), mesh, "Material")
