@@ -74,3 +74,10 @@ Position of the Boston Scientific Vercise elektroce: (X: 5, Y: 14, Z: -4.5).
 Voltage-controlled stimulation with 1V on the lowest contact and ground at the contact above.
 
 **TODO: Implement processing of DTI data.**
+
+## Input case 8: Point analysis for differenet areas
+
+Use MRI data in MNI space from MNI_ICBM_2009b_NLIN_ASYM atlas from Lead-DBS templates.
+Position of the Boston Scientific Vercise elektroce: (X: 5, Y: 14, Z: -4.5).
+Voltage-controlled stimulation with 1V on the lowest contact and ground at the contact above.
+We seed points in different patterns (line, array, or brain region) to evaluate the electric potential/field at different points.
