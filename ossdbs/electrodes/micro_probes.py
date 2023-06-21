@@ -52,7 +52,7 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         radius = self._parameters.lead_diameter * 0.5 + thickness
         height = self._parameters.total_length - self._parameters.lead_diameter * 0.5
         lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
-        tip = occ.Sphere(c=center, r=radius + thickness,)
+        tip = occ.Sphere(c=center, r=radius)
         encapsulation = tip + lead
         encapsulation.bc('EncapsulationLayerSurface')
         encapsulation.mat('EncapsulationLayer')
@@ -222,3 +222,16 @@ class MicroProbesSNEX100Model(ElectrodeModel):
             edge.name = self._boundaries['Contact_2']
 
         return netgen.occ.Glue([contact_1, contact_2])
+
+    def get_max_mesh_size_contacts(self, ratio: float) -> float:
+        """Use electrode's contact size to estimate maximal mesh size.
+
+        Parameters
+        ----------
+
+        ratio: float
+            Ratio between characteristic contact size and maximal mesh size.
+
+        """
+
+        return self._parameters.core_electrode_diameter / ratio

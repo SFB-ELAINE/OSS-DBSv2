@@ -1,9 +1,18 @@
-from .abbott_stjude import AbbottStJudeParameters
-from .boston_scientific_vercise import BostonScientificVerciseParameters
-from .medtronic import MedtronicParameters
-from .pins_medical import PINSMedicalParameters
+from .abbott_stjude import (AbbottStJudeParameters,
+                            AbbottStJudeActiveTipModel,
+                            AbbottStJudeDirectedModel)
+from .boston_scientific_vercise import (BostonScientificVerciseParameters,
+                                        BostonScientificVerciseModel,
+                                        BostonScientificVerciseDirectedModel)
+from .medtronic import (MedtronicParameters,
+                        MedtronicModel)
 from .micro_probes import (MicroProbesSNEX100Parameters,
-                           MicroProbesRodentElectrodeParameters)
+                           MicroProbesSNEX100Model,
+                           MicroProbesRodentElectrodeParameters,
+                           MicroProbesRodentElectrodeModel)
+from .pins_medical import (PINSMedicalParameters,
+                           PINSMedicalModel)
+
 
 # TODO total_length might be too short
 default_electrode_parameters = \
@@ -95,3 +104,101 @@ default_electrode_parameters = \
                            total_length=100.0)
 
      }
+
+
+def AbbottStJudeActiveTip6142_6145(rotation: float = 0,
+                                   direction: tuple = (0, 0, 1),
+                                   position: tuple = (0, 0, 0)):
+    parameters = default_electrode_parameters["AbbottStJudeActiveTip6142_6145"]
+    return AbbottStJudeActiveTipModel(parameters, rotation, direction, position)
+
+
+def AbbottStJudeActiveTip6146_6149(rotation: float = 0,
+                                   direction: tuple = (0, 0, 1),
+                                   position: tuple = (0, 0, 0)):
+    parameters = default_electrode_parameters["AbbottStJudeActiveTip6146_6149"]
+    return AbbottStJudeActiveTipModel(parameters, rotation, direction, position)
+
+
+def AbbottStJudeDirected6172(rotation: float = 0,
+                             direction: tuple = (0, 0, 1),
+                             position: tuple = (0, 0, 0)):
+    parameters = default_electrode_parameters["AbbottStJudeDirected6173"]
+    return AbbottStJudeDirectedModel(parameters, rotation, direction, position)
+
+
+def AbbottStJudeDirected6173(rotation: float = 0,
+                             direction: tuple = (0, 0, 1),
+                             position: tuple = (0, 0, 0)):
+    parameters = default_electrode_parameters["AbbottStJudeDirected6173"]
+    return AbbottStJudeDirectedModel(parameters, rotation, direction, position)
+
+
+def BostonScientificVercise(rotation: float = 0,
+                            direction: tuple = (0, 0, 1),
+                            position: tuple = (0, 0, 0)):
+    parameters = default_electrode_parameters["BostonScientificVercise"]
+    return BostonScientificVerciseModel(parameters, rotation, direction, position)
+
+
+def BostonScientificVerciseDirected(rotation: float = 0,
+                                    direction: tuple = (0, 0, 1),
+                                    position: tuple = (0, 0, 0)):
+    parameters = default_electrode_parameters["BostonScientificVerciseDirected"]
+    return BostonScientificVerciseDirectedModel(parameters, rotation, direction, position)
+
+
+def Medtronic3387(rotation: float = 0,
+                  direction: tuple = (0, 0, 1),
+                  position: tuple = (0, 0, 0)):
+    parameters = default_electrode_parameters["Medtronic3387"]
+    return MedtronicModel(parameters, rotation, direction, position)
+
+
+def Medtronic3389(rotation: float = 0,
+                  direction: tuple = (0, 0, 1),
+                  position: tuple = (0, 0, 0)):
+    parameters = default_electrode_parameters["Medtronic3389"]
+    return MedtronicModel(parameters, rotation, direction, position)
+
+
+def Medtronic3391(rotation: float = 0,
+                  direction: tuple = (0, 0, 1),
+                  position: tuple = (0, 0, 0)):
+    parameters = default_electrode_parameters["Medtronic3391"]
+    return MedtronicModel(parameters, rotation, direction, position)
+
+
+def MicroProbesSNEX100(rotation: float = 0,
+                       direction: tuple = (0, 0, 1),
+                       position: tuple = (0, 0, 0)):
+    parameters = default_electrode_parameters["MicroProbesSNEX100"]
+    return MicroProbesSNEX100Model(parameters, rotation, direction, position)
+
+
+def MicroProbesRodentElectrode(rotation: float = 0,
+                               direction: tuple = (0, 0, 1),
+                               position: tuple = (0, 0, 0)):
+    parameters = default_electrode_parameters["MicroProbesRodentElectrode"]
+    return MicroProbesRodentElectrodeModel(parameters, rotation, direction, position)
+
+
+def PINSMedicalL301(rotation: float = 0,
+                    direction: tuple = (0, 0, 1),
+                    position: tuple = (0, 0, 0)):
+    parameters = default_electrode_parameters["PINSMedicalL301"]
+    return PINSMedicalModel(parameters, rotation, direction, position)
+
+
+def PINSMedicalL302(rotation: float = 0,
+                    direction: tuple = (0, 0, 1),
+                    position: tuple = (0, 0, 0)):
+    parameters = default_electrode_parameters["PINSMedicalL302"]
+    return PINSMedicalModel(parameters, rotation, direction, position)
+
+
+def PINSMedicalL303(rotation: float = 0,
+                    direction: tuple = (0, 0, 1),
+                    position: tuple = (0, 0, 0)):
+    parameters = default_electrode_parameters["PINSMedicalL303"]
+    return PINSMedicalModel(parameters, rotation, direction, position)

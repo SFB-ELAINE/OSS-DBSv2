@@ -1,4 +1,4 @@
-from ossdbs.bounding_box import BoundingBox
+from ossdbs.model_geometry.bounding_box import BoundingBox
 
 
 class TestBoundingBox:

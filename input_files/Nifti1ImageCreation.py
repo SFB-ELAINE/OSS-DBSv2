@@ -13,13 +13,7 @@ def main():
                        [0, 0, 1., -74],
                        [0, 0, 0, 1]])
     nii_image = nibabel.Nifti1Image(dataobj=array, affine=affine)
- #  nii_image.header['xyzt_units'] = 2
-    nibabel.save(nii_image, 'TestMRI')
-
-    array = np.full((x, y, z, 3, 3), np.eye(3))
-    nii_image = nibabel.Nifti1Image(dataobj=array, affine=affine)
-    nii_image.header['xyzt_units'] = 2
-    nibabel.save(nii_image, 'TestDTI')
+    nibabel.save(nii_image, 'segmask.nii.gz')
 
 
 if __name__ == '__main__':
