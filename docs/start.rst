@@ -12,6 +12,8 @@ This file will allow you to specify all necessary parameters for the simulation,
 to additional input files such as imaging data or specific points to be analyzed. 
 An standard input file without imaging data will have the following structure:
 
+TODO: to be updated!
+
 .. code-block:: bash
 
   "CaseGrounding": {
@@ -20,8 +22,7 @@ An standard input file without imaging data will have the following structure:
     "Voltage[V]": 0.0
   },
   "CurrentControlled": false,
-  "DielectricModel": {"Type": "",
-                      "PathToCustomParameters": ""
+  "DielectricModel": {"Type": ""
                     },
   "DiffusionTensorImage": {
     "Path": ""
@@ -88,10 +89,10 @@ An standard input file without imaging data will have the following structure:
   "StimulationSignal": {
     "Type": "Rectangle",
     "Frequency[Hz]": 130.0,
-    "PulseWidth[µs]": 60.0,
-    "PulseTopWidth[µs]": 0.0,
-    "CounterPulseWidth[µs]": 0.0,
-    "InterPulseWidth[µs]": 0.0
+    "PulseWidth[us]": 60.0,
+    "PulseTopWidth[us]": 0.0,
+    "CounterPulseWidth[us]": 0.0,
+    "InterPulseWidth[us]": 0.0
   },
   "PointModel":{
     "Pathway": {
