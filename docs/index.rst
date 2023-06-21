@@ -41,7 +41,7 @@ The software OSS-DBS can be easily installed using pip:
     $ pip install oss_dbs
 
 For first steps with OSS-DBS see the next section of this documentation.
-Some examples to run you can find in the 'ref_examples'_.
+Some examples to run you can find in the Examples section.
 
 .. note::
    To edit Sphinx documentation you need to install the following packages:
@@ -64,6 +64,7 @@ Table of contents
    signals
    volume_conductor_model
    electrodes
+   add_electrode
 
 
 Indices and tables

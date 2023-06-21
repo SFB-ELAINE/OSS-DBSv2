@@ -4,14 +4,13 @@
     "Current[A]": 0.0,
     "Voltage[V]": 0.0
   },
-  "CurrentControled": false,
-  "DielectricModel": {"Type": "ColeCole4",
-                      "PathToCustomParameters": ""
+  "CurrentControlled": false,
+  "DielectricModel": {"Type": "ColeCole4"
   },
   "Electrodes": [
     {
       "Name": "MicroProbesSNEX100Custom",
-      "PathToCustomParameters": "",
+      "PathToCustomParameters": "micro_probes_SNEX100_custom.json",
       "Rotation[Degrees]": 0,
       "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
       "TipPosition": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
@@ -50,7 +49,7 @@
   "MaterialDistribution": {
     "DiffusionTensorActive": false,
     "DTIPath": "",
-    "MRIPath": "./input_case2/new_segmented_Atlas_GMWMCSF.nii.gz"
+    "MRIPath": "new_segmented_Atlas_GMWMCSF.nii.gz"
   },
   "Mesh": {
     "LoadMesh": false,
@@ -63,7 +62,7 @@
     "SaveMesh": true
   },
   "OutputPath": "case2",
-  "RegionOfInterest": {
+  "BrainRegion": {
     "Center": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
     "Dimension": { "x[mm]": 10.0, "y[mm]": 10.0, "z[mm]": 20.0 }
   },
@@ -78,10 +77,10 @@
   "StimulationSignal": {
     "Type": "Rectangle",
     "Frequency[Hz]": 130.0,
-    "PulseWidth[µs]": 60.0,
-    "PulseTopWidth[µs]": 0.0,
-    "CounterPulseWidth[µs]": 0.0,
-    "InterPulseWidth[µs]": 0.0
+    "PulseWidth[us]": 60.0,
+    "PulseTopWidth[us]": 0.0,
+    "CounterPulseWidth[us]": 0.0,
+    "InterPulseWidth[us]": 0.0
   },
   "PointModel":{
     "Pathway": {

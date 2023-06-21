@@ -18,6 +18,6 @@ The source documentation also contains information about
 Code
 ------
 
-.. autoclass:: ossdbs.electrodes.electrode_models.boston_scientific_vercise.BostonScientificVercise
+.. autoclass:: ossdbs.electrodes.boston_scientific_vercise.BostonScientificVercise
     :members:
     :show-inheritance:

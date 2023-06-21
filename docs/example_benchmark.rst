@@ -2,7 +2,7 @@ Benchmarking OSS-DBS v.0.1
 ===========================
 
 .. note::
-    Write about benchmark with isotropic and QS case
+    Need to find a good marker for benchmarking!
 
 This Benchmark with OSS-DBS v.0.1 [Butenko2019]_ will show that results from the new version are consistent
 with previous results. Also we will the improvements in the handling of the new version as well as the advanteges

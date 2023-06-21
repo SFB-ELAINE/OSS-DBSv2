@@ -1,18 +1,43 @@
-
-from abc import ABC, abstractmethod
-from ossdbs.materials import Material
+import numpy as np
+from abc import ABC
+from ossdbs.utils.materials import MATERIALS
 
 
 class DielectricModel(ABC):
-    """Model for the dielectric spectrum of tissues."""
+    """Model for the dielectric spectrum of tissues.
 
-    @abstractmethod
-    def permitivity(self, material: Material, omega: float) -> complex:
-        """Calculate the permitivity by the angular frequency omega.
+    TODO explain how to add another model
+    """
+
+    @property
+    def material_models(self) -> dict:
+        return self.MODELS
+
+    def permittivity(self, material: str, omega: float) -> float:
+        """Calculate the permittivity by the angular frequency omega.
 
         Parameters
         ----------
-        material : Material
+        material : str
+            Corresponding material.
+
+        omega : float
+            Angular frequency [1/s].
+
+        Returns
+        -------
+        float
+            Permittivity.
+        """
+        
+        return np.real(self.MODELS[material].complex_permittivity(omega))
+
+    def complex_permittivity(self, material: str, omega: float) -> float:
+        """Calculate the permittivity by the angular frequency omega.
+
+        Parameters
+        ----------
+        material : str
             Corresponding material.
 
         omega : float
@@ -21,17 +46,34 @@ class DielectricModel(ABC):
         Returns
         -------
         complex
-            Complex permitivity.
+            Complex permittivity.
         """
-        pass
+        return self.MODELS[material].complex_permittivity(omega)
 
-    @abstractmethod
-    def conductivity(self, material: Material, omega: float) -> complex:
+    def conductivity(self, material: str, omega: float) -> float:
         """Calculate the conductivity by the angular frequency omega.
 
         Parameters
         ----------
-        material : Material
+        material : str
+            Corresponding material.
+
+        omega : float
+            Angular frequency [1/s].
+
+        Returns
+        -------
+        float
+            Conductivity.
+        """
+        return np.real(self.MODELS[material].complex_conductivity(omega))
+
+    def complex_conductivity(self, material: str, omega: float) -> complex:
+        """Calculate the conductivity by the angular frequency omega.
+
+        Parameters
+        ----------
+        material : str
             Corresponding material.
 
         omega : float
@@ -42,4 +84,4 @@ class DielectricModel(ABC):
         complex
             Complex conductivity.
         """
-        pass
+        return self.MODELS[material].complex_conductivity(omega)

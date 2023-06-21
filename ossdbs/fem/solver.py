@@ -31,10 +31,10 @@ class CGSolver(Solver):
                  printrates: bool = True,
                  maxsteps: int = 10000,
                  precision: float = 1e-12) -> None:
-        self.__precond_par = precond_par.to_dictionary()
-        self.__printrates = printrates
-        self.__maxsteps = maxsteps
-        self.__precision = precision
+        self._precond_par = precond_par.to_dictionary()
+        self._printrates = printrates
+        self._maxsteps = maxsteps
+        self._precision = precision
 
     def bvp(self,
             bilinear_form: ngsolve.BilinearForm,
@@ -49,15 +49,15 @@ class CGSolver(Solver):
         grid_function: ngsolve.GridFunction
         """
         preconditioner = ngsolve.Preconditioner(bf=bilinear_form,
-                                                **self.__precond_par)
+                                                **self._precond_par)
 
         bilinear_form.Assemble()
         linear_form.Assemble()
         inverse = ngsolve.CGSolver(mat=bilinear_form.mat,
                                    pre=preconditioner.mat,
-                                   printrates=self.__printrates,
-                                   maxsteps=self.__maxsteps,
-                                   precision=self.__precision)
+                                   printrates=self._printrates,
+                                   maxsteps=self._maxsteps,
+                                   precision=self._precision)
 
         r = linear_form.vec.CreateVector()
         r.data = linear_form.vec - bilinear_form.mat * grid_function.vec
@@ -79,10 +79,10 @@ class GMRESSolver(Solver):
                  printrates: bool = True,
                  maxsteps: int = 10000,
                  precision: float = 1e-12) -> None:
-        self.__precond_par = precond_par.to_dictionary()
-        self.__printrates = printrates
-        self.__maxsteps = maxsteps
-        self.__precision = precision
+        self._precond_par = precond_par.to_dictionary()
+        self._printrates = printrates
+        self._maxsteps = maxsteps
+        self._precision = precision
 
     def bvp(self,
             bilinear_form: ngsolve.BilinearForm,
@@ -97,15 +97,15 @@ class GMRESSolver(Solver):
         grid_function: ngsolve.GridFunction
         """
         preconditioner = ngsolve.Preconditioner(bf=bilinear_form,
-                                                **self.__precond_par)
+                                                **self._precond_par)
 
         bilinear_form.Assemble()
         linear_form.Assemble()
         inverse = ngsolve.GMRESSolver(mat=bilinear_form.mat,
                                       pre=preconditioner.mat,
-                                      printrates=self.__printrates,
-                                      maxsteps=self.__maxsteps,
-                                      precision=self.__precision)
+                                      printrates=self._printrates,
+                                      maxsteps=self._maxsteps,
+                                      precision=self._precision)
 
         r = linear_form.vec.CreateVector()
         r.data = linear_form.vec - bilinear_form.mat * grid_function.vec
