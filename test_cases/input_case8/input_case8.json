@@ -1,0 +1,68 @@
+{
+  "Surfaces": [
+	  {"Name": "BrainSurface",
+      "Active": true,
+      "Current[A]": 0.0,
+      "Voltage[V]": 0.0
+    }
+   ],
+  "DielectricModel": {"Type": "ColeCole4"
+  },
+  "Electrodes": [
+    {
+      "Name": "MicroProbesRodentElectrode",
+      "Rotation[Degrees]": 0,
+      "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
+      "TipPosition": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
+      "EncapsulationLayer": {
+      "Thickness[mm]": 0.1,
+      "Material": "GrayMatter",
+      "MaxMeshSizeHeight": 0.1
+      },
+
+      "Contacts": [
+        {
+          "Contact_ID": 1,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 1.0,
+          "Floating": false,
+          "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+        }
+      ]
+    }
+  ],
+  "EQSMode": false,
+  "MaterialDistribution": {
+    "DiffusionTensorActive": false,
+    "DTIPath": "",
+    "MRIPath": "new_segmented_Atlas_GMWMCSF.nii.gz"
+  },
+  "Mesh": {
+    "LoadMesh": false,
+    "MeshElementOrder": 2,
+    "MeshingHypothesis": {
+      "Type": "Default",
+      "MaxMeshSizeHeight": 0.2
+    },
+    "SaveMesh": true
+  },
+  "OutputPath": "case3",
+  "BrainRegion": {
+    "Shape": "Ellipsoid",
+    "Center": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
+    "Dimension": { "x[mm]": 10.0, "y[mm]": 10.0, "z[mm]": 20.0 }
+  },
+  "Solver": {
+    "Type": "CG",
+    "Preconditioner": "bddc",
+    "PrintRates": false,
+    "MaximumSteps": 10000,
+    "Precision": 1e-12
+  },
+  "StimulationSignal": {
+    "Type": "Multisine",
+    "ListOfFrequencies": [10, 100, 1000],
+    "CutoffFrequency": 1e6
+  }
+}

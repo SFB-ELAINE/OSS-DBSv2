@@ -8,13 +8,12 @@ The different geometries are saved
 to STEP files.
 """
 import ossdbs
-from ossdbs.factories import BrainRegionFactory
 from ngsolve import Draw, Mesh, TaskManager
 import netgen.occ as occ
 
 settings = \
     {"MaterialDistribution":
-        {"MRIPath": "homogeneous.nii"
+        {"MRIPath": "segmask.nii.gz"
          },
      "BrainRegion":
         {"Center": {"x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5},
@@ -22,22 +21,22 @@ settings = \
          }
      }
 
-nifti_image = ossdbs.Nifti1Image(settings['MaterialDistribution']['MRIPath'])
-box = ossdbs.BrainGeometry(nifti_image.bounding_box(), "Box")
+nifti_image = ossdbs.MagneticResonanceImage(settings['MaterialDistribution']['MRIPath'])
+box = ossdbs.BrainGeometry("Box", nifti_image.bounding_box)
 box.geometry.WriteStep("box.step")
 region_parameters = settings['BrainRegion']
-region_of_interest = BrainRegionFactory.create(region_parameters)
-box = ossdbs.BrainGeometry(region_of_interest, "Box")
+region_of_interest = ossdbs.create_bounding_box(region_parameters)
+box = ossdbs.BrainGeometry("Box", region_of_interest)
 box.geometry.WriteStep("box_ROI.step")
 
-geometry = ossdbs.BrainGeometry(region_of_interest, "Ellipsoid")
+geometry = ossdbs.BrainGeometry("Ellipsoid", region_of_interest)
 geometry.geometry.WriteStep("geo_ROI_ellipsoid.step")
-geometry = ossdbs.BrainGeometry(nifti_image.bounding_box(), "Ellipsoid")
+geometry = ossdbs.BrainGeometry("Ellipsoid", nifti_image.bounding_box)
 geometry.geometry.WriteStep("geo_full_ellipsoid.step")
 
-geometry = ossdbs.BrainGeometry(region_of_interest, "Sphere")
+geometry = ossdbs.BrainGeometry("Sphere", region_of_interest)
 geometry.geometry.WriteStep("geo_ROI_sphere.step")
-geometry = ossdbs.BrainGeometry(nifti_image.bounding_box(), "Sphere")
+geometry = ossdbs.BrainGeometry("Sphere", nifti_image.bounding_box)
 geometry.geometry.WriteStep("geo_full_sphere.step")
 
 occgeo = occ.OCCGeometry(geometry.geometry)

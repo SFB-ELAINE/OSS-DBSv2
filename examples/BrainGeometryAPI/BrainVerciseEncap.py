@@ -19,7 +19,7 @@ settings = \
           },
          ],
      "MaterialDistribution":
-        {"MRIPath": "homogeneous.nii"
+        {"MRIPath": "segmask.nii.gz"
          },
      "BrainRegion":
         {"Center": {"x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5},

@@ -5,13 +5,11 @@
     "Voltage[V]": 0.0
   },
   "CurrentControlled": false,
-  "DielectricModel": {"Type": "Constant",
-                      "PathToCustomParameters": ""
+  "DielectricModel": {"Type": "Constant"
   },
   "Electrodes": [
     {
       "Name": "AbbottStjudeActiveTip6146_6149",
-      "PathToCustomParameters": "",
       "Rotation[Degrees]": 0,
       "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
       "TipPosition": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
@@ -78,10 +76,10 @@
   "StimulationSignal": {
     "Type": "Rectangle",
     "Frequency[Hz]": 130.0,
-    "PulseWidth[µs]": 60.0,
-    "PulseTopWidth[µs]": 0.0,
-    "CounterPulseWidth[µs]": 0.0,
-    "InterPulseWidth[µs]": 0.0
+    "PulseWidth[us]": 60.0,
+    "PulseTopWidth[us]": 0.0,
+    "CounterPulseWidth[us]": 0.0,
+    "InterPulseWidth[us]": 0.0
   },
   "PointModel":{
     "Pathway": {

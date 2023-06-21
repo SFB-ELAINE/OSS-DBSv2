@@ -1,3 +1,5 @@
-from .analysis import point_analysis
+from .lattice import Lattice
+from .pathway import Pathway
+from .point_model import PointModel
 
-__all__ = ['point_analysis']
+__all__ = ['Lattice', 'Pathway', 'PointModel']
