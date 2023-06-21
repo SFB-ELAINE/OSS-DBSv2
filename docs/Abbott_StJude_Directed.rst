@@ -17,10 +17,10 @@ and  :doc:`Active Tip 6172 <./Abbott_StJude_Directed>`.
 Code
 -----
 
-.. autoclass:: ossdbs.electrodes.electrode_models.abbott_stjude.AbbottStjudeDirected6172
+.. autoclass:: ossdbs.electrodes.abbott_stjude.AbbottStJudeDirected6172
     :members:
     :show-inheritance:
 
-.. autoclass:: ossdbs.electrodes.electrode_models.abbott_stjude.AbbottStjudeDirected6173
+.. autoclass:: ossdbs.electrodes.abbott_stjude.AbbottStJudeDirected6173
     :members:
     :show-inheritance:

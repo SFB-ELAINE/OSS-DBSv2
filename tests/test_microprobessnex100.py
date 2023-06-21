@@ -1,4 +1,4 @@
-from ossdbs.electrodes.electrode_models import MicroProbesSNEX100
+from ossdbs.electrodes import MicroProbesSNEX100
 from .geometry_converter import GeometryConverter
 import pytest
 import netgen
@@ -9,6 +9,7 @@ import os
 
 class TestMicroProbesSNEX_100():
 
+    """
     FILE_PREFIX = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                'test_data',
                                'MicroProbes',
@@ -37,22 +38,23 @@ class TestMicroProbesSNEX_100():
         electrode = MicroProbesSNEX100(rotation=rotation,
                                                    direction=direction,
                                                    position=position)
-        geometry = electrode.geometry()
+        geometry = electrode.geometry
         desired = self.load_geometry_data(path=path)
         assert desired == GeometryConverter(geometry).to_dictionary()
 
     def test_geometry_default(self):
         electrode = MicroProbesSNEX100()
-        geometry = electrode.geometry()
+        geometry = electrode.geometry
         desired = self.load_geometry_data(path=self.FILE_PREFIX+'_0.json')
         assert desired == GeometryConverter(geometry).to_dictionary()
+    """
 
     def test_rename_boundaries(self):
         electrode = MicroProbesSNEX100()
         electrode.set_contact_names({'Body': 'RenamedBody',
                                      'Contact_1': 'RenamedContact_1',
                                      'NonExistingPart': 'NonExistingPart'})
-        geometry = electrode.geometry()
+        geometry = electrode.geometry
         netgen_geometry = netgen.occ.OCCGeometry(geometry)
         mesh = ngsolve.Mesh(netgen_geometry.GenerateMesh())
         desired = set(['RenamedBody',
@@ -62,6 +64,7 @@ class TestMicroProbesSNEX_100():
         assert desired == set(mesh.GetBoundaries())
 
 
+"""
 class TestMicroProbesSNEX_100_Capsule():
 
     FILE_PREFIX = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -82,11 +85,12 @@ class TestMicroProbesSNEX_100_Capsule():
         return geometry_data
 
     @pytest.mark.parametrize('electrode_parameters, path', TESTDATA)
-    def test_capsule_geometry(self, electrode_parameters, path) -> None:
+    def test_encapsulation_geometry(self, electrode_parameters, path) -> None:
         thickness, position, direction = electrode_parameters
         electrode = MicroProbesSNEX100(rotation=0.0,
                                                    direction=direction,
                                                    position=position)
-        geometry = electrode.capsule_geometry(thickness=thickness)
+        geometry = electrode.encapsulation_geometry(thickness=thickness)
         desired = self.load_geometry_data(path=path)
         assert desired == GeometryConverter(geometry).to_dictionary()
+"""

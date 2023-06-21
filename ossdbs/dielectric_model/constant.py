@@ -1,32 +1,43 @@
 
 from dataclasses import dataclass
 from ossdbs.dielectric_model import DielectricModel
-from ossdbs.materials import Material
+from scipy.constants import epsilon_0 as e0
 
 
 @dataclass
 class MaterialConstantModel:
-    permitivity: complex
+    """
+    permittivity: complex
+        Relative permittivity
+    conductivity: complex
+    """
+
+    permittivity: complex
     conductivity: complex
 
-
-class ConstantModel(DielectricModel):
-    """Constant model for the dielectric spectrum of tissues."""
-    MODELS = {Material.BLOOD: MaterialConstantModel(5.26e3, 7e-1),
-              Material.WHITE_MATTER: MaterialConstantModel(6.98e4, 6.26e-2),
-              Material.GRAY_MATTER: MaterialConstantModel(1.64e5, 9.88e-2),
-              Material.CSF: MaterialConstantModel(1.09e2, 2.0),
-              Material.UNKNOWN: MaterialConstantModel(1.64e5, 9.88e-2),
-              }
-
-    def conductivity(self, material: Material, omega: float) -> complex:
-        """Return the conductivity independent of the angular frequency omega.
+    def complex_permittivity(self, omega: float) -> complex:
+        """Calculate the permittivity by the angular frequency omega.
 
         Parameters
         ----------
-        material : Material
-            Corresponding material.
+        omega : float
+            Angular frequency [1/s].
 
+        Returns
+        -------
+        complex
+            Complex permittivity.
+        """
+        if omega == 0:
+            return self.permittivity * e0 + 0j
+
+        return e0 * self.permittivity + self.conductivity / (1j * omega)
+
+    def complex_conductivity(self, omega: float) -> complex:
+        """Calculate the conductivity by the angular frequency omega.
+
+        Parameters
+        ----------
         omega : float
             Angular frequency [1/s].
 
@@ -35,22 +46,20 @@ class ConstantModel(DielectricModel):
         complex
             Complex conductivity.
         """
-        return self.MODELS[material].conductivity
+        if omega == 0:
+            return self.conductivity + 0j
 
-    def permitivity(self, material: Material, omega: float) -> complex:
-        """Return the permitivity independent of the angular frequency omega.
+        return 1j * omega * self.complex_permittivity(omega=omega)
 
-        Parameters
-        ----------
-        material : Material
-            Corresponding material.
 
-        omega : float
-            Angular frequency [1/s].
+class ConstantModel(DielectricModel):
+    """Constant model for the dielectric spectrum of tissues.
 
-        Returns
-        -------
-        complex
-            Complex permitivity.
-        """
-        return self.MODELS[material].permitivity
+    TODO: where are these values from?
+    """
+    MODELS = {"Blood": MaterialConstantModel(5.26e3, 7e-1),
+              "White matter": MaterialConstantModel(6.98e4, 6.26e-2),
+              "Gray matter": MaterialConstantModel(1.64e5, 9.88e-2),
+              "CSF": MaterialConstantModel(1.09e2, 2.0),
+              "Unknown": MaterialConstantModel(1.64e5, 9.88e-2),
+              }

@@ -27,11 +27,11 @@ PINS Medical L302
 Code
 ------
 
-.. autoclass:: ossdbs.electrodes.electrode_models.pins_medical.PINSMedicalL301
+.. autoclass:: ossdbs.electrodes.pins_medical.PINSMedicalL301
     :members:
     :show-inheritance:
 
 
-.. autoclass:: ossdbs.electrodes.electrode_models.pins_medical.PINSMedicalL302
+.. autoclass:: ossdbs.electrodes.pins_medical.PINSMedicalL302
     :members:
     :show-inheritance:

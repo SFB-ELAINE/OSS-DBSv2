@@ -1,5 +1,6 @@
 Electrodes
-================
+==========
+
 This is an overview about the electrode models used for simulation.
 
 .. toctree::
@@ -15,5 +16,3 @@ This is an overview about the electrode models used for simulation.
    Micro_Probes_Snex100
    Pins_Medical_L301_L302
    Pins_Medical_L303
-
-

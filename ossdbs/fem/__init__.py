@@ -1,23 +1,38 @@
-
 from .mesh import Mesh
-from .preconditioner import LocalPreconditioner
-from .preconditioner import BDDCPreconditioner
-from .preconditioner import MultigridPreconditioner
+from .preconditioner import (LocalPreconditioner,
+                             DirectPreconditioner,
+                             BDDCPreconditioner,
+                             AMGPreconditioner,
+                             MultigridPreconditioner)
 from .solver import Solver, GMRESSolver, CGSolver
-from .volume_conductor import Solution
-from .volume_conductor import VolumeConductor
-from .volume_conductor import VolumeConductorNonFloating
-from .volume_conductor import VolumeConductorFloating
-from .volume_conductor import VolumeConductorFloatingImpedance
+from .volume_conductor import (ConductivityCF,
+                               VolumeConductor,
+                               VolumeConductorNonFloating,
+                               VolumeConductorFloating,
+                               VolumeConductorFloatingImpedance)
+
+SOLVERS = {'CG': CGSolver,
+           'GMRES': GMRESSolver}
+
+
+PRECONDITIONERS = {'bddc': BDDCPreconditioner(),
+                   'local': LocalPreconditioner(),
+                   'multigrid': MultigridPreconditioner(),
+                   'h1amg': AMGPreconditioner(),
+                   'direct': DirectPreconditioner()
+                   }
+
 
 __all__ = ['LocalPreconditioner',
+           'DirectPreconditioner',
            'BDDCPreconditioner',
            'MultigridPreconditioner',
+           'AMGPreconditioner',
            'Solver',
+           'ConductivityCF',
            'GMRESSolver',
            'CGSolver',
            'Mesh',
-           'Solution',
            'VolumeConductor',
            'VolumeConductorNonFloating',
            'VolumeConductorFloating',

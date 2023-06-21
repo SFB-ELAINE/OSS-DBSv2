@@ -1,14 +1,13 @@
-
-from ossdbs.fem.volume_conductor.volume_conductor_model import Solution
-from ossdbs.fem.volume_conductor.volume_conductor_model import VolumeConductor
-from ossdbs.fem.volume_conductor.nonfloating import VolumeConductorNonFloating
-from ossdbs.fem.volume_conductor.floating import VolumeConductorFloating
-from ossdbs.fem.volume_conductor.floating_impedance \
+from .volume_conductor_model import VolumeConductor
+from .nonfloating import VolumeConductorNonFloating
+from .floating import VolumeConductorFloating
+from .floating_impedance \
     import VolumeConductorFloatingImpedance
+from .conductivity import ConductivityCF
 
-__all__ = ['Solution',
-           'VolumeConductor',
+__all__ = ['VolumeConductor',
            'VolumeConductorNonFloating',
            'VolumeConductorFloating',
-           'VolumeConductorFloatingImpedance'
+           'VolumeConductorFloatingImpedance',
+           'ConductivityCF'
            ]

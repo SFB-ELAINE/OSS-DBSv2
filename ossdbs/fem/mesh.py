@@ -1,5 +1,6 @@
-
 from typing import List
+import netgen.occ
+import netgen.meshing
 import ngsolve
 import numpy as np
 
@@ -9,7 +10,7 @@ class Mesh:
 
     Parameters
     ----------
-    geometry : netgen.libngpy._NgOCC.OCCGeometry
+    geometry : netgen.occ.OCCGeometry
 
     order : int
         Order of mesh elements.
@@ -19,15 +20,63 @@ class Mesh:
     """
 
     def __init__(self,
-                 ngsolve_mesh: ngsolve.comp.Mesh,
-                 order: int,
-                 complex_datatype: bool = False) -> None:
-        self.__mesh = ngsolve_mesh
-        self.__mesh.Curve(order=order)
-        self.__order = order
-        self.__complex = complex_datatype
+                 geometry: netgen.occ.OCCGeometry,
+                 order: int) -> None:
+        self._geometry = geometry
+        self._order = order
+        self._mesh = None
 
-    def boundary_coefficients(self, boundaries) \
+    def generate_mesh(self, meshing_parameters: dict) -> None:
+        netgen_mp = self._meshing_parameters(meshing_parameters)
+        self._mesh = ngsolve.Mesh(self.geometry.GenerateMesh(mp=netgen_mp))
+        self._mesh.Curve(order=self.order)
+
+    def load_mesh(self, filename: str) -> None:
+        self._mesh = ngsolve.Mesh(filename=filename)
+        self._mesh.ngmesh.SetGeometry(self._geometry)
+        self._mesh.Curve(order=self.order)
+
+    def _meshing_parameters(self, mesh_parameters: dict):
+        mesh_type = mesh_parameters['Type']
+
+        if mesh_type == "Custom":
+            if "CustomParameters" in mesh_parameters:
+                custom_parameters = mesh_parameters
+                if not isinstance(custom_parameters, dict):
+                    raise ValueError("CustomParameters have to passed as a dict.")
+                return netgen.meshing.MeshingParameters(**custom_parameters)
+            else:
+                raise ValueError("You need to specific CustomParameters if you want to generate a custom mesh.")
+
+        return {'Coarse': netgen.meshing.meshsize.coarse,
+                'Fine': netgen.meshing.meshsize.fine,
+                'Moderate': netgen.meshing.meshsize.moderate,
+                'VeryCoarse': netgen.meshing.meshsize.very_coarse,
+                'VeryFine': netgen.meshing.meshsize.very_fine,
+                'Default': netgen.meshing.MeshingParameters(),
+                }[mesh_type]
+
+    @property
+    def order(self) -> int:
+        return self._order
+
+    @order.setter
+    def order(self, value: int) -> None:
+        self._order = value
+
+    @property
+    def geometry(self) -> netgen.occ.OCCGeometry:
+        return self._geometry
+
+    @property
+    def boundaries(self) -> List:
+        return self.ngsolvemesh.GetBoundaries()
+
+    @property
+    def materials(self) -> List:
+        return self.ngsolvemesh.GetMaterials()
+
+    def boundary_coefficients(self, boundaries: dict) \
             -> ngsolve.fem.CoefficientFunction:
         """Return a boundary coefficient function.
 
@@ -36,39 +85,28 @@ class Mesh:
         ngsolve.fem.CoefficientFunction
         """
 
-        return self.__mesh.BoundaryCF(values=boundaries)
+        return self._mesh.BoundaryCF(values=boundaries)
 
-    def is_complex(self) -> bool:
-        """Return the state of the data type for spaces. True if complex,
-        False otherwise.
-
-        Returns
-        -------
-        bool
-        """
-        return self.__complex
-
-    def flux_space(self) -> ngsolve.comp.HDiv:
-        """Return a flux space based on the mesh.
+    def material_coefficients(self, materials: dict) \
+            -> ngsolve.fem.CoefficientFunction:
+        """Return a boundary coefficient function.
 
         Returns
         -------
-        ngsolve.comp.HDiv
+        ngsolve.fem.CoefficientFunction
         """
 
-        return ngsolve.HDiv(mesh=self.__mesh,
-                            order=self.__order-1,
-                            complex=self.__complex)
+        return self._mesh.MaterialCF(values=materials)
 
-    def ngsolvemesh(self) -> ngsolve.comp.Mesh:
+    @property
+    def ngsolvemesh(self) -> ngsolve.Mesh:
         """Return mesh as a ngsolve object.
 
         Returns
         -------
         ngsolve.comp.Mesh
         """
-
-        return self.__mesh
+        return self._mesh
 
     def is_included(self, points: np.ndarray) -> np.ndarray:
         """Check each point in collection for collision with geometry.
@@ -86,14 +124,18 @@ class Mesh:
             True if point is included in geometry, False otherwise.
         """
         x, y, z = points.T
-        mips = self.__mesh(x, y, z)
+        mips = self._mesh(x, y, z)
         return np.array([mip[5] != -1 for mip in mips])
 
-    def refine(self) -> None:
+    def refine(self, at_surface: bool = False) -> None:
         """Refine the mesh."""
 
-        self.__mesh.Refine()
-        self.__mesh.Curve(order=self.__order)
+        self._mesh.Refine(mark_surface_elements=at_surface)
+        self._mesh.Curve(order=self._order)
+
+    def curve(self, order: int) -> None:
+        self._order = order
+        self._mesh.Curve(order=order)
 
     def save(self, file_name: str) -> None:
         """Save netgen mesh.
@@ -104,40 +146,7 @@ class Mesh:
             File name of the mesh data.
         """
 
-        self.__mesh.ngmesh.Save(file_name)
-
-    def h1_space(self, boundaries: List[str]) -> ngsolve.comp.H1:
-        """Return a h1 space based on the mesh.
-
-        Parameters
-        ----------
-        boundaries : list of str
-            List of boundary names.
-
-        Returns
-        -------
-        ngsolve.comp.H1
-        """
-
-        dirichlet = '|'.join(boundary for boundary in boundaries)
-        return ngsolve.H1(mesh=self.__mesh,
-                          order=self.__order,
-                          dirichlet=dirichlet,
-                          complex=self.__complex,
-                          wb_withedges=False)
-
-    def number_space(self) -> ngsolve.comp.NumberSpace:
-        """Return a number space based on the mesh.
-
-        Returns
-        -------
-        ngsolve.comp.NumberSpace
-            Space with only one single (global) DOF.
-        """
-
-        return ngsolve.NumberSpace(mesh=self.__mesh,
-                                   order=0,
-                                   complex=self.__complex)
+        self._mesh.ngmesh.Save(file_name)
 
     def refine_at_voxel(self,
                         start: tuple,
@@ -157,7 +166,7 @@ class Mesh:
             Voxelvalues.
         """
 
-        space = ngsolve.L2(self.__mesh, order=0)
+        space = ngsolve.L2(self._mesh, order=0)
         grid_function = ngsolve.GridFunction(space=space)
         cf = ngsolve.VoxelCoefficient(start=start,
                                       end=end,
@@ -166,11 +175,24 @@ class Mesh:
         grid_function.Set(cf)
         flags = grid_function.vec.FV().NumPy()
 
-        for element, flag in zip(self.__mesh.Elements(ngsolve.VOL), flags):
-            self.__mesh.SetRefinementFlag(ei=element, refine=flag)
+        for element, flag in zip(self._mesh.Elements(ngsolve.VOL), flags):
+            self._mesh.SetRefinementFlag(ei=element, refine=flag)
         self.refine()
 
-    def refine_by_boundaries(self, boundaries: list) -> None:
+    def refine_at_materials(self, materials: List[str]) -> None:
+        """Refine the mesh by the boundaries.
+
+        Parameters
+        ----------
+        boundaries : List[str]
+            Collection of material names.
+
+        """
+        for element in self._mesh.Elements(ngsolve.VOL):
+            to_refine = element.mat in materials
+            self._mesh.SetRefinementFlag(ei=element, refine=to_refine)
+
+    def refine_at_boundaries(self, boundaries: list) -> None:
         """Refine the mesh by the boundaries.
 
         Parameters
@@ -179,10 +201,12 @@ class Mesh:
             Collection of boundary names.
         """
 
-        for element in self.__mesh.Elements(ngsolve.BND):
+        for element in self._mesh.Elements(ngsolve.VOL):
+            self._mesh.SetRefinementFlag(ei=element, refine=False)
+        for element in self._mesh.Elements(ngsolve.BND):
             to_refine = element.mat in boundaries
-            self.__mesh.SetRefinementFlag(ei=element, refine=to_refine)
-        self.refine()
+            self._mesh.SetRefinementFlag(ei=element, refine=to_refine)
+        self.refine(at_surface=True)
 
     def refine_by_error(self, gridfunction: ngsolve.GridFunction) -> List:
         """Refine the mesh by the error at each mesh element.
@@ -200,36 +224,11 @@ class Mesh:
         error = difference * ngsolve.Conj(difference)
 
         element_errors = ngsolve.Integrate(cf=error,
-                                           mesh=self.__mesh,
+                                           mesh=self._mesh,
                                            VOL_or_BND=ngsolve.VOL,
                                            element_wise=True).real
         limit = 0.5 * max(element_errors)
-        for element in self.__mesh.Elements(ngsolve.BND):
+        for element in self._mesh.Elements(ngsolve.BND):
             to_refine = element_errors[element.nr] > limit
-            self.__mesh.SetRefinementFlag(ei=element, refine=to_refine)
+            self._mesh.SetRefinementFlag(ei=element, refine=to_refine)
         self.refine()
-
-    def datatype_complex(self, value: bool) -> None:
-        """Get the state of complex data. True if data is complex, false
-        otherwise.
-
-        Returns
-        -------
-        bool
-        """
-        self.__complex = value
-
-    def surfacel2_space(self, boundaries: List[str]) -> ngsolve.comp.SurfaceL2:
-        """Return a number SurfaceL2 on the mesh.
-
-        Returns
-        -------
-        ngsolve.comp.SurfaceL2
-            SurfaceL2 space with minimum order of 1.
-        """
-
-        dirichlet = '|'.join(boundary for boundary in boundaries)
-        return ngsolve.SurfaceL2(mesh=self.__mesh,
-                                 order=max(1, self.__order - 1),
-                                 dirichlet=dirichlet,
-                                 complex=self.__complex)
