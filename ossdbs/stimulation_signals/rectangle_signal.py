@@ -18,36 +18,9 @@ class RectangleSignal(TimeDomainSignal):
         Relative width between pulse and counter pulse of one period.
     """
 
-    def _generate_samples(self, sample_spacing: float) -> np.ndarray:
-        """Generate samples which follow the signal form.
+    def get_frequencies_and_fourier_coefficients(self,
+                                                 cutoff_frequency: float) -> np.ndarray:
+        pass
 
-        Parameters
-        ----------
-        sample_spacing : float
-            Timestep [s] between two samples.
-
-        Returns
-        -------
-        np.ndarray
-            Samples for one period.
-        """
-
-        spacing = sample_spacing * self._frequency
-        n_samples = int(1 / spacing) if 0 < spacing < 1 else 1
-
-        pulse_length = int(self._pulse_width * n_samples)
-        pulse = np.array([1] * pulse_length)
-
-        space_length = int(self._space_width * n_samples)
-
-        counter_length = int(self._counter_pulse_width * n_samples)
-        counter_value = -pulse_length / counter_length if counter_length else 0
-        counter_pulse = np.array([counter_value] * counter_length)
-        counter_start = pulse_length + space_length
-        counter_end = counter_start + counter_length
-
-        signal = np.zeros(n_samples)
-        signal[:pulse_length] = pulse
-        n_counter_samples = n_samples - counter_start
-        signal[counter_start:counter_end] = counter_pulse[:n_counter_samples]
-        return signal
+    def get_fourier_coefficients(frequencies: float) -> np.ndarray:
+        pass
