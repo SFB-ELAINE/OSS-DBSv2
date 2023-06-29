@@ -68,6 +68,18 @@
     "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
     "Dimension": { "x[mm]": 80.0, "y[mm]": 80.0, "z[mm]": 80.0 }
   },
+  "PointModel":{
+    "Pathway": {
+      "Active": false,
+      "FileName": "./axon_test.hdf5"
+    },
+    "Lattice": {
+      "Center": { "x[mm]": 14.937, "y[mm]": -13.613, "z[mm]": -5.123 },
+      "Direction": { "x[mm]": 2.2314, "y[mm]": 5.0661, "z[mm]": 3.99 },
+      "PointDistance[mm]": 0.1,
+      "Shape": { "x": 1, "y": 1, "z": 1 }
+    }
+    },
   "Solver": {
     "Type": "CG",
     "Preconditioner": "bddc",

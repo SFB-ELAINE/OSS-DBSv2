@@ -25,6 +25,7 @@ from ossdbs.fem import (VolumeConductor,
                         VolumeConductorFloatingImpedance)
 import numpy as np
 import logging
+import pandas as pd
 
 _logger = logging.getLogger(__name__)
 
@@ -295,3 +296,33 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
                                                     amplitudes=fourier_coefficients,
                                                     current_controlled=current_controlled)
     return frequency_domain_signal
+
+def run_volume_conductor_model(settings, volume_conductor):
+    """TODO document
+
+
+    Notes
+    -----
+
+    Run at all frequencies.
+    If the mode is multisine, a provided list of frequencies is used.
+    """
+    _logger.info("Run volume conductor model")
+    compute_impedance = False
+    if "ComputeImpedance" in settings:
+        if settings["ComputeImpedance"]:
+            _logger.info("Will compute impedance at each frequency")
+            compute_impedance = True
+
+    volume_conductor.run_full_analysis(compute_impedance)
+    # save impedance
+    if "SaveImpedance" in settings:
+        if settings["SaveImpedance"]:
+            _logger.info("Saving impedance")
+            df = pd.DataFrame({"freq": volume_conductor.signal.frequencies,
+                               "real": volume_conductor.impedances.real,
+                               "imag": volume_conductor.impedances.imag})
+            df.to_csv("impedance.csv", index=False)
+
+    if compute_impedance:
+        return volume_conductor.impedances
