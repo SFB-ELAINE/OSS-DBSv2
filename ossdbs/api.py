@@ -23,6 +23,7 @@ from ossdbs.fem import (VolumeConductor,
                         VolumeConductorNonFloating,
                         VolumeConductorFloating,
                         VolumeConductorFloatingImpedance)
+from ossdbs.utils.vtk_export import FieldSolution
 import numpy as np
 import logging
 import pandas as pd
@@ -323,6 +324,12 @@ def run_volume_conductor_model(settings, volume_conductor):
                                "real": volume_conductor.impedances.real,
                                "imag": volume_conductor.impedances.imag})
             df.to_csv("impedance.csv", index=False)
+
+    if "ExportVTK" in settings:
+        if settings["ExportVTK"]:
+            u = FieldSolution(volume_conductor.potential, "potential", 
+                volume_conductor.mesh.ngsolvemesh, False)
+            u.save("test_potenital")
 
     if compute_impedance:
         return volume_conductor.impedances
