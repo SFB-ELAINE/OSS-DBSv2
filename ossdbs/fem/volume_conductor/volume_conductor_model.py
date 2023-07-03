@@ -70,7 +70,7 @@ class VolumeConductor(ABC):
                           lattice: np.ndarray = None
                           ) -> None:
         if compute_impedance:
-            self._impedances = np.ndarray(shape=(len(self.signal.frequencies),))
+            self._impedances = np.ndarray(shape=(len(self.signal.frequencies)), dtype=complex)
         for idx, frequency in enumerate(self.signal.frequencies):
             _logger.info("Computing at frequency: {}".format(frequency))
             if not self.current_controlled:
