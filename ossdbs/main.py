@@ -114,13 +114,6 @@ def main() -> None:
         volume_conductor = prepare_volume_conductor_model(settings, geometry, conductivity, solver)
         run_volume_conductor_model(settings, volume_conductor)
 
-    vtk = VTKOutput(ma=volume_conductor.mesh.ngsolvemesh,
-               coefs=[volume_conductor.potential],
-               names = ["potential"],
-               filename="potential_result",
-               subdivision=3)
-    vtk.Do()
-
     time_1 = time.time()
     timings["VolumeConductor"] = time_1 - time_0
 

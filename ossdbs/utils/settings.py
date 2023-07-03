@@ -63,6 +63,7 @@ class Settings:
                'OutputPath': 'result',
                "ComputeImpedance": False,
                "SaveImpedance": False,
+               "ExportVTK": False,
                'Solver': {
                    'Type': 'CG',
                    'Preconditioner': 'bddc',

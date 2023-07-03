@@ -47,6 +47,7 @@
   },
   "ComputeImpedance": true,
   "SaveImpedance": true,
+  "ExportVTK": false,
   "Mesh": {
     "LoadMesh": false,
     "MeshElementOrder": 2,
