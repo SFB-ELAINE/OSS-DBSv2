@@ -143,7 +143,7 @@ def set_contact_and_encapsulation_layer_properties(settings, model_geometry):
 
 
 def set_custom_mesh_sizes(settings, model_geometry):
-    model_geometry.set_volume_mesh_sizes(settings["VolumeMeshSizes"])
+    model_geometry.set_mesh_sizes(settings["MeshSize"])
 
 
 def generate_mesh(settings):
@@ -156,7 +156,7 @@ def generate_mesh(settings):
     """
     model_geometry = generate_model_geometry(settings)
     set_contact_and_encapsulation_layer_properties(settings, model_geometry)
-    if "VolumeMeshSizes" in settings:
+    if "MeshSize" in settings:
         set_custom_mesh_sizes(settings, model_geometry)
 
     mesh_settings = settings["Mesh"]
