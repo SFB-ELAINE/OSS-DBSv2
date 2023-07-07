@@ -27,6 +27,7 @@ class TimeDomainSignal(ABC):
     Notes
     -----
 
+    TODO document and clarify how to use amplitude 
     The spectrum is also received from here.
 
     """
@@ -39,10 +40,28 @@ class TimeDomainSignal(ABC):
                  ) -> None:
         if np.isclose(frequency, 0):
             raise ValueError("Frequency must be greater than zero.")
-        self._frequency = abs(frequency)
-        self._pulse_width = abs(pulse_width)
-        self._space_width = abs(inter_pulse_width)
-        self._counter_pulse_width = abs(counter_pulse_width)
+        self._frequency = frequency
+        self._pulse_width = pulse_width
+        self._inter_pulse_width = inter_pulse_width
+        self._counter_pulse_width = counter_pulse_width
+        self._amplitude = 1.0
+        self._counter_amplitude = 1.0
+
+    @property
+    def amplitude(self) -> float:
+        return self._amplitude
+
+    @amplitude.setter
+    def amplitude(self, value) -> None:
+        self._amplitude = value
+
+    @property
+    def counter_amplitude(self) -> float:
+        return self._counter_amplitude
+
+    @counter_amplitude.setter
+    def counter_amplitude(self, value) -> None:
+        self._counter_amplitude = value
 
     @property
     def frequency(self) -> float:

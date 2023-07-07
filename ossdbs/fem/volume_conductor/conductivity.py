@@ -38,7 +38,7 @@ class ConductivityCF:
         if dti_image is not None:
             self._diffusion, self._bounding_box = self._crop_dti_image(dti_image, brain_bounding_box)
             # TODO implement slicing
-        self._model = dielectric_model
+        self._dielectric_model = dielectric_model
         self._encapsulation_layers = encapsulation_layers
         self._is_complex = complex_data
 
@@ -91,9 +91,9 @@ class ConductivityCF:
         for material in MATERIALS:
             material_idx = MATERIALS[material]
             if self.is_complex:
-                self._data[self._masks[material_idx]] = self._model.complex_conductivity(material, omega)
+                self._data[self._masks[material_idx]] = self._dielectric_model.complex_conductivity(material, omega)
             else:
-                self._data[self._masks[material_idx]] = self._model.conductivity(material, omega)
+                self._data[self._masks[material_idx]] = self._dielectric_model.conductivity(material, omega)
 
         # transform conductivity [S/m] to [S/mm] since the geometry is
         # measured in mm
