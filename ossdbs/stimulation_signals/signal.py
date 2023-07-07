@@ -27,7 +27,7 @@ class TimeDomainSignal(ABC):
     Notes
     -----
 
-    TODO document and clarify how to use amplitude 
+    TODO document and clarify how to use amplitude
     The spectrum is also received from here.
 
     """
