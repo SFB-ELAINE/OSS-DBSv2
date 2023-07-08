@@ -1,4 +1,3 @@
-
 from .signal import TimeDomainSignal
 import numpy as np
 
@@ -18,16 +17,6 @@ class RectangleSignal(TimeDomainSignal):
         Relative width between pulse and counter pulse of one period.
     """
 
-    def get_frequencies_and_fourier_coefficients(self,
-                                                 cutoff_frequency: float) -> np.ndarray:
-        max_harmonic = int(cutoff_frequency / self.frequency)
-        harmonics = np.arange(0, max_harmonic + 1)
-        frequencies = harmonics * self.frequency
-        coefficients = self.get_fourier_coefficients(frequencies)
-        return frequencies, coefficients
-
-        pass
-
     def get_fourier_coefficients(self, frequency_list: np.ndarray) -> np.ndarray:
         print(self._inter_pulse_width)
         coefficients = self._harmonics_at_freqs(frequency_list, self.amplitude, self.frequency, self._pulse_width, shift=self._pulse_width)
@@ -43,3 +32,17 @@ class RectangleSignal(TimeDomainSignal):
             # apply time shift at each frequency
             coefficient = coefficient * np.exp(-frequencies * 1j * 2. * np.pi * shift)
         return coefficient
+
+    def get_time_domain_signal(self, dt: float, timesteps: int) -> np.ndarray:
+        signal = np.zeros(timesteps)
+        period = 1. / self.frequency
+        offset = 0
+        while offset < timesteps * dt:
+            pulse_idx = offset + int(self._pulse_width / dt)
+            signal[:pulse_idx] = self.amplitude
+            if self._counter_pulse_width is not None:
+                counter_pulse_start_idx = offset + int(self._pulse_width / dt + self._inter_pulse_width / dt)
+                counter_pulse_end_idx = offset + counter_pulse_start_idx + int(self._counter_pulse_width / dt)
+                signal[counter_pulse_start_idx:counter_pulse_end_idx] = -self.counter_amplitude
+            offset += period
+        return signal

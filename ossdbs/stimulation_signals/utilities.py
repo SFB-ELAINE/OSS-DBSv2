@@ -33,3 +33,9 @@ def _gen_signal(coefficient, harmonics, frequency, dt, shift, SigmaApprox, n):
     signal = 2. * np.sum(sigma * coefficient * np.exp(harmonics * 1j * 2. * np.pi * frequency * (n * dt - shift)))
     signal -= coefficient[0]
     tmp[n] = np.real(signal)
+
+
+def adjust_cutoff_frequency(cutoff_frequency, frequency):
+    """Function to make cutoff frequency multiple of stimulation frequency
+    """
+    return cutoff_frequency - cutoff_frequency % frequency
