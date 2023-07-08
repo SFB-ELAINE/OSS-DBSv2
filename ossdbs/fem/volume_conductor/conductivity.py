@@ -2,7 +2,6 @@ from ossdbs.utils.nifti1image import (MagneticResonanceImage,
                                       DiffusionTensorImage)
 from ossdbs.model_geometry import BoundingBox
 from ossdbs.dielectric_model import DielectricModel
-from ossdbs.utils.materials import MATERIALS
 from ossdbs.fem.mesh import Mesh
 import numpy as np
 import ngsolve
@@ -30,6 +29,7 @@ class ConductivityCF:
                  mri_image: MagneticResonanceImage,
                  brain_bounding_box: BoundingBox,
                  dielectric_model: DielectricModel,
+                 materials: dict,
                  encapsulation_layers=[],  # TODO type hint
                  complex_data: bool = False,
                  dti_image: DiffusionTensorImage = None
@@ -38,14 +38,15 @@ class ConductivityCF:
         if dti_image is not None:
             self._diffusion, self._bounding_box = self._crop_dti_image(dti_image, brain_bounding_box)
             # TODO implement slicing
-        self._model = dielectric_model
+        self._dielectric_model = dielectric_model
         self._encapsulation_layers = encapsulation_layers
         self._is_complex = complex_data
 
         self._data = np.zeros(self._material_distribution.shape, dtype=self._get_datatype())
-        self._masks = [None] * len(MATERIALS)
-        for material in MATERIALS:
-            material_idx = MATERIALS[material]
+        self._materials = materials
+        self._masks = [None] * len(self._materials)
+        for material in self._materials:
+            material_idx = self._materials[material]
             self._masks[material_idx] = self._material_distribution == material_idx
 
     @property
@@ -88,12 +89,12 @@ class ConductivityCF:
             Data structure representing the conductivity distribution in space.
         """
 
-        for material in MATERIALS:
-            material_idx = MATERIALS[material]
+        for material in self._materials:
+            material_idx = self._materials[material]
             if self.is_complex:
-                self._data[self._masks[material_idx]] = self._model.complex_conductivity(material, omega)
+                self._data[self._masks[material_idx]] = self._dielectric_model.complex_conductivity(material, omega)
             else:
-                self._data[self._masks[material_idx]] = self._model.conductivity(material, omega)
+                self._data[self._masks[material_idx]] = self._dielectric_model.conductivity(material, omega)
 
         # transform conductivity [S/m] to [S/mm] since the geometry is
         # measured in mm
