@@ -19,8 +19,6 @@ from ossdbs.fem import ConductivityCF
 import logging
 import time
 
-from ngsolve import VTKOutput
-
 _logger = logging.getLogger(__name__)
 
 
