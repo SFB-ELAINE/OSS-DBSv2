@@ -42,6 +42,13 @@
 
   "MaterialDistribution": {
     "MRIPath": "icbm_avg_152_segmented.nii.gz",
+    "MRIMapping": {
+      "Unknown": 0,
+      "CSF": 1,
+      "White matter": 2,
+      "Gray matter": 3,
+      "Blood": 4      
+    },
     "DiffusionTensorActive": false,
     "DTIPath": ""
   },
