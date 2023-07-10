@@ -1,4 +1,3 @@
-
 from .signal import TimeDomainSignal
 import numpy as np
 
@@ -18,36 +17,32 @@ class RectangleSignal(TimeDomainSignal):
         Relative width between pulse and counter pulse of one period.
     """
 
-    def _generate_samples(self, sample_spacing: float) -> np.ndarray:
-        """Generate samples which follow the signal form.
+    def get_fourier_coefficients(self, frequency_list: np.ndarray) -> np.ndarray:
+        print(self._inter_pulse_width)
+        coefficients = self._harmonics_at_freqs(frequency_list, self.amplitude, self.frequency, self._pulse_width, shift=self._pulse_width)
+        if np.greater(self._counter_pulse_width, 0.0):
+            coefficients2 = self._harmonics_at_freqs(frequency_list, -self.counter_amplitude, self.frequency, self._counter_pulse_width, shift=2.0 * self._pulse_width + self._inter_pulse_width)
+            coefficients = coefficients + coefficients2
+        return coefficients
 
-        Parameters
-        ----------
-        sample_spacing : float
-            Timestep [s] between two samples.
+    def _harmonics_at_freqs(self, frequencies, amp, frequency, tp, shift=None):
+        coefficient = amp * tp * frequency * np.sinc(frequencies * tp)
+        coefficient = coefficient.astype("complex128")
+        if shift is not None:
+            # apply time shift at each frequency
+            coefficient = coefficient * np.exp(-frequencies * 1j * 2. * np.pi * shift)
+        return coefficient
 
-        Returns
-        -------
-        np.ndarray
-            Samples for one period.
-        """
-
-        spacing = sample_spacing * self._frequency
-        n_samples = int(1 / spacing) if 0 < spacing < 1 else 1
-
-        pulse_length = int(self._pulse_width * n_samples)
-        pulse = np.array([1] * pulse_length)
-
-        space_length = int(self._space_width * n_samples)
-
-        counter_length = int(self._counter_pulse_width * n_samples)
-        counter_value = -pulse_length / counter_length if counter_length else 0
-        counter_pulse = np.array([counter_value] * counter_length)
-        counter_start = pulse_length + space_length
-        counter_end = counter_start + counter_length
-
-        signal = np.zeros(n_samples)
-        signal[:pulse_length] = pulse
-        n_counter_samples = n_samples - counter_start
-        signal[counter_start:counter_end] = counter_pulse[:n_counter_samples]
+    def get_time_domain_signal(self, dt: float, timesteps: int) -> np.ndarray:
+        signal = np.zeros(timesteps)
+        period = 1. / self.frequency
+        offset = 0
+        while offset < timesteps * dt:
+            pulse_idx = offset + int(self._pulse_width / dt)
+            signal[:pulse_idx] = self.amplitude
+            if self._counter_pulse_width is not None:
+                counter_pulse_start_idx = offset + int(self._pulse_width / dt + self._inter_pulse_width / dt)
+                counter_pulse_end_idx = offset + counter_pulse_start_idx + int(self._counter_pulse_width / dt)
+                signal[counter_pulse_start_idx:counter_pulse_end_idx] = -self.counter_amplitude
+            offset += period
         return signal

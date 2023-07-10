@@ -85,7 +85,7 @@ class Mesh:
         ngsolve.fem.CoefficientFunction
         """
 
-        return self._mesh.BoundaryCF(values=boundaries)
+        return self._mesh.BoundaryCF(boundaries)
 
     def material_coefficients(self, materials: dict) \
             -> ngsolve.fem.CoefficientFunction:
@@ -96,7 +96,7 @@ class Mesh:
         ngsolve.fem.CoefficientFunction
         """
 
-        return self._mesh.MaterialCF(values=materials)
+        return self._mesh.MaterialCF(materials)
 
     @property
     def ngsolvemesh(self) -> ngsolve.Mesh:

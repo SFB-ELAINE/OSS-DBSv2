@@ -1,3 +1,4 @@
+from .materials import MATERIALS
 
 
 class Settings:
@@ -49,6 +50,7 @@ class Settings:
                    'DiffusionTensorActive': False,
                    'DTIPath': '',
                },
+               "MRIMapping": MATERIALS,
                'Surfaces': [],
                'Mesh': {
                    'LoadMesh': False,
