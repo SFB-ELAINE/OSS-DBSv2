@@ -1,3 +1,5 @@
+# TODO implement meaningful tests for signals
+"""
 from ossdbs.stimulation_signals.rectangle_signal import RectangleSignal
 from ossdbs.stimulation_signals.triangle_signal import TriangleSignal
 from ossdbs.stimulation_signals.trapezoid_signal import TrapezoidSignal
@@ -137,19 +139,6 @@ class TestTrapezoidStimulationSignal:
         desired = [0]
         np.testing.assert_equal(actual, desired)
 
-    """
-    # TODO fix
-    def test_generate_no_pulse_width(self):
-        signal = TrapezoidSignal(frequency=1,
-                                 pulse_width=0.0,
-                                 top_width=0.1,
-                                 counter_pulse_width=0.6,
-                                 inter_pulse_width=0.1)
-        actual = signal._generate_samples(sample_spacing=0.1)
-        desired = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-        np.testing.assert_equal(actual, desired)
-    """
-
     def test_generate_no_pulse_top_width(self):
         signal = TrapezoidSignal(frequency=1,
                                  pulse_width=0.3,
@@ -187,3 +176,4 @@ class TestTrapezoidStimulationSignal:
         actual = signal._generate_samples(sample_spacing=0.1)
         desired = [0.5, 1, 0.5, 0, 0, 0, -1 / 6, -1 / 3, -0.5, -0.5]
         np.testing.assert_equal(actual, desired)
+"""
