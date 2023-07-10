@@ -1,6 +1,6 @@
 MATERIALS = {'Blood': 4,
-             'Gray matter': 1,
+             'Gray matter': 3,
              'White matter': 2,
-             'CSF': 3,
+             'CSF': 1,
              'Unknown': 0
              }

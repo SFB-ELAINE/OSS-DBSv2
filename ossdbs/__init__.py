@@ -14,6 +14,7 @@ from ossdbs.api import (generate_electrodes,
                         prepare_dielectric_properties,
                         prepare_volume_conductor_model,
                         prepare_stimulation_signal,
+                        run_volume_conductor_model,
                         set_contact_and_encapsulation_layer_properties,
                         generate_model_geometry)
 from ossdbs.utils.nifti1image import (MagneticResonanceImage,
@@ -56,4 +57,5 @@ __all__ = ('__version__',
            'MagneticResonanceImage',
            'DiffusionTensorImage',
            'set_contact_and_encapsulation_layer_properties',
-           'Mesh')
+           'Mesh',
+           'run_volume_conductor_model')

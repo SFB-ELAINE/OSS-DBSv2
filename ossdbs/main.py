@@ -7,6 +7,7 @@ from ossdbs.api import (generate_electrodes,
                         create_bounding_box,
                         prepare_solver,
                         prepare_volume_conductor_model,
+                        run_volume_conductor_model,
                         set_contact_and_encapsulation_layer_properties
                         )
 from ossdbs.utils.settings import Settings
@@ -16,41 +17,9 @@ from ossdbs.model_geometry import (ModelGeometry,
                                    BrainGeometry)
 from ossdbs.fem import ConductivityCF
 import logging
-import pandas as pd
 import time
 
 _logger = logging.getLogger(__name__)
-
-
-def run_volume_conductor_model(settings, volume_conductor):
-    """TODO document
-
-
-    Notes
-    -----
-
-    Run at all frequencies.
-    If the mode is multisine, a provided list of frequencies is used.
-    """
-    _logger.info("Run volume conductor model")
-    compute_impedance = False
-    if "ComputeImpedance" in settings:
-        if settings["ComputeImpedance"]:
-            _logger.info("Will compute impedance at each frequency")
-            compute_impedance = True
-
-    volume_conductor.run_full_analysis(compute_impedance)
-    # save impedance
-    if "SaveImpedance" in settings:
-        if settings["SaveImpedance"]:
-            _logger.info("Saving impedance")
-            df = pd.DataFrame({"freq": volume_conductor.signal.frequencies,
-                               "real": volume_conductor.impedances.real,
-                               "imag": volume_conductor.impedances.imag})
-            df.to_csv("impedance.csv", index=False)
-
-    if compute_impedance:
-        return volume_conductor.impedances
 
 
 def main() -> None:
