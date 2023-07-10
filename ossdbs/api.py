@@ -23,8 +23,10 @@ from ossdbs.fem import (VolumeConductor,
                         VolumeConductorNonFloating,
                         VolumeConductorFloating,
                         VolumeConductorFloatingImpedance)
+from ossdbs.utils.vtk_export import FieldSolution
 import numpy as np
 import logging
+import pandas as pd
 
 _logger = logging.getLogger(__name__)
 
@@ -141,7 +143,7 @@ def set_contact_and_encapsulation_layer_properties(settings, model_geometry):
 
 
 def set_custom_mesh_sizes(settings, model_geometry):
-    model_geometry.set_volume_mesh_sizes(settings["VolumeMeshSizes"])
+    model_geometry.set_mesh_sizes(settings["Mesh"]["MeshSize"])
 
 
 def generate_mesh(settings):
@@ -154,7 +156,7 @@ def generate_mesh(settings):
     """
     model_geometry = generate_model_geometry(settings)
     set_contact_and_encapsulation_layer_properties(settings, model_geometry)
-    if "VolumeMeshSizes" in settings:
+    if "MeshSize" in settings["Mesh"]:
         set_custom_mesh_sizes(settings, model_geometry)
 
     mesh_settings = settings["Mesh"]
@@ -295,3 +297,39 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
                                                     amplitudes=fourier_coefficients,
                                                     current_controlled=current_controlled)
     return frequency_domain_signal
+
+def run_volume_conductor_model(settings, volume_conductor):
+    """TODO document
+
+
+    Notes
+    -----
+
+    Run at all frequencies.
+    If the mode is multisine, a provided list of frequencies is used.
+    """
+    _logger.info("Run volume conductor model")
+    compute_impedance = False
+    if "ComputeImpedance" in settings:
+        if settings["ComputeImpedance"]:
+            _logger.info("Will compute impedance at each frequency")
+            compute_impedance = True
+
+    volume_conductor.run_full_analysis(compute_impedance)
+    # save impedance
+    if "SaveImpedance" in settings:
+        if settings["SaveImpedance"]:
+            _logger.info("Saving impedance")
+            df = pd.DataFrame({"freq": volume_conductor.signal.frequencies,
+                               "real": volume_conductor.impedances.real,
+                               "imag": volume_conductor.impedances.imag})
+            df.to_csv("impedance.csv", index=False)
+
+    if "ExportVTK" in settings:
+        if settings["ExportVTK"]:
+            u = FieldSolution(volume_conductor.potential, "potential", 
+                volume_conductor.mesh.ngsolvemesh, False)
+            u.save("test_potenital")
+
+    if compute_impedance:
+        return volume_conductor.impedances

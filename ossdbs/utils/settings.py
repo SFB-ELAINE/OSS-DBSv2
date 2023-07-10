@@ -52,7 +52,6 @@ class Settings:
                },
                "MRIMapping": MATERIALS,
                'Surfaces': [],
-               'VolumeMeshSizes': {},
                'Mesh': {
                    'LoadMesh': False,
                    'LoadPath': '',
@@ -62,9 +61,11 @@ class Settings:
                    'SaveMesh': False,
                    'SavePath': 'mesh'
                },
+               'MeshSize': {},
                'OutputPath': 'result',
                "ComputeImpedance": False,
                "SaveImpedance": False,
+               "ExportVTK": False,
                'Solver': {
                    'Type': 'CG',
                    'Preconditioner': 'bddc',
