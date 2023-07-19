@@ -61,9 +61,14 @@ class Pathway(PointModel):
             sub_group.create_dataset('Location', data=location.astype('S'))
             potential = data.potential[start:end]
             sub_group.create_dataset('Potential[V]', data=potential)
-            current_density = data.current_density[start:end]
-            sub_group.create_dataset('CurrentDensity[A|m2]',
-                                     data=current_density)
+            electric_field_magnitude = data.electric_field_magnitude[start:end]
+            sub_group.create_dataset('Electric field magnitude[Vm^(-1)]', data=electric_field_magnitude)
+            electric_field_vector_x = data.electric_field_vector[0][start:end]
+            sub_group.create_dataset('Electric field vector x[Vm^(-1)]', data=electric_field_vector_x)
+            electric_field_vector_y = data.electric_field_vector[1][start:end]
+            sub_group.create_dataset('Electric field vector x[Vm^(-1)]', data=electric_field_vector_y)
+            electric_field_vector_z = data.electric_field_vector[2][start:end]
+            sub_group.create_dataset('Electric field vector x[Vm^(-1)]', data=electric_field_vector_z)
             start = start + end
         return start
 

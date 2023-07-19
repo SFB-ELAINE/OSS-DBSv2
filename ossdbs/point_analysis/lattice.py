@@ -91,4 +91,7 @@ class Lattice(PointModel):
         file.create_dataset('Points[mm]', data=data.points)
         file.create_dataset('Location', data=self.__location.astype('S'))
         file.create_dataset('Potential[V]', data=data.potential)
-        file.create_dataset('Current_density[A|m2]', data=data.current_density)
+        file.create_dataset('Electric field magnitude[Vm^(-1)]', data=data.electric_field_magnitude)
+        file.create_dataset('Electric field vector x[Vm^(-1)]', data=data.electric_field_vector[0])
+        file.create_dataset('Electric field vector y[Vm^(-1)]', data=data.electric_field_vector[1])
+        file.create_dataset('Electric field vector z[Vm^(-1)]', data=data.electric_field_vector[2])
