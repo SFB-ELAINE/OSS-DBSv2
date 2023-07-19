@@ -298,6 +298,7 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
                                                     current_controlled=current_controlled)
     return frequency_domain_signal
 
+
 def run_volume_conductor_model(settings, volume_conductor):
     """TODO document
 
@@ -327,8 +328,8 @@ def run_volume_conductor_model(settings, volume_conductor):
 
     if "ExportVTK" in settings:
         if settings["ExportVTK"]:
-            u = FieldSolution(volume_conductor.potential, "potential", 
-                volume_conductor.mesh.ngsolvemesh, False)
+            u = FieldSolution(volume_conductor.potential, "potential",
+                              volume_conductor.mesh.ngsolvemesh, False)
             u.save("test_potenital")
 
     if compute_impedance:
