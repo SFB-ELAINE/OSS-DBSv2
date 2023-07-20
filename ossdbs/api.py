@@ -27,6 +27,7 @@ from ossdbs.utils.vtk_export import FieldSolution
 import numpy as np
 import logging
 import pandas as pd
+import h5py
 
 _logger = logging.getLogger(__name__)
 
@@ -316,7 +317,9 @@ def run_volume_conductor_model(settings, volume_conductor):
             _logger.info("Will compute impedance at each frequency")
             compute_impedance = True
 
-    volume_conductor.run_full_analysis(compute_impedance)
+    # TODO WIP: integrate point analysis, default return is None
+    lattice = create_point_analysis(settings)
+    volume_conductor.run_full_analysis(compute_impedance, lattice=lattice)
     # save impedance
     if "SaveImpedance" in settings:
         if settings["SaveImpedance"]:
@@ -334,3 +337,33 @@ def run_volume_conductor_model(settings, volume_conductor):
 
     if compute_impedance:
         return volume_conductor.impedances
+
+
+# TODO WIP
+def create_point_analysis(settings):
+    """Run a postprocessing analysis on the VCM
+
+    Notes
+    -----
+
+    Current plan:
+    1. Create points where the potential and electric field
+       shall be evaluated.
+    2. Integrate these points into the VCM: run_full_analysis
+       of the volume_conductor_model has an argument lattice.
+    3. Write separate function to load results and estimate VTA / PAM
+    """
+    # decide on a mode for the analysis, to be discussed!
+    mode = None
+    if 'Points' in settings:
+        mode = "Lead-DBS"
+        _logger.info("Use Lead-DBS model for postprocessing")
+    # TODO define mode with lattice model or pathway model
+    # interaction with Lead-DBS
+    if mode == "Lead-DBS":
+        with h5py.File(settings['Points'], "r") as file:
+            points = [np.array(file[key]) for key in file.keys()]
+        return np.concatenate(points, axis=0)
+    # TODO create lattice / pathway model from input file
+
+    return None

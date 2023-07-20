@@ -7,6 +7,7 @@ from ossdbs.stimulation_signals import FrequencyDomainSignal
 from .conductivity import ConductivityCF
 from typing import List
 import numpy as np
+import os
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -59,6 +60,9 @@ class VolumeConductor(ABC):
         self._frequency = None
         self._sigma = None
 
+        # to write results
+        self._output_path = None
+
     @abstractmethod
     def compute_solution(self,
                          frequency: float
@@ -73,7 +77,7 @@ class VolumeConductor(ABC):
             if self._complex:
                 self._impedances = np.ndarray(shape=(len(self.signal.frequencies)), dtype=complex)
             else:
-                 self._impedances = np.ndarray(shape=(len(self.signal.frequencies)))
+                self._impedances = np.ndarray(shape=(len(self.signal.frequencies)))
         for idx, frequency in enumerate(self.signal.frequencies):
             _logger.info("Computing at frequency: {}".format(frequency))
             if not self.current_controlled:
@@ -88,6 +92,23 @@ class VolumeConductor(ABC):
                 continue
             if compute_impedance:
                 self._impedances[idx] = self.compute_impedance()
+
+    @property
+    def output_path(self) -> str:
+        return self._output_path
+
+    @output_path.setter
+    def output_path(self, path: str) -> None:
+        """Set the path to write output.
+
+        Notes
+        -----
+
+        Creates directory if it doesn't exist.
+        """
+        if not os.path.exists(path):
+            os.makedirs(path)
+        self._output_path = path
 
     @property
     def conductivity_cf(self) -> ConductivityCF:
