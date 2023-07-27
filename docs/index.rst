@@ -49,6 +49,7 @@ Some examples to run you can find in the Examples section.
 .. code-block:: console
 
    $ pip install sphinx
+   $ pip install nbsphinx
    $ pip install sphinx-rtd-theme
 
 =================
@@ -65,6 +66,7 @@ Table of contents
    volume_conductor_model
    electrodes
    add_electrode
+   /Electrode_Examples.ipynb
 
 
 Indices and tables

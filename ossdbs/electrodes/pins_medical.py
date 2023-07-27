@@ -1,6 +1,6 @@
 # PINS Medical L301
 from abc import ABC
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from .electrode_model_template import ElectrodeModel
 import netgen
 import netgen.occ as occ
@@ -18,7 +18,7 @@ class PINSMedicalParameters(ABC):
 
 
 class PINSMedicalModel(ElectrodeModel):
-    """PINS Medical L301 electrode.
+    """PINS Medical electrode.
 
     Attributes
     ----------
@@ -36,6 +36,12 @@ class PINSMedicalModel(ElectrodeModel):
     """
 
     _n_contacts = 4
+
+    def parameter_check(self):
+        # Check to ensure that all parameters are at least 0
+        for param in (asdict(self._parameters).values()):
+            if (param < 0):
+                raise ValueError("Parameter values cannot be less than zero")
 
     def _construct_encapsulation_geometry(self, thickness: float) \
             -> netgen.libngpy._NgOCC.TopoDS_Shape:
@@ -81,26 +87,25 @@ class PINSMedicalModel(ElectrodeModel):
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
         contact = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
-
-        distance_1 = self._parameters.tip_length
-        distance_2 = distance_1 + self._parameters.contact_length + self._parameters.contact_spacing
-        distance_3 = distance_2 + self._parameters.contact_length + self._parameters.contact_spacing
-        distance_4 = distance_3 + self._parameters.contact_length + self._parameters.contact_spacing
-
-        vector_1 = tuple(np.array(self._direction) * distance_1)
-        vector_2 = tuple(np.array(self._direction) * distance_2)
-        vector_3 = tuple(np.array(self._direction) * distance_3)
-        vector_4 = tuple(np.array(self._direction) * distance_4)
-
-        contacts = [contact.Move(v=vector_1),
-                    contact.Move(v=vector_2),
-                    contact.Move(v=vector_3),
-                    contact.Move(v=vector_4)]
-
-        for index, contact in enumerate(contacts, 1):
-            name = self._boundaries['Contact_{}'.format(index)]
+        contacts = []
+        distance = self._parameters.tip_length
+        for count in range(self._n_contacts):
+            name = self._boundaries['Contact_{}'.format(count + 1)]
             contact.bc(name)
+            min_edge_z_val = float("inf")
+            max_edge_z_val = float("-inf")
             for edge in contact.edges:
-                edge.name = name
+                if (edge.center.z < min_edge_z_val):
+                    min_edge_z_val = edge.center.z
+                    min_edge = edge    
+                if (edge.center.z > max_edge_z_val):
+                    max_edge_z_val = edge.center.z
+                    max_edge = edge    
+            # Only name edge with the min and max z values (represents the edge between the non-contact and contact surface)
+            min_edge.name = name
+            max_edge.name = name
+            vector = tuple(np.array(self._direction) * distance)
+            contacts.append(contact.Move(vector))
+            distance += self._parameters.contact_length + self._parameters.contact_spacing
 
         return netgen.occ.Glue(contacts)
