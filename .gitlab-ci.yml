@@ -62,8 +62,9 @@ pages:
   stage: "pages"
   image: "python:3.10"
   script:
-    - pip install sphinx sphinx-rtd-theme
+    - apt-get install -y pandoc
     - cd docs
+    - pip install -r requirements.txt
     - make html
     - mv _build/html/ ../public/
   artifacts:
