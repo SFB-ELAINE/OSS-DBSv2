@@ -24,3 +24,4 @@ ng.ini
 *.swp
 test_cases/input_case2/micro_probes_SNEX100_custom.json
 input_files/impedance.csv
+*checkpoints.ipynb
