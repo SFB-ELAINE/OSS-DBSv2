@@ -20,14 +20,14 @@ Brain Geometry and the Conductivity.
 Brain Geometry
 ^^^^^^^^^^^^^^
 
-.. automodule:: ossdbs.brain_geometry
+.. automodule:: ossdbs.model_geometry.BrainGeometry
     :members:
     :undoc-members:
     :show-inheritance:
 
 Conductivity
 ^^^^^^^^^^^^
-.. automodule:: ossdbs.conductivity
+.. automodule:: ossdbs.fem.volume_conductor.conductivity
     :members:
     :undoc-members:
     :show-inheritance:
