@@ -10,15 +10,12 @@ Prepare the geometry
   required to build the electrode.
 * Implement the actual electrode model in a class called `ElectrodenameModel`.
   A template for this class is given in :class:`ossdbs.electrodes.ElectrodeModel`.
-  The number of contacts and two methods need to be implemented:
-  `_construct_geometry` and `_construct_encapsulation_geometry`.
-* Add the default parameters of the electrode to `ossdbs/electrodes/defaults.py`. 
-  Add a function to `ossdbs/electrodes/__init__.py` named `Electrodename`.
-  This function does nothing else than building the electrode model with the default geometry.
-  Customised electrode parameters are thus not possible using this class.
+  At the minimum, the following methods need to be implemented:
+  `parameter_check`, `_construct_encapsulation_geometry`, `_construct_geometry`, `_body`, and `_contacts`.
+* Import the model from the correct file to `ossdbs/electrodes/defaults.py` at the top of the file. 
+  Also, add the default parameters of the electrode and a function named `Electrodename` to this file  
+* Import the model from the correct file to `ossdbs/electrodes/__init__.py` and from `.defaults` at the top of the file.
+  Additionally, add the model name/class name to the `ELECTRODE_MODELS`, `ELECTRODES`, `ELECTRODE_PARAMETERS`, and `__all__` dictionaries. 
 
-Final steps
------------
 
-* Add the electrode to `ossdbs/factories/custom_electrode_factory.py`
-* Add the electrode to `ossdbs/factories/electrode_factory.py`
+

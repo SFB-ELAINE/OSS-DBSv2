@@ -1,6 +1,6 @@
 from ossdbs.electrodes import (ELECTRODES,
                                ELECTRODE_MODELS,
-                               custom_parameters)
+                               ELECTRODE_PARAMETERS)
 from ossdbs.dielectric_model import (create_cc4_model,
                                      create_constant_model,
                                      DIELECTRIC_MODELS)
@@ -47,8 +47,6 @@ def generate_electrodes(settings: dict):
 
     Notes
     -----
-
-    TODO custom electrodes
     """
     _logger.info("Generate electrode geometries")
     electrodes = []
@@ -62,10 +60,12 @@ def generate_electrodes(settings: dict):
                     electrode_parameters["TipPosition"]["y[mm]"],
                     electrode_parameters["TipPosition"]["z[mm]"])
 
-        if "Model" in name:
+        # Implemented custom electrodes without using custom_electrodes.py
+        if "Custom" in name:
             electrode_model = ELECTRODE_MODELS[name]
-            custom_electrode_parameters = custom_parameters(electrode_parameters["CustomParameters"])
-            electrode = electrode_model(parameters=custom_electrode_parameters,
+            parameter_class = ELECTRODE_PARAMETERS[electrode_model.__name__]
+            custom_list = electrode_parameters["CustomParameters"]
+            electrode = electrode_model(parameters=parameter_class(**custom_list),
                                         direction=direction,
                                         position=position,
                                         rotation=rotation)
