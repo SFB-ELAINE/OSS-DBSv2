@@ -6,7 +6,7 @@ from .boston_scientific_vercise import (BostonScientificVerciseParameters,
                                         BostonScientificVerciseModel,
                                         BostonScientificVerciseDirectedModel)
 from .medtronic import (MedtronicParameters,
-                        MedtronicModel)
+                        MedtronicModel, MedtronicSenSightModel)
 from .micro_probes import (MicroProbesSNEX100Parameters,
                            MicroProbesSNEX100Model,
                            MicroProbesRodentElectrodeParameters,
@@ -23,12 +23,13 @@ from .defaults import (default_electrode_parameters,
                        Medtronic3387,
                        Medtronic3389,
                        Medtronic3391,
+                       MedtronicSenSightB33015,
+                       MedtronicSenSightB33005,
                        MicroProbesSNEX100,
                        MicroProbesRodentElectrode,
                        PINSMedicalL301,
                        PINSMedicalL302,
                        PINSMedicalL303)
-from .custom_electrodes import custom_parameters
 
 
 ELECTRODES = {'AbbottStJudeActiveTip6142_6145':
@@ -49,6 +50,10 @@ ELECTRODES = {'AbbottStJudeActiveTip6142_6145':
               Medtronic3389,
               'Medtronic3391':
               Medtronic3391,
+              'MedtronicSenSightB33015':
+              MedtronicSenSightB33015,
+              'MedtronicSenSightB33005':
+              MedtronicSenSightB33005,
               'MicroProbesSNEX100':
               MicroProbesSNEX100,
               'PINSMedicalL301':
@@ -71,6 +76,8 @@ ELECTRODE_MODELS = {'AbbottStJudeActiveTipCustom':
                     BostonScientificVerciseDirectedModel,
                     'MedtronicCustom':
                     MedtronicModel,
+                    'MedtronicSensightCustom':
+                    MedtronicSenSightModel,
                     'MicroProbesRodentElectrodeCustom':
                     MicroProbesRodentElectrodeModel,
                     'MicroProbesSNEX100Custom':
@@ -89,6 +96,8 @@ ELECTRODE_PARAMETERS = {'AbbottStJudeActiveTipModel':
                         'BostonScientificVerciseDirectedModel':
                         BostonScientificVerciseParameters,
                         'MedtronicModel':
+                        MedtronicParameters,
+                        'MedtronicSenSightModel':
                         MedtronicParameters,
                         'MicroProbesRodentElectrodeModel':
                         MicroProbesRodentElectrodeParameters,
@@ -115,6 +124,8 @@ __all__ = ('ElectrodeModel',
            'Medtronic3389',
            'Medtronic3391',
            'MedtronicModel',
+           'MedtronicSenSightB33015',
+           'MedtronicSenSightB33005',
            'MedtronicParameters',
            'MicroProbesRodentElectrode',
            'MicroProbesRodentElectrodeModel',

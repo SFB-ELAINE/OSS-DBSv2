@@ -48,7 +48,7 @@ class ElectrodeModel(ABC):
             self._boundaries['Contact_{}'.format(idx)] = 'Contact_{}'.format(idx)
 
         self._parameters = parameters
-
+        self.parameter_check()
         self._geometry = self._construct_geometry()
         self._encapsulation_geometry = None
         self._encapsulation_thickness = 0.0
@@ -105,6 +105,10 @@ class ElectrodeModel(ABC):
             return self._construct_encapsulation_geometry(thickness)
         return self._encapsulation_geometry
 
+    @abstractmethod
+    def parameter_check(self):
+        pass
+   
     @abstractmethod
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         pass
