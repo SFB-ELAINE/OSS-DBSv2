@@ -1,73 +1,285 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
-<svg width="48cm" height="19cm" viewBox="-320 499 953 365" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-  <g id="Background"/>
-  <g id="Background"/>
-  <g id="Background"/>
-  <g id="Background"/>
-  <g id="Background"/>
-  <g id="Background"/>
-  <g id="MicroProbesCustomRodent">
-    <g>
-      <ellipse style="fill: #ba3100; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #000000" cx="-140" cy="660" rx="40" ry="40"/>
-      <text font-size="12.8" style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="-140" y="663.881">
-        <tspan x="-140" y="663.881"></tspan>
-      </text>
+<svg
+   width="48cm"
+   height="19cm"
+   viewBox="-320 499 953 365"
+   version="1.1"
+   id="svg382"
+   sodipodi:docname="MicroProbesCustomRodent.svg"
+   inkscape:version="1.2.2 (b0a8486, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs386" />
+  <sodipodi:namedview
+     id="namedview384"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="cm"
+     showgrid="false"
+     inkscape:zoom="0.93927083"
+     inkscape:cx="907.08661"
+     inkscape:cy="359.32128"
+     inkscape:window-width="1846"
+     inkscape:window-height="1016"
+     inkscape:window-x="1994"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="MicroProbesCustomRodent" />
+  <g
+     id="Background" />
+  <g
+     id="g279" />
+  <g
+     id="g281" />
+  <g
+     id="g283" />
+  <g
+     id="g285" />
+  <g
+     id="g287" />
+  <g
+     id="MicroProbesCustomRodent">
+    <g
+       id="g295">
+      <ellipse
+         style="fill: #ba3100; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #000000"
+         cx="-140"
+         cy="660"
+         rx="40"
+         ry="40"
+         id="ellipse289" />
+      <text
+         font-size="12.8"
+         style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal"
+         x="-140"
+         y="663.881"
+         id="text293"><tspan
+           x="-140"
+           y="663.881"
+           id="tspan291" /></text>
     </g>
-    <g>
-      <rect style="fill: #eab12f; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #000000" x="-140" y="620" width="621.724" height="80" rx="0" ry="0"/>
-      <text font-size="12.8" style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="170.862" y="663.881">
-        <tspan x="170.862" y="663.881"></tspan>
-      </text>
+    <g
+       id="g303">
+      <rect
+         style="fill: #eab12f; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #000000"
+         x="-140"
+         y="620"
+         width="621.724"
+         height="80"
+         rx="0"
+         ry="0"
+         id="rect297" />
+      <text
+         font-size="12.8"
+         style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal"
+         x="170.862"
+         y="663.881"
+         id="text301"><tspan
+           x="170.862"
+           y="663.881"
+           id="tspan299" /></text>
     </g>
-    <text font-size="16.9333" style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="540" y="680">
-      <tspan x="540" y="680">0.235 mm </tspan>
-    </text>
-    <text font-size="22.5778" style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="0" y="520">
-      <tspan x="0" y="520">MicroProbes Custom Rodent</tspan>
-    </text>
-    <g>
-      <rect style="fill: #ba3100; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #000000" x="-140" y="620" width="60" height="80" rx="0" ry="0"/>
-      <text font-size="12.8" style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal" x="-110" y="663.881">
-        <tspan x="-110" y="663.881"></tspan>
-      </text>
+    <text
+       font-size="16.9333"
+       style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal"
+       x="540"
+       y="680"
+       id="text307"><tspan
+         x="540"
+         y="680"
+         id="tspan305">0.235 mm </tspan></text>
+    <text
+       font-size="22.5778"
+       style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal"
+       x="0"
+       y="520"
+       id="text311"><tspan
+         x="0"
+         y="520"
+         id="tspan309">MicroProbes Custom Rodent</tspan></text>
+    <g
+       id="g319">
+      <rect
+         style="fill: #ba3100; fill-opacity: 1; stroke-opacity: 1; stroke-width: 2; stroke: #000000"
+         x="-140"
+         y="620"
+         width="60"
+         height="80"
+         rx="0"
+         ry="0"
+         id="rect313" />
+      <text
+         font-size="12.8"
+         style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:middle;font-family:sans-serif;font-style:normal;font-weight:normal"
+         x="-110"
+         y="663.881"
+         id="text317"><tspan
+           x="-110"
+           y="663.881"
+           id="tspan315" /></text>
     </g>
-    <text font-size="16.9333" style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="-320" y="660">
-      <tspan x="-320" y="660">0.225 mm </tspan>
-    </text>
-    <text font-size="16.9333" style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="-160" y="800">
-      <tspan x="-160" y="800">0.01125 mm </tspan>
-    </text>
-    <g>
-      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000" x1="-175.528" y1="760" x2="-84.4721" y2="760"/>
-      <polyline style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000" points="-167.764,755 -177.764,760 -167.764,765 "/>
-      <polyline style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000" points="-92.2361,765 -82.2361,760 -92.2361,755 "/>
+    <text
+       font-size="16.9333"
+       style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal"
+       x="-320"
+       y="660"
+       id="text323"><tspan
+         x="-320"
+         y="660"
+         id="tspan321">0.225 mm </tspan></text>
+    <text
+       font-size="16.9333px"
+       style="font-style:normal;font-weight:normal;font-family:sans-serif;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
+       x="-160"
+       y="800"
+       id="text327"><tspan
+         x="-160"
+         y="800"
+         id="tspan325">0.1125 mm</tspan></text>
+    <g
+       id="g335">
+      <line
+         style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000"
+         x1="-175.528"
+         y1="760"
+         x2="-84.4721"
+         y2="760"
+         id="line329" />
+      <polyline
+         style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000"
+         points="-167.764,755 -177.764,760 -167.764,765 "
+         id="polyline331" />
+      <polyline
+         style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000"
+         points="-92.2361,765 -82.2361,760 -92.2361,755 "
+         id="polyline333" />
     </g>
-    <g>
-      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000" x1="-200" y1="695.528" x2="-200" y2="624.472"/>
-      <polyline style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000" points="-205,687.764 -200,697.764 -195,687.764 "/>
-      <polyline style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000" points="-195,632.236 -200,622.236 -205,632.236 "/>
+    <g
+       id="g343">
+      <line
+         style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000"
+         x1="-200"
+         y1="695.528"
+         x2="-200"
+         y2="624.472"
+         id="line337" />
+      <polyline
+         style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000"
+         points="-205,687.764 -200,697.764 -195,687.764 "
+         id="polyline339" />
+      <polyline
+         style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000"
+         points="-195,632.236 -200,622.236 -205,632.236 "
+         id="polyline341" />
     </g>
-    <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000" x1="-140" y1="620" x2="-200" y2="620"/>
-    <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000" x1="-140" y1="700" x2="-200" y2="700"/>
-    <g>
-      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000" x1="520" y1="695.528" x2="520" y2="624.472"/>
-      <polyline style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000" points="515,687.764 520,697.764 525,687.764 "/>
-      <polyline style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000" points="525,632.236 520,622.236 515,632.236 "/>
+    <line
+       style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000"
+       x1="-140"
+       y1="620"
+       x2="-200"
+       y2="620"
+       id="line345" />
+    <line
+       style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000"
+       x1="-140"
+       y1="700"
+       x2="-200"
+       y2="700"
+       id="line347" />
+    <g
+       id="g355">
+      <line
+         style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000"
+         x1="520"
+         y1="695.528"
+         x2="520"
+         y2="624.472"
+         id="line349" />
+      <polyline
+         style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000"
+         points="515,687.764 520,697.764 525,687.764 "
+         id="polyline351" />
+      <polyline
+         style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000"
+         points="525,632.236 520,622.236 515,632.236 "
+         id="polyline353" />
     </g>
-    <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000" x1="481.724" y1="620" x2="520" y2="620"/>
-    <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000" x1="481.724" y1="700" x2="520" y2="700"/>
-    <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000" x1="-180" y1="760" x2="-180" y2="660"/>
-    <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000" x1="-80" y1="760" x2="-80" y2="700"/>
-    <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000" x1="-180" y1="820" x2="-180" y2="660"/>
-    <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000" x1="480" y1="820" x2="481.724" y2="700"/>
-    <g>
-      <line style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000" x1="-175.528" y1="820" x2="475.528" y2="820"/>
-      <polyline style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000" points="-167.764,815 -177.764,820 -167.764,825 "/>
-      <polyline style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000" points="467.764,825 477.764,820 467.764,815 "/>
+    <line
+       style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000"
+       x1="481.724"
+       y1="620"
+       x2="520"
+       y2="620"
+       id="line357" />
+    <line
+       style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000"
+       x1="481.724"
+       y1="700"
+       x2="520"
+       y2="700"
+       id="line359" />
+    <line
+       style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000"
+       x1="-180"
+       y1="760"
+       x2="-180"
+       y2="660"
+       id="line361" />
+    <line
+       style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000"
+       x1="-80"
+       y1="760"
+       x2="-80"
+       y2="700"
+       id="line363" />
+    <line
+       style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000"
+       x1="-180"
+       y1="820"
+       x2="-180"
+       y2="660"
+       id="line365" />
+    <line
+       style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke-dasharray: 4; stroke: #000000"
+       x1="480"
+       y1="820"
+       x2="481.724"
+       y2="700"
+       id="line367" />
+    <g
+       id="g375">
+      <line
+         style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000"
+         x1="-175.528"
+         y1="820"
+         x2="475.528"
+         y2="820"
+         id="line369" />
+      <polyline
+         style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000"
+         points="-167.764,815 -177.764,820 -167.764,825 "
+         id="polyline371" />
+      <polyline
+         style="fill: none; stroke-opacity: 1; stroke-width: 2; stroke: #000000"
+         points="467.764,825 477.764,820 467.764,815 "
+         id="polyline373" />
     </g>
-    <text font-size="16.9333" style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal" x="-160" y="860">
-      <tspan x="-160" y="860">13.3 mm </tspan>
-    </text>
+    <text
+       font-size="16.9333"
+       style="fill: #000000; fill-opacity: 1; stroke: none;text-anchor:start;font-family:sans-serif;font-style:normal;font-weight:normal"
+       x="-160"
+       y="860"
+       id="text379"><tspan
+         x="-160"
+         y="860"
+         id="tspan377">13.3 mm </tspan></text>
   </g>
 </svg>
