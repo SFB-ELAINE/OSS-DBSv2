@@ -293,7 +293,7 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
         elif spectrum_mode == "Truncation":
             frequencies, fourier_coefficients = signal.get_truncated_spectrum(cutoff_frequency)
         else:
-            frequencies, fourier_coefficients = signal.frequencies, signal.fourier_coefficients
+            frequencies, fourier_coefficients = signal.get_frequencies_and_fourier_coefficients(cutoff_frequency)
     frequency_domain_signal = FrequencyDomainSignal(frequencies=frequencies,
                                                     amplitudes=fourier_coefficients,
                                                     current_controlled=current_controlled)
@@ -331,9 +331,21 @@ def run_volume_conductor_model(settings, volume_conductor):
 
     if "ExportVTK" in settings:
         if settings["ExportVTK"]:
-            u = FieldSolution(volume_conductor.potential, "potential",
-                              volume_conductor.mesh.ngsolvemesh, False)
-            u.save("test_potenital")
+            # TODO check at which freq it saves results
+            FieldSolution(volume_conductor.potential,
+                          "potential",
+                          volume_conductor.mesh.ngsolvemesh,
+                          False).save("potential")
+
+            FieldSolution(volume_conductor.electric_field,
+                          "E-field",
+                          volume_conductor.mesh.ngsolvemesh,
+                          False).save("E-field")
+
+            FieldSolution(volume_conductor.conductivity,
+                          "conductivity",
+                          volume_conductor.mesh.ngsolvemesh,
+                          False).save("conductivity")
 
     if compute_impedance:
         return volume_conductor.impedances

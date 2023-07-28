@@ -201,9 +201,8 @@ class VolumeConductor(ABC):
         """TODO document
         """
         if len(self.contacts.active) == 2:
-            curr_dens_conj = ngsolve.Conj(self.current_density)
             mesh = self._mesh.ngsolvemesh
-            power = ngsolve.Integrate(self.electric_field * curr_dens_conj, mesh)
+            power = ngsolve.Integrate(self.electric_field * self.current_density, mesh)
             # TODO integrate surface impedance
             voltage = 0
             for idx, contact in enumerate(self.contacts.active):

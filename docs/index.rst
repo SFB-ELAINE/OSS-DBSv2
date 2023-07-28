@@ -65,8 +65,6 @@ Table of contents
    signals
    volume_conductor_model
    electrodes
-   add_electrode
-   /Electrode_Examples.ipynb
 
 
 Indices and tables
