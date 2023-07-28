@@ -1,6 +1,5 @@
 import numpy as np
 from abc import ABC
-from ossdbs.utils.materials import MATERIALS
 
 
 class DielectricModel(ABC):
@@ -29,7 +28,6 @@ class DielectricModel(ABC):
         float
             Permittivity.
         """
-        
         return np.real(self.MODELS[material].complex_permittivity(omega))
 
     def complex_permittivity(self, material: str, omega: float) -> float:
