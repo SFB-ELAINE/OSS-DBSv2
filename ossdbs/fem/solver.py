@@ -58,7 +58,6 @@ class CGSolver(Solver):
                                    printrates=self._printrates,
                                    maxsteps=self._maxsteps,
                                    precision=self._precision)
-
         r = linear_form.vec.CreateVector()
         r.data = linear_form.vec - bilinear_form.mat * grid_function.vec
         grid_function.vec.data = grid_function.vec.data + inverse * r

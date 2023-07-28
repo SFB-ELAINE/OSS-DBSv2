@@ -95,7 +95,7 @@ def main() -> None:
     time_0 = time_1
 
     _logger.info("Prepare conductivity coefficient function")
-    materials = settings["MRIMapping"]
+    materials = settings["MaterialDistribution"]["MRIMapping"]
     conductivity = ConductivityCF(mri_image,
                                   brain_region,
                                   dielectric_model,
