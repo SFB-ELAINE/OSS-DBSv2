@@ -1,13 +1,32 @@
-{ 
-  "Electrodes":
-  [
+{
+  "BrainRegion": {
+    "Center": {
+      "x[mm]": 17.0,
+      "y[mm]": 8.0,
+      "z[mm]": 6.0
+    },
+    "Dimension": {
+      "x[mm]": 40.0,
+      "y[mm]": 40.0,
+      "z[mm]": 40.0
+    },
+    "Shape": "Sphere"
+  },
+  "Electrodes": [
     {
       "Name": "BostonScientificVercise",
       "PathToCustomParameters": "",
       "Rotation[Degrees]": 0.0,
-      "Direction": { "x[mm]": 0.0, "y[mm]": 0.0, "z[mm]": 1.0 },
-      "TipPosition": { "x[mm]": 17.0, "y[mm]": 8.0, "z[mm]": 6.0 },
-
+      "Direction": {
+        "x[mm]": 0.0,
+        "y[mm]": 0.0,
+        "z[mm]": 1.0
+      },
+      "TipPosition": {
+        "x[mm]": 17.0,
+        "y[mm]": 8.0,
+        "z[mm]": 6.0
+      },
       "Contacts": [
         {
           "Contact_ID": 1,
@@ -15,7 +34,11 @@
           "Current[A]": 0.0,
           "Voltage[V]": 1.0,
           "Floating": false,
-          "SurfaceImpedance[Ohmm]": { "real": 0.0, "imag": 0.0 }
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSizeEdge": 0.01
         },
         {
           "Contact_ID": 2,
@@ -23,23 +46,21 @@
           "Current[A]": 0.0,
           "Voltage[V]": 0.0,
           "Floating": false,
-          "SurfaceImpedance[Ohmm]": { "real": 0.0, "imag": 0.0 }
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSizeEdge": 0.01
         }
       ],
-    "EncapsulationLayer": {
-  	    "Thickness[mm]": 0.0,
-  	    "Material": "Blood",
-	      "DielectricModel": "ColeCole4",
-        "MaxMeshSize": 0.5
-  	  }
+      "EncapsulationLayer": {
+        "Thickness[mm]": 0.0,
+        "Material": "Blood",
+        "DielectricModel": "ColeCole4",
+        "MaxMeshSize": 0.01
+      }
     }
   ],
-
-  "BrainRegion": {
-    "Center": { "x[mm]": 17.0, "y[mm]": 8.0, "z[mm]": 6.0 },
-    "Dimension": { "x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0 }
-  },
-
   "MaterialDistribution": {
     "MRIPath": "icbm_avg_152_segmented.nii.gz",
     "MRIMapping": {
@@ -47,16 +68,14 @@
       "CSF": 1,
       "White matter": 2,
       "Gray matter": 3,
-      "Blood": 4      
+      "Blood": 4
     },
     "DiffusionTensorActive": false,
     "DTIPath": ""
   },
-
   "DielectricModel": {
     "Type": "ColeCole4"
   },
-
   "Mesh": {
     "LoadMesh": false,
     "MeshElementOrder": 2,
@@ -64,35 +83,56 @@
       "Type": "Default",
       "MaxMeshSize": 0.1
     },
-    "MeshSize":{
+    "MeshSize": {
       "Edges": {},
-      "Faces":{"E1C1": 0.1},
-      "Volumes":{"Brain": 0.5}
+      "Faces": {},
+      "Volumes": {
+        "Brain": 0.1
+      }
     },
     "SaveMesh": false
   },
-
-  "MeshRefinement": {
-	  "MeshSizeRatioContacts": 3.0
-  },
-
-  "EQSMode": false,
-  "CurrentControlled": false,
+  "EQSMode": true,
+  "FEMOrder": 2,
   "ComputeImpedance": true,
-
   "StimulationSignal": {
+    "CurrentControlled": false,
     "Type": "Multisine",
-    "ListOfFrequencies": [130.0]
+    "ListOfFrequencies": [
+      130.0
+    ]
   },
-    
   "Solver": {
     "Type": "CG",
     "Preconditioner": "bddc",
-    "PrintRates": false,
+    "PrintRates": true,
     "MaximumSteps": 10000,
     "Precision": 1e-12
   },
-
+  "PointModel": {
+    "Pathway": {
+      "Active": false,
+      "FileName": ""
+    },
+    "Lattice": {
+      "Center": {
+        "x[mm]": 10,
+        "y[mm]": 10,
+        "z[mm]": 10
+      },
+      "Shape": {
+        "x": 10,
+        "y": 10,
+        "z": 10
+      },
+      "Direction": {
+        "x[mm]": 0,
+        "y[mm]": 0,
+        "z[mm]": 1
+      },
+      "PointDistance[mm]": 1
+    }
+  },
   "OutputPath": "",
   "SaveImpedance": true,
   "ExportVTK": true
