@@ -16,7 +16,8 @@ from ossdbs.api import (generate_electrodes,
                         prepare_stimulation_signal,
                         run_volume_conductor_model,
                         set_contact_and_encapsulation_layer_properties,
-                        generate_model_geometry)
+                        generate_model_geometry,
+                        generate_neuron_grid)
 from ossdbs.utils.nifti1image import (MagneticResonanceImage,
                                       DiffusionTensorImage)
 
@@ -58,4 +59,5 @@ __all__ = ('__version__',
            'DiffusionTensorImage',
            'set_contact_and_encapsulation_layer_properties',
            'Mesh',
-           'run_volume_conductor_model')
+           'run_volume_conductor_model',
+           'generate_neuron_grid')
