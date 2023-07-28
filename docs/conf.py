@@ -43,7 +43,8 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
-    'nbsphinx'
+    'sphinx.ext.autosummary'
+    # 'nbsphinx'  # TODO currently not supported in gitlab CI
 ]
 
 # Add any paths that contain templates here, relative to this directory.

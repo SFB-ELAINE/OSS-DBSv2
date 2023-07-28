@@ -31,5 +31,3 @@ Code
 .. autoclass:: ossdbs.electrodes.micro_probes.MicroProbesRodentElectrodeModel
     :members:
     :show-inheritance:
-
-To view examples of how to reference these electrodes, refer to the :doc:`Electrode Examples page <../Electrode_Examples>`.

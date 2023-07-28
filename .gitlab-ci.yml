@@ -5,19 +5,19 @@ stages:
     - "run"
     - "pages"
 
-before_script:
-  - python --version  # For debugging
-  - pip install virtualenv
-  - virtualenv venv
-  - source venv/bin/activate
-
 .test:
   script:
+    - pip install virtualenv
+    - virtualenv venv
+    - source venv/bin/activate
     - pip install tox
     - tox -e $PYTHONVERSION
 
 .run:
   script:
+   - pip install virtualenv
+   - virtualenv venv
+   - source venv/bin/activate
    - pip install .
    - cd input_files
    - ossdbs 'inputTest.json'
@@ -60,17 +60,30 @@ run-3.10:
 
 pages:
   stage: "pages"
+  # needed with jupyter notebooks
+  # image: "ubuntu:22.04"
   image: "python:3.10"
   script:
-    - apt-get install -y pandoc
+    # needed for jupyter notebooks
+    # - apt update
+    # - apt install -y python3 python3-pip
+    # - apt install -y pandoc
+    - pip install virtualenv
+    - virtualenv venv
+    - source venv/bin/activate
+    - pip install .
     - cd docs
     - pip install -r requirements.txt
+    # in future also include jupyter notebooks
+    # - jupyter --version
+    # - jupyter nbextension install --user --py widgetsnbextension
+    # - jupyter nbextension enable --user --py widgetsnbextension
+    # - jupyter nbextension install --user --py webgui_jupyter_widgets
+    # - jupyter nbextension enable --user --py webgui_jupyter_widgets
     - make html
     - mv _build/html/ ../public/
   artifacts:
     paths:
       - public
   only: 
-      - main 
-  # rules:
-    #    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      - main
