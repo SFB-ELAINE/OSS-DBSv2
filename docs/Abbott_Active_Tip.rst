@@ -52,9 +52,3 @@ Code
 .. autoclass:: ossdbs.electrodes.abbott_stjude.AbbottStJudeActiveTipModel
     :members:
     :show-inheritance:
-
-
-
-
-
-To view examples of how to reference these electrodes, refer to the :doc:`Electrode Examples page <../Electrode_Examples>`.
