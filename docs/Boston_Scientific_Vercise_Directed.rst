@@ -33,7 +33,3 @@ Code
 .. autoclass:: ossdbs.electrodes.boston_scientific_vercise.BostonScientificVerciseDirectedModel
     :members:
     :show-inheritance:
-
-
-To view examples of how to reference these electrodes, refer to the :doc:`Electrode Examples page <../Electrode_Examples>`.
-
