@@ -20,6 +20,7 @@ from ossdbs.api import (generate_electrodes,
                         generate_neuron_grid)
 from ossdbs.utils.nifti1image import (MagneticResonanceImage,
                                       DiffusionTensorImage)
+import ngsolve
 
 
 _logger = logging.getLogger(__name__)
@@ -28,6 +29,8 @@ _logger.addHandler(logging.NullHandler())
 
 def set_logger(level=logging.INFO):
     _logger.setLevel(level)
+    if level == logging.DEBUG:
+        ngsolve.ngsglobals.msg_level = 10
     # to avoid multiple output in Jupyter notebooks
     if len(_logger.handlers) == 1:
         ch = logging.StreamHandler()
