@@ -1,6 +1,7 @@
 from .bounding_box import BoundingBox
 import netgen.occ
 import numpy as np
+import numpy.linalg as npl
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -15,7 +16,7 @@ class BrainGeometry:
     shape: str
         Choose between "Sphere", "Ellipsoid", "Box", and "Custom"
     bounding_box : BoundingBox
-        Bounding box of the geometry, can be none for a custom geometry
+        Bounding box of the geometry in voxel space, can be none for custom geometry
 
     Notes
     -----
@@ -38,15 +39,16 @@ class BrainGeometry:
     """
     def __init__(self,
                  shape: str,
-                 bounding_box: BoundingBox = None
+                 bounding_box: BoundingBox = None,
+                 trafo_matrix: np.ndarray = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
+                 translation: np.ndarray = np.array([0, 0, 0])
                  ) -> None:
         self._bbox = bounding_box
         self._geometry = None
         self._shape = shape
-
-    @property
-    def bounding_box(self):
-        return self._bbox
+        self._trafo_matrix = trafo_matrix
+        self._translation = translation
+        self._affine_trafo = netgen.occ.gp_GTrsf(mat=self._trafo_matrix.ravel(), vec=self._translation)
 
     def get_surface_names(self):
         surface_list = []
@@ -65,7 +67,7 @@ class BrainGeometry:
         """
 
         if self._geometry is None:
-            _logger.debug("Inititalize geo of shape {}")
+            _logger.debug("Inititalize geo of shape {}".format(self._shape))
             self._geometry = self._create_shape()
             self._geometry.bc('BrainSurface')
             self._geometry.mat('Brain')
@@ -88,18 +90,20 @@ class BrainGeometry:
         x, y, z = np.subtract(self._bbox.end, self._bbox.start) / 2
         transformator = netgen.occ.gp_GTrsf(mat=[x, 0, 0, 0, y, 0, 0, 0, z])
         sphere = netgen.occ.Sphere(c=netgen.occ.Pnt(1, 1, 1), r=1)
-        return transformator(sphere).Move(self._bbox.start)
+        ellipsoid = transformator(sphere).Move(self._bbox.start)
+
+        return self._affine_trafo(ellipsoid)
 
     def _create_sphere(self) -> netgen.occ.Solid:
         x, y, z = np.subtract(self._bbox.end, self._bbox.start) / 2
         center = np.add(self._bbox.start, (x, y, z))
         radius = np.min([x, y, z])
         sphere = netgen.occ.Sphere(c=netgen.occ.Pnt(center), r=radius)
-        return sphere
+        return self._affine_trafo(sphere)
 
     def _create_box(self) -> netgen.occ.Solid:
         box = netgen.occ.Box(self._bbox.start, self._bbox.end)
-        return box
+        return self._affine_trafo(box)
 
     def import_geometry(self, path_to_geo_file: str):
         """Import brain geometry from CAD file
@@ -113,11 +117,16 @@ class BrainGeometry:
         _logger.debug("Import brain geometry from file: {}".format(path_to_geo_file))
         occgeo = netgen.occ.OCCGeometry(path_to_geo_file)
         self._geometry = occgeo.shape
-        bbox = self._geometry.bounding_box
-        print(bbox)
-        self._bbox = BoundingBox(bbox[0], bbox[1])
         self._geometry.bc('BrainSurface')
         self._geometry.mat('Brain')
+        # get bounding box in voxel space
+        bbox = self._geometry.bounding_box
+        inv_trafo = npl.inv(self._trafo_matrix)
+        inv_affine_trafo = netgen.occ.gp_GTrsf(mat=inv_trafo.ravel(), vec=-inv_trafo.dot(self._translation))
+        box = netgen.occ.Box(bbox[0], bbox[1])
+        box_voxel = inv_affine_trafo(box)
+        bbox_voxel = box_voxel.bounding_box
+        self._bbox = BoundingBox(bbox_voxel[0], bbox_voxel[1])
 
     def set_geometry(self, geo: netgen.occ.Solid):
         """Set brain geometry from externally prepared OCC solid

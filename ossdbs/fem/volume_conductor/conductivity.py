@@ -5,6 +5,9 @@ from ossdbs.dielectric_model import DielectricModel
 from ossdbs.fem.mesh import Mesh
 import numpy as np
 import ngsolve
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class ConductivityCF:
@@ -16,7 +19,7 @@ class ConductivityCF:
         Matrix represents coding for the distribution of different materials.
 
     bounding_box : BoundingBox
-        Represents a cuboid aligned with the cartesian axis.
+        Represents a cuboid in real space.
 
     dielectric_model : DielectricModel
         Model for the dielectric spectrum of a tissues.
@@ -34,17 +37,27 @@ class ConductivityCF:
                  complex_data: bool = False,
                  dti_image: DiffusionTensorImage = None
                  ) -> None:
-        self._material_distribution, self._bounding_box = self._crop_mri_image(mri_image, brain_bounding_box)
+
+        _logger.debug("Crop MRI image")
+        brain_bounding_box_voxel = mri_image.get_voxel_bounding_box(brain_bounding_box)
+        self._material_distribution, self._mri_voxel_bounding_box = mri_image._crop_image(brain_bounding_box_voxel)
+        # account for ordering in NGSolve
+        self._material_distribution = np.swapaxes(self._material_distribution, 0, 2)
+
         if dti_image is not None:
-            self._diffusion, self._bounding_box = self._crop_dti_image(dti_image, brain_bounding_box)
-            # TODO implement slicing
+            _logger.debug("Crop DTI image")
+            brain_bounding_box_voxel = dti_image.get_voxel_bounding_box(brain_bounding_box)
+            self._dti_data, self._dti_voxel_bounding_box = dti_image._crop_image(brain_bounding_box_voxel)
+            self._dti_voxel_cf = self.create_dti_voxel_cf(self._dti_data, self._dti_voxel_bounding_box, dti_image)
+
         self._dielectric_model = dielectric_model
         self._encapsulation_layers = encapsulation_layers
         self._is_complex = complex_data
-
         self._data = np.zeros(self._material_distribution.shape, dtype=self._get_datatype())
         self._materials = materials
         self._masks = [None] * len(self._materials)
+        self._trafo_cf = mri_image.trafo_cf
+        # Creates a boolean mask for the indices that material is present in
         for material in self._materials:
             material_idx = self._materials[material]
             self._masks[material_idx] = self._material_distribution == material_idx
@@ -65,7 +78,6 @@ class ConductivityCF:
                  frequency: float,
                  ) -> ngsolve.CF:
         omega = 2 * np.pi * frequency
-        # TODO integrate diffusion if applicable
         material_dict = {"Brain": self._distribution(omega)}
         for encapsulation_layer in self._encapsulation_layers:
             if self.is_complex:
@@ -88,71 +100,38 @@ class ConductivityCF:
         ngsolve.VoxelCoefficient
             Data structure representing the conductivity distribution in space.
         """
-
         for material in self._materials:
             material_idx = self._materials[material]
+            # Sets conductivity values based on what indices in self._data are material_idx
             if self.is_complex:
                 self._data[self._masks[material_idx]] = self._dielectric_model.complex_conductivity(material, omega)
             else:
                 self._data[self._masks[material_idx]] = self._dielectric_model.conductivity(material, omega)
+        start = self._mri_voxel_bounding_box.start
+        end = self._mri_voxel_bounding_box.end
+        return ngsolve.VoxelCoefficient(start, end, self._data, False, trafocf=self._trafo_cf)
 
-        # transform conductivity [S/m] to [S/mm] since the geometry is
-        # measured in mm
-        values = self._data * 1e-3
-        start, end = self._bounding_box.start, self._bounding_box.end
+    def material_distribution(self, mesh: Mesh) -> ngsolve.VoxelCoefficient:
+        """Return MRI image projected onto mesh
 
-        return ngsolve.VoxelCoefficient(start, end, values, False)
+        Notes
+        -----
 
-    def _crop_mri_image(self, nifti, brain_bounding_box) -> np.ndarray:
-        """Crop the Nifti image of the conductivity to match the brain geometry.
-
-        Returns
-        -------
-        TODO
+        The encapsulation layer material is set to a fixed value.
         """
+        start, end = self._mri_voxel_bounding_box.start, self._mri_voxel_bounding_box.end
+        materials = ngsolve.VoxelCoefficient(start, end, self._material_distribution, linear=False, trafocf=self._trafo_cf)
+        material_dict = {"Brain": materials}
+        for encapsulation_layer in self._encapsulation_layers:
+            material_dict[encapsulation_layer.name] = self._materials[encapsulation_layer.material]
+        return mesh.material_coefficients(material_dict)
 
-        voxel_size = nifti.voxel_size
-        offset = nifti.offset
-        bbox = brain_bounding_box.intersection(nifti.bounding_box)
-        start, end = bbox.start, bbox.end
-        start_index = np.floor(np.subtract(start, offset) / voxel_size)
-        x_s, y_s, z_s = start_index.astype(int)
-        end_index = np.ceil(np.subtract(end, offset) / voxel_size)
-        x_e, y_e, z_e = end_index.astype(int)
-
-        data = nifti.data_map[x_s:x_e, y_s:y_e, z_s:z_e]
-        new_start = tuple(start_index * voxel_size + offset)
-        new_end = tuple(end_index * voxel_size + offset)
-
-        bounding_box = BoundingBox(start=new_start, end=new_end)
-
-        return data, bounding_box
-
-    def _crop_dti_image(self, nifti, brain_bounding_box) -> np.ndarray:
-        """Crop the Nifti image of the diffusion to match the brain geometry.
-
-        Returns
-        -------
-        TODO
-        """
-
-        voxel_size = nifti.voxel_size
-        offset = nifti.offset
-        bbox = brain_bounding_box.intersection(nifti.bounding_box)
-        start, end = bbox.start, bbox.end
-        start_index = np.floor(np.subtract(start, offset) / voxel_size)
-        x_s, y_s, z_s = start_index.astype(int)
-        end_index = np.ceil(np.subtract(end, offset) / voxel_size)
-        x_e, y_e, z_e = end_index.astype(int)
-
-        #TODO
-        # data = nifti.data_map[x_s:x_e, y_s:y_e, z_s:z_e]
-        datatmp = nifti.diffusion()
-        data = datatmp[x_s:x_e, y_s:y_e, z_s:z_e]
-
-        new_start = tuple(start_index * voxel_size + offset)
-        new_end = tuple(end_index * voxel_size + offset)
-
-        bounding_box = BoundingBox(start=new_start, end=new_end)
-
-        return data, bounding_box
+    def create_dti_voxel_cf(self, dti_data, dti_voxel_bounding_box, dti_image):
+        start, end = dti_voxel_bounding_box.start, dti_voxel_bounding_box.end
+        dti_flat_matrix = []
+        for component, index in dti_image.components.items():
+            dti_component_data = dti_data[:, :, :, index]
+            # account for ordering in NGSolve
+            dti_component_data = np.swapaxes(dti_component_data, 0, 2)
+            dti_flat_matrix.append(ngsolve.VoxelCoefficient(start, end, dti_component_data, linear=False, trafocf=dti_image.trafo_cf))
+        return ngsolve.CoefficientFunction(tuple(dti_flat_matrix), dims=(3, 3))
