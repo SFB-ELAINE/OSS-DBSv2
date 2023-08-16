@@ -2,6 +2,7 @@ from ossdbs.electrodes import (ELECTRODES,
                                ELECTRODE_MODELS,
                                ELECTRODE_PARAMETERS)
 from ossdbs.dielectric_model import (create_cc4_model,
+                                     create_cc3_model,
                                      create_constant_model,
                                      DIELECTRIC_MODELS)
 from ossdbs.model_geometry import (BoundingBox,
@@ -88,8 +89,10 @@ def prepare_dielectric_properties(settings: dict):
         model_parameters = dielectric_parameters['CustomParameters']
         if 'ColeCole4' in dielectric_parameters['Type']:
             return create_cc4_model(model_parameters)
+        if 'ColeCole3' in dielectric_parameters['Type']:
+            return create_cc3_model(model_parameters)
         if 'Constant' in dielectric_parameters['Type']:
-            return create_constant_model()
+            return create_constant_model(model_parameters)
 
     return DIELECTRIC_MODELS[dielectric_parameters['Type']]
 
@@ -122,6 +125,7 @@ def set_contact_and_encapsulation_layer_properties(settings, model_geometry):
     electrode_settings = settings["Electrodes"]
     offset = 0
     for idx, new_parameters in enumerate(electrode_settings):
+        _logger.debug("Update Electrode {} with settings {}".format(idx, new_parameters))
         if "Contacts" in new_parameters:
             for contact_info in new_parameters["Contacts"]:
                 contact_idx = offset + contact_info["Contact_ID"]
@@ -130,10 +134,12 @@ def set_contact_and_encapsulation_layer_properties(settings, model_geometry):
             offset += model_geometry.electrodes[idx].n_contacts
         if "EncapsulationLayer" in new_parameters:
             # encapsulation layer is one-indexed in the model_geometry
+            _logger.debug("Updating encapsulation layer {}".format(idx + 1))
             encap_idx = model_geometry.get_encapsulation_layer_index("EncapsulationLayer_{}".format(idx + 1))
+            _logger.debug("Encapsulation layer has index {}".format(encap_idx))
             if encap_idx != -1:
                 _logger.info("Updating encapsulation layer properties")
-                model_geometry.update_encapsulation_layer(idx, new_parameters["EncapsulationLayer"])
+                model_geometry.update_encapsulation_layer(encap_idx, new_parameters["EncapsulationLayer"])
     if "Surfaces" in settings:
         for surface in settings["Surfaces"]:
             idx = model_geometry.get_contact_index(surface["Name"])
@@ -328,21 +334,26 @@ def run_volume_conductor_model(settings, volume_conductor):
 
     if "ExportVTK" in settings:
         if settings["ExportVTK"]:
+            ngmesh = volume_conductor.mesh.ngsolvemesh
             # TODO check at which freq it saves results
             FieldSolution(volume_conductor.potential,
                           "potential",
-                          volume_conductor.mesh.ngsolvemesh,
-                          False).save("potential")
+                          ngmesh,
+                          volume_conductor.is_complex).save("potential")
 
             FieldSolution(volume_conductor.electric_field,
                           "E-field",
-                          volume_conductor.mesh.ngsolvemesh,
-                          False).save("E-field")
+                          ngmesh,
+                          volume_conductor.is_complex).save("E-field")
 
             FieldSolution(volume_conductor.conductivity,
                           "conductivity",
-                          volume_conductor.mesh.ngsolvemesh,
-                          False).save("conductivity")
+                          ngmesh,
+                          volume_conductor.is_complex).save("conductivity")
 
+            FieldSolution(volume_conductor.conductivity_cf.material_distribution(volume_conductor.mesh),
+                          "material",
+                          ngmesh,
+                          False).save("material")
     if compute_impedance:
         return volume_conductor.impedances
