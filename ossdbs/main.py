@@ -12,7 +12,8 @@ from ossdbs.api import (generate_electrodes,
                         )
 from ossdbs.utils.settings import Settings
 from ossdbs.utils.type_check import TypeChecker
-from ossdbs.utils.nifti1image import MagneticResonanceImage
+from ossdbs.utils.nifti1image import (MagneticResonanceImage,
+                                      DiffusionTensorImage)
 from ossdbs.model_geometry import (ModelGeometry,
                                    BrainGeometry)
 from ossdbs.fem import ConductivityCF
@@ -52,6 +53,10 @@ def main() -> None:
     mri_path = settings['MaterialDistribution']['MRIPath']
     _logger.debug("Input path: {}".format(mri_path))
     mri_image = MagneticResonanceImage(mri_path)
+    dti_image = None
+    if settings["MaterialDistribution"]["DiffusionTensorActive"]:
+        _logger.info("Load DTI image")
+        dti_image = DiffusionTensorImage(settings["MaterialDistribution"]["DTIPath"])
 
     time_1 = time.time()
     timings["MRI"] = time_1 - time_0
@@ -101,7 +106,8 @@ def main() -> None:
                                   dielectric_model,
                                   materials,
                                   geometry.encapsulation_layers,
-                                  complex_data=settings["EQSMode"]
+                                  complex_data=settings["EQSMode"],
+                                  dti_image=dti_image
                                   )
 
     time_1 = time.time()

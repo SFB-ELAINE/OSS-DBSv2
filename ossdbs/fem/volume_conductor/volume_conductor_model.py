@@ -53,7 +53,7 @@ class VolumeConductor(ABC):
             self._mesh.generate_mesh(meshing_parameters['MeshingHypothesis'])
 
         if meshing_parameters["SaveMesh"]:
-            self._mesh.save_mesh(Mesh["Path"])
+            self._mesh.save(meshing_parameters["SavePath"])
 
         # to save previous solution and do post-processing
         self._frequency = None
@@ -70,10 +70,10 @@ class VolumeConductor(ABC):
                           lattice: np.ndarray = None
                           ) -> None:
         if compute_impedance:
-            if self._complex:
+            if self.is_complex:
                 self._impedances = np.ndarray(shape=(len(self.signal.frequencies)), dtype=complex)
             else:
-                 self._impedances = np.ndarray(shape=(len(self.signal.frequencies)))
+                self._impedances = np.ndarray(shape=(len(self.signal.frequencies)))
         for idx, frequency in enumerate(self.signal.frequencies):
             _logger.info("Computing at frequency: {}".format(frequency))
             if not self.current_controlled:
@@ -169,8 +169,12 @@ class VolumeConductor(ABC):
 
     @property
     def current_density(self) -> ngsolve.GridFunction:
+        """Return current density in A/mm^2
+
+        """
         _logger.debug("Compute current density at frequency {} Hz".format(self.frequency))
-        return self.conductivity * self.electric_field
+        # scale to account for mm as length unit (not yet contained in conductivity)
+        return 1e-3 * self.conductivity * self.electric_field
 
     @property
     def electric_field(self) -> ngsolve.GridFunction:
@@ -181,6 +185,7 @@ class VolumeConductor(ABC):
         """
         if len(self.contacts.active) == 2:
             mesh = self._mesh.ngsolvemesh
+            # do not need to account for mm because of integration
             power = ngsolve.Integrate(self.electric_field * self.current_density, mesh)
             # TODO integrate surface impedance
             voltage = 0

@@ -8,15 +8,15 @@ class FieldSolution:
     solution: ngsolve.CoefficientFunction
     label: str
     mesh: ngsolve.comp.Mesh
-    complex: bool
+    is_complex: bool
 
     def save(self, filename: str) -> None:
         names = ["{}_real".format(self.label)]
-        if complex:
+        if self.is_complex:
             names.append("{}_imag".format(self.label))
 
         coefficients = [self.solution.real]
-        if complex:
+        if self.is_complex:
             coefficients.append(self.solution.imag)
 
         ngsolve.VTKOutput(ma=self.mesh,
