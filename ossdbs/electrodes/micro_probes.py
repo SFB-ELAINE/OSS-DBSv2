@@ -131,8 +131,8 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
                 encapsulation = encapsulation.MakeFillet([fillet_leadE], encap_lead_radius/24)
         else:
             encapsulation = encap_tip + encap_lead
-            if (encap_tip_radius != encap_lead_radius):
-                encapsulation = encapsulation.MakeFillet([fillet_leadE], encap_lead_radius/50)
+            # if (encap_tip_radius != encap_lead_radius):
+            #     encapsulation = encapsulation.MakeFillet([fillet_leadE], encap_lead_radius/50)
             # TODO: Issues with the following command
             # encapsulation = encapsulation.MakeFillet([fillet_tipE], 0.00001)      
 

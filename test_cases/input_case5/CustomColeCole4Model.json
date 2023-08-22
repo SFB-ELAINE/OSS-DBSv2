@@ -1,5 +1,5 @@
 {
-    "GrayMatter": {
+    "Gray matter": {
         "Alpha": [
             0.1,
             0.15,
@@ -21,7 +21,7 @@
             0.005305
         ]
     },
-    "WhiteMatter": {
+    "White matter": {
         "Alpha": [
             0.1,
             0.15,
@@ -43,7 +43,7 @@
             0.005305
         ]
     },
-    "CerebroSpinalFluid": {
+    "CSF": {
         "Alpha": [
             0.1,
             0.15,

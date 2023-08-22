@@ -1,39 +1,50 @@
-from ossdbs.dielectric_model import DielectricModel
-from .colecole4 import MaterialColeColeModel
+from .colecole4 import ColeColeParameters, ColeCole4Model
 import numpy as np
 
 
-WhiteMatterModel = MaterialColeColeModel(alpha=np.array([0.1, 0.1, 0.3]),
-                                         eps_delta=np.array([32.0, 100.0, 4.0e4]),
-                                         eps_inf=4.0,
-                                         sigma=0.265,
-                                         tau=np.array([7.958e-12, 7.958e-9, 53.052e-6])
-                                         )
+WhiteMatterColeCole3Default =\
+    ColeColeParameters(alpha=np.array([0.1, 0.1, 0.3]),
+                       eps_delta=np.array([32.0, 100.0, 4.0e4]),
+                       eps_inf=4.0,
+                       sigma=0.265,
+                       tau=np.array([7.958e-12, 7.958e-9, 53.052e-6])
+                       )
 
-GrayMatterModel = MaterialColeColeModel(alpha=np.array([0.1, 0.15, 0.22, 0.0]),
-                                        eps_delta=np.array([45.0, 400.0, 2.0e5]),
-                                        eps_inf=4.0,
-                                        sigma=0.239,
-                                        tau=np.array([7.958e-12, 15.915e-9, 106.103e-6])
-                                        )
+GrayMatterColeCole3Default =\
+    ColeColeParameters(alpha=np.array([0.1, 0.15, 0.22, 0.0]),
+                       eps_delta=np.array([45.0, 400.0, 2.0e5]),
+                       eps_inf=4.0,
+                       sigma=0.239,
+                       tau=np.array([7.958e-12, 15.915e-9, 106.103e-6])
+                       )
 
-CSFModel = MaterialColeColeModel(alpha=np.array([0.1, 0.0, 0.0]),
-                                 eps_delta=np.array([65.0, 40.0, 0.0]),
-                                 eps_inf=4.0,
-                                 sigma=2.0,
-                                 tau=np.array([7.96e-12, 1.592e-9, 159.155e-6]),
-                                 )
-
-
-BloodModel = MaterialColeColeModel(alpha=np.array([0.1, 0.1, 0.0]),
-                                   eps_delta=np.array([56.0, 5200.0, 0.0]),
-                                   eps_inf=4.0,
-                                   sigma=0.7,
-                                   tau=np.array([8.38e-12, 132.63e-9, 0])
-                                   )
+CSFColeCole3Default =\
+    ColeColeParameters(alpha=np.array([0.1, 0.0, 0.0]),
+                       eps_delta=np.array([65.0, 40.0, 0.0]),
+                       eps_inf=4.0,
+                       sigma=2.0,
+                       tau=np.array([7.96e-12, 1.592e-9, 159.155e-6]),
+                       )
 
 
-class ColeCole3Model(DielectricModel):
+BloodColeCole3Default =\
+    ColeColeParameters(alpha=np.array([0.1, 0.1, 0.0]),
+                       eps_delta=np.array([56.0, 5200.0, 0.0]),
+                       eps_inf=4.0,
+                       sigma=0.7,
+                       tau=np.array([8.38e-12, 132.63e-9, 0])
+                       )
+
+default_cole_cole3_parameters =\
+    {"Gray matter": GrayMatterColeCole3Default,
+     "Unknown": GrayMatterColeCole3Default,
+     "White matter": WhiteMatterColeCole3Default,
+     "CSF": CSFColeCole3Default,
+     "Blood": BloodColeCole3Default
+     }
+
+
+class ColeCole3Model(ColeCole4Model):
     """Cole Cole model for the dielectric spectrum of tissues.
 
     Better solution for available tissues?
@@ -51,9 +62,7 @@ class ColeCole3Model(DielectricModel):
                         dx.doi.org/10.1016/j.bioelechem.2021.107773
 
     """
-    MODELS = {"Blood": BloodModel,
-              "White matter": WhiteMatterModel,
-              "Gray matter": GrayMatterModel,
-              "CSF": CSFModel,
-              "Unknown": GrayMatterModel
-              }
+    def __init__(self, parameters: ColeColeParameters):
+        self._parameters = parameters
+        if not self._parameters.assert_order(3):
+            raise ValueError("ColeCole4Model requires information about four dispersions")

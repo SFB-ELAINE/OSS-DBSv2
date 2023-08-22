@@ -2,7 +2,6 @@ from typing import List
 from .contacts import Contact
 from .encapsulation_layers import EncapsulationLayer
 from .brain_geometry import BrainGeometry
-from ossdbs.dielectric_model import DIELECTRIC_MODELS
 from ossdbs.electrodes import ElectrodeModel
 import netgen.occ
 import numpy as np
@@ -145,7 +144,7 @@ class ModelGeometry:
             if setting == "Material":
                 encapsulation_layer.material = value
             elif setting == "DielectricModel":
-                encapsulation_layer.dielectric_model = DIELECTRIC_MODELS[value]
+                encapsulation_layer.dielectric_model = value
             elif setting == "DielectricParameters":
                 encapsulation_layer.dielectric_parameters = value
             elif setting == "MaxMeshSize":
@@ -155,7 +154,6 @@ class ModelGeometry:
                 continue
             else:
                 raise ValueError("Tried to update encapsulation layer with setting {}".format(setting))
-
         return
 
     @property

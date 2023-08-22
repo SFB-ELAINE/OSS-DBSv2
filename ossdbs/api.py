@@ -1,10 +1,9 @@
 from ossdbs.electrodes import (ELECTRODES,
                                ELECTRODE_MODELS,
                                ELECTRODE_PARAMETERS)
-from ossdbs.dielectric_model import (create_cc4_model,
-                                     create_cc3_model,
-                                     create_constant_model,
-                                     DIELECTRIC_MODELS)
+from ossdbs.dielectric_model import (dielectric_models,
+                                     dielectric_model_parameters,
+                                     default_dielectric_parameters)
 from ossdbs.model_geometry import (BoundingBox,
                                    ModelGeometry,
                                    BrainGeometry)
@@ -25,6 +24,7 @@ from ossdbs.fem import (VolumeConductor,
                         VolumeConductorFloating,
                         VolumeConductorFloatingImpedance)
 from ossdbs.utils.vtk_export import FieldSolution
+
 import numpy as np
 import logging
 import pandas as pd
@@ -82,19 +82,27 @@ def generate_electrodes(settings: dict):
     return electrodes
 
 
-def prepare_dielectric_properties(settings: dict):
-    _logger.info("Prepare dielectric model")
-    dielectric_parameters = settings["DielectricModel"]
-    if 'Custom' in dielectric_parameters['Type']:
-        model_parameters = dielectric_parameters['CustomParameters']
-        if 'ColeCole4' in dielectric_parameters['Type']:
-            return create_cc4_model(model_parameters)
-        if 'ColeCole3' in dielectric_parameters['Type']:
-            return create_cc3_model(model_parameters)
-        if 'Constant' in dielectric_parameters['Type']:
-            return create_constant_model(model_parameters)
+def prepare_dielectric_properties(settings: dict) -> dict:
+    """Return dictionary with dielectric properties for each tissue
 
-    return DIELECTRIC_MODELS[dielectric_parameters['Type']]
+    """
+    _logger.info("Prepare dielectric model")
+    dielectric_settings = settings["DielectricModel"]
+    model_type = dielectric_settings['Type']
+    custom_parameters = dielectric_settings['CustomParameters']
+
+    # create empty dict for collection of dielectric models
+    dielectric_properties = {}
+    dielectric_model = dielectric_models[model_type]
+    parameter_template = dielectric_model_parameters[model_type]
+    default_parameters = default_dielectric_parameters[model_type]
+    for material in settings["MaterialDistribution"]["MRIMapping"]:
+        if custom_parameters is not None:
+            model_parameters = parameter_template(**custom_parameters[material])
+        else:
+            model_parameters = default_parameters[material]
+        dielectric_properties[material] = dielectric_model(model_parameters)
+    return dielectric_properties
 
 
 def generate_brain_model(settings):
@@ -294,7 +302,7 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
 
         if spectrum_mode == "OctaveBand":
             # TODO add cutoff?!
-            frequencies, fourier_coefficients = signal.get_octave_band_frequencies(cutoff_frequency)
+            frequencies, fourier_coefficients = signal.get_octave_band_spectrum(cutoff_frequency)
         elif spectrum_mode == "Truncation":
             frequencies, fourier_coefficients = signal.get_truncated_spectrum(cutoff_frequency)
         else:
