@@ -1,17 +1,14 @@
-{
-  "CaseGrounding": {
-    "Active": false,
-    "Current[A]": 0.0,
-    "Voltage[V]": 0.0
-  },
-  "CurrentControlled": false,
-  "DielectricModel": {"Type": "ColeCole4Custom",
-                      "PathToCustomParameters": "ColeCole4ModelCustom.json"
+{"DielectricModel": {"Type": "ColeCole4",
+	              "CustomParameters":
+		      {"Gray matter": {"alpha": [0.11, 0.15, 0.22, 0.0], "eps_delta": [45.0, 400.0, 200000.0, 45000000.0], "eps_inf": 4.0, "sigma": 0.02, "tau": [7.958e-12, 1.5915e-08, 0.000106103, 0.005305]},
+		       "Unknown": {"alpha": [0.11, 0.15, 0.22, 0.0], "eps_delta": [45.0, 400.0, 200000.0, 45000000.0], "eps_inf": 4.0, "sigma": 0.02, "tau": [7.958e-12, 1.5915e-08, 0.000106103, 0.005305]},
+		       "White matter": {"alpha": [0.1, 0.15, 0.22, 0.0], "eps_delta": [45.0, 400.0, 200000.0, 45000000.0], "eps_inf": 4.0, "sigma": 0.02, "tau": [7.958e-12, 1.5915e-08, 0.000106103, 0.005305]},
+		       "CSF": {"alpha": [0.1, 0.15, 0.22, 0.0], "eps_delta": [45.0, 400.0, 200000.0, 45000000.0], "eps_inf": 4.0, "sigma": 0.02, "tau": [7.958e-12, 1.5915e-08, 0.000106103, 0.005305]},
+		       "Blood": {"alpha": [0.1, 0.15, 0.22, 0.0], "eps_delta": [45.0, 400.0, 200000.0, 45000000.0], "eps_inf": 4.0, "sigma": 0.02, "tau": [7.958e-12, 1.5915e-08, 0.000106103, 0.005305]}}
                     },
   "Electrodes": [
     {
-      "Name": "AbbottStjudeActiveTip6146_6149",
-      "PathToCustomParameters": "",
+      "Name": "AbbottStJudeActiveTip6146_6149",
       "Rotation[Degrees]": 0,
       "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
       "TipPosition": { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
@@ -23,7 +20,7 @@
           "Current[A]": 0.0,
           "Voltage[V]": 1.0,
           "Floating": false,
-          "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+          "SurfaceImpedance[Ohmm]": { "real": 0.0, "imag": 0.0 }
         },
         {
           "Contact_ID": 2,
@@ -31,22 +28,17 @@
           "Current[A]": 0.0,
           "Voltage[V]": 0.0,
           "Floating": false,
-          "SurfaceImpedance[Ωm]": { "real": 0.0, "imag": 0.0 }
+          "SurfaceImpedance[Ohmm]": { "real": 0.0, "imag": 0.0 }
         }
-      ]
+      ],
+  "EncapsulationLayer": {
+    "Thickness[mm]": 0.3,
+    "Material": "Gray matter",
+    "MaxMeshSize": 0.1
+  }
     }
   ],
-  "Contacts":{"MaxMeshSizeHeight": 0.1},
-  "EncapsulatingLayer": {
-    "Thickness[mm]": 0.3,
-    "Material": "GrayMatter",
-    "MaxMeshSizeHeight": 0.1
-  },
   "EQSMode": false,
-  "Floating": {
-    "Active": false,
-    "FloatingImpedance": false
-  },
   "MaterialDistribution": {
     "DiffusionTensorActive": false,
     "DTIPath": "",
@@ -74,26 +66,14 @@
     "MaximumSteps": 10000,
     "Precision": 1e-12
   },
-  "SpectrumMode": "OctaveBand",
   "StimulationSignal": {
     "Type": "Rectangle",
     "Frequency[Hz]": 130.0,
     "PulseWidth[us]": 60.0,
     "PulseTopWidth[us]": 0.0,
     "CounterPulseWidth[us]": 0.0,
-    "InterPulseWidth[us]": 0.0
-  },
-  "PointModel":{
-    "Pathway": {
-      "Active": false,
-      "FileName": ""
-    },
-    "Lattice": {
-      "Center":  { "x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5 },
-      "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
-      "PointDistance[mm]": 0.1,
-      "Shape": { "x": 3, "y": 3, "z": 3 }
-    }
+    "InterPulseWidth[us]": 0.0,
+    "SpectrumMode": "OctaveBand"
   }
 }
 

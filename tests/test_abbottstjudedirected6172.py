@@ -55,7 +55,8 @@ class TestAbbottStJudeDirected6172():
                                      'NonExistingPart': 'NonExistingPart'})
         geometry = electrode.geometry
         netgen_geometry = netgen.occ.OCCGeometry(geometry)
-        mesh = ngsolve.Mesh(netgen_geometry.GenerateMesh())
+        with ngsolve.TaskManager():
+            mesh = ngsolve.Mesh(netgen_geometry.GenerateMesh())
         desired = set(['RenamedBody',
                        'RenamedContact_1',
                        'Contact_2',

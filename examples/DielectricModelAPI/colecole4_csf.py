@@ -1,11 +1,14 @@
-from ossdbs.dielectric_model import DIELECTRIC_MODELS
+from ossdbs.dielectric_model import dielectric_models, default_dielectric_parameters
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.constants import epsilon_0 as e0
 import impedancefitter as ifit
 import json
 
-model = DIELECTRIC_MODELS["ColeCole4"]
+model = dielectric_models["ColeCole4"]
+material_model = {}
+for material, parameters in default_dielectric_parameters["ColeCole4"].items():
+    material_model[material] = model(parameters)
 
 
 # benchmark from impedancefitter
@@ -27,11 +30,11 @@ permittivity = np.zeros(len(frequencies), dtype=np.complex128)
 conductivity = np.zeros(len(frequencies), dtype=np.complex128)
 for idx, frequency in enumerate(frequencies):
     omega = 2 * np.pi * frequency
-    permittivity[idx] = model.complex_permittivity("CSF", omega)
+    permittivity[idx] = material_model["CSF"].complex_permittivity(omega)
 
 for idx, frequency in enumerate(frequencies):
     omega = 2 * np.pi * frequency
-    conductivity[idx] = model.complex_conductivity("CSF", omega)
+    conductivity[idx] = material_model["CSF"].complex_conductivity(omega)
 
 permittivity_bench, conductivity_bench = get_benchmark("csf", frequencies)
 plt.xscale("log")

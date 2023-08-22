@@ -1,9 +1,9 @@
 from ossdbs.electrodes import (ELECTRODES,
                                ELECTRODE_MODELS,
                                ELECTRODE_PARAMETERS)
-from ossdbs.dielectric_model import (create_cc4_model,
-                                     create_constant_model,
-                                     DIELECTRIC_MODELS)
+from ossdbs.dielectric_model import (dielectric_models,
+                                     dielectric_model_parameters,
+                                     default_dielectric_parameters)
 from ossdbs.model_geometry import (BoundingBox,
                                    ModelGeometry,
                                    BrainGeometry)
@@ -24,6 +24,7 @@ from ossdbs.fem import (VolumeConductor,
                         VolumeConductorFloating,
                         VolumeConductorFloatingImpedance)
 from ossdbs.utils.vtk_export import FieldSolution
+
 import numpy as np
 import logging
 import pandas as pd
@@ -82,17 +83,27 @@ def generate_electrodes(settings: dict):
     return electrodes
 
 
-def prepare_dielectric_properties(settings: dict):
-    _logger.info("Prepare dielectric model")
-    dielectric_parameters = settings["DielectricModel"]
-    if 'Custom' in dielectric_parameters['Type']:
-        model_parameters = dielectric_parameters['CustomParameters']
-        if 'ColeCole4' in dielectric_parameters['Type']:
-            return create_cc4_model(model_parameters)
-        if 'Constant' in dielectric_parameters['Type']:
-            return create_constant_model()
+def prepare_dielectric_properties(settings: dict) -> dict:
+    """Return dictionary with dielectric properties for each tissue
 
-    return DIELECTRIC_MODELS[dielectric_parameters['Type']]
+    """
+    _logger.info("Prepare dielectric model")
+    dielectric_settings = settings["DielectricModel"]
+    model_type = dielectric_settings['Type']
+    custom_parameters = dielectric_settings['CustomParameters']
+
+    # create empty dict for collection of dielectric models
+    dielectric_properties = {}
+    dielectric_model = dielectric_models[model_type]
+    parameter_template = dielectric_model_parameters[model_type]
+    default_parameters = default_dielectric_parameters[model_type]
+    for material in settings["MaterialDistribution"]["MRIMapping"]:
+        if custom_parameters is not None:
+            model_parameters = parameter_template(**custom_parameters[material])
+        else:
+            model_parameters = default_parameters[material]
+        dielectric_properties[material] = dielectric_model(model_parameters)
+    return dielectric_properties
 
 
 def generate_brain_model(settings):
@@ -123,6 +134,7 @@ def set_contact_and_encapsulation_layer_properties(settings, model_geometry):
     electrode_settings = settings["Electrodes"]
     offset = 0
     for idx, new_parameters in enumerate(electrode_settings):
+        _logger.debug("Update Electrode {} with settings {}".format(idx, new_parameters))
         if "Contacts" in new_parameters:
             for contact_info in new_parameters["Contacts"]:
                 contact_idx = offset + contact_info["Contact_ID"]
@@ -131,10 +143,12 @@ def set_contact_and_encapsulation_layer_properties(settings, model_geometry):
             offset += model_geometry.electrodes[idx].n_contacts
         if "EncapsulationLayer" in new_parameters:
             # encapsulation layer is one-indexed in the model_geometry
+            _logger.debug("Updating encapsulation layer {}".format(idx + 1))
             encap_idx = model_geometry.get_encapsulation_layer_index("EncapsulationLayer_{}".format(idx + 1))
+            _logger.debug("Encapsulation layer has index {}".format(encap_idx))
             if encap_idx != -1:
                 _logger.info("Updating encapsulation layer properties")
-                model_geometry.update_encapsulation_layer(idx, new_parameters["EncapsulationLayer"])
+                model_geometry.update_encapsulation_layer(encap_idx, new_parameters["EncapsulationLayer"])
     if "Surfaces" in settings:
         for surface in settings["Surfaces"]:
             idx = model_geometry.get_contact_index(surface["Name"])
@@ -289,7 +303,7 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
 
         if spectrum_mode == "OctaveBand":
             # TODO add cutoff?!
-            frequencies, fourier_coefficients = signal.get_octave_band_frequencies(cutoff_frequency)
+            frequencies, fourier_coefficients = signal.get_octave_band_spectrum(cutoff_frequency)
         elif spectrum_mode == "Truncation":
             frequencies, fourier_coefficients = signal.get_truncated_spectrum(cutoff_frequency)
         else:
@@ -331,22 +345,27 @@ def run_volume_conductor_model(settings, volume_conductor):
 
     if "ExportVTK" in settings:
         if settings["ExportVTK"]:
+            ngmesh = volume_conductor.mesh.ngsolvemesh
             # TODO check at which freq it saves results
             FieldSolution(volume_conductor.potential,
                           "potential",
-                          volume_conductor.mesh.ngsolvemesh,
-                          False).save("potential")
+                          ngmesh,
+                          volume_conductor.is_complex).save("potential")
 
             FieldSolution(volume_conductor.electric_field,
                           "E-field",
-                          volume_conductor.mesh.ngsolvemesh,
-                          False).save("E-field")
+                          ngmesh,
+                          volume_conductor.is_complex).save("E-field")
 
             FieldSolution(volume_conductor.conductivity,
                           "conductivity",
-                          volume_conductor.mesh.ngsolvemesh,
-                          False).save("conductivity")
+                          ngmesh,
+                          volume_conductor.is_complex).save("conductivity")
 
+            FieldSolution(volume_conductor.conductivity_cf.material_distribution(volume_conductor.mesh),
+                          "material",
+                          ngmesh,
+                          False).save("material")
     if compute_impedance:
         return volume_conductor.impedances
 

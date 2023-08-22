@@ -114,7 +114,6 @@ class TimeDomainSignal(ABC):
         timesteps = int(cutoff_frequency / self.frequency)
 
         time_domain_signal = self.get_time_domain_signal(dt, timesteps)
-        print(len(time_domain_signal))
         return fftfreq(len(time_domain_signal), d=dt), fft(time_domain_signal)
 
     def retrieve_time_domain_signal(self, fft_signal, cutoff_frequency: float) -> np.ndarray:

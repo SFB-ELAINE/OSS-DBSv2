@@ -18,7 +18,6 @@ class RectangleSignal(TimeDomainSignal):
     """
 
     def get_fourier_coefficients(self, frequency_list: np.ndarray) -> np.ndarray:
-        print(self._inter_pulse_width)
         coefficients = self._harmonics_at_freqs(frequency_list, self.amplitude, self.frequency, self._pulse_width, shift=self._pulse_width)
         if np.greater(self._counter_pulse_width, 0.0):
             coefficients2 = self._harmonics_at_freqs(frequency_list, -self.counter_amplitude, self.frequency, self._counter_pulse_width, shift=2.0 * self._pulse_width + self._inter_pulse_width)

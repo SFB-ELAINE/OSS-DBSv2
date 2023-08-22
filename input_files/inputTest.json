@@ -92,7 +92,7 @@
     },
     "SaveMesh": false
   },
-  "EQSMode": true,
+  "EQSMode": false,
   "FEMOrder": 2,
   "ComputeImpedance": true,
   "StimulationSignal": {
@@ -106,8 +106,8 @@
     "Type": "CG",
     "Preconditioner": "bddc",
     "PrintRates": true,
-    "MaximumSteps": 10000,
-    "Precision": 1e-12
+    "MaximumSteps": 200,
+    "Precision": 1e-8
   },
   "PointModel": {
     "Pathway": {
