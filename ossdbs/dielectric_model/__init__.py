@@ -1,59 +1,39 @@
 from .dielectric_model import DielectricModel
-from .colecole4 import MaterialColeColeModel
-from .colecole4 import ColeCole4Model
-from .constant import ConstantModel
-from .constant import MaterialConstantModel
-from ossdbs.utils.materials import MATERIALS
-import numpy as np
+from .colecole4 import (ColeColeParameters,
+                        ColeCole4Model,
+                        default_cole_cole4_parameters)
+from .colecole3 import (ColeCole3Model,
+                        default_cole_cole3_parameters)
+from .constant import (ConstantModel,
+                       ConstantParameters,
+                       default_constant_parameters)
 
 import logging
 _logger = logging.getLogger(__name__)
 
+dielectric_models = {"ColeCole4": ColeCole4Model,
+                     "ColeCole3": ColeCole3Model,
+                     "Constant": ConstantModel}
 
-def create_cc4_model(parameters: dict):
+dielectric_model_parameters = {"ColeCole4": ColeColeParameters,
+                               "ColeCole3": ColeColeParameters,
+                               "Constant": ConstantParameters}
 
-    cc4_model = ColeCole4Model()
-
-    for key, material in MATERIALS.items():
-        if key not in parameters:
-            _logger.warning("Parameter {} not a valid parameter for ColeCole4Model".format(key))
-            continue
-
-        model = MaterialColeColeModel(
-                    eps_inf=parameters[key]['EpsilonInfinite'],
-                    sigma=parameters[key]['Sigma'],
-                    alpha=np.array(parameters[key]['Alpha']),
-                    eps_delta=np.array(parameters[key]['EpsilonDelta']),
-                    tau=np.array(parameters[key]['Tau'])
-                    )
-        cc4_model.MODELS.update({material: model})
-
-    return cc4_model
-
-
-def create_constant_model(parameters: dict):
-    constant_model = ConstantModel()
-    for key, material in MATERIALS.items():
-        if key not in parameters:
-            _logger.warning("Parameter {} not a valid parameter for ConstantModel".format(key))
-            continue
-
-        model = MaterialConstantModel(
-                        permittivity=parameters[key]['Permittivity'],
-                        conductivity=parameters[key]['Conductivity'],
-                        )
-        constant_model.MODELS.update({material: model})
-    return constant_model
-
-
-DIELECTRIC_MODELS = {'ColeCole4': ColeCole4Model(),
-                     'Constant': ConstantModel()
-                     }
+default_dielectric_parameters = {"ColeCole4": default_cole_cole4_parameters,
+                                 "ColeCole3": default_cole_cole3_parameters,
+                                 "Constant": default_constant_parameters}
 
 
 __all__ = ('DielectricModel',
            'ColeCole4Model',
-           'MaterialColeColeModel',
+           'ColeCole3Model',
+           'ColeColeParameters',
            'ConstantModel',
-           'MaterialConstantModel',
+           'ConstantParameters',
+           'default_cole_cole4_parameters',
+           'default_cole_cole3_parameters',
+           'default_constant_parameters',
+           'dielectric_models',
+           'dielectric_model_parameters',
+           'default_dielectric_parameters'
            )

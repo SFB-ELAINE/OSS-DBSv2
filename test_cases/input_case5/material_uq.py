@@ -4,6 +4,7 @@ import ngsolve
 import pandas as pd
 from ossdbs.point_analysis import point_analysis
 
+
 def uq_material():
 
     df = pd.read_csv("./parameters_GM_CC4.csv")
@@ -54,21 +55,21 @@ def write_json(alpha,
                sigma,
                tau):
     data = {
-        "GrayMatter": {
-           "Alpha": alpha,
-           "EpsilonDelta": epsilon_delta,
-           "EpsilonInfinite": epsilon_inf,
-           "Sigma": sigma,
-           "Tau": tau
+        "Gray matter": {
+            "Alpha": alpha,
+            "EpsilonDelta": epsilon_delta,
+            "EpsilonInfinite": epsilon_inf,
+            "Sigma": sigma,
+            "Tau": tau
         },
-        "WhiteMatter": {
+        "White matter": {
             "Alpha": [0.1, 0.15, 0.22, 0.0],
             "EpsilonDelta": [45.0, 400.0, 2.0e5, 4.5e7],
             "EpsilonInfinite": 4.0,
             "Sigma": 0.02,
             "Tau": [7.958e-12, 15.915e-9, 106.103e-6, 5.305e-3]
         },
-        "CerebroSpinalFluid": {
+        "CSF": {
             "Alpha": [0.1, 0.15, 0.22, 0.0],
             "EpsilonDelta": [45.0, 400.0, 2.0e5, 4.5e7],
             "EpsilonInfinite": 4.0,
