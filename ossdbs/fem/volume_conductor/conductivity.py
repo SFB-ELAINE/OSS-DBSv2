@@ -1,7 +1,6 @@
 from ossdbs.utils.nifti1image import (MagneticResonanceImage,
                                       DiffusionTensorImage)
 from ossdbs.model_geometry import BoundingBox
-from ossdbs.dielectric_model import DielectricModel
 from ossdbs.fem.mesh import Mesh
 import numpy as np
 import ngsolve
@@ -21,8 +20,8 @@ class ConductivityCF:
     bounding_box : BoundingBox
         Represents a cuboid in real space.
 
-    dielectric_model : DielectricModel
-        Model for the dielectric spectrum of a tissues.
+    dielectric_properties : dict
+        Dictionary with dielectric properties of each material
 
     encapsulation_layers : dict
         A dictionary containing the materials of the encapsulation layer
@@ -31,7 +30,7 @@ class ConductivityCF:
     def __init__(self,
                  mri_image: MagneticResonanceImage,
                  brain_bounding_box: BoundingBox,
-                 dielectric_model: DielectricModel,
+                 dielectric_properties: dict,
                  materials: dict,
                  encapsulation_layers=[],  # TODO type hint
                  complex_data: bool = False,
@@ -50,7 +49,7 @@ class ConductivityCF:
             self._dti_data, self._dti_voxel_bounding_box = dti_image._crop_image(brain_bounding_box_voxel)
             self._dti_voxel_cf = self.create_dti_voxel_cf(self._dti_data, self._dti_voxel_bounding_box, dti_image)
 
-        self._dielectric_model = dielectric_model
+        self._dielectric_properties = dielectric_properties
         self._encapsulation_layers = encapsulation_layers
         self._is_complex = complex_data
         self._data = np.zeros(self._material_distribution.shape, dtype=self._get_datatype())
@@ -81,9 +80,9 @@ class ConductivityCF:
         material_dict = {"Brain": self._distribution(omega)}
         for encapsulation_layer in self._encapsulation_layers:
             if self.is_complex:
-                material_dict[encapsulation_layer.name] = encapsulation_layer.dielectric_model.complex_conductivity(encapsulation_layer.material, omega)
+                material_dict[encapsulation_layer.name] = encapsulation_layer.dielectric_properties.complex_conductivity(omega)
             else:
-                material_dict[encapsulation_layer.name] = encapsulation_layer.dielectric_model.conductivity(encapsulation_layer.material, omega)
+                material_dict[encapsulation_layer.name] = encapsulation_layer.dielectric_properties.conductivity(omega)
         return mesh.material_coefficients(material_dict)
 
     def _distribution(self,
@@ -104,9 +103,9 @@ class ConductivityCF:
             material_idx = self._materials[material]
             # Sets conductivity values based on what indices in self._data are material_idx
             if self.is_complex:
-                self._data[self._masks[material_idx]] = self._dielectric_model.complex_conductivity(material, omega)
+                self._data[self._masks[material_idx]] = self._dielectric_properties[material].complex_conductivity(omega)
             else:
-                self._data[self._masks[material_idx]] = self._dielectric_model.conductivity(material, omega)
+                self._data[self._masks[material_idx]] = self._dielectric_properties[material].conductivity(omega)
         start = self._mri_voxel_bounding_box.start
         end = self._mri_voxel_bounding_box.end
         return ngsolve.VoxelCoefficient(start, end, self._data, False, trafocf=self._trafo_cf)

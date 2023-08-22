@@ -1,4 +1,5 @@
-from ossdbs.dielectric_model import ColeCole4Model
+from ossdbs.dielectric_model import (ColeCole4Model,
+                                     default_cole_cole4_parameters)
 import numpy as np
 import pytest
 
@@ -17,14 +18,16 @@ class TestWhiteMatterModel:
                              TESTDATA_PERMITTIVITY)
     def test_permittivity(self, frequency, permittivity, tolerance):
         omega = 2 * np.pi * frequency
-        actual = ColeCole4Model().complex_permittivity("White matter", omega)
+        parameters = default_cole_cole4_parameters["White matter"]
+        actual = ColeCole4Model(parameters).complex_permittivity(omega)
         np.testing.assert_allclose(actual, permittivity, atol=tolerance)
 
     @pytest.mark.parametrize('frequency, conductivity, tolerance',
                              TESTDATA_CONDUCTIVITY)
     def test_conductivity(self, frequency, conductivity, tolerance):
         omega = 2 * np.pi * frequency
-        actual = ColeCole4Model().complex_conductivity("White matter", omega)
+        parameters = default_cole_cole4_parameters["White matter"]
+        actual = ColeCole4Model(parameters).complex_conductivity(omega)
         np.testing.assert_allclose(actual, conductivity, atol=tolerance)
 
 
@@ -42,14 +45,16 @@ class TestGrayMatterModel:
                              TESTDATA_PERMITTIVITY)
     def test_permittivity(self, frequency, permittivity, tolerance):
         omega = 2 * np.pi * frequency
-        actual = ColeCole4Model().complex_permittivity("Gray matter", omega)
+        parameters = default_cole_cole4_parameters["Gray matter"]
+        actual = ColeCole4Model(parameters).complex_permittivity(omega)
         np.testing.assert_allclose(actual, permittivity, atol=tolerance)
 
     @pytest.mark.parametrize('frequency, conductivity, tolerance',
                              TESTDATA_CONDUCTIVITY)
     def test_conductivity(self, frequency, conductivity, tolerance):
         omega = 2 * np.pi * frequency
-        actual = ColeCole4Model().complex_conductivity("Gray matter", omega)
+        parameters = default_cole_cole4_parameters["Gray matter"]
+        actual = ColeCole4Model(parameters).complex_conductivity(omega)
         np.testing.assert_allclose(actual, conductivity, atol=tolerance)
 
 
@@ -67,12 +72,14 @@ class TestCerebroSpinalFluidModel:
                              TESTDATA_PERMITTIVITY)
     def test_permittivity(self, frequency, permittivity, tolerance):
         omega = 2 * np.pi * frequency
-        actual = ColeCole4Model().complex_permittivity("CSF", omega)
+        parameters = default_cole_cole4_parameters["CSF"]
+        actual = ColeCole4Model(parameters).complex_permittivity(omega)
         np.testing.assert_allclose(actual, permittivity, atol=tolerance)
 
     @pytest.mark.parametrize('frequency, conductivity, tolerance',
                              TESTDATA_CONDUCTIVITY)
     def test_conductivity(self, frequency, conductivity, tolerance):
         omega = 2 * np.pi * frequency
-        actual = ColeCole4Model().complex_conductivity("CSF", omega)
+        parameters = default_cole_cole4_parameters["CSF"]
+        actual = ColeCole4Model(parameters).complex_conductivity(omega)
         np.testing.assert_allclose(actual, conductivity, atol=tolerance)

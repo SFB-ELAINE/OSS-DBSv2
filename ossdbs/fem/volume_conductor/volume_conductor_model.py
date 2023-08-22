@@ -151,9 +151,14 @@ class VolumeConductor(ABC):
     def update_contacts(self, voltages: dict = {}, currents: dict = {}, surface_impedances: dict = {}) -> None:
         """TODO document
         """
-        self._contacts.voltages = voltages
-        self._contacts.currents = currents
-        self._contacts.surface_impedances = surface_impedances
+        if self.is_complex:
+            self._contacts.voltages = voltages
+            self._contacts.currents = currents
+            self._contacts.surface_impedances = surface_impedances
+            return
+        self._contacts.voltages = np.real(voltages)
+        self._contacts.currents = np.real(currents)
+        self._contacts.surface_impedances = np.real(surface_impedances)
 
     @property
     def potential(self) -> ngsolve.GridFunction:

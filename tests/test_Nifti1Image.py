@@ -6,8 +6,6 @@ import numpy as np
 import pytest
 import nibabel
 
-from ossdbs.model_geometry.bounding_box import BoundingBox
-
 
 class TestNifti1Image:
     @pytest.fixture
