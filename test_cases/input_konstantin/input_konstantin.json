@@ -5,8 +5,7 @@
     "Voltage[V]": 0.0
   },
   "CurrentControled": false,
-  "DielectricModel": {"Type": "ColeCole4",
-                      "PathToCustomParameters": ""
+  "DielectricModel": {"Type": "ColeCole4"
   },
   "Electrodes": [
     {

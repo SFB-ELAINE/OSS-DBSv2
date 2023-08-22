@@ -10,7 +10,6 @@
   "Electrodes": [
     {
       "Name": "MicroProbesSNEX100Custom",
-      "PathToCustomParameters": "micro_probes_SNEX100_custom.json",
       "Rotation[Degrees]": 0,
       "Direction": { "x[mm]": 0, "y[mm]": 0, "z[mm]": 1 },
       "TipPosition": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
@@ -38,7 +37,7 @@
   "Contacts":{"MaxMeshSizeHeight": 0.1},
   "EncapsulatingLayer": {
     "Thickness[mm]": 0.1,
-    "Material": "GrayMatter",
+    "Material": "Gray matter",
     "MaxMeshSizeHeight": 0.1
   },
   "EQSMode": false,

@@ -3,11 +3,10 @@ from .materials import MATERIALS
 
 class Settings:
 
-    CUSTOM_SETTING = {'BrainRegion': {
-                        'Center': {'x[mm]': 0, 'y[mm]': 0, 'z[mm]': 0},
-                        'Dimension': {'x[mm]': 40, 'y[mm]': 40, 'z[mm]': 40},
-                        'Shape': 'Ellipsoid'
-                        }
+    CUSTOM_SETTING = {'BrainRegion': {'Center': {'x[mm]': 0, 'y[mm]': 0, 'z[mm]': 0},
+                                      'Dimension': {'x[mm]': 40, 'y[mm]': 40, 'z[mm]': 40},
+                                      'Shape': 'Ellipsoid'
+                                      }
                       }
 
     ELECTRODE_SETTING = {'Name': 'BostonScientificVerciseDirected',
@@ -31,69 +30,65 @@ class Settings:
     ENCAPSULATION_SETTING = {'Thickness[mm]': 0.0,
                              'Material': 'Gray matter',
                              'DielectricModel': 'ColeCole4',
-                             'DielectricParameters': {},
+                             'DielectricParameters': None,
                              'MaxMeshSize': 1e6
                              }
 
     SETTING = {'Electrodes': [],
                'Surfaces': [],
-               'MaterialDistribution': {
-                    'MRIPath': '',
-                    'MRIMapping': MATERIALS,
-                    'DiffusionTensorActive': False,
-                    'DTIPath': ''
+               'MaterialDistribution':
+               {'MRIPath': '',
+                'MRIMapping': MATERIALS,
+                'DiffusionTensorActive': False,
+                'DTIPath': ''
                 },
-               'DielectricModel': {
-                   'Type': 'ColeCole4'
-                },
-               'Mesh': {
-                    'LoadMesh': False,
-                    'LoadPath': '',
-                    'MeshingHypothesis': {
-                        'Type': 'Default',
-                        'MaxMeshSize': 1e6
-                    },
-                    'MeshSize': {
-                        'Edges': {},
-                        'Faces': {},
-                        'Volumes': {}
-                    },
-                    'SaveMesh': False,
-                    'SavePath': 'mesh'
-               },
+               'DielectricModel': {'Type': 'ColeCole4',
+                                   'CustomParameters': None
+                                   },
+               'Mesh': {'LoadMesh': False,
+                        'LoadPath': '',
+                        'MeshingHypothesis':
+                        {'Type': 'Default',
+                         'MaxMeshSize': 1e6
+                         },
+                        'MeshSize':
+                        {'Edges': {},
+                         'Faces': {},
+                         'Volumes': {}
+                         },
+                        'SaveMesh': False,
+                        'SavePath': 'mesh'
+                        },
                'EQSMode': False,
                'FEMOrder': 2,
                'ComputeImpedance': False,
-               'StimulationSignal': {
-                    'Type': 'Rectangle',
-                    'ListOfFrequencies': [130.0],
-                    'Frequency[Hz]': 130.0,
-                    'PulseWidth[us]': 60.0,
-                    'PulseTopWidth[us]': 0.0,
-                    'CounterPulseWidth[us]': 0.0,
-                    'InterPulseWidth[us]': 0.0,
-                    'SpectrumMode': 'FullSpectrum',
-                    'CutoffFrequency': 1e8,
-                    'CurrentControlled': False
+               'StimulationSignal':
+               {'Type': 'Rectangle',
+                'ListOfFrequencies': [130.0],
+                'Frequency[Hz]': 130.0,
+                'PulseWidth[us]': 60.0,
+                'PulseTopWidth[us]': 0.0,
+                'CounterPulseWidth[us]': 0.0,
+                'InterPulseWidth[us]': 0.0,
+                'SpectrumMode': 'FullSpectrum',
+                'CutoffFrequency': 1e8,
+                'CurrentControlled': False
                 },
-                'Solver': {
-                    'Type': 'CG',
-                    'Preconditioner': 'bddc',
-                    'PrintRates': False,
-                    'MaximumSteps': 10000,
-                    'Precision': 1e-12
-               },
-               'PointModel': {
-                    'Pathway': {
-                        'Active': False,
-                        'FileName': ''
-                    },
-                    'Lattice': {
-                        'Center': {'x[mm]': 0, 'y[mm]': 0, 'z[mm]': 0},
-                        'Shape': {'x': 10, 'y': 10, 'z': 10},
-                        'Direction': {'x[mm]': 0, 'y[mm]': 0, 'z[mm]': 1},
-                        'PointDistance[mm]': 0.1
-                    }
+               'Solver': {'Type': 'CG',
+                          'Preconditioner': 'bddc',
+                          'PrintRates': False,
+                          'MaximumSteps': 10000,
+                          'Precision': 1e-12
+                          },
+               'PointModel':
+               {'Pathway': {'Active': False,
+                            'FileName': ''
+                            },
+                'Lattice': {'Center': {'x[mm]': 0, 'y[mm]': 0, 'z[mm]': 0},
+                            'Shape': {'x': 10, 'y': 10, 'z': 10},
+                            'Direction': {'x[mm]': 0, 'y[mm]': 0, 'z[mm]': 1},
+                            'PointDistance[mm]': 0.1
+                            }
                 },
                'OutputPath': 'Results',
                'SaveImpedance': False,
