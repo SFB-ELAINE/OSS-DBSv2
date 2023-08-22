@@ -16,7 +16,7 @@
       "TipPosition": { "x[mm]": 22.95, "y[mm]": 11.35, "z[mm]": 7.95 },
       "EncapsulationLayer": {
       "Thickness[mm]": 0.1,
-      "Material": "GrayMatter",
+      "Material": "Gray matter",
       "MaxMeshSizeHeight": 0.1
       },
       "Contacts": [

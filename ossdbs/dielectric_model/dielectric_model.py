@@ -1,18 +1,18 @@
 import numpy as np
-from abc import ABC
+from abc import ABC, abstractmethod
 
 
 class DielectricModel(ABC):
     """Model for the dielectric spectrum of tissues.
 
-    TODO explain how to add another model
+    Notes
+    -----
+
+    To add another model, define its complex permittivity
+    and add the static conductivity.
     """
 
-    @property
-    def material_models(self) -> dict:
-        return self.MODELS
-
-    def permittivity(self, material: str, omega: float) -> float:
+    def permittivity(self, omega: float) -> float:
         """Calculate the permittivity by the angular frequency omega.
 
         Parameters
@@ -28,9 +28,10 @@ class DielectricModel(ABC):
         float
             Permittivity.
         """
-        return np.real(self.MODELS[material].complex_permittivity(omega))
+        return np.real(self.complex_permittivity(omega))
 
-    def complex_permittivity(self, material: str, omega: float) -> float:
+    @abstractmethod
+    def complex_permittivity(self, omega: float) -> float:
         """Calculate the permittivity by the angular frequency omega.
 
         Parameters
@@ -46,9 +47,9 @@ class DielectricModel(ABC):
         complex
             Complex permittivity.
         """
-        return self.MODELS[material].complex_permittivity(omega)
+        pass
 
-    def conductivity(self, material: str, omega: float) -> float:
+    def conductivity(self, omega: float) -> float:
         """Calculate the conductivity by the angular frequency omega.
 
         Parameters
@@ -64,16 +65,13 @@ class DielectricModel(ABC):
         float
             Conductivity.
         """
-        return np.real(self.MODELS[material].complex_conductivity(omega))
+        return np.real(self.complex_conductivity(omega))
 
-    def complex_conductivity(self, material: str, omega: float) -> complex:
+    def complex_conductivity(self, omega: float) -> complex:
         """Calculate the conductivity by the angular frequency omega.
 
         Parameters
         ----------
-        material : str
-            Corresponding material.
-
         omega : float
             Angular frequency [1/s].
 
@@ -82,4 +80,12 @@ class DielectricModel(ABC):
         complex
             Complex conductivity.
         """
-        return self.MODELS[material].complex_conductivity(omega)
+        if omega == 0:
+            return self.static_conductivity + 0j
+
+        return 1j * omega * self.complex_permittivity(omega=omega)
+
+    @property
+    @abstractmethod
+    def static_conductivity(self) -> float:
+        pass

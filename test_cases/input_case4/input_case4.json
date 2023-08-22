@@ -37,7 +37,7 @@
   "Contacts":{"MaxMeshSizeHeight": 0.1},
   "EncapsulatingLayer": {
     "Thickness[mm]": 0.1,
-    "Material": "GrayMatter",
+    "Material": "Gray matter",
     "MaxMeshSizeHeight": 0.1
   },
   "EQSMode": false,
