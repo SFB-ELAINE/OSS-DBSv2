@@ -1,5 +1,7 @@
-
 from abc import ABC, abstractmethod
+import logging
+
+_logger = logging.getLogger(__name__)
 
 
 class Preconditioner(ABC):
@@ -12,6 +14,7 @@ class Preconditioner(ABC):
 class BDDCPreconditioner(Preconditioner):
 
     def __init__(self, coarsetype: str = "h1amg") -> None:
+        _logger.debug("Initialized BDDC preconditioner with coarsetype: {}".format(coarsetype))
         self.type = 'bddc'
         self.coarsetype = coarsetype
 
@@ -21,6 +24,7 @@ class BDDCPreconditioner(Preconditioner):
 
 class LocalPreconditioner(Preconditioner):
     def __init__(self) -> None:
+        _logger.debug("Initialized Jacobi preconditioner")
         self.type = 'local'
 
     def to_dictionary(self) -> dict:
@@ -29,6 +33,7 @@ class LocalPreconditioner(Preconditioner):
 
 class MultigridPreconditioner(Preconditioner):
     def __init__(self) -> None:
+        _logger.debug("Initialized multigrid preconditioner")
         self.type = 'multigrid'
 
     def to_dictionary(self) -> dict:
@@ -37,6 +42,7 @@ class MultigridPreconditioner(Preconditioner):
 
 class AMGPreconditioner(Preconditioner):
     def __init__(self) -> None:
+        _logger.debug("Initialized AMG preconditioner")
         self.type = 'h1amg'
 
     def to_dictionary(self) -> dict:
@@ -45,6 +51,7 @@ class AMGPreconditioner(Preconditioner):
 
 class DirectPreconditioner(Preconditioner):
     def __init__(self, inverse: str = "") -> None:
+        _logger.debug("Use direct solver as preconditioner")
         self.type = 'direct'
         self.inverse = inverse
 

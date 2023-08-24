@@ -5,6 +5,9 @@ from ossdbs.model_geometry import ModelGeometry
 from ossdbs.fem.solver import Solver
 from .conductivity import ConductivityCF
 
+import logging
+_logger = logging.getLogger(__name__)
+
 
 class VolumeConductorNonFloating(VolumeConductor):
     """Model for representing a volume conductor which evaluates the potential.
@@ -39,17 +42,26 @@ class VolumeConductorNonFloating(VolumeConductor):
             floating values of floating contacts.
         """
         self._frequency = frequency
+        _logger.debug("Get conductivity at frequency")
         self._sigma = self.conductivity_cf(self.mesh, frequency)
+        _logger.debug("Sigma: {}".format(self._sigma))
 
         # update boundary condition values
+        _logger.debug("Assign potential values")
         boundary_values = self.contacts.voltages
         coefficient = self.mesh.boundary_coefficients(boundary_values)
         self._potential.Set(coefficient=coefficient,
                             VOL_or_BND=ngsolve.BND)
 
+        _logger.debug("Prepare weak form")
         u = self._space.TrialFunction()
         v = self._space.TestFunction()
+        # TODO symmetric even if anisotropy?
+        _logger.debug("Bilinear form")
         bilinear_form = ngsolve.BilinearForm(space=self._space, symmetric=True)
+        _logger.debug("Bilinear form, formulation")
         bilinear_form += self._sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
+        _logger.debug("Linear form")
         linear_form = ngsolve.LinearForm(space=self._space)
+        _logger.debug("Solve BVP")
         self.solver.bvp(bilinear_form, linear_form, self._potential)

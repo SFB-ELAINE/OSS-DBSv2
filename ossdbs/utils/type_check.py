@@ -45,6 +45,7 @@ class TypeChecker:
              'Solver': {
                  'Type': str,
                  'Preconditioner': str,
+                 'PreconditionerKwargs': dict,
                  'PrintRates': bool,
                  'MaximumSteps': int,
                  'Precision': (int, float)
