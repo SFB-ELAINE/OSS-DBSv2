@@ -81,6 +81,7 @@ class VolumeConductor(ABC):
         for idx, frequency in enumerate(self.signal.frequencies):
             _logger.info("Computing at frequency: {}".format(frequency))
             if not self.current_controlled:
+                _logger.debug("Get scaled voltage values")
                 voltage_values = self.get_scaled_active_contact_voltages(self.signal.amplitudes[idx])
                 self.update_contacts(voltages=voltage_values)
             self.compute_solution(frequency)

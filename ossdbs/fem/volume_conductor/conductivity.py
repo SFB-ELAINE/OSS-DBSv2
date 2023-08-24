@@ -42,6 +42,7 @@ class ConductivityCF:
         self._material_distribution, self._mri_voxel_bounding_box = mri_image._crop_image(brain_bounding_box_voxel)
         # account for ordering in NGSolve
         self._material_distribution = np.swapaxes(self._material_distribution, 0, 2)
+        self._dti_voxel_cf = None
 
         if dti_image is not None:
             _logger.debug("Crop DTI image")
@@ -80,9 +81,19 @@ class ConductivityCF:
         material_dict = {"Brain": self._distribution(omega)}
         for encapsulation_layer in self._encapsulation_layers:
             if self.is_complex:
-                material_dict[encapsulation_layer.name] = encapsulation_layer.dielectric_properties.complex_conductivity(omega)
+                encapsulation_layer_properties = encapsulation_layer.dielectric_properties.complex_conductivity(omega)
             else:
-                material_dict[encapsulation_layer.name] = encapsulation_layer.dielectric_properties.conductivity(omega)
+                encapsulation_layer_properties = encapsulation_layer.dielectric_properties.conductivity(omega)
+            if self._dti_voxel_cf is not None:
+                # reshape CoefficientFunction for isotropic encapsulation layer
+                encapsulation_layer_properties_cf =\
+                        ngsolve.CoefficientFunction((encapsulation_layer_properties, 0, 0,
+                                                     0, encapsulation_layer_properties, 0,
+                                                     0, 0, encapsulation_layer_properties),
+                                                    dims=(3, 3))
+            else:
+                encapsulation_layer_properties_cf = encapsulation_layer_properties
+            material_dict[encapsulation_layer.name] = encapsulation_layer_properties_cf
         return mesh.material_coefficients(material_dict)
 
     def _distribution(self,
@@ -108,7 +119,9 @@ class ConductivityCF:
                 self._data[self._masks[material_idx]] = self._dielectric_properties[material].conductivity(omega)
         start = self._mri_voxel_bounding_box.start
         end = self._mri_voxel_bounding_box.end
-        return ngsolve.VoxelCoefficient(start, end, self._data, False, trafocf=self._trafo_cf)
+        if self._dti_voxel_cf is None:
+            return ngsolve.VoxelCoefficient(start, end, self._data, False, trafocf=self._trafo_cf)
+        return self._dti_voxel_cf * ngsolve.VoxelCoefficient(start, end, self._data, False, trafocf=self._trafo_cf)
 
     def material_distribution(self, mesh: Mesh) -> ngsolve.VoxelCoefficient:
         """Return MRI image projected onto mesh
