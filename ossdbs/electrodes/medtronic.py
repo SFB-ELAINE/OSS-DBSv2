@@ -14,6 +14,7 @@ class MedtronicParameters():
     contact_spacing: float
     lead_diameter: float
     total_length: float
+    offset: float
 
 
 class MedtronicModel(ElectrodeModel):
@@ -97,10 +98,10 @@ class MedtronicModel(ElectrodeModel):
             for edge in contact.edges:
                 if (edge.center.z < min_edge_z_val):
                     min_edge_z_val = edge.center.z
-                    min_edge = edge   
+                    min_edge = edge
                 if (edge.center.z > max_edge_z_val):
                     max_edge_z_val = edge.center.z
-                    max_edge = edge    
+                    max_edge = edge
             # Only name edge with the min and max z values (edge between the non-contact and contact surface)
             min_edge.name = name
             max_edge.name = name
@@ -244,9 +245,9 @@ class MedtronicSenSightModel(ElectrodeModel):
         min_z_val = float("inf")
         for edge in contact.edges:
             if (edge.center.z > max_z_val):
-                max_z_val = edge.center.z       
+                max_z_val = edge.center.z
             if (edge.center.z < min_z_val):
-                min_z_val = edge.center.z  
+                min_z_val = edge.center.z
             if (edge.center.x > max_x_val):
                 max_x_val = edge.center.x
                 max_x_edge = edge
@@ -285,4 +286,3 @@ class MedtronicSenSightModel(ElectrodeModel):
             return (0, 1, 0)
 
         return (x, y, not z)
-    

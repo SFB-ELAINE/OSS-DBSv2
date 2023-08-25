@@ -14,6 +14,7 @@ class AbbottStJudeParameters():
     contact_spacing: float
     lead_diameter: float
     total_length: float
+    offset: float
 
 
 class AbbottStJudeActiveTipModel(ElectrodeModel):
@@ -91,14 +92,14 @@ class AbbottStJudeActiveTipModel(ElectrodeModel):
             for edge in contact.edges:
                 if (edge.center.z < min_edge_z_val):
                     min_edge_z_val = edge.center.z
-                    min_edge = edge    
+                    min_edge = edge
                 if (edge.center.z > max_edge_z_val):
                     max_edge_z_val = edge.center.z
-                    max_edge = edge    
-            # Only name edge with the max z value for contact_1
+                    max_edge = edge
+                    # Only name edge with the max z value for contact_1
                 max_edge.name = name
-            if (name != 'Contact_1'): 
-                min_edge.name =  name
+            if (name != 'Contact_1'):
+                min_edge.name = name
                 vector = tuple(np.array(self._direction) * distance)
                 contacts.append(contact.Move(vector))
                 distance += self._parameters.contact_length + self._parameters.contact_spacing
@@ -106,7 +107,7 @@ class AbbottStJudeActiveTipModel(ElectrodeModel):
                 distance = self._parameters.tip_length + self._parameters.contact_spacing
                 contacts.append(contact)
                 contact = contact_cyl
-            
+
         return occ.Glue(contacts)
 
 
@@ -131,7 +132,7 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
         for param in (asdict(self._parameters).values()):
             if (param < 0):
                 raise ValueError("Parameter values cannot be less than zero")
-            
+
     def _construct_encapsulation_geometry(self, thickness: float) \
             -> netgen.libngpy._NgOCC.TopoDS_Shape:
         center = tuple(np.array(self._direction) * self._parameters.lead_diameter * 0.5)
@@ -165,7 +166,7 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
     def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         vectors = []
         distance = self._parameters.tip_length
-        for index in range(0,4):
+        for index in range(0, 4):
             vectors.append(tuple(np.array(self._direction) * distance))
             distance += self._parameters.contact_length + self._parameters.contact_spacing
 
@@ -189,14 +190,14 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
         for index, contact in enumerate(contacts, 1):
             name = self._boundaries['Contact_{}'.format(index)]
             contact.bc(name)
-            # Label max z value and min z value for contact_1 and contact_8 
-            if (name == 'Contact_1' or name == 'Contact_8'):     
+            # Label max z value and min z value for contact_1 and contact_8
+            if (name == 'Contact_1' or name == 'Contact_8'):
                 min_edge_z_val = float("inf")
                 for edge in contact.edges:
                     if (edge.center.z < min_edge_z_val):
                         min_edge_z_val = edge.center.z
                         min_edge = edge
-                min_edge.name = name    
+                min_edge.name = name
                 max_edge_z_val = float("-inf")
                 for edge in contact.edges:
                     if (edge.center.z > max_edge_z_val):
@@ -229,9 +230,9 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
         min_z_val = float("inf")
         for edge in contact.edges:
             if (edge.center.z > max_z_val):
-                max_z_val = edge.center.z       
+                max_z_val = edge.center.z
             if (edge.center.z < min_z_val):
-                min_z_val = edge.center.z  
+                min_z_val = edge.center.z
             if (edge.center.x > max_x_val):
                 max_x_val = edge.center.x
                 max_x_edge = edge
@@ -242,9 +243,11 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
         max_y_edge.name = "max y"
         # Label only the outer edges of the contact with min z and max z values
         for edge in contact.edges:
-            if (np.isclose(edge.center.z, max_z_val) and not (np.isclose(edge.center.x, radius/2) or np.isclose(edge.center.y, radius/2))):
+            if (np.isclose(edge.center.z, max_z_val) and not (
+                    np.isclose(edge.center.x, radius / 2) or np.isclose(edge.center.y, radius / 2))):
                 edge.name = "max z"
-            elif (np.isclose(edge.center.z, min_z_val) and not (np.isclose(edge.center.x, radius/2) or np.isclose(edge.center.y, radius/2))):
+            elif (np.isclose(edge.center.z, min_z_val) and not (
+                    np.isclose(edge.center.x, radius / 2) or np.isclose(edge.center.y, radius / 2))):
                 edge.name = "min z"
         contact = contact.Rotate(axis, angle)
         # TODO: check that the starting axis of the contacts are correct according to the documentation

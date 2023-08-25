@@ -15,6 +15,7 @@ class PINSMedicalParameters(ABC):
     contact_spacing: float
     lead_diameter: float
     total_length: float
+    offset: float
 
 
 class PINSMedicalModel(ElectrodeModel):
@@ -97,10 +98,10 @@ class PINSMedicalModel(ElectrodeModel):
             for edge in contact.edges:
                 if (edge.center.z < min_edge_z_val):
                     min_edge_z_val = edge.center.z
-                    min_edge = edge    
+                    min_edge = edge
                 if (edge.center.z > max_edge_z_val):
                     max_edge_z_val = edge.center.z
-                    max_edge = edge    
+                    max_edge = edge
             # Only name edge with the min and max z values (represents the edge between the non-contact and contact surface)
             min_edge.name = name
             max_edge.name = name

@@ -36,7 +36,7 @@ class ElectrodeModel(ABC):
                  parameters: dataclass,
                  rotation: float = 0,
                  direction: tuple = (0, 0, 1),
-                 position: tuple = (0, 0, 0),
+                 position: tuple = (0, 0, 0)
                  ) -> None:
         self._position = position
         self._rotation = rotation
@@ -108,7 +108,7 @@ class ElectrodeModel(ABC):
     @abstractmethod
     def parameter_check(self):
         pass
-   
+
     @abstractmethod
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         pass
