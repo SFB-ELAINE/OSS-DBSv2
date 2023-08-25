@@ -14,6 +14,7 @@ class BostonScientificVerciseParameters():
     contact_spacing: float
     lead_diameter: float
     total_length: float
+    offset: float
 
 
 class BostonScientificVerciseDirectedModel(ElectrodeModel):
@@ -42,7 +43,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         for param in (asdict(self._parameters).values()):
             if (param < 0):
                 raise ValueError("Parameter values cannot be less than zero")
-                       
+
     def _construct_encapsulation_geometry(self, thickness: float) \
             -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of encapsulation layer around electrode.
@@ -95,7 +96,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
 
         vectors = []
         distance = self._parameters.tip_length + self._parameters.contact_spacing
-        for index in range(0,3):
+        for index in range(0, 3):
             vectors.append(tuple(np.array(self._direction) * distance))
             distance += self._parameters.contact_length + self._parameters.contact_spacing
 
@@ -126,7 +127,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
                     if (edge.center.z < min_edge_z_val):
                         min_edge_z_val = edge.center.z
                         min_edge = edge
-                min_edge.name = name           
+                min_edge.name = name
             if (name == 'Contact_1' or name == 'Contact_8'):
                 max_edge_z_val = float("-inf")
                 for edge in contact.edges:
@@ -160,9 +161,9 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         min_z_val = float("inf")
         for edge in contact.edges:
             if (edge.center.z > max_z_val):
-                max_z_val = edge.center.z       
+                max_z_val = edge.center.z
             if (edge.center.z < min_z_val):
-                min_z_val = edge.center.z  
+                min_z_val = edge.center.z
             if (edge.center.x > max_x_val):
                 max_x_val = edge.center.x
                 max_x_edge = edge
@@ -173,9 +174,11 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         max_y_edge.name = "max y"
         # Label only the outer edges of the contact with min z and max z values
         for edge in contact.edges:
-            if (np.isclose(edge.center.z, max_z_val) and not (np.isclose(edge.center.x, radius/2) or np.isclose(edge.center.y, radius/2))):
+            if (np.isclose(edge.center.z, max_z_val) and not (
+                    np.isclose(edge.center.x, radius / 2) or np.isclose(edge.center.y, radius / 2))):
                 edge.name = "max z"
-            elif (np.isclose(edge.center.z, min_z_val) and not (np.isclose(edge.center.x, radius/2) or np.isclose(edge.center.y, radius/2))):
+            elif (np.isclose(edge.center.z, min_z_val) and not (
+                    np.isclose(edge.center.x, radius / 2) or np.isclose(edge.center.y, radius / 2))):
                 edge.name = "min z"
 
         # TODO: check that the starting axis of the contacts are correct according to the documentation
@@ -265,7 +268,7 @@ class BostonScientificVerciseModel(ElectrodeModel):
         height = self._parameters.contact_length
         contact = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
         contacts = []
-        distance = self._parameters.tip_length 
+        distance = self._parameters.tip_length
         for count in range(self._n_contacts):
             name = self._boundaries['Contact_{}'.format(count + 1)]
             contact.bc(name)
@@ -274,7 +277,7 @@ class BostonScientificVerciseModel(ElectrodeModel):
             for edge in contact.edges:
                 if (edge.center.z < min_edge_z_val):
                     min_edge_z_val = edge.center.z
-                    min_edge = edge 
+                    min_edge = edge
                 if (edge.center.z > max_edge_z_val):
                     max_edge_z_val = edge.center.z
                     max_edge = edge
@@ -283,5 +286,5 @@ class BostonScientificVerciseModel(ElectrodeModel):
             max_edge.name = name
             vector = tuple(np.array(self._direction) * distance)
             contacts.append(contact.Move(vector))
-            distance += self._parameters.contact_length + self._parameters.contact_spacing      
+            distance += self._parameters.contact_length + self._parameters.contact_spacing
         return netgen.occ.Glue(contacts)

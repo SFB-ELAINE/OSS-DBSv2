@@ -169,8 +169,56 @@ class VolumeConductor(ABC):
         return self._frequency
 
     def evaluate_potential_at_points(self, lattice: np.ndarray) -> np.ndarray:
-        # TODO
-        pass
+        """ Return electric potential at specifed 3-D coordinates
+
+        Parameters
+        ----------
+        lattice : Nx3 numpy.ndarray of lattice points
+
+        Returns
+        -------
+        Nx1 numpy.ndarray
+
+        TODO: filter points outside of the computational domain
+        """
+        # There might be a faster way to do this without for loops
+        # behind the scenes of NGSolve
+        pots = np.empty(lattice.shape[0])
+        mesh = self.mesh.ngsolvemesh
+
+        for i in range(lattice.shape[0]):
+            try:
+                pots[i] = self.potential(mesh(lattice[i, 0], lattice[i, 1], lattice[i, 2]))
+            except:
+                pass
+        return pots
+
+    def evaluate_field_at_points(self, lattice: np.ndarray) -> np.ndarray:
+        """ Return electric field components at specifed 3-D coordinates
+
+        Parameters
+        ----------
+        lattice : Nx3 numpy.ndarray of lattice points
+
+        Returns
+        -------
+        Nx3 numpy.ndarray
+
+        TODO: filter points outside of the computational domain
+        """
+        # There might be a faster way to do this without for loops
+        # behind the scenes of NGSolve
+        fields = np.empty((lattice.shape[0], 3))
+        mesh = self.mesh.ngsolvemesh
+        # Instantiate outside of for loop so that the code isn't recalculating
+        # the e-field every time self.electric_field is called
+        electric_field = self.electric_field
+        for i in range(lattice.shape[0]):
+            try:
+                fields[i] = electric_field(mesh(lattice[i, 0], lattice[i, 1], lattice[i, 2]))
+            except:
+                fields[i] = (0, 0, 0)
+        return fields
 
     @property
     def current_density(self) -> ngsolve.GridFunction:

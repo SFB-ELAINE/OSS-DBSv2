@@ -17,7 +17,8 @@ from ossdbs.api import (generate_electrodes,
                         run_volume_conductor_model,
                         set_contact_and_encapsulation_layer_properties,
                         generate_model_geometry,
-                        generate_neuron_grid)
+                        generate_neuron_grid,
+                        load_from_lead_mat)
 from ossdbs.utils.nifti1image import (MagneticResonanceImage,
                                       DiffusionTensorImage)
 import ngsolve

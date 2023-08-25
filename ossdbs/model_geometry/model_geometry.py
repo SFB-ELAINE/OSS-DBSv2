@@ -154,6 +154,7 @@ class ModelGeometry:
                 continue
             else:
                 raise ValueError("Tried to update encapsulation layer with setting {}".format(setting))
+
         return
 
     @property

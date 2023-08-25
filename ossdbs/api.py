@@ -18,12 +18,18 @@ from ossdbs.stimulation_signals import (TimeDomainSignal,
                                         TriangleSignal)
 from ossdbs.point_analysis import (PointModel,
                                    Pathway,
-                                   Lattice)
+                                   Lattice,
+                                   VoxelLattice)
 from ossdbs.fem import (VolumeConductor,
                         VolumeConductorNonFloating,
                         VolumeConductorFloating,
                         VolumeConductorFloatingImpedance)
 from ossdbs.utils.vtk_export import FieldSolution
+from ossdbs.utils.lead_settings import LeadSettings
+
+from ossdbs.utils.imp_coord import imp_coord
+from ossdbs.utils.nifti1image import MagneticResonanceImage
+import os
 
 import numpy as np
 import logging
@@ -205,23 +211,30 @@ def prepare_solver(settings):
 
 
 def generate_neuron_grid(settings: dict) -> PointModel:
-    if settings['Pathway']['Active']:
-        file_name = settings['Pathway']['FileName']
+    if settings["PointModel"]['Pathway']['Active']:
+        file_name = settings["PointModel"]['Pathway']['FileName']
         return Pathway(file_name)
+    elif settings["PointModel"]['Lattice']['Active']:
+        shape_par = settings["PointModel"]['Lattice']['Shape']
+        shape = shape_par['x'], shape_par['y'], shape_par['z']
+        center_par = settings["PointModel"]['Lattice']['Center']
+        center = center_par['x[mm]'], center_par['y[mm]'], center_par['z[mm]']
+        dir_par = settings["PointModel"]['Lattice']['Direction']
+        direction = dir_par['x[mm]'], dir_par['y[mm]'], dir_par['z[mm]']
+        distance = settings["PointModel"]['Lattice']['PointDistance[mm]']
 
-    shape_par = settings['Lattice']['Shape']
-    shape = shape_par['x'], shape_par['y'], shape_par['z']
-    center_par = settings['Lattice']['Center']
-    center = center_par['x[mm]'], center_par['y[mm]'], center_par['z[mm]']
-    dir_par = settings['Lattice']['Direction']
-    direction = dir_par['x[mm]'], dir_par['y[mm]'], dir_par['z[mm]']
-    distance = settings['Lattice']['PointDistance[mm]']
+        return Lattice(shape=shape,
+                       center=center,
+                       distance=distance,
+                       direction=direction)
+    else:
+        imp = imp_coord(settings)
+        affine = MagneticResonanceImage(
+            os.path.join(os.environ['STIMFOLDER'], settings['MaterialDistribution']['MRIPath'])).affine
+        shape_par = settings["PointModel"]['VoxelLattice']['Shape']
+        shape = np.array([shape_par['x'], shape_par['y'], shape_par['z']])
 
-    return Lattice(shape=shape,
-                   center=center,
-                   distance=distance,
-                   direction=direction)
-
+        return VoxelLattice(imp, affine, shape)
 
 def filter_grid_points(electrodes, mesh, points, material_distribution):
     # TODO locations of points in relation to tissue. needs to be reworked
@@ -332,13 +345,13 @@ def run_volume_conductor_model(settings, volume_conductor):
 
     volume_conductor.run_full_analysis(compute_impedance)
     # save impedance
-    if "SaveImpedance" in settings:
-        if settings["SaveImpedance"]:
+    if "ComputeImpedance" in settings:
+        if settings["ComputeImpedance"]:
             _logger.info("Saving impedance")
             df = pd.DataFrame({"freq": volume_conductor.signal.frequencies,
                                "real": volume_conductor.impedances.real,
                                "imag": volume_conductor.impedances.imag})
-            df.to_csv("impedance.csv", index=False)
+            df.to_csv(os.path.join(os.environ["STIMFOLDER"], settings["OutputPath"], "impedance.csv"), index=False)
 
     if "ExportVTK" in settings:
         if settings["ExportVTK"]:
@@ -347,21 +360,29 @@ def run_volume_conductor_model(settings, volume_conductor):
             FieldSolution(volume_conductor.potential,
                           "potential",
                           ngmesh,
-                          volume_conductor.is_complex).save("potential")
+                          volume_conductor.is_complex).save(os.path.join(os.environ["STIMFOLDER"],"potential"))
 
             FieldSolution(volume_conductor.electric_field,
                           "E-field",
                           ngmesh,
-                          volume_conductor.is_complex).save("E-field")
+                          volume_conductor.is_complex).save(os.path.join(os.environ["STIMFOLDER"],"E-field"))
 
             FieldSolution(volume_conductor.conductivity,
                           "conductivity",
                           ngmesh,
-                          volume_conductor.is_complex).save("conductivity")
+                          volume_conductor.is_complex).save(os.path.join(os.environ["STIMFOLDER"],"conductivity"))
 
             FieldSolution(volume_conductor.conductivity_cf.material_distribution(volume_conductor.mesh),
                           "material",
                           ngmesh,
-                          False).save("material")
+                          False).save(os.path.join(os.environ["STIMFOLDER"],"material"))
     if compute_impedance:
         return volume_conductor.impedances
+
+
+def load_from_lead_mat(filename, hemi_idx):
+    """Convert Lead-DBS input (stored in oss-dbs_parameters.mat) to OSS-DBS v2 format
+
+    """
+    ls = LeadSettings(filename)
+    return ls.make_oss_settings(hemis_idx=hemi_idx)

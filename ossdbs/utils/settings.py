@@ -88,11 +88,19 @@ class Settings:
                             'Shape': {'x': 10, 'y': 10, 'z': 10},
                             'Direction': {'x[mm]': 0, 'y[mm]': 0, 'z[mm]': 1},
                             'PointDistance[mm]': 0.1
-                            }
+                            },
+                'VoxelLattice': {
+                    'Active': False,
+                    'Shape': {'x': 10, 'y': 10, 'z': 10},
+                    }
                 },
                'OutputPath': 'Results',
                'SaveImpedance': False,
-               'ExportVTK': False
+               'ExportVTK': False,
+               'TemplateSpace': True,
+               "ModelSide": 0,
+               'CalcAxonActivation': False,
+               'ActivationThresholdVTA': 0
                }
 
     def __init__(self, partial_settings: dict) -> None:
