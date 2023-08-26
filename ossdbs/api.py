@@ -385,4 +385,4 @@ def load_from_lead_mat(filename, hemi_idx):
 
     """
     ls = LeadSettings(filename)
-    return ls.make_oss_settings(hemis_idx=hemi_idx)
+    return ls.make_oss_settings(hemis_idx=int(hemi_idx))
