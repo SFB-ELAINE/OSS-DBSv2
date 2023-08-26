@@ -87,13 +87,13 @@ class VoxelLattice(PointModel):
         else:
             return self._coordinates
 
-    # Temporary solution
     def save_as_nifti(self, settings, scalar_field, filename, binarize=False):
 
         """ Save scalar field (e.g. electric potential or E-field magnitude) in MRI space using nifti format
 
         Parameters
         ----------
+        settings: dict of parameters
         scalar_field : Nx1 numpy.ndarray of scalar values on the voxel lattice
         filename: str, name for the nifti file
         binarize: bool, thresholds the scalar field and saves the binarized result
