@@ -6,7 +6,7 @@ import sys
 import json
 import h5py
 import ossdbs
-from ossdbs.utils.imp_coord import imp_coord
+from ossdbs.leaddbs_interface.imp_coord import imp_coord
 import logging
 import time
 #import ngsolve
@@ -14,21 +14,19 @@ import time
 
 _logger = logging.getLogger(__name__)
 
-def main(lead_settings, hemi_side):
+def load_default_for_lead(settings):
 
-    timings = {}
-    time_0 = time.time()
-    hemi_side = int(hemi_side)
+    """Add parameters that are not defined in Lead-DBS GUI
 
-    ### Lead/OSS Interface ###
-    output_path, tail = os.path.split(lead_settings)
-    # sys.path.insert(output_path)
-    os.environ["STIMFOLDER"] = output_path
-    SIDES = ['rh', 'lh']
+    Parameters
+    ----------
+    settings: dict, OSS-DBS settings imported from Lead-DBS
 
-    settings = ossdbs.load_from_lead_mat(lead_settings, hemi_side)
-    # Used imp coords defined in oss-dbs parameter file rather than 
-    # the STN coords we've been using (14,-11,-5)
+    Returns
+    -------
+    settings: dict
+    """
+
     settings["BrainRegion"]["Dimension"]["x[mm]"] = 60
     settings["BrainRegion"]["Dimension"]["y[mm]"] = 60
     settings["BrainRegion"]["Dimension"]["z[mm]"] = 80
@@ -43,13 +41,8 @@ def main(lead_settings, hemi_side):
     settings["ExportVTK"] = True
     settings["Mesh"]["MeshingHypothesis"]["Type"] = "Fine"
     settings["FEMOrder"] = 2
-    settings["ComputeImpedance"] = True
-    settings["SaveImpedance"] = True
-
-    side = SIDES[hemi_side]
-
-    with open(os.path.join(os.environ["STIMFOLDER"], "fail_" + side + ".txt"), 'w') as f:
-        print("LEAD Settings Converted")
+    settings["ComputeImpedance"] = False
+    settings["SaveImpedance"] = False
 
     first_contact = imp_coord(settings)
     settings["PointModel"]["Lattice"] = {"Active": True,
@@ -68,8 +61,33 @@ def main(lead_settings, hemi_side):
                                              "y[mm]": settings["Electrodes"][0]["Direction"]["y[mm]"],
                                              "z[mm]": settings["Electrodes"][0]["Direction"]["z[mm]"]
                                          },
-                                         "PointDistance[mm]": 0.4
+                                         "PointDistance[mm]": 0.5
                                          }
+
+    return settings
+
+def main(lead_settings, hemi_side):
+
+    timings = {}
+    time_0 = time.time()
+    hemi_side = int(hemi_side)
+
+    ### Lead/OSS Interface ###
+    output_path, tail = os.path.split(lead_settings)
+    # sys.path.insert(output_path)
+    os.environ["STIMFOLDER"] = output_path
+    SIDES = ['rh', 'lh']
+    side = SIDES[hemi_side]
+
+    # get settings from oss-dbs_parameters.mat
+    settings = ossdbs.load_from_lead_mat(lead_settings, hemi_side)
+
+    # add default settings (alternatively, set using GUI)
+    settings = load_default_for_lead(settings)
+
+    # create the fail flag for Lead-DBS, will be removed if successful run
+    with open(os.path.join(os.environ["STIMFOLDER"], "fail_" + side + ".txt"), 'w') as f:
+        print("Settings imported")
 
     if not os.path.isdir(settings["OutputPath"]):
         os.mkdir(settings["OutputPath"])
