@@ -61,75 +61,15 @@ class LeadSettings:
         # folders for the output
         HEMIS_OUTPUT_PATHS = ["Results_rh", "Results_lh"]
 
-        # Convert the electrode name to OSS-DBS format
-        oss_elec_name = self.get_elec_type().replace(" ", "")
-        # Check that oss electrode name is valid
-        if oss_elec_name not in default_electrode_parameters.keys():
-            raise Exception(oss_elec_name + " is not a recognized electrode type")
+        elec_dict = self.import_implantation_settings(hemis_idx)
 
-        # get tip position from the head and tail markers
-        unit_directions, tip_pos = self.get_tip_position(oss_elec_name)
+        # get electrode dictionary with stimulation parameters
+        elec_dict, case_grounding = self.import_stimulation_settings(hemis_idx, elec_dict)
 
-        # stimulation vector over electrode contacts (negative - cathode)
-        pulse_amps = self.get_phi_vec()
+        # add another dict if more than one electrode at a time
+        elec_dicts = [elec_dict]
 
-        # check stimulation mode
-        if self.get_cur_ctrl()[hemis_idx]:
-            pulse_amp_key = "Current[A]"
-            not_pulse_amp_key = "Voltage[V]"
-            # Lead-DBS uses mA as the input
-            pulse_amps = pulse_amps * 0.001
-        else:
-            pulse_amp_key = "Voltage[V]"
-            not_pulse_amp_key = "Current[A]"
-            # Fix of VC random grounding bug for Lead-DBS stim settings
-            pulse_amps[pulse_amps == 0] = float('nan')
-
-            # make list of dictionaries for the electrode settings
-        # for now use one electrode at a time
-        elec_dicts = np.empty(self.get_num_elecs(), dtype=object)
-        for index_side in [hemis_idx]:
-
-            pulse_amp = pulse_amps[index_side, :]
-
-            if self.get_cur_ctrl()[index_side]:
-                # for CC, check if currents sum up to 0.0. If not, enable case grounding
-                case_grounding = np.sum(pulse_amp[~np.isnan(pulse_amp)]) != 0
-            else:
-                # for VC, case grounding is defined explicitly
-                case_grounding = bool(self.get_case_grnd()[index_side])
-
-            # cntct_dicts is a list of the contacts that will go in the json for this electrode
-            # We only include the active ones for now
-            cntct_dicts = np.empty(np.sum(~np.isnan(pulse_amp)), dtype=object)
-            cntcts_made = 0
-
-            for i in range(len(pulse_amp)):
-                if not np.isnan(pulse_amp[i]):
-                    cntct_dicts[cntcts_made] = {
-                        # Assuming one-indexed contact ids
-                        "Contact_ID": i + 1,
-                        "Active": True,
-                        pulse_amp_key: pulse_amp[i],
-                        not_pulse_amp_key: False}
-                    cntcts_made += 1
-
-            elec_dicts[0] = {
-                # Assuming both electrodes are the same type
-                "Name": oss_elec_name,
-                "PathToCustomParameters": "",
-                "Rotation[Degrees]": self.get_rot_z(index_side),
-                "Direction": {"x[mm]": unit_directions[index_side, 0],
-                              "y[mm]": unit_directions[index_side, 1],
-                              "z[mm]": unit_directions[index_side, 2]},
-                "TipPosition": {
-                    "x[mm]": tip_pos[index_side, 0],
-                    "y[mm]": tip_pos[index_side, 1],
-                    "z[mm]": tip_pos[index_side, 2]},
-                "Contacts": cntct_dicts.tolist()}
-
-        ### MAKE THE DICTIONARY ###    
-
+        ### MAKE THE DICTIONARY ###
         partial_dict = {
             "ModelSide": 0,  # hardcoded for now, always keep to 0 (no matter which hemisphere)
             "BrainRegion": {
@@ -138,7 +78,7 @@ class LeadSettings:
                            "y[mm]": self.get_imp_coord()[hemis_idx, 1],
                            "z[mm]": self.get_imp_coord()[hemis_idx, 2]}
             },
-            "Electrodes": elec_dicts.tolist(),
+            "Electrodes": elec_dicts,
             "Surfaces": [{
                 "Name": "BrainSurface",
                 "Active": bool(case_grounding),
@@ -309,6 +249,113 @@ class LeadSettings:
         tip_position = imp_coords - elec_params.offset * unit_directions
 
         return unit_directions, tip_position
+
+    def import_implantation_settings(self, hemis_idx, elec_dict=None):
+
+        """Convert Lead-DBS implantation settings to OSS-DBS parameters
+
+        Parameters
+        ----------
+        hemis_idx: int, hemisphere ID (0 - right, 1 - left)
+        elec_dict: dict, default=None, electrode dictionary to create/update
+
+        Returns
+        -------
+        elec_dict: dict
+        case_grounding: bool
+        """
+
+        # Convert the electrode name to OSS-DBS format
+        electrode_name = self.get_elec_type().replace(" ", "")
+        # Check that oss electrode name is valid
+        if electrode_name not in default_electrode_parameters.keys():
+            raise Exception(electrode_name + " is not a recognized electrode type")
+
+        # get tip position from the head and tail markers
+        unit_directions, tip_pos = self.get_tip_position(electrode_name)
+
+        elec_dict_imp = {
+            # Assuming both electrodes are the same type
+            "Name": electrode_name,
+            "PathToCustomParameters": "",
+            "Rotation[Degrees]": self.get_rot_z(hemis_idx),
+            "Direction": {"x[mm]": unit_directions[hemis_idx, 0],
+                          "y[mm]": unit_directions[hemis_idx, 1],
+                          "z[mm]": unit_directions[hemis_idx, 2]},
+            "TipPosition": {
+                "x[mm]": tip_pos[hemis_idx, 0],
+                "y[mm]": tip_pos[hemis_idx, 1],
+                "z[mm]": tip_pos[hemis_idx, 2]}}
+        if elec_dict is None:
+            elec_dict = elec_dict_imp
+        else:
+            elec_dict.update(elec_dict_imp)
+
+        return elec_dict
+
+    def import_stimulation_settings(self, hemis_idx, elec_dict=None):
+        """Convert Lead-DBS stim settings to OSS-DBS parameters, update electrode dictionary
+
+        Parameters
+        ----------
+        hemis_idx: int, hemisphere ID (0 - right, 1 - left)
+        elec_dict: dict, default=None, electrode dictionary to create/update
+
+        Returns
+        -------
+        elec_dict: dict
+        case_grounding: bool
+        """
+
+        # stimulation vector over electrode contacts (negative - cathode)
+        pulse_amps = self.get_phi_vec()
+
+        # check stimulation mode
+        if self.get_cur_ctrl()[hemis_idx]:
+            pulse_amp_key = "Current[A]"
+            not_pulse_amp_key = "Voltage[V]"
+            # Lead-DBS uses mA as the input
+            pulse_amps = pulse_amps * 0.001
+        else:
+            pulse_amp_key = "Voltage[V]"
+            not_pulse_amp_key = "Current[A]"
+            # Fix of VC random grounding bug for Lead-DBS stim settings
+            pulse_amps[pulse_amps == 0] = float('nan')
+
+            # make list of dictionaries for the electrode settings
+        # for now use one electrode at a time
+
+        for index_side in [hemis_idx]:
+
+            pulse_amp = pulse_amps[index_side, :]
+
+            if self.get_cur_ctrl()[index_side]:
+                # for CC, check if currents sum up to 0.0. If not, enable case grounding
+                case_grounding = np.sum(pulse_amp[~np.isnan(pulse_amp)]) != 0
+            else:
+                # for VC, case grounding is defined explicitly
+                case_grounding = bool(self.get_case_grnd()[index_side])
+
+            # cntct_dicts is a list of the contacts that will go in the json for this electrode
+            # We only include the active ones for now
+            cntct_dicts = np.empty(np.sum(~np.isnan(pulse_amp)), dtype=object)
+            cntcts_made = 0
+
+            for i in range(len(pulse_amp)):
+                if not np.isnan(pulse_amp[i]):
+                    cntct_dicts[cntcts_made] = {
+                        # Assuming one-indexed contact ids
+                        "Contact_ID": i + 1,
+                        "Active": True,
+                        pulse_amp_key: pulse_amp[i],
+                        not_pulse_amp_key: False}
+                    cntcts_made += 1
+
+        if elec_dict is None:
+            elec_dict = {}  # or you could set default to {}
+        elec_dict["Contacts"] = cntct_dicts.tolist()
+
+        return elec_dict, case_grounding
 
     # Private fxns
 

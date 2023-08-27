@@ -25,9 +25,9 @@ from ossdbs.fem import (VolumeConductor,
                         VolumeConductorFloating,
                         VolumeConductorFloatingImpedance)
 from ossdbs.utils.vtk_export import FieldSolution
-from ossdbs.utils.lead_settings import LeadSettings
+from ossdbs.leaddbs_interface.lead_settings import LeadSettings
 
-from ossdbs.utils.imp_coord import imp_coord
+from ossdbs.leaddbs_interface.imp_coord import imp_coord
 from ossdbs.utils.nifti1image import MagneticResonanceImage
 import os
 
