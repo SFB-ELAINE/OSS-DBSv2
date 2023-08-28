@@ -24,11 +24,13 @@ from ossdbs.fem import (VolumeConductor,
                         VolumeConductorNonFloating,
                         VolumeConductorFloating,
                         VolumeConductorFloatingImpedance)
+from ossdbs.utils.nifti1image import (MagneticResonanceImage,
+                                      DiffusionTensorImage)
+
 from ossdbs.utils.vtk_export import FieldSolution
 from ossdbs.leaddbs_interface.lead_settings import LeadSettings
 
 from ossdbs.leaddbs_interface.imp_coord import imp_coord
-from ossdbs.utils.nifti1image import MagneticResonanceImage
 
 import numpy as np
 import logging
@@ -202,7 +204,8 @@ def prepare_solver(settings):
     parameters = settings["Solver"]
     solver_type = parameters['Type']
     solver = SOLVERS[solver_type]
-    preconditioner = PRECONDITIONERS[parameters['Preconditioner']]
+    preconditioner_kwargs = parameters["PreconditionerKwargs"]
+    preconditioner = PRECONDITIONERS[parameters['Preconditioner']](**preconditioner_kwargs)
 
     return solver(precond_par=preconditioner,
                   printrates=parameters['PrintRates'],
@@ -363,6 +366,7 @@ def run_volume_conductor_model(settings, volume_conductor):
                           "potential",
                           ngmesh,
                           volume_conductor.is_complex).save("potential")
+
             FieldSolution(volume_conductor.electric_field,
                           "E-field",
                           ngmesh,
@@ -379,6 +383,18 @@ def run_volume_conductor_model(settings, volume_conductor):
                           False).save("material")
     if compute_impedance:
         return volume_conductor.impedances
+
+
+def load_images(settings):
+    _logger.info("Load MRI image")
+    mri_path = settings['MaterialDistribution']['MRIPath']
+    _logger.debug("Input path: {}".format(mri_path))
+    mri_image = MagneticResonanceImage(mri_path)
+    dti_image = None
+    if settings["MaterialDistribution"]["DiffusionTensorActive"]:
+        _logger.info("Load DTI image")
+        dti_image = DiffusionTensorImage(settings["MaterialDistribution"]["DTIPath"])
+    return mri_image, dti_image
 
 
 def load_from_lead_mat(filename, hemi_idx):
