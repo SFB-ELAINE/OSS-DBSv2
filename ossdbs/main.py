@@ -2,7 +2,8 @@ import sys
 import json
 import ngsolve
 from ossdbs import set_logger
-from ossdbs.api import (generate_electrodes,
+from ossdbs.api import (load_images,
+                        generate_electrodes,
                         prepare_dielectric_properties,
                         create_bounding_box,
                         prepare_solver,
@@ -12,8 +13,6 @@ from ossdbs.api import (generate_electrodes,
                         )
 from ossdbs.utils.settings import Settings
 from ossdbs.utils.type_check import TypeChecker
-from ossdbs.utils.nifti1image import (MagneticResonanceImage,
-                                      DiffusionTensorImage)
 from ossdbs.model_geometry import (ModelGeometry,
                                    BrainGeometry,
                                    BoundingBox)
@@ -50,14 +49,7 @@ def main() -> None:
     timings["Settings"] = time_1 - time_0
     time_0 = time_1
 
-    _logger.info("Load MRI image")
-    mri_path = settings['MaterialDistribution']['MRIPath']
-    _logger.debug("Input path: {}".format(mri_path))
-    mri_image = MagneticResonanceImage(mri_path)
-    dti_image = None
-    if settings["MaterialDistribution"]["DiffusionTensorActive"]:
-        _logger.info("Load DTI image")
-        dti_image = DiffusionTensorImage(settings["MaterialDistribution"]["DTIPath"])
+    mri_image, dti_image = load_images(settings)
 
     time_1 = time.time()
     timings["MRI"] = time_1 - time_0

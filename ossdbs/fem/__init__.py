@@ -15,11 +15,11 @@ SOLVERS = {'CG': CGSolver,
            'GMRES': GMRESSolver}
 
 
-PRECONDITIONERS = {'bddc': BDDCPreconditioner(),
-                   'local': LocalPreconditioner(),
-                   'multigrid': MultigridPreconditioner(),
-                   'h1amg': AMGPreconditioner(),
-                   'direct': DirectPreconditioner()
+PRECONDITIONERS = {'bddc': BDDCPreconditioner,
+                   'local': LocalPreconditioner,
+                   'multigrid': MultigridPreconditioner,
+                   'h1amg': AMGPreconditioner,
+                   'direct': DirectPreconditioner
                    }
 
 
