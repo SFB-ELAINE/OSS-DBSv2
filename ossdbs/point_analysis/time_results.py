@@ -1,13 +1,14 @@
 from dataclasses import dataclass
 import numpy as np
-from ossdbs.utils.vtk_export import FieldSolution
 
 
 @dataclass
 class TimeResult:
-    # TODO check what is really needed
+    """
+    TODO format of electric_field_vector needs to be clarified
+    """
     points: np.ndarray
     time_steps: np.ndarray
     potential: np.ndarray
-    current_density: np.ndarray
-    field_solution: FieldSolution
+    electric_field_magnitude: np.ndarray
+    electric_field_vector: np.ndarray

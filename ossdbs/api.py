@@ -29,11 +29,11 @@ from ossdbs.leaddbs_interface.lead_settings import LeadSettings
 
 from ossdbs.leaddbs_interface.imp_coord import imp_coord
 from ossdbs.utils.nifti1image import MagneticResonanceImage
-import os
 
 import numpy as np
 import logging
 import pandas as pd
+import h5py
 
 _logger = logging.getLogger(__name__)
 
@@ -229,12 +229,12 @@ def generate_neuron_grid(settings: dict) -> PointModel:
                        direction=direction)
     else:
         imp = imp_coord(settings)
-        affine = MagneticResonanceImage(
-            os.path.join(os.environ['STIMFOLDER'], settings['MaterialDistribution']['MRIPath'])).affine
+        affine = MagneticResonanceImage(settings['MaterialDistribution']['MRIPath']).affine
         shape_par = settings["PointModel"]['VoxelLattice']['Shape']
         shape = np.array([shape_par['x'], shape_par['y'], shape_par['z']])
 
         return VoxelLattice(imp, affine, shape)
+
 
 def filter_grid_points(electrodes, mesh, points, material_distribution):
     # TODO locations of points in relation to tissue. needs to be reworked
@@ -343,7 +343,9 @@ def run_volume_conductor_model(settings, volume_conductor):
             _logger.info("Will compute impedance at each frequency")
             compute_impedance = True
 
-    volume_conductor.run_full_analysis(compute_impedance)
+    # TODO WIP: integrate point analysis, default return is None
+    lattice = create_point_analysis(settings)
+    volume_conductor.run_full_analysis(compute_impedance, lattice=lattice)
     # save impedance
     if "ComputeImpedance" in settings:
         if settings["ComputeImpedance"]:
@@ -351,7 +353,7 @@ def run_volume_conductor_model(settings, volume_conductor):
             df = pd.DataFrame({"freq": volume_conductor.signal.frequencies,
                                "real": volume_conductor.impedances.real,
                                "imag": volume_conductor.impedances.imag})
-            df.to_csv(os.path.join(os.environ["STIMFOLDER"], settings["OutputPath"], "impedance.csv"), index=False)
+            df.to_csv(settings["OutputPath"] + "/impedance.csv", index=False)
 
     if "ExportVTK" in settings:
         if settings["ExportVTK"]:
@@ -360,22 +362,21 @@ def run_volume_conductor_model(settings, volume_conductor):
             FieldSolution(volume_conductor.potential,
                           "potential",
                           ngmesh,
-                          volume_conductor.is_complex).save(os.path.join(os.environ["STIMFOLDER"],"potential"))
-
+                          volume_conductor.is_complex).save("potential")
             FieldSolution(volume_conductor.electric_field,
                           "E-field",
                           ngmesh,
-                          volume_conductor.is_complex).save(os.path.join(os.environ["STIMFOLDER"],"E-field"))
+                          volume_conductor.is_complex).save("E-field")
 
             FieldSolution(volume_conductor.conductivity,
                           "conductivity",
                           ngmesh,
-                          volume_conductor.is_complex).save(os.path.join(os.environ["STIMFOLDER"],"conductivity"))
+                          volume_conductor.is_complex).save("conductivity")
 
             FieldSolution(volume_conductor.conductivity_cf.material_distribution(volume_conductor.mesh),
                           "material",
                           ngmesh,
-                          False).save(os.path.join(os.environ["STIMFOLDER"],"material"))
+                          False).save("material")
     if compute_impedance:
         return volume_conductor.impedances
 
@@ -386,3 +387,33 @@ def load_from_lead_mat(filename, hemi_idx):
     """
     ls = LeadSettings(filename)
     return ls.make_oss_settings(hemis_idx=int(hemi_idx))
+
+
+# TODO WIP
+def create_point_analysis(settings):
+    """Run a postprocessing analysis on the VCM
+
+    Notes
+    -----
+
+    Current plan:
+    1. Create points where the potential and electric field
+       shall be evaluated.
+    2. Integrate these points into the VCM: run_full_analysis
+       of the volume_conductor_model has an argument lattice.
+    3. Write separate function to load results and estimate VTA / PAM
+    """
+    # decide on a mode for the analysis, to be discussed!
+    mode = None
+    if 'Points' in settings:
+        mode = "Lead-DBS"
+        _logger.info("Use Lead-DBS model for postprocessing")
+    # TODO define mode with lattice model or pathway model
+    # interaction with Lead-DBS
+    if mode == "Lead-DBS":
+        with h5py.File(settings['Points'], "r") as file:
+            points = [np.array(file[key]) for key in file.keys()]
+        return np.concatenate(points, axis=0)
+    # TODO create lattice / pathway model from input file
+
+    return None
