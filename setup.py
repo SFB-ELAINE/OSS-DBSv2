@@ -18,11 +18,13 @@ with open('requirements.txt') as fp:
 setup(
     name=about['__title__'],
     version=about['__version__'],
-    author="XYZ",
-    author_email="xyz@abc.com",
-    description="Open-source DBS",
+    description="OSS-DBS",
     packages=find_packages(include=['ossdbs', 'ossdbs.*']),
     python_requires='>=3.8',
     install_requires=install_requires,
-    entry_points={'console_scripts': ['ossdbs=ossdbs.main:main']}
+    entry_points={'console_scripts':
+                  ['ossdbs = ossdbs.main:main',
+                   'leaddbs2ossdbs = leaddbsinterface.convert_input_dictionary:main'
+                   ]
+                  }
 )
