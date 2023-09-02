@@ -102,7 +102,7 @@ class VoxelLattice(PointModel):
         """
 
         # get affine of the segmented MRI image to use as a template
-        img = nib.load(os.path.join(os.environ["STIMFOLDER"], settings["MaterialDistribution"]["MRIPath"]))
+        img = nib.load(os.path.join(settings["OutputPath"], settings["MaterialDistribution"]["MRIPath"]))
         affine_grid = self.affine.copy()
         affine_grid[0:3, 3] = [self.coordinates[0][0], self.coordinates[0][1], self.coordinates[0][2]]
 
@@ -111,15 +111,14 @@ class VoxelLattice(PointModel):
         # you can just reshape it
         nifti_grid = scalar_field.reshape(base_xg.shape)
 
-        nifti_output = np.zeros(nifti_grid.shape, float);
+        nifti_output = np.zeros(nifti_grid.shape, float)
         if binarize:
             nifti_output[nifti_grid >= settings["ActivationThresholdVTA"]] = 1
             nifti_output[nifti_grid < settings["ActivationThresholdVTA"]] = 0
         else:
             nifti_output = nifti_grid  # V/mm
 
-        nib.save(nib.Nifti1Image(nifti_output, affine_grid, img.header), os.path.join(os.environ["STIMFOLDER"],
-                                                                                      settings["OutputPath"], filename))
+        nib.save(nib.Nifti1Image(nifti_output, affine_grid, img.header), os.path.join(settings["OutputPath"], filename))
 
     def _gen_grid(self):
         """ Return list of ndarrays (coordinate matrices from coordinate vectors).
