@@ -1,3 +1,4 @@
+import os
 from ossdbs.electrodes import (ELECTRODES,
                                ELECTRODE_MODELS,
                                ELECTRODE_PARAMETERS)
@@ -356,7 +357,7 @@ def run_volume_conductor_model(settings, volume_conductor):
             df = pd.DataFrame({"freq": volume_conductor.signal.frequencies,
                                "real": volume_conductor.impedances.real,
                                "imag": volume_conductor.impedances.imag})
-            df.to_csv(settings["OutputPath"] + "/impedance.csv", index=False)
+            df.to_csv(os.path.join(settings["OutputPath"], "impedance.csv"), index=False)
 
     if "ExportVTK" in settings:
         if settings["ExportVTK"]:
@@ -395,14 +396,6 @@ def load_images(settings):
         _logger.info("Load DTI image")
         dti_image = DiffusionTensorImage(settings["MaterialDistribution"]["DTIPath"])
     return mri_image, dti_image
-
-
-def load_from_lead_mat(filename, hemi_idx):
-    """Convert Lead-DBS input (stored in oss-dbs_parameters.mat) to OSS-DBS v2 format
-
-    """
-    ls = LeadSettings(filename)
-    return ls.make_oss_settings(hemis_idx=int(hemi_idx))
 
 
 # TODO WIP

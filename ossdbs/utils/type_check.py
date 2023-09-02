@@ -2,19 +2,20 @@
 
 class TypeChecker:
 
-    TYPES = {'DielectricModel': {
-                 'Type': str,
-                 },
+    TYPES = {'DielectricModel':
+             {'Type': str,
+              },
              'Electrodes': list,
-             'Contacts': {
-                 'MaxMeshSize': float,
-                 'MaxMeshSizeEdge': float
-                 },
-             'EncapsulationLayer': {
-                 'Thickness[mm]': (int, float),
-                 'Material': str,
-                 'MaxMeshSize': (int, float)
-                 },
+             'FailFlag': str,
+             'Contacts':
+             {'MaxMeshSize': float,
+              'MaxMeshSizeEdge': float
+              },
+             'EncapsulationLayer':
+             {'Thickness[mm]': (int, float),
+              'Material': str,
+              'MaxMeshSize': (int, float)
+              },
              'EQSMode': bool,
              'FEMOrder': int,
              'MaterialDistribution': {
@@ -27,21 +28,20 @@ class TypeChecker:
                  'LoadPath': str,
                  'MeshElementOrder': int,
                  'MeshingHypothesis': {
-                     'Type': str,
-                     },
+                     'Type': str},
                  'SaveMesh': bool,
                  'SavePath': str
              },
              'OutputPath': str,
-             'BrainRegion': {
-                 'Center': {'x[mm]': (int, float),
+             'BrainRegion':
+             {'Center': {'x[mm]': (int, float),
+                         'y[mm]': (int, float),
+                         'z[mm]': (int, float)},
+              'Dimension': {'x[mm]': (int, float),
                             'y[mm]': (int, float),
                             'z[mm]': (int, float)},
-                 'Dimension': {'x[mm]': (int, float),
-                               'y[mm]': (int, float),
-                               'z[mm]': (int, float)},
-                 'Shape': str
-                 },
+              'Shape': str
+              },
              'Solver': {
                  'Type': str,
                  'Preconditioner': str,
@@ -61,10 +61,10 @@ class TypeChecker:
                  'CutoffFrequency': float
              },
              'PointModel': {
-                 'Pathway': {
-                     'Active': bool,
-                     'FileName': str
-                     },
+                 'Pathway':
+                 {'Active': bool,
+                  'FileName': str
+                  },
                  'Lattice': {
                      'Center': {'x[mm]': (int, float),
                                 'y[mm]': (int, float),
@@ -78,7 +78,7 @@ class TypeChecker:
                                'z': int}
                  }
              }
-            }
+             }
 
     ELECTRODE_SETTING = {'Name': str,
                          'Rotation[Degrees]': (int, float),
@@ -116,8 +116,7 @@ class TypeChecker:
                     raise TypeError(message) from None
             else:
                 if not isinstance(settings[key], target[key]):
-                    message = '[\'{key}\'] is not of instance {type}'.format(
-                                                key=key, type=target[key])
+                    message = '[\'{key}\'] is not of instance {type}'.format(key=key, type=target[key])
                     raise TypeError(message)
 
     @classmethod

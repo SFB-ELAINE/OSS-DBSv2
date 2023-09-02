@@ -17,6 +17,7 @@ docs/._*
 .coveragerc
 *.vtu
 .DS_Store
+*.vol.gz
 
 case*/
 ng.ini
