@@ -108,7 +108,7 @@ class Mesh:
         """
         return self._mesh
 
-    def is_included(self, points: np.ndarray) -> np.ndarray:
+    def not_included(self, points: np.ndarray) -> np.ndarray:
         """Check each point in collection for collision with geometry.
         True if point is included in geometry, false otherwise.
 
@@ -125,7 +125,7 @@ class Mesh:
         """
         x, y, z = points.T
         mips = self._mesh(x, y, z)
-        return np.array([mip[5] != -1 for mip in mips])
+        return np.array([mip[5] == -1 for mip in mips])
 
     def refine(self, at_surface: bool = False) -> None:
         """Refine the mesh."""

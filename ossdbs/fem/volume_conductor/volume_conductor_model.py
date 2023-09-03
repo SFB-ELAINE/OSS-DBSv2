@@ -8,6 +8,10 @@ from .conductivity import ConductivityCF
 from typing import List
 import numpy as np
 import os
+import time
+import pandas as pd
+import h5py
+from ossdbs.utils.vtk_export import FieldSolution
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -71,8 +75,16 @@ class VolumeConductor(ABC):
 
     def run_full_analysis(self,
                           compute_impedance: bool = False,
-                          lattice: np.ndarray = None
+                          export_vtk: bool = False,
+                          lattice: np.ndarray = None,
+                          point_model: str = None,
+                          template_space: bool = False
                           ) -> None:
+        timings = {}
+        timings["FieldProbing"] = []
+        timings["FieldExport"] = []
+        timings["ComputeSolution"] = []
+
         if compute_impedance:
             if self.is_complex:
                 self._impedances = np.ndarray(shape=(len(self.signal.frequencies)), dtype=complex)
@@ -84,7 +96,11 @@ class VolumeConductor(ABC):
                 _logger.debug("Get scaled voltage values")
                 voltage_values = self.get_scaled_active_contact_voltages(self.signal.amplitudes[idx])
                 self.update_contacts(voltages=voltage_values)
+            time_0 = time.time()
             self.compute_solution(frequency)
+            time_1 = time.time()
+            timings["ComputeSolution"].append(time_1 - time_0)
+            time_0 = time_1
 
             if self.current_controlled:
                 # TODO implement current control
@@ -93,6 +109,67 @@ class VolumeConductor(ABC):
                 continue
             if compute_impedance:
                 self._impedances[idx] = self.compute_impedance()
+            if export_vtk:
+                self.vtk_export()
+            if lattice is None or point_model is None:
+                raise ValueError("You need to provide the corresponding point_model to the lattice")
+            if lattice is not None and point_model is not None:
+                potentials = self.evaluate_potential_at_points(lattice)
+                time_1 = time.time()
+                timings["PotentialProbing"].append(time_1 - time_0)
+                time_0 = time_1
+
+                fields = self.evaluate_field_at_points(lattice)
+                field_mags = np.linalg.norm(fields, axis=1).reshape((fields.shape[0], 1))
+                time_1 = time.time()
+                timings["FieldProbing"].append(time_1 - time_0)
+                time_0 = time_1
+
+                # TODO needs fix
+                # For high res use Latice
+                # If computed in MNI, create affine
+                # if point_model == 'VoxelLattice':
+                #     grid.save_as_nifti(settings, field_mags, os.path.join(settings["OutputPath"], "E_field_solution.nii"))
+                #     grid.save_as_nifti(settings, field_mags, os.path.join(settings["OutputPath"], "VTA_solution.nii"), binarize=True)
+
+                # Save points
+                h5f_pts = h5py.File(os.path.join(self.output_path, "oss_pts.h5"), 'w')
+                h5f_pts.create_dataset("points", data=lattice)
+                h5f_pts.close()
+
+                # Save potential evaluation
+                h5f_pot = h5py.File(os.path.join(self.output_path, 'oss_potentials.h5'), 'w')
+                h5f_pot.create_dataset("points", data=lattice)
+                h5f_pot.create_dataset("potentials", data=potentials)
+                h5f_pot.close()
+                df_pot = pd.DataFrame(np.concatenate([lattice, potentials.reshape((potentials.shape[0], 1))], axis=1),
+                                      columns=["x-pt", "y-pt", "z-pt", "potential"])
+                df_pot.to_csv(os.path.join(self.output_path, "oss_potentials.csv"), index=False)
+
+                # Save electric field evaluation
+                h5f_field = h5py.File(os.path.join(self.output_path, "oss_field.h5"), 'w')
+                h5f_field.create_dataset("points", data=lattice)
+                h5f_field.create_dataset("field/field_vecs", data=fields)
+                h5f_field.create_dataset("field/field_mags", data=field_mags)
+                h5f_field.close()
+                df_field = pd.DataFrame(np.concatenate([lattice, fields, field_mags], axis=1),
+                                        columns=["x-pt", "y-pt", "z-pt", "x-field", "y-field", "z-field", "magnitude"])
+                if template_space:
+                    df_field.to_csv(os.path.join(self.output_path, "E_field_Template_space.csv"), index=False)
+                else:
+                    df_field.to_csv(os.path.join(self.output_path, "E_field_MRI_space.csv"), index=False)
+
+                time_1 = time.time()
+                timings["FieldExport"] = time_1 - time_0
+                time_0 = time_1
+
+        # save impedance at all frequencies to file!
+        if compute_impedance:
+            _logger.info("Saving impedance")
+            df = pd.DataFrame({"freq": self.signal.frequencies,
+                               "real": self.impedances.real,
+                               "imag": self.impedances.imag})
+            df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
 
     @property
     def output_path(self) -> str:
@@ -201,18 +278,15 @@ class VolumeConductor(ABC):
         -------
         Nx1 numpy.ndarray
 
-        TODO: filter points outside of the computational domain
-        """
-        # There might be a faster way to do this without for loops
-        # behind the scenes of NGSolve
-        pots = np.empty(lattice.shape[0])
-        mesh = self.mesh.ngsolvemesh
+        Notes
+        -----
 
-        for i in range(lattice.shape[0]):
-            try:
-                pots[i] = self.potential(mesh(lattice[i, 0], lattice[i, 1], lattice[i, 2]))
-            except:
-                pass
+        Make sure that points outside of the computational domain
+        are filtered!
+        """
+        mesh = self.mesh.ngsolvemesh
+        x, y, z = lattice.T
+        pots = self.potential(mesh(x, y, z))
         return pots
 
     def evaluate_field_at_points(self, lattice: np.ndarray) -> np.ndarray:
@@ -228,18 +302,9 @@ class VolumeConductor(ABC):
 
         TODO: filter points outside of the computational domain
         """
-        # There might be a faster way to do this without for loops
-        # behind the scenes of NGSolve
-        fields = np.empty((lattice.shape[0], 3))
         mesh = self.mesh.ngsolvemesh
-        # Instantiate outside of for loop so that the code isn't recalculating
-        # the e-field every time self.electric_field is called
-        electric_field = self.electric_field
-        for i in range(lattice.shape[0]):
-            try:
-                fields[i] = electric_field(mesh(lattice[i, 0], lattice[i, 1], lattice[i, 2]))
-            except:
-                fields[i] = (0, 0, 0)
+        x, y, z = lattice.T
+        fields = self.electric_field(mesh(x, y, z))
         return fields
 
     @property
@@ -269,6 +334,31 @@ class VolumeConductor(ABC):
             return voltage / power
         else:
             raise NotImplementedError("Impedance for more than two active contacts not yet supported")
+
+    def vtk_export(self) -> None:
+        """Export all relevant properties to VTK
+        """
+        ngmesh = self.mesh.ngsolvemesh
+        # TODO add frequency to name
+        FieldSolution(self.potential,
+                      "potential",
+                      ngmesh,
+                      self.is_complex).save(os.path.join(self.output_path, "potential"))
+
+        FieldSolution(self.electric_field,
+                      "E-field",
+                      ngmesh,
+                      self.is_complex).save(os.path.join(self.output_path, "E-field"))
+
+        FieldSolution(self.conductivity,
+                      "conductivity",
+                      ngmesh,
+                      self.is_complex).save(os.path.join(self.output_path, "conductivity"))
+
+        FieldSolution(self.conductivity_cf.material_distribution(self.mesh),
+                      "material",
+                      ngmesh,
+                      False).save(os.path.join(self.output_path, "material"))
 
     def floating_values(self) -> dict:
         floating_voltages = {}

@@ -1,4 +1,3 @@
-from typing import Tuple
 import numpy as np
 import h5py
 from .point_model import PointModel
@@ -18,12 +17,12 @@ class VoxelLattice(PointModel):
 
     affine : np.ndarray
         (4,4) np.ndarray specifying the affine of the MRI image
-        
+
     shape : np.ndarray
         (3,) np.ndarray specifying the number of points in each direction (x, y, z)
         Each dimension must be odd. Otherwise, the point corresponding to the voxel containing the implantation
         coordinate will not be at the center of the grid.
-        
+
     """
 
     def __init__(self,
@@ -33,7 +32,7 @@ class VoxelLattice(PointModel):
                  ) -> None:
         self._imp_coord = imp_coord
         self._affine = affine
-        self._coordinates = []
+        self._coordinates = self._initialize_coordinates()
 
         # Check on dimension condition on shape input
         if np.sum(shape[shape / 2 == 0]) > 0:
@@ -41,7 +40,6 @@ class VoxelLattice(PointModel):
 
         self._shape = shape
 
-    @property
     def coordinates(self) -> np.ndarray:
         """Generates grids of points in the MRI voxels.
 
@@ -50,42 +48,37 @@ class VoxelLattice(PointModel):
         np.ndarray
         """
 
-        if len(self._coordinates) == 0:
+        # CALCULATION OF GRID CENTER
 
-            ### CALCULATION OF GRID CENTER ###
+        # Calculate the voxel index corresponding to the implantation coordinate
+        inv_aff = np.linalg.inv(self.affine)
+        imp_vox_idx = inv_aff @ np.append(self.imp_coord, 1)
 
-            # Calculate the voxel index corresponding to the implantation coordinate
-            inv_aff = np.linalg.inv(self.affine)
-            imp_vox_idx = inv_aff @ np.append(self.imp_coord, 1)
+        # DOUBLE CHECK AFFINE MAPS COORDINATE TO VOXEL CENTER
+        # "[...] a coordinate such as (i,j,k) == np.round((i,j,k)) expresses the center of a voxel"
+        # https://spinalcordtoolbox.com/overview/concepts/spaces-and-coordinates.html
+        # Therefore the implantation coordinate will lie within the voxel indexed by imp_vox_idx
+        imp_vox_idx = np.round(imp_vox_idx)
 
-            # DOUBLE CHECK AFFINE MAPS COORDINATE TO VOXEL CENTER
-            # "[...] a coordinate such as (i,j,k) == np.round((i,j,k)) expresses the center of a voxel"
-            # https://spinalcordtoolbox.com/overview/concepts/spaces-and-coordinates.html
-            # Therefore the implantation coordinate will lie within the voxel indexed by imp_vox_idx
-            imp_vox_idx = np.round(imp_vox_idx)
+        # This is the coordinate of the center of the voxel that contains the implantation coordinate
+        imp_vox_center_coord = self.affine @ imp_vox_idx.T
 
-            # This is the coordinate of the center of the voxel that contains the implantation coordinate
-            imp_vox_center_coord = self.affine @ imp_vox_idx.T
+        # GRID CONSTRUCTION AROUND GRID CENTER ###
+        base_xg, base_yg, base_zg = self._gen_grid()
+        base_xg = base_xg.reshape((np.prod(self.shape), 1))
+        base_yg = base_yg.reshape((np.prod(self.shape), 1))
+        base_zg = base_zg.reshape((np.prod(self.shape), 1))
 
-            ### GRID CONSTRUCTION AROUND GRID CENTER ###
-            base_xg, base_yg, base_zg = self._gen_grid()
-            base_xg = base_xg.reshape((np.prod(self.shape), 1))
-            base_yg = base_yg.reshape((np.prod(self.shape), 1))
-            base_zg = base_zg.reshape((np.prod(self.shape), 1))
+        # These points are the centers of the voxels to
+        # transform from voxel space into coordinate space
+        points = np.concatenate([base_xg, base_yg, base_zg], axis=1)
+        # Homogenize points for affine transformation
+        points = np.concatenate([points, np.ones_like(base_xg)], axis=1).T
 
-            # These points are the centers of the voxels to
-            # transform from voxel space into coordinate space
-            points = np.concatenate([base_xg, base_yg, base_zg], axis=1)
-            # Homogenize points for affine transformation
-            points = np.concatenate([points, np.ones_like(base_xg)], axis=1).T
+        _coordinates = (self.affine @ points)[0:3, :].T - self.affine[:3, 3] + imp_vox_center_coord[0:3]
 
-            self._coordinates = (self.affine @ points)[0:3, :].T - self.affine[:3, 3] + imp_vox_center_coord[0:3]
-
-            # Apply affine to homogenized points, center around center, and unhomogenize
-            return self._coordinates
-
-        else:
-            return self._coordinates
+        # Apply affine to homogenized points, center around center, and unhomogenize
+        return _coordinates
 
     def save_as_nifti(self, settings, scalar_field, filename, binarize=False):
 
@@ -133,15 +126,15 @@ class VoxelLattice(PointModel):
     # Time result still needs to be implemented
     def save(self, data: TimeResult, file_name: str) -> None:
         with h5py.File(file_name, "w") as file:
-            self.__write_file(data, file)
+            self._write_file(data, file)
 
     def set_location_names(self, names: np.ndarray) -> None:
-        self.__location = names
+        self._location = names
 
-    def __write_file(self, data, file):
+    def _write_file(self, data, file):
         file.create_dataset('TimeSteps[s]', data=data.time_steps)
         file.create_dataset('Points[mm]', data=data.points)
-        file.create_dataset('Location', data=self.__location.astype('S'))
+        file.create_dataset('Location', data=self._location.astype('S'))
         file.create_dataset('Potential[V]', data=data.potential)
         file.create_dataset('Current_density[A|m2]', data=data.current_density)
 

@@ -1,4 +1,4 @@
-from .imp_coord import imp_coord
+from ossdbs.point_analysis import imp_coord
 
 
 def load_default_for_lead(settings):
@@ -18,7 +18,8 @@ def load_default_for_lead(settings):
 
     settings["BrainRegion"]["Dimension"]["x[mm]"] = 60
     settings["BrainRegion"]["Dimension"]["y[mm]"] = 60
-    settings["BrainRegion"]["Dimension"]["z[mm]"] = 80
+    settings["BrainRegion"]["Dimension"]["y[mm]"] = 60
+    settings["BrainRegion"]["Shape"] = "Ellipsoid"
     settings["StimulationSignal"]["Type"] = "Multisine"
     settings["StimulationSignal"]["ListOfFrequencies"] = [10000]
 
