@@ -88,10 +88,8 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         fillet_tipE.name = "fillet_tipE"
 
         encap_lead_radius = self._parameters.lead_radius + thickness
-        encap_lead_ht = self._parameters.total_length - (
-                    self._parameters.exposed_wire + self._parameters.contact_radius)
-        encap_lead_start_pt = tuple(
-            np.array(self._direction) * (self._parameters.exposed_wire + self._parameters.contact_radius))
+        encap_lead_ht = self._parameters.total_length - (self._parameters.exposed_wire + self._parameters.contact_radius)
+        encap_lead_start_pt = tuple(np.array(self._direction) * (self._parameters.exposed_wire + self._parameters.contact_radius))
         encap_lead = occ.Cylinder(p=encap_lead_start_pt, d=self._direction, r=encap_lead_radius, h=encap_lead_ht)
 
         # Find lead edge with the min z value for fillet
@@ -134,7 +132,7 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
                 encapsulation = encapsulation.MakeFillet([fillet_leadE], encap_lead_radius / 24)
         else:
             encapsulation = encap_tip + encap_lead
-            #if (encap_tip_radius != encap_lead_radius):
+            # if (encap_tip_radius != encap_lead_radius):
             #    encapsulation = encapsulation.MakeFillet([fillet_leadE], encap_lead_radius / 50)
             # TODO: Issues with the following command
             # encapsulation = encapsulation.MakeFillet([fillet_tipE], 0.00001)

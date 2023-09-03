@@ -258,14 +258,13 @@ class MedtronicSenSightModel(ElectrodeModel):
         max_y_edge.name = "max y"
         # Label only the outer edges of the contact with min z and max z values
         for edge in contact.edges:
-            if (np.isclose(edge.center.z, max_z_val)
-                and not (np.isclose(edge.center.x, radius/2)
-                or np.isclose(edge.center.y, radius/2))):
+            cond_z_max = np.isclose(edge.center.z, max_z_val)
+            cond_z_min = np.isclose(edge.center.z, min_z_val)
+            cond_x = np.isclose(edge.center.x, radius / 2)
+            cond_y = np.isclose(edge.center.y, radius / 2)
+            if cond_z_max and not (cond_x or cond_y):
                 edge.name = "max z"
-
-            elif (np.isclose(edge.center.z, min_z_val)
-                  and not (np.isclose(edge.center.x, radius/2)
-                  or np.isclose(edge.center.y, radius/2))):
+            elif cond_z_min and not (cond_x or cond_y):
                 edge.name = "min z"
         # Reseting position so that 0 deg lies in the middle of contact
         contact = contact.Rotate(axis, angle)

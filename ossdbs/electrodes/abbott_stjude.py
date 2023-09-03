@@ -98,15 +98,16 @@ class AbbottStJudeActiveTipModel(ElectrodeModel):
                     max_edge = edge
                     # Only name edge with the max z value for contact_1
                 max_edge.name = name
-            if (name != 'Contact_1'):
+            # first contact is different from others
+            if count == 0:
+                distance = self._parameters.tip_length + self._parameters.contact_spacing
+                contacts.append(contact)
+                contact = contact_cyl
+            else:
                 min_edge.name = name
                 vector = tuple(np.array(self._direction) * distance)
                 contacts.append(contact.Move(vector))
                 distance += self._parameters.contact_length + self._parameters.contact_spacing
-            else:
-                distance = self._parameters.tip_length + self._parameters.contact_spacing
-                contacts.append(contact)
-                contact = contact_cyl
 
         return occ.Glue(contacts)
 
