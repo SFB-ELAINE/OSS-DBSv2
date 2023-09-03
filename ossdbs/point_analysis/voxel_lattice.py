@@ -39,8 +39,9 @@ class VoxelLattice(PointModel):
             raise Exception("Each dimension of the shape argument must be odd number")
 
         self._shape = shape
+        self._coordinates = self._initialize_coordinates()
 
-    def coordinates(self) -> np.ndarray:
+    def _initialize_coordinates(self) -> np.ndarray:
         """Generates grids of points in the MRI voxels.
 
         Returns
