@@ -1,4 +1,3 @@
-import os
 from ossdbs.electrodes import (ELECTRODES,
                                ELECTRODE_MODELS,
                                ELECTRODE_PARAMETERS)
@@ -20,7 +19,8 @@ from ossdbs.stimulation_signals import (TimeDomainSignal,
 from ossdbs.point_analysis import (PointModel,
                                    Pathway,
                                    Lattice,
-                                   VoxelLattice)
+                                   VoxelLattice,
+                                   imp_coord)
 from ossdbs.fem import (VolumeConductor,
                         VolumeConductorNonFloating,
                         VolumeConductorFloating,
@@ -28,15 +28,8 @@ from ossdbs.fem import (VolumeConductor,
 from ossdbs.utils.nifti1image import (MagneticResonanceImage,
                                       DiffusionTensorImage)
 
-from ossdbs.utils.vtk_export import FieldSolution
-from ossdbs.leaddbs_interface.lead_settings import LeadSettings
-
-from ossdbs.leaddbs_interface.imp_coord import imp_coord
-
 import numpy as np
 import logging
-import pandas as pd
-import h5py
 
 _logger = logging.getLogger(__name__)
 
@@ -215,8 +208,10 @@ def prepare_solver(settings):
 
 
 def generate_neuron_grid(settings: dict) -> PointModel:
+    _logger.info("Generate neuron grid")
     if settings["PointModel"]['Pathway']['Active']:
         file_name = settings["PointModel"]['Pathway']['FileName']
+        _logger.info("from Pathway stored in {}".format(file_name))
         return Pathway(file_name)
     elif settings["PointModel"]['Lattice']['Active']:
         shape_par = settings["PointModel"]['Lattice']['Shape']
@@ -227,11 +222,13 @@ def generate_neuron_grid(settings: dict) -> PointModel:
         direction = dir_par['x[mm]'], dir_par['y[mm]'], dir_par['z[mm]']
         distance = settings["PointModel"]['Lattice']['PointDistance[mm]']
 
+        _logger.info("from lattice")
         return Lattice(shape=shape,
                        center=center,
                        distance=distance,
                        direction=direction)
-    else:
+    elif settings["PointModel"]['VoxelLattice']['Active']:
+        _logger.info("from voxel lattice")
         imp = imp_coord(settings)
         affine = MagneticResonanceImage(settings['MaterialDistribution']['MRIPath']).affine
         shape_par = settings["PointModel"]['VoxelLattice']['Shape']
@@ -341,49 +338,20 @@ def run_volume_conductor_model(settings, volume_conductor):
     If the mode is multisine, a provided list of frequencies is used.
     """
     _logger.info("Run volume conductor model")
+    volume_conductor.output_path = settings["OutputPath"]
+    _logger.info("Output path set to: {}".format(volume_conductor.output_path))
     compute_impedance = False
     if "ComputeImpedance" in settings:
         if settings["ComputeImpedance"]:
             _logger.info("Will compute impedance at each frequency")
             compute_impedance = True
-
-    # TODO WIP: integrate point analysis, default return is None
-    lattice = create_point_analysis(settings)
-    volume_conductor.run_full_analysis(compute_impedance, lattice=lattice)
-    # save impedance
-    if "ComputeImpedance" in settings:
-        if settings["ComputeImpedance"]:
-            _logger.info("Saving impedance")
-            df = pd.DataFrame({"freq": volume_conductor.signal.frequencies,
-                               "real": volume_conductor.impedances.real,
-                               "imag": volume_conductor.impedances.imag})
-            df.to_csv(os.path.join(settings["OutputPath"], "impedance.csv"), index=False)
-
     if "ExportVTK" in settings:
         if settings["ExportVTK"]:
-            ngmesh = volume_conductor.mesh.ngsolvemesh
-            # TODO check at which freq it saves results
-            FieldSolution(volume_conductor.potential,
-                          "potential",
-                          ngmesh,
-                          volume_conductor.is_complex).save("potential")
-
-            FieldSolution(volume_conductor.electric_field,
-                          "E-field",
-                          ngmesh,
-                          volume_conductor.is_complex).save("E-field")
-
-            FieldSolution(volume_conductor.conductivity,
-                          "conductivity",
-                          ngmesh,
-                          volume_conductor.is_complex).save("conductivity")
-
-            FieldSolution(volume_conductor.conductivity_cf.material_distribution(volume_conductor.mesh),
-                          "material",
-                          ngmesh,
-                          False).save("material")
-    if compute_impedance:
-        return volume_conductor.impedances
+            _logger.info("Will export solution to VTK")
+            export_vtk = True
+    lattice = create_point_analysis(settings)
+    template_space = settings["TemplateSpace"]
+    volume_conductor.run_full_analysis(compute_impedance, export_vtk, lattice=lattice, template_space=template_space)
 
 
 def load_images(settings):
@@ -398,8 +366,7 @@ def load_images(settings):
     return mri_image, dti_image
 
 
-# TODO WIP
-def create_point_analysis(settings):
+def create_point_analysis(settings, mesh):
     """Run a postprocessing analysis on the VCM
 
     Notes
@@ -412,17 +379,16 @@ def create_point_analysis(settings):
        of the volume_conductor_model has an argument lattice.
     3. Write separate function to load results and estimate VTA / PAM
     """
-    # decide on a mode for the analysis, to be discussed!
-    mode = None
-    if 'Points' in settings:
-        mode = "Lead-DBS"
-        _logger.info("Use Lead-DBS model for postprocessing")
-    # TODO define mode with lattice model or pathway model
-    # interaction with Lead-DBS
-    if mode == "Lead-DBS":
-        with h5py.File(settings['Points'], "r") as file:
-            points = [np.array(file[key]) for key in file.keys()]
-        return np.concatenate(points, axis=0)
-    # TODO create lattice / pathway model from input file
-
-    return None
+    grid = generate_neuron_grid(settings)
+    grid_pts = grid.points_in_mesh(mesh)
+    x, y, z = grid_pts.T
+    x_compressed = np.ma.compressed(x)
+    y_compressed = np.ma.compressed(x)
+    z_compressed = np.ma.compressed(x)
+    if not (len(x_compressed) == len(y_compressed) == len(z_compressed)):
+        raise RuntimeError("The creation of the grid for the point analysis did not work")
+    lattice = np.ndarray(shape=(len(x_compressed), 3))
+    lattice[:, 0] = x_compressed
+    lattice[:, 1] = y_compressed
+    lattice[:, 2] = z_compressed
+    return lattice
