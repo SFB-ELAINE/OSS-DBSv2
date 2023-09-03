@@ -77,12 +77,14 @@ class VolumeConductor(ABC):
                           compute_impedance: bool = False,
                           export_vtk: bool = False,
                           lattice: np.ndarray = None,
-                          point_model: str = None,
                           template_space: bool = False
                           ) -> None:
         timings = {}
-        timings["FieldProbing"] = []
-        timings["FieldExport"] = []
+        if lattice is not None:
+            timings["PotentialProbing"] = []
+            timings["FieldProbing"] = []
+        if export_vtk:
+            timings["FieldExport"] = []
         timings["ComputeSolution"] = []
 
         if compute_impedance:
@@ -111,9 +113,7 @@ class VolumeConductor(ABC):
                 self._impedances[idx] = self.compute_impedance()
             if export_vtk:
                 self.vtk_export()
-            if lattice is None or point_model is None:
-                raise ValueError("You need to provide the corresponding point_model to the lattice")
-            if lattice is not None and point_model is not None:
+            if lattice is not None:
                 potentials = self.evaluate_potential_at_points(lattice)
                 time_1 = time.time()
                 timings["PotentialProbing"].append(time_1 - time_0)
@@ -170,6 +170,8 @@ class VolumeConductor(ABC):
                                "real": self.impedances.real,
                                "imag": self.impedances.imag})
             df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
+
+        return timings
 
     @property
     def output_path(self) -> str:

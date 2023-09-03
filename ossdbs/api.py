@@ -235,6 +235,7 @@ def generate_neuron_grid(settings: dict) -> PointModel:
         shape = np.array([shape_par['x'], shape_par['y'], shape_par['z']])
 
         return VoxelLattice(imp, affine, shape)
+    return None
 
 
 def filter_grid_points(electrodes, mesh, points, material_distribution):
@@ -349,9 +350,10 @@ def run_volume_conductor_model(settings, volume_conductor):
         if settings["ExportVTK"]:
             _logger.info("Will export solution to VTK")
             export_vtk = True
-    lattice = create_point_analysis(settings)
+    lattice = create_point_analysis(settings, volume_conductor.mesh)
     template_space = settings["TemplateSpace"]
-    volume_conductor.run_full_analysis(compute_impedance, export_vtk, lattice=lattice, template_space=template_space)
+    vcm_timings = volume_conductor.run_full_analysis(compute_impedance, export_vtk, lattice=lattice, template_space=template_space)
+    return vcm_timings
 
 
 def load_images(settings):
@@ -372,19 +374,18 @@ def create_point_analysis(settings, mesh):
     Notes
     -----
 
-    Current plan:
-    1. Create points where the potential and electric field
-       shall be evaluated.
-    2. Integrate these points into the VCM: run_full_analysis
-       of the volume_conductor_model has an argument lattice.
-    3. Write separate function to load results and estimate VTA / PAM
+    TODO
     """
+
     grid = generate_neuron_grid(settings)
+    if grid is None:
+        return None
+
     grid_pts = grid.points_in_mesh(mesh)
     x, y, z = grid_pts.T
     x_compressed = np.ma.compressed(x)
-    y_compressed = np.ma.compressed(x)
-    z_compressed = np.ma.compressed(x)
+    y_compressed = np.ma.compressed(y)
+    z_compressed = np.ma.compressed(z)
     if not (len(x_compressed) == len(y_compressed) == len(z_compressed)):
         raise RuntimeError("The creation of the grid for the point analysis did not work")
     lattice = np.ndarray(shape=(len(x_compressed), 3))

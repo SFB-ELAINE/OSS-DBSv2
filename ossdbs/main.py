@@ -129,12 +129,13 @@ def main() -> None:
     with ngsolve.TaskManager():
         solver = prepare_solver(settings)
         volume_conductor = prepare_volume_conductor_model(settings, geometry, conductivity, solver)
-        run_volume_conductor_model(settings, volume_conductor)
+        vcm_timings = run_volume_conductor_model(settings, volume_conductor)
 
     time_1 = time.time()
     timings["VolumeConductor"] = time_1 - time_0
 
     _logger.info("Timings:\n {}".format(pprint.pformat(timings)))
+    _logger.info("Volume conductor timings:\n {}".format(pprint.pformat(vcm_timings)))
 
     # write success file
     open(os.path.join(settings["OutputPath"], "success_" + settings["FailFlag"] + ".txt"), 'w').close()

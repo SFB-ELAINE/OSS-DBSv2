@@ -87,10 +87,10 @@ class ConductivityCF:
             if self._dti_voxel_cf is not None:
                 # reshape CoefficientFunction for isotropic encapsulation layer
                 encapsulation_layer_properties_cf =\
-                        ngsolve.CoefficientFunction((encapsulation_layer_properties, 0, 0,
-                                                     0, encapsulation_layer_properties, 0,
-                                                     0, 0, encapsulation_layer_properties),
-                                                    dims=(3, 3))
+                    ngsolve.CoefficientFunction((encapsulation_layer_properties, 0, 0,
+                                                 0, encapsulation_layer_properties, 0,
+                                                 0, 0, encapsulation_layer_properties),
+                                                dims=(3, 3))
             else:
                 encapsulation_layer_properties_cf = encapsulation_layer_properties
             material_dict[encapsulation_layer.name] = encapsulation_layer_properties_cf
