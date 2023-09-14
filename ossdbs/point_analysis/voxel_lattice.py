@@ -32,13 +32,12 @@ class VoxelLattice(PointModel):
                  ) -> None:
         self._imp_coord = imp_coord
         self._affine = affine
-        self._coordinates = self._initialize_coordinates()
+        self._shape = shape
 
         # Check on dimension condition on shape input
         if np.sum(shape[shape / 2 == 0]) > 0:
             raise Exception("Each dimension of the shape argument must be odd number")
 
-        self._shape = shape
         self._coordinates = self._initialize_coordinates()
 
     def _initialize_coordinates(self) -> np.ndarray:
@@ -96,14 +95,13 @@ class VoxelLattice(PointModel):
         """
 
         # get affine of the segmented MRI image to use as a template
-        img = nib.load(os.path.join(settings["OutputPath"], settings["MaterialDistribution"]["MRIPath"]))
+        img = nib.load(settings["MaterialDistribution"]["MRIPath"])
         affine_grid = self.affine.copy()
         affine_grid[0:3, 3] = [self.coordinates[0][0], self.coordinates[0][1], self.coordinates[0][2]]
 
-        base_xg, base_yg, base_zg = self._gen_grid()
         # Assuming data is in the same format as it was generated,
         # you can just reshape it
-        nifti_grid = scalar_field.reshape(base_xg.shape)
+        nifti_grid = scalar_field.reshape(self._shape)
 
         nifti_output = np.zeros(nifti_grid.shape, float)
         if binarize:
@@ -122,7 +120,9 @@ class VoxelLattice(PointModel):
         base_x = np.linspace(begin[0], end[0], self.shape[0])
         base_y = np.linspace(begin[1], end[1], self.shape[1])
         base_z = np.linspace(begin[2], end[2], self.shape[2])
-        return np.meshgrid(base_x, base_y, base_z)
+
+        # iteration ordering is z,y,x
+        return np.meshgrid(base_x, base_y, base_z, indexing='ij')
 
     # Time result still needs to be implemented
     def save(self, data: TimeResult, file_name: str) -> None:

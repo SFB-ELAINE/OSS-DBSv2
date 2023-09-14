@@ -310,6 +310,11 @@ class LeadSettings:
         # stimulation vector over electrode contacts (negative - cathode)
         pulse_amps = self.get_phi_vec()
 
+        # check if the stimulation was defined for this side
+        if np.isnan(self.get_cur_ctrl()[hemis_idx]):
+            print("No stimulation defined for this side")
+            raise SystemExit
+
         # check stimulation mode
         if self.get_cur_ctrl()[hemis_idx]:
             pulse_amp_key = "Current[A]"

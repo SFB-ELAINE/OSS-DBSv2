@@ -74,10 +74,12 @@ class VolumeConductor(ABC):
         pass
 
     def run_full_analysis(self,
+                          settings,
                           compute_impedance: bool = False,
                           export_vtk: bool = False,
                           lattice: np.ndarray = None,
-                          template_space: bool = False
+                          lattice_mask: np.ndarray = None,
+                          template_space: bool = False,
                           ) -> None:
         timings = {}
         if lattice is not None:
@@ -158,6 +160,26 @@ class VolumeConductor(ABC):
                     df_field.to_csv(os.path.join(self.output_path, "E_field_Template_space.csv"), index=False)
                 else:
                     df_field.to_csv(os.path.join(self.output_path, "E_field_MRI_space.csv"), index=False)
+
+                if settings["PointModel"]['VoxelLattice']['Active'] or settings["PointModel"]['Lattice']['Active']:
+
+                    # retrieve the complete grid
+                    from ossdbs.api import generate_neuron_grid
+                    grid_all_pts = generate_neuron_grid(settings)
+
+                    # we need to fill in missing values in field_mags
+                    # WARNING: mark missing values differently for potentials!
+                    field_mags_full = np.zeros(lattice_mask.shape[0],float)
+                    field_mags_full[lattice_mask[:, 0]] = field_mags[:, 0]
+
+                    if settings["PointModel"]['VoxelLattice']['Active']:
+                        # store in segmask (MRI) space, Lead-DBS warps can be applied
+                        grid_all_pts.save_as_nifti(settings, field_mags_full, "E_field_solution.nii")
+                        grid_all_pts.save_as_nifti(settings, field_mags_full, "VTA_solution.nii", binarize=True)
+                    else:
+                        # store in an abstract orthogonal space aligned with world coordinates
+                        grid_all_pts.save_as_nifti(settings, field_mags_full, "E_field_solution_WA.nii")
+                        grid_all_pts.save_as_nifti(settings, field_mags_full, "VTA_solution_WA.nii", binarize=True)
 
                 time_1 = time.time()
                 timings["FieldExport"] = time_1 - time_0
