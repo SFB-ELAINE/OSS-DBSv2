@@ -208,10 +208,10 @@ def prepare_solver(settings):
 
 
 def generate_neuron_grid(settings: dict) -> PointModel:
-    _logger.info("Generate neuron grid")
+
     if settings["PointModel"]['Pathway']['Active']:
         file_name = settings["PointModel"]['Pathway']['FileName']
-        _logger.info("from Pathway stored in {}".format(file_name))
+        _logger.info("Import neuron geometries stored in {}".format(file_name))
         return Pathway(file_name)
     elif settings["PointModel"]['Lattice']['Active']:
         shape_par = settings["PointModel"]['Lattice']['Shape']
@@ -350,9 +350,9 @@ def run_volume_conductor_model(settings, volume_conductor):
         if settings["ExportVTK"]:
             _logger.info("Will export solution to VTK")
             export_vtk = True
-    lattice = create_point_analysis(settings, volume_conductor.mesh)
+    lattice, lattice_mask = create_point_analysis(settings, volume_conductor.mesh)
     template_space = settings["TemplateSpace"]
-    vcm_timings = volume_conductor.run_full_analysis(compute_impedance, export_vtk, lattice=lattice, template_space=template_space)
+    vcm_timings = volume_conductor.run_full_analysis(settings, compute_impedance, export_vtk, lattice=lattice, lattice_mask=lattice_mask, template_space=template_space)
     return vcm_timings
 
 
@@ -374,6 +374,11 @@ def create_point_analysis(settings, mesh):
     Notes
     -----
 
+    Returns
+    -------
+    np.ndarray, lattice with filtered out points
+    np.ndarray, logical mask for preserved points
+
     TODO
     """
 
@@ -392,4 +397,5 @@ def create_point_analysis(settings, mesh):
     lattice[:, 0] = x_compressed
     lattice[:, 1] = y_compressed
     lattice[:, 2] = z_compressed
-    return lattice
+
+    return lattice, np.invert(grid_pts.mask)

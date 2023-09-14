@@ -41,6 +41,10 @@ def main() -> None:
     time_0 = time.time()
     set_logger(level=args.loglevel)
 
+    # navigate to the stim folder (where input dict.json is stored)
+    stim_folder, _ = os.path.split(args.input_dictionary)
+    os.chdir(stim_folder)
+
     _logger.info("Loading settings from input file")
     _logger.debug("Input file: {}".format(args.input_dictionary))
     with open(args.input_dictionary, 'r') as json_file:
@@ -54,7 +58,7 @@ def main() -> None:
     if not os.path.isdir(settings["OutputPath"]):
         os.mkdir(settings["OutputPath"])
     # create fail flag
-    open(os.path.join(settings["OutputPath"], "fail_" + settings["FailFlag"] + ".txt"), 'w').close()
+    open("fail_" + settings["FailFlag"] + ".txt", 'w').close()
 
     time_1 = time.time()
     timings["Settings"] = time_1 - time_0
@@ -138,8 +142,8 @@ def main() -> None:
     _logger.info("Volume conductor timings:\n {}".format(pprint.pformat(vcm_timings)))
 
     # write success file
-    open(os.path.join(settings["OutputPath"], "success_" + settings["FailFlag"] + ".txt"), 'w').close()
-    os.remove(os.path.join(settings["OutputPath"], "fail_" + settings["FailFlag"] + ".txt"))
+    open("success_" + settings["FailFlag"] + ".txt", 'w').close()
+    os.remove("fail_" + settings["FailFlag"] + ".txt")
     _logger.info("Process Completed")
 
 
