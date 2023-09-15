@@ -384,7 +384,7 @@ def create_point_analysis(settings, mesh):
 
     grid = generate_neuron_grid(settings)
     if grid is None:
-        return None
+        return None, None
 
     grid_pts = grid.points_in_mesh(mesh)
     x, y, z = grid_pts.T
