@@ -32,8 +32,7 @@ class LeadSettings:
         cur_ctrl_arr = self.get_cur_ctrl()
         if all(~np.isnan(cur_ctrl_arr)):
             if cur_ctrl_arr[0] != cur_ctrl_arr[1]:
-                print("Simultaneous use of VC and CC is not allowed!")
-                raise SystemExit
+                raise RuntimeError("Simultaneous use of VC and CC is not allowed!")
 
         # for now restrict to one electrode per simulation
         self.NUM_ELECS = 1
@@ -312,8 +311,7 @@ class LeadSettings:
 
         # check if the stimulation was defined for this side
         if np.isnan(self.get_cur_ctrl()[hemis_idx]):
-            print("No stimulation defined for this side")
-            raise SystemExit
+            raise RuntimeError("No stimulation defined for this side")
 
         # check stimulation mode
         if self.get_cur_ctrl()[hemis_idx]:
