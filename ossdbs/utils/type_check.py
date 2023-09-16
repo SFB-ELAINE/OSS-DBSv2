@@ -7,6 +7,7 @@ class TypeChecker:
               },
              'Electrodes': list,
              'FailFlag': str,
+             'ActivationThresholdVTA': (type(None), float),
              'Contacts':
              {'MaxMeshSize': float,
               'MaxMeshSizeEdge': float

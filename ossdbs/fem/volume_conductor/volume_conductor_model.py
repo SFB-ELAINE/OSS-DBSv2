@@ -4,6 +4,7 @@ from ossdbs.model_geometry import ModelGeometry, Contacts
 from ossdbs.fem.solver import Solver
 from ossdbs.fem.mesh import Mesh
 from ossdbs.stimulation_signals import FrequencyDomainSignal
+from ossdbs.point_analysis import PointModel, Lattice, VoxelLattice
 from .conductivity import ConductivityCF
 from typing import List
 import numpy as np
@@ -74,14 +75,20 @@ class VolumeConductor(ABC):
         pass
 
     def run_full_analysis(self,
-                          settings,
                           compute_impedance: bool = False,
                           export_vtk: bool = False,
-                          lattice: np.ndarray = None,
-                          lattice_mask: np.ndarray = None,
+                          point_model: PointModel = False,
                           template_space: bool = False,
+                          activation_threshold: float = None
                           ) -> None:
         timings = {}
+        grid_pts = None
+        lattice_mask = None
+        lattice = None
+        if point_model is not None:
+            grid_pts = point_model.points_in_mesh(self.mesh)
+            lattice_mask = np.invert(grid_pts.mask)
+            lattice = point_model.filtered_lattice(grid_pts)
         if lattice is not None:
             timings["PotentialProbing"] = []
             timings["FieldProbing"] = []
@@ -127,13 +134,6 @@ class VolumeConductor(ABC):
                 timings["FieldProbing"].append(time_1 - time_0)
                 time_0 = time_1
 
-                # TODO needs fix
-                # For high res use Latice
-                # If computed in MNI, create affine
-                # if point_model == 'VoxelLattice':
-                #     grid.save_as_nifti(settings, field_mags, os.path.join(settings["OutputPath"], "E_field_solution.nii"))
-                #     grid.save_as_nifti(settings, field_mags, os.path.join(settings["OutputPath"], "VTA_solution.nii"), binarize=True)
-
                 # Save points
                 h5f_pts = h5py.File(os.path.join(self.output_path, "oss_pts.h5"), 'w')
                 h5f_pts.create_dataset("points", data=lattice)
@@ -161,25 +161,25 @@ class VolumeConductor(ABC):
                 else:
                     df_field.to_csv(os.path.join(self.output_path, "E_field_MRI_space.csv"), index=False)
 
-                if settings["PointModel"]['VoxelLattice']['Active'] or settings["PointModel"]['Lattice']['Active']:
-
-                    # retrieve the complete grid
-                    from ossdbs.api import generate_neuron_grid
-                    grid_all_pts = generate_neuron_grid(settings)
-
-                    # we need to fill in missing values in field_mags
-                    # WARNING: mark missing values differently for potentials!
-                    field_mags_full = np.zeros(lattice_mask.shape[0],float)
+                print(type(point_model))
+                print(isinstance(point_model, Lattice))
+                if isinstance(point_model, VoxelLattice) or isinstance(point_model, Lattice):
+                    field_mags_full = np.zeros(lattice_mask.shape[0], float)
+                    # TODO set all values to -1?
+                    # field_mags_full -= 1
+                    # overwrite values inside mesh
                     field_mags_full[lattice_mask[:, 0]] = field_mags[:, 0]
 
-                    if settings["PointModel"]['VoxelLattice']['Active']:
-                        # store in segmask (MRI) space, Lead-DBS warps can be applied
-                        grid_all_pts.save_as_nifti(settings, field_mags_full, "E_field_solution.nii")
-                        grid_all_pts.save_as_nifti(settings, field_mags_full, "VTA_solution.nii", binarize=True)
+                    if type(point_model) == VoxelLattice:
+                        suffix = "_WA"
                     else:
-                        # store in an abstract orthogonal space aligned with world coordinates
-                        grid_all_pts.save_as_nifti(settings, field_mags_full, "E_field_solution_WA.nii")
-                        grid_all_pts.save_as_nifti(settings, field_mags_full, "VTA_solution_WA.nii", binarize=True)
+                        suffix = ""
+                    point_model.save_as_nifti(field_mags_full,
+                                              os.path.join(self.output_path, "E_field_solution{}.nii".format(suffix)))
+                    point_model.save_as_nifti(field_mags_full,
+                                              os.path.join(self.output_path, "VTA_solution{}.nii".format(suffix)),
+                                              binarize=True,
+                                              activation_threshold=activation_threshold)
 
                 time_1 = time.time()
                 timings["FieldExport"] = time_1 - time_0

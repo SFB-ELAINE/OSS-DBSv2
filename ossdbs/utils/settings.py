@@ -102,7 +102,7 @@ class Settings:
                'TemplateSpace': True,
                "ModelSide": 0,
                'CalcAxonActivation': False,
-               'ActivationThresholdVTA': 0,
+               'ActivationThresholdVTA': None,
                'FailFlag': "oss"
                }
 
