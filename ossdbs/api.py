@@ -230,11 +230,12 @@ def generate_neuron_grid(settings: dict) -> PointModel:
     elif settings["PointModel"]['VoxelLattice']['Active']:
         _logger.info("from voxel lattice")
         imp = imp_coord(settings)
-        affine = MagneticResonanceImage(settings['MaterialDistribution']['MRIPath']).affine
+        mri_image = MagneticResonanceImage(settings['MaterialDistribution']['MRIPath'])
+        affine = mri_image.affine
+        header = mri_image.header
         shape_par = settings["PointModel"]['VoxelLattice']['Shape']
         shape = np.array([shape_par['x'], shape_par['y'], shape_par['z']])
-
-        return VoxelLattice(imp, affine, shape)
+        return VoxelLattice(imp, affine, shape, header)
     return None
 
 
@@ -350,9 +351,11 @@ def run_volume_conductor_model(settings, volume_conductor):
         if settings["ExportVTK"]:
             _logger.info("Will export solution to VTK")
             export_vtk = True
-    lattice, lattice_mask = create_point_analysis(settings, volume_conductor.mesh)
+    point_model = generate_neuron_grid(settings)
     template_space = settings["TemplateSpace"]
-    vcm_timings = volume_conductor.run_full_analysis(settings, compute_impedance, export_vtk, lattice=lattice, lattice_mask=lattice_mask, template_space=template_space)
+    vcm_timings = volume_conductor.run_full_analysis(compute_impedance, export_vtk,
+                                                     point_model=point_model, template_space=template_space,
+                                                     activation_threshold=settings["ActivationThresholdVTA"])
     return vcm_timings
 
 
@@ -366,36 +369,3 @@ def load_images(settings):
         _logger.info("Load DTI image")
         dti_image = DiffusionTensorImage(settings["MaterialDistribution"]["DTIPath"])
     return mri_image, dti_image
-
-
-def create_point_analysis(settings, mesh):
-    """Run a postprocessing analysis on the VCM
-
-    Notes
-    -----
-
-    Returns
-    -------
-    np.ndarray, lattice with filtered out points
-    np.ndarray, logical mask for preserved points
-
-    TODO
-    """
-
-    grid = generate_neuron_grid(settings)
-    if grid is None:
-        return None, None
-
-    grid_pts = grid.points_in_mesh(mesh)
-    x, y, z = grid_pts.T
-    x_compressed = np.ma.compressed(x)
-    y_compressed = np.ma.compressed(y)
-    z_compressed = np.ma.compressed(z)
-    if not (len(x_compressed) == len(y_compressed) == len(z_compressed)):
-        raise RuntimeError("The creation of the grid for the point analysis did not work")
-    lattice = np.ndarray(shape=(len(x_compressed), 3))
-    lattice[:, 0] = x_compressed
-    lattice[:, 1] = y_compressed
-    lattice[:, 2] = z_compressed
-
-    return lattice, np.invert(grid_pts.mask)

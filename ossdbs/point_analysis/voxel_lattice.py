@@ -1,9 +1,9 @@
 import numpy as np
+import nibabel
 import h5py
 from .point_model import PointModel
 from .time_results import TimeResult
 import nibabel as nib
-import os
 
 
 class VoxelLattice(PointModel):
@@ -28,11 +28,13 @@ class VoxelLattice(PointModel):
     def __init__(self,
                  imp_coord: np.ndarray,
                  affine: np.ndarray,
-                 shape: np.ndarray
+                 shape: np.ndarray,
+                 header: nibabel.Nifti1Header
                  ) -> None:
         self._imp_coord = imp_coord
         self._affine = affine
         self._shape = shape
+        self._header = header
 
         # Check on dimension condition on shape input
         if np.sum(shape[shape / 2 == 0]) > 0:
@@ -80,22 +82,12 @@ class VoxelLattice(PointModel):
         # Apply affine to homogenized points, center around center, and unhomogenize
         return _coordinates
 
-    def save_as_nifti(self, settings, scalar_field, filename, binarize=False):
+    def save_as_nifti(self, scalar_field, filename, binarize=False, activation_threshold=None):
+        # TODO add support for upsampled lattice
 
-        """ Save scalar field (e.g. electric potential or E-field magnitude) in MRI space using nifti format
-
-        Parameters
-        ----------
-        settings: dict of parameters
-        scalar_field : Nx1 numpy.ndarray of scalar values on the voxel lattice
-        filename: str, name for the nifti file
-        binarize: bool, thresholds the scalar field and saves the binarized result
-
-        TODO: add support for upsampled lattice
-        """
-
+        if binarize and activation_threshold is None:
+            raise ValueError("Need to provide activation_threshold to binarize")
         # get affine of the segmented MRI image to use as a template
-        img = nib.load(settings["MaterialDistribution"]["MRIPath"])
         affine_grid = self.affine.copy()
         affine_grid[0:3, 3] = [self.coordinates[0][0], self.coordinates[0][1], self.coordinates[0][2]]
 
@@ -105,12 +97,12 @@ class VoxelLattice(PointModel):
 
         nifti_output = np.zeros(nifti_grid.shape, float)
         if binarize:
-            nifti_output[nifti_grid >= settings["ActivationThresholdVTA"]] = 1
-            nifti_output[nifti_grid < settings["ActivationThresholdVTA"]] = 0
+            nifti_output[nifti_grid >= activation_threshold] = 1
+            nifti_output[nifti_grid < activation_threshold] = 0
         else:
             nifti_output = nifti_grid  # V/mm
 
-        nib.save(nib.Nifti1Image(nifti_output, affine_grid, img.header), os.path.join(settings["OutputPath"], filename))
+        nib.save(nib.Nifti1Image(nifti_output, affine_grid, self._header), filename)
 
     def _gen_grid(self):
         """ Return list of ndarrays (coordinate matrices from coordinate vectors).

@@ -1,12 +1,9 @@
-
-
 from typing import Tuple
 import numpy as np
 import h5py
 from .point_model import PointModel
 from .time_results import TimeResult
 import nibabel as nib
-import os
 
 
 class Lattice(PointModel):
@@ -86,8 +83,7 @@ class Lattice(PointModel):
         with h5py.File(file_name, "w") as file:
             self._write_file(data, file)
 
-    def save_as_nifti(self, settings, scalar_field, filename, binarize=False):
-
+    def save_as_nifti(self, scalar_field, filename, binarize=False, activation_threshold=None):
         """ Save scalar field (e.g. electric potential or E-field magnitude) in abstract orthogonal space using nifti
          format
 
@@ -95,7 +91,7 @@ class Lattice(PointModel):
         ----------
         settings: dict of parameters
         scalar_field : Nx1 numpy.ndarray of scalar values on the lattice
-        filename: str, name for the nifti file
+        filename: str, name for the nifti file that should contain full path
         binarize: bool, thresholds the scalar field and saves the binarized result
 
         """
@@ -106,8 +102,8 @@ class Lattice(PointModel):
 
         nifti_output = np.zeros(nifti_grid.shape, float)
         if binarize:
-            nifti_output[nifti_grid >= settings["ActivationThresholdVTA"]] = 1
-            nifti_output[nifti_grid < settings["ActivationThresholdVTA"]] = 0
+            nifti_output[nifti_grid >= activation_threshold] = 1
+            nifti_output[nifti_grid < activation_threshold] = 0
         else:
             nifti_output = nifti_grid  # V/mm
 
@@ -120,7 +116,7 @@ class Lattice(PointModel):
         affine[2, 2] = self._distance
 
         img = nib.Nifti1Image(nifti_output, affine)
-        nib.save(img, os.path.join(settings["OutputPath"], filename))
+        nib.save(img, filename)
 
     def set_location_names(self, names: np.ndarray) -> None:
         self._location = names
