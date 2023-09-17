@@ -16,6 +16,30 @@ To install OSS-DBS, clone it into a local directory,
 pip install -e .
 ```
 
+To also run the test suite of OSS-DBS, run
+
+```
+pip install -e ".[test]"
+```
+
+To develop OSS-DBS, run
+
+```
+pip install -e ".[dev]"
+```
+
+To locally build the docs of OSS-DBS, run
+
+```
+pip install -e ".[doc]"
+```
+
+To do everything of the above, run
+
+```
+pip install -e ".[all]"
+```
+
 Run OSS-DBS
 -----------
 
