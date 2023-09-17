@@ -4,11 +4,10 @@ from typing import List
 
 @dataclass
 class Contact:
-    """Electrode contact settings
+    """Electrode contact settings.
 
     Notes
     -----
-
     This class stores the main parameters of the
     electrode contacts.
 
@@ -42,7 +41,11 @@ class Contact:
 
 def check_contact(contact: Contact):
     if contact.active and contact.floating:
-        raise ValueError("The contact {} has multiple roles. Please make sure that contacts are either active, floating or none of the two.".format(contact.name))
+        raise ValueError(
+            "The contact {} has multiple roles. Please make sure that contacts are either active, floating or none of the two.".format(
+                contact.name
+            )
+        )
 
 
 class Contacts:
@@ -50,7 +53,6 @@ class Contacts:
 
     Notes
     -----
-
     This class is intended to take the list of contacts of the model geometry and
     detect active, floating and unused contacts.
     """
@@ -61,8 +63,11 @@ class Contacts:
         self._all_contacts = contacts
         self._active = [contact for contact in contacts if contact.active]
         self._floating = [contact for contact in contacts if contact.floating]
-        self._unused = [contact for contact in contacts
-                        if not contact.floating and not contact.active]
+        self._unused = [
+            contact
+            for contact in contacts
+            if not contact.floating and not contact.active
+        ]
 
     def append(self, contact: Contact) -> None:
         self._all_contacts.append(contact)
@@ -160,8 +165,9 @@ class Contacts:
         -------
         dict
         """
-        return {contact.name: contact.surface_impedance
-                for contact in self._all_contacts}
+        return {
+            contact.name: contact.surface_impedance for contact in self._all_contacts
+        }
 
     @surface_impedances.setter
     def surface_impedances(self, impedance_values: dict) -> None:

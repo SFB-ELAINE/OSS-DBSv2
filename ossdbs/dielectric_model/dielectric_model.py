@@ -1,5 +1,6 @@
-import numpy as np
 from abc import ABC, abstractmethod
+
+import numpy as np
 
 
 class DielectricModel(ABC):
@@ -7,7 +8,6 @@ class DielectricModel(ABC):
 
     Notes
     -----
-
     To add another model, define its complex permittivity
     and add the static conductivity.
     """

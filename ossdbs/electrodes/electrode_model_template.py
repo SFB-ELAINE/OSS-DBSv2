@@ -1,8 +1,9 @@
-from abc import ABC, abstractmethod
-import netgen
 import logging
-import numpy as np
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
+
+import netgen
+import numpy as np
 
 _logger = logging.getLogger(__name__)
 
@@ -12,7 +13,6 @@ class ElectrodeModel(ABC):
 
     Attributes
     ----------
-
     rotation : float
         Rotation angle in degree of electrode.
 
@@ -32,20 +32,21 @@ class ElectrodeModel(ABC):
 
     _n_contacts: int
 
-    def __init__(self,
-                 parameters: dataclass,
-                 rotation: float = 0,
-                 direction: tuple = (0, 0, 1),
-                 position: tuple = (0, 0, 0)
-                 ) -> None:
+    def __init__(
+        self,
+        parameters: dataclass,
+        rotation: float = 0,
+        direction: tuple = (0, 0, 1),
+        position: tuple = (0, 0, 0),
+    ) -> None:
         self._position = position
         self._rotation = rotation
         norm = np.linalg.norm(direction)
         self._direction = tuple(direction / norm) if norm else (0, 0, 1)
 
-        self._boundaries = {'Body': 'Body'}
+        self._boundaries = {"Body": "Body"}
         for idx in range(1, self._n_contacts + 1):
-            self._boundaries['Contact_{}'.format(idx)] = 'Contact_{}'.format(idx)
+            self._boundaries[f"Contact_{idx}"] = f"Contact_{idx}"
 
         self._parameters = parameters
         self.parameter_check()
@@ -58,13 +59,12 @@ class ElectrodeModel(ABC):
 
     @property
     def n_contacts(self) -> int:
-        """Returns number of contacts.
-        """
+        """Returns number of contacts."""
         return self._n_contacts
 
     @property
     def boundaries(self) -> dict:
-        "Returns names of boundaries"
+        "Returns names of boundaries."
         return self._boundaries
 
     @property
@@ -86,8 +86,9 @@ class ElectrodeModel(ABC):
         self._encapsulation_geometry = self._construct_encapsulation_geometry(thickness)
         self._encapsulation_thickness = thickness
 
-    def encapsulation_geometry(self, thickness: float) \
-            -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def encapsulation_geometry(
+        self, thickness: float
+    ) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of encapsulation layer around electrode.
 
         Parameters
@@ -100,7 +101,9 @@ class ElectrodeModel(ABC):
         netgen.libngpy._NgOCC.TopoDS_Shape
         """
         if np.less(thickness, 1e-3):
-            raise ValueError("The specified thickness is too small. Choose a larger, positive value.")
+            raise ValueError(
+                "The specified thickness is too small. Choose a larger, positive value."
+            )
         if not np.isclose(thickness, self._encapsulation_thickness):
             return self._construct_encapsulation_geometry(thickness)
         return self._encapsulation_geometry
@@ -114,8 +117,9 @@ class ElectrodeModel(ABC):
         pass
 
     @abstractmethod
-    def _construct_encapsulation_geometry(self, thickness: float) \
-            -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def _construct_encapsulation_geometry(
+        self, thickness: float
+    ) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         pass
 
     def set_contact_names(self, boundaries: dict) -> None:
@@ -128,7 +132,6 @@ class ElectrodeModel(ABC):
              'Contact_1': 'contact_name',
              'Contact_2': ...}
         """
-
         if self._boundaries == boundaries:
             _logger.info("Boundary names remain unchanged")
             return
@@ -161,17 +164,14 @@ class ElectrodeModel(ABC):
 
         Parameters
         ----------
-
         ratio: float
             Ratio between characteristic contact size and maximal mesh size.
 
         Notes
         -----
-
         For most of the electrodes, the electrode diameter is used.
         Exemptions are:
         * :class:`ossdbs.electrodes.MicroProbesSNEX100Model`
 
         """
-
         return self._parameters.lead_diameter / ratio

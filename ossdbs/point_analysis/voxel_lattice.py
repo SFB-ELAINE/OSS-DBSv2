@@ -1,17 +1,17 @@
-import numpy as np
-import nibabel
 import h5py
+import nibabel
+import nibabel as nib
+import numpy as np
+
 from .point_model import PointModel
 from .time_results import TimeResult
-import nibabel as nib
 
 
 class VoxelLattice(PointModel):
-    """Matrix of grid points in the centers of MRI voxels
+    """Matrix of grid points in the centers of MRI voxels.
 
     Attributes
     ----------
-
     imp_coord : np.ndarray
         (3,) np.ndarray specifying the implantation coordinate in mm space (this will be the center of the grid)
 
@@ -25,12 +25,13 @@ class VoxelLattice(PointModel):
 
     """
 
-    def __init__(self,
-                 imp_coord: np.ndarray,
-                 affine: np.ndarray,
-                 shape: np.ndarray,
-                 header: nibabel.Nifti1Header
-                 ) -> None:
+    def __init__(
+        self,
+        imp_coord: np.ndarray,
+        affine: np.ndarray,
+        shape: np.ndarray,
+        header: nibabel.Nifti1Header,
+    ) -> None:
         self._imp_coord = imp_coord
         self._affine = affine
         self._shape = shape
@@ -49,7 +50,6 @@ class VoxelLattice(PointModel):
         -------
         np.ndarray
         """
-
         # CALCULATION OF GRID CENTER
 
         # Calculate the voxel index corresponding to the implantation coordinate
@@ -77,19 +77,29 @@ class VoxelLattice(PointModel):
         # Homogenize points for affine transformation
         points = np.concatenate([points, np.ones_like(base_xg)], axis=1).T
 
-        _coordinates = (self.affine @ points)[0:3, :].T - self.affine[:3, 3] + imp_vox_center_coord[0:3]
+        _coordinates = (
+            (self.affine @ points)[0:3, :].T
+            - self.affine[:3, 3]
+            + imp_vox_center_coord[0:3]
+        )
 
         # Apply affine to homogenized points, center around center, and unhomogenize
         return _coordinates
 
-    def save_as_nifti(self, scalar_field, filename, binarize=False, activation_threshold=None):
+    def save_as_nifti(
+        self, scalar_field, filename, binarize=False, activation_threshold=None
+    ):
         # TODO add support for upsampled lattice
 
         if binarize and activation_threshold is None:
             raise ValueError("Need to provide activation_threshold to binarize")
         # get affine of the segmented MRI image to use as a template
         affine_grid = self.affine.copy()
-        affine_grid[0:3, 3] = [self.coordinates[0][0], self.coordinates[0][1], self.coordinates[0][2]]
+        affine_grid[0:3, 3] = [
+            self.coordinates[0][0],
+            self.coordinates[0][1],
+            self.coordinates[0][2],
+        ]
 
         # Assuming data is in the same format as it was generated,
         # you can just reshape it
@@ -105,8 +115,7 @@ class VoxelLattice(PointModel):
         nib.save(nib.Nifti1Image(nifti_output, affine_grid, self._header), filename)
 
     def _gen_grid(self):
-        """ Return list of ndarrays (coordinate matrices from coordinate vectors).
-        """
+        """Return list of ndarrays (coordinate matrices from coordinate vectors)."""
         begin = -((self.shape - 1) / 2).astype(int)
         end = -begin
         base_x = np.linspace(begin[0], end[0], self.shape[0])
@@ -114,7 +123,7 @@ class VoxelLattice(PointModel):
         base_z = np.linspace(begin[2], end[2], self.shape[2])
 
         # iteration ordering is z,y,x
-        return np.meshgrid(base_x, base_y, base_z, indexing='ij')
+        return np.meshgrid(base_x, base_y, base_z, indexing="ij")
 
     # Time result still needs to be implemented
     def save(self, data: TimeResult, file_name: str) -> None:
@@ -125,11 +134,11 @@ class VoxelLattice(PointModel):
         self._location = names
 
     def _write_file(self, data, file):
-        file.create_dataset('TimeSteps[s]', data=data.time_steps)
-        file.create_dataset('Points[mm]', data=data.points)
-        file.create_dataset('Location', data=self._location.astype('S'))
-        file.create_dataset('Potential[V]', data=data.potential)
-        file.create_dataset('Current_density[A|m2]', data=data.current_density)
+        file.create_dataset("TimeSteps[s]", data=data.time_steps)
+        file.create_dataset("Points[mm]", data=data.points)
+        file.create_dataset("Location", data=self._location.astype("S"))
+        file.create_dataset("Potential[V]", data=data.potential)
+        file.create_dataset("Current_density[A|m2]", data=data.current_density)
 
     @property
     def shape(self):

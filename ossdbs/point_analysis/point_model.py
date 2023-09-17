@@ -1,11 +1,13 @@
 from abc import ABC, abstractmethod
+from typing import Optional
+
 import numpy as np
-from ossdbs.point_analysis.time_results import TimeResult
+
 from ossdbs.fem import Mesh
+from ossdbs.point_analysis.time_results import TimeResult
 
 
 class PointModel(ABC):
-
     @property
     def coordinates(self) -> np.ndarray:
         return self._coordinates
@@ -23,28 +25,29 @@ class PointModel(ABC):
         pass
 
     def points_in_mesh(self, mesh: Mesh):
-        """Create a masked array of the points that are in the mesh
-        """
+        """Create a masked array of the points that are in the mesh."""
         mask = mesh.not_included(self.coordinates)
         # use copy to avoid allocation of new memory
-        return np.ma.masked_array(self.coordinates, np.column_stack((mask, mask, mask)), copy=True)
+        return np.ma.masked_array(
+            self.coordinates, np.column_stack((mask, mask, mask)), copy=True
+        )
 
     def filtered_lattice(self, grid_pts: np.ma.MaskedArray):
-        """Return a lattice that NGSolve can process
+        """Return a lattice that NGSolve can process.
 
         Notes
         -----
-
         The masked array is expected to be constructed by
         :meth:`points_in_mesh`
         """
-
         x, y, z = grid_pts.T
         x_compressed = np.ma.compressed(x)
         y_compressed = np.ma.compressed(y)
         z_compressed = np.ma.compressed(z)
         if not (len(x_compressed) == len(y_compressed) == len(z_compressed)):
-            raise RuntimeError("The creation of the grid for the point analysis did not work")
+            raise RuntimeError(
+                "The creation of the grid for the point analysis did not work"
+            )
         lattice = np.ndarray(shape=(len(x_compressed), 3))
         lattice[:, 0] = x_compressed
         lattice[:, 1] = y_compressed
@@ -52,16 +55,17 @@ class PointModel(ABC):
         return lattice
 
     @abstractmethod
-    def save_as_nifti(self,
-                      scalar_field: np.ndarray,
-                      filename: str,
-                      binarize: bool = False,
-                      activation_threshold: float = None):
-        """ Save scalar field in abstract orthogonal space using nifti format
+    def save_as_nifti(
+        self,
+        scalar_field: np.ndarray,
+        filename: str,
+        binarize: bool = False,
+        activation_threshold: Optional[float] = None,
+    ):
+        """Save scalar field in abstract orthogonal space using nifti format.
 
         Parameters
         ----------
-
         scalar_field : Nx1 numpy.ndarray of scalar values on the lattice
         filename: str, name for the nifti file that should contain full path
         binarize: bool, thresholds the scalar field and saves the binarized result

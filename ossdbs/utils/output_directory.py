@@ -1,4 +1,3 @@
-
 import os
 
 
@@ -19,6 +18,6 @@ class OutputDirectory:
         """Return output directory and generates directory if given directory
         does not exist.
         """
-        file_dir = self._directory if self._directory else 'result'
+        file_dir = self._directory if self._directory else "result"
         os.makedirs(file_dir, exist_ok=True)
         return file_dir
