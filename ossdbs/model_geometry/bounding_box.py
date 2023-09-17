@@ -1,4 +1,5 @@
 from typing import List, Tuple
+
 import numpy as np
 
 
@@ -13,9 +14,8 @@ class BoundingBox:
     end : tuple
         End point (x, y, z) of bounding box.
     """
-    def __init__(self,
-                 start: tuple = (0, 0, 0),
-                 end: tuple = (0, 0, 0)) -> None:
+
+    def __init__(self, start: tuple = (0, 0, 0), end: tuple = (0, 0, 0)) -> None:
         self.start = start
         self.end = end
 
@@ -30,7 +30,7 @@ class BoundingBox:
         """
         return tuple(np.round(np.subtract(self.end, self.start)).astype(int))
 
-    def intersection(self, other: 'BoundingBox') -> 'BoundingBox':
+    def intersection(self, other: "BoundingBox") -> "BoundingBox":
         """Returns the overlapping volume of this and another bounding boxes.
 
         Parameters
@@ -74,10 +74,7 @@ class BoundingBox:
         x_values = x_s + np.arange(shape[0]) * voxel_size[0]
         y_values = y_s + np.arange(shape[1]) * voxel_size[1]
         z_values = z_s + np.arange(shape[2]) * voxel_size[2]
-        return [(x, y, z)
-                for x in x_values
-                for y in y_values
-                for z in z_values]
+        return [(x, y, z) for x in x_values for y in y_values for z in z_values]
 
-    def __eq__(self, other: 'BoundingBox') -> bool:
+    def __eq__(self, other: "BoundingBox") -> bool:
         return self.start == other.start and self.end == other.end

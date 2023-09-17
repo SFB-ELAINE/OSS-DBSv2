@@ -1,6 +1,8 @@
 from dataclasses import dataclass
-from ossdbs.dielectric_model import DielectricModel
+
 from scipy.constants import epsilon_0 as e0
+
+from ossdbs.dielectric_model import DielectricModel
 
 
 @dataclass
@@ -9,27 +11,28 @@ class ConstantParameters:
     The default values are taken from the model by Gabriel et al.
     at a frequency of 10 kHz.
     """
+
     permittivity: float
     conductivity: float
 
 
-BloodConstantDefault = ConstantParameters(permittivity=5.25e3,
-                                          conductivity=7e-1),
-WhiteMatterConstantDefault = ConstantParameters(permittivity=1.25e4,
-                                                conductivity=6.95e-2)
-GrayMatterConstantDefault = ConstantParameters(permittivity=2.22e4,
-                                               conductivity=1.15e-1),
-CSFConstantDefault = ConstantParameters(permittivity=1.09e2,
-                                        conductivity=2.0),
+BloodConstantDefault = (ConstantParameters(permittivity=5.25e3, conductivity=7e-1),)
+WhiteMatterConstantDefault = ConstantParameters(
+    permittivity=1.25e4, conductivity=6.95e-2
+)
+GrayMatterConstantDefault = (
+    ConstantParameters(permittivity=2.22e4, conductivity=1.15e-1),
+)
+CSFConstantDefault = (ConstantParameters(permittivity=1.09e2, conductivity=2.0),)
 
 
-default_constant_parameters =\
-    {"Gray matter": GrayMatterConstantDefault,
-     "Unknown": GrayMatterConstantDefault,
-     "White matter": WhiteMatterConstantDefault,
-     "CSF": CSFConstantDefault,
-     "Blood": BloodConstantDefault
-     }
+default_constant_parameters = {
+    "Gray matter": GrayMatterConstantDefault,
+    "Unknown": GrayMatterConstantDefault,
+    "White matter": WhiteMatterConstantDefault,
+    "CSF": CSFConstantDefault,
+    "Blood": BloodConstantDefault,
+}
 
 
 class ConstantModel(DielectricModel):
@@ -52,7 +55,9 @@ class ConstantModel(DielectricModel):
         if omega == 0:
             return self._parameters.permittivity * e0 + 0j
 
-        return e0 * self._parameters.permittivity + self._parameters.conductivity / (1j * omega)
+        return e0 * self._parameters.permittivity + self._parameters.conductivity / (
+            1j * omega
+        )
 
     @property
     def static_conductivity(self) -> float:

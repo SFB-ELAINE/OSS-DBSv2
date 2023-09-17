@@ -1,9 +1,11 @@
 from typing import Tuple
-import numpy as np
+
 import h5py
+import nibabel as nib
+import numpy as np
+
 from .point_model import PointModel
 from .time_results import TimeResult
-import nibabel as nib
 
 
 class Lattice(PointModel):
@@ -24,18 +26,15 @@ class Lattice(PointModel):
         Orientation of cuboid in 3d space.
     """
 
-    def __init__(self,
-                 shape: tuple,
-                 center: tuple,
-                 distance: float,
-                 direction: tuple
-                 ) -> None:
+    def __init__(
+        self, shape: tuple, center: tuple, distance: float, direction: tuple
+    ) -> None:
         self._distance = abs(distance)
         self._shape = shape
         self._center = center
         norm = np.linalg.norm(direction)
         self._direction = tuple(direction / norm) if norm else (0, 0, 1)
-        self._location = np.full(shape[0] * shape[1] * shape[2], '')
+        self._location = np.full(shape[0] * shape[1] * shape[2], "")
         self._coordinates = self._initialize_coordinates()
 
     def _initialize_coordinates(self) -> np.ndarray:
@@ -51,8 +50,12 @@ class Lattice(PointModel):
         z_values = (np.arange(o) - ((o - 1) / 2)) * self._distance
 
         alpha, beta = self._rotation_angles_xz()
-        coordinates = [self._rotation((x, y, z), alpha, beta)
-                       for x in x_values for y in y_values for z in z_values]
+        coordinates = [
+            self._rotation((x, y, z), alpha, beta)
+            for x in x_values
+            for y in y_values
+            for z in z_values
+        ]
 
         return np.array(coordinates) + self._center
 
@@ -83,9 +86,11 @@ class Lattice(PointModel):
         with h5py.File(file_name, "w") as file:
             self._write_file(data, file)
 
-    def save_as_nifti(self, scalar_field, filename, binarize=False, activation_threshold=None):
-        """ Save scalar field (e.g. electric potential or E-field magnitude) in abstract orthogonal space using nifti
-         format
+    def save_as_nifti(
+        self, scalar_field, filename, binarize=False, activation_threshold=None
+    ):
+        """Save scalar field (e.g. electric potential or E-field magnitude) in abstract orthogonal space using nifti
+         format.
 
         Parameters
         ----------
@@ -95,7 +100,6 @@ class Lattice(PointModel):
         binarize: bool, thresholds the scalar field and saves the binarized result
 
         """
-
         # Assuming data is in the same format as it was generated,
         # you can just reshape it
         nifti_grid = scalar_field.reshape(self._shape)
@@ -110,7 +114,11 @@ class Lattice(PointModel):
         # create an abstract nifti
         # define affine transform with the correct resolution and offset
         affine = np.eye(4)
-        affine[0:3, 3] = [self.coordinates[0][0], self.coordinates[0][1], self.coordinates[0][2]]
+        affine[0:3, 3] = [
+            self.coordinates[0][0],
+            self.coordinates[0][1],
+            self.coordinates[0][2],
+        ]
         affine[0, 0] = self._distance
         affine[1, 1] = self._distance
         affine[2, 2] = self._distance
@@ -122,11 +130,19 @@ class Lattice(PointModel):
         self._location = names
 
     def _write_file(self, data, file):
-        file.create_dataset('TimeSteps[s]', data=data.time_steps)
-        file.create_dataset('Points[mm]', data=data.points)
-        file.create_dataset('Location', data=self._location.astype('S'))
-        file.create_dataset('Potential[V]', data=data.potential)
-        file.create_dataset('Electric field magnitude[Vm^(-1)]', data=data.electric_field_magnitude)
-        file.create_dataset('Electric field vector x[Vm^(-1)]', data=data.electric_field_vector[0])
-        file.create_dataset('Electric field vector y[Vm^(-1)]', data=data.electric_field_vector[1])
-        file.create_dataset('Electric field vector z[Vm^(-1)]', data=data.electric_field_vector[2])
+        file.create_dataset("TimeSteps[s]", data=data.time_steps)
+        file.create_dataset("Points[mm]", data=data.points)
+        file.create_dataset("Location", data=self._location.astype("S"))
+        file.create_dataset("Potential[V]", data=data.potential)
+        file.create_dataset(
+            "Electric field magnitude[Vm^(-1)]", data=data.electric_field_magnitude
+        )
+        file.create_dataset(
+            "Electric field vector x[Vm^(-1)]", data=data.electric_field_vector[0]
+        )
+        file.create_dataset(
+            "Electric field vector y[Vm^(-1)]", data=data.electric_field_vector[1]
+        )
+        file.create_dataset(
+            "Electric field vector z[Vm^(-1)]", data=data.electric_field_vector[2]
+        )

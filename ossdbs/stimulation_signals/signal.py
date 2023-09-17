@@ -1,8 +1,11 @@
-from dataclasses import dataclass
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Optional
+
 import numpy as np
-from .utilities import adjust_cutoff_frequency
 from scipy.fft import fft, fftfreq, ifft
+
+from .utilities import adjust_cutoff_frequency
 
 
 @dataclass
@@ -28,18 +31,18 @@ class TimeDomainSignal(ABC):
 
     Notes
     -----
-
     TODO document and clarify how to use amplitude
     The spectrum is also received from here.
 
     """
 
-    def __init__(self,
-                 frequency: float,
-                 pulse_width: float,
-                 inter_pulse_width: float,
-                 counter_pulse_width: float = None,
-                 ) -> None:
+    def __init__(
+        self,
+        frequency: float,
+        pulse_width: float,
+        inter_pulse_width: float,
+        counter_pulse_width: Optional[float] = None,
+    ) -> None:
         if np.isclose(frequency, 0):
             raise ValueError("Frequency must be greater than zero.")
         self._frequency = frequency
@@ -83,13 +86,13 @@ class TimeDomainSignal(ABC):
     def get_fourier_coefficients(frequencies: float) -> np.ndarray:
         pass
 
-    def get_octave_band_spectrum(self,
-                                 cutoff_frequency: float) -> np.ndarray:
-        """TODO document
-
-        """
+    def get_octave_band_spectrum(self, cutoff_frequency: float) -> np.ndarray:
+        """TODO document."""
         # TODO better to use FFT?!
-        frequencies, fourier_coefficients = self.get_frequencies_and_fourier_coefficients(cutoff_frequency)
+        (
+            frequencies,
+            fourier_coefficients,
+        ) = self.get_frequencies_and_fourier_coefficients(cutoff_frequency)
         n_octaves = int(np.log2(len(frequencies) - 1)) + 1
         octave_indices = 2 ** np.arange(0, n_octaves)
         # TODO check
@@ -98,8 +101,9 @@ class TimeDomainSignal(ABC):
         octave_amplitudes = fourier_coefficients[octave_indices]
         return octave_frequencies, octave_amplitudes
 
-    def get_frequencies_and_fourier_coefficients(self,
-                                                 cutoff_frequency: float) -> np.ndarray:
+    def get_frequencies_and_fourier_coefficients(
+        self, cutoff_frequency: float
+    ) -> np.ndarray:
         max_harmonic = int(cutoff_frequency / self.frequency)
         harmonics = np.arange(0, max_harmonic + 1)
         frequencies = harmonics * self.frequency
@@ -116,7 +120,9 @@ class TimeDomainSignal(ABC):
         time_domain_signal = self.get_time_domain_signal(dt, timesteps)
         return fftfreq(len(time_domain_signal), d=dt), fft(time_domain_signal)
 
-    def retrieve_time_domain_signal(self, fft_signal, cutoff_frequency: float) -> np.ndarray:
+    def retrieve_time_domain_signal(
+        self, fft_signal, cutoff_frequency: float
+    ) -> np.ndarray:
         cutoff_frequency = adjust_cutoff_frequency(cutoff_frequency, self.frequency)
         dt = 1.0 / cutoff_frequency
         timesteps = dt * np.arange(int(cutoff_frequency / self.frequency))

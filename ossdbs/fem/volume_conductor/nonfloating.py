@@ -1,33 +1,43 @@
-from ossdbs.fem.volume_conductor.volume_conductor_model import VolumeConductor
-from ossdbs.stimulation_signals import FrequencyDomainSignal
+import logging
+
 import ngsolve
-from ossdbs.model_geometry import ModelGeometry
+
 from ossdbs.fem.solver import Solver
+from ossdbs.fem.volume_conductor.volume_conductor_model import VolumeConductor
+from ossdbs.model_geometry import ModelGeometry
+from ossdbs.stimulation_signals import FrequencyDomainSignal
+
 from .conductivity import ConductivityCF
 
-import logging
 _logger = logging.getLogger(__name__)
 
 
 class VolumeConductorNonFloating(VolumeConductor):
-    """Model for representing a volume conductor which evaluates the potential.
-    """
+    """Model for representing a volume conductor which evaluates the potential."""
 
-    def __init__(self,
-                 geometry: ModelGeometry,
-                 conductivity: ConductivityCF,
-                 solver: Solver,
-                 order: int,
-                 meshing_parameters: dict,
-                 frequency_domain_signal: FrequencyDomainSignal) -> None:
-        super().__init__(geometry, conductivity, solver, order, meshing_parameters, frequency_domain_signal)
+    def __init__(
+        self,
+        geometry: ModelGeometry,
+        conductivity: ConductivityCF,
+        solver: Solver,
+        order: int,
+        meshing_parameters: dict,
+        frequency_domain_signal: FrequencyDomainSignal,
+    ) -> None:
+        super().__init__(
+            geometry,
+            conductivity,
+            solver,
+            order,
+            meshing_parameters,
+            frequency_domain_signal,
+        )
         boundaries = [contact.name for contact in self.contacts.active]
         self._space = self.h1_space(boundaries=boundaries)
         self._potential = ngsolve.GridFunction(space=self._space)
         self._floating_values = {}
 
-    def compute_solution(self,
-                         frequency: float) -> ngsolve.comp.GridFunction:
+    def compute_solution(self, frequency: float) -> ngsolve.comp.GridFunction:
         """Evaluate electrical potential of volume conductor.
 
         Parameters
@@ -44,14 +54,13 @@ class VolumeConductorNonFloating(VolumeConductor):
         self._frequency = frequency
         _logger.debug("Get conductivity at frequency")
         self._sigma = self.conductivity_cf(self.mesh, frequency)
-        _logger.debug("Sigma: {}".format(self._sigma))
+        _logger.debug(f"Sigma: {self._sigma}")
 
         # update boundary condition values
         _logger.debug("Assign potential values")
         boundary_values = self.contacts.voltages
         coefficient = self.mesh.boundary_coefficients(boundary_values)
-        self._potential.Set(coefficient=coefficient,
-                            VOL_or_BND=ngsolve.BND)
+        self._potential.Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
 
         _logger.debug("Prepare weak form")
         u = self._space.TrialFunction()

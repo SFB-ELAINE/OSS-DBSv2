@@ -1,25 +1,28 @@
-from abc import ABC, abstractmethod
-import ngsolve
-from ossdbs.model_geometry import ModelGeometry, Contacts
-from ossdbs.fem.solver import Solver
-from ossdbs.fem.mesh import Mesh
-from ossdbs.stimulation_signals import FrequencyDomainSignal
-from ossdbs.point_analysis import PointModel, Lattice, VoxelLattice
-from .conductivity import ConductivityCF
-from typing import List
-import numpy as np
+import logging
 import os
 import time
-import pandas as pd
+from abc import ABC, abstractmethod
+from typing import List, Optional
+
 import h5py
+import ngsolve
+import numpy as np
+import pandas as pd
+
+from ossdbs.fem.mesh import Mesh
+from ossdbs.fem.solver import Solver
+from ossdbs.model_geometry import Contacts, ModelGeometry
+from ossdbs.point_analysis import Lattice, PointModel, VoxelLattice
+from ossdbs.stimulation_signals import FrequencyDomainSignal
 from ossdbs.utils.vtk_export import FieldSolution
 
-import logging
+from .conductivity import ConductivityCF
+
 _logger = logging.getLogger(__name__)
 
 
 class VolumeConductor(ABC):
-    """Template class of a volume conductor
+    """Template class of a volume conductor.
 
     Parameters
     ----------
@@ -31,13 +34,15 @@ class VolumeConductor(ABC):
     # TODO add more abstractmethod ?
     """
 
-    def __init__(self,
-                 geometry: ModelGeometry,
-                 conductivity: ConductivityCF,
-                 solver: Solver,
-                 order: int,
-                 meshing_parameters: dict,
-                 frequency_domain_signal: FrequencyDomainSignal) -> None:
+    def __init__(
+        self,
+        geometry: ModelGeometry,
+        conductivity: ConductivityCF,
+        solver: Solver,
+        order: int,
+        meshing_parameters: dict,
+        frequency_domain_signal: FrequencyDomainSignal,
+    ) -> None:
         self._solver = solver
         self._model_geometry = geometry
         # to update contacts later, shall not be changed
@@ -56,7 +61,7 @@ class VolumeConductor(ABC):
             # TODO check that LoadPath is there if LoadMesh
             self._mesh.load_mesh(meshing_parameters["LoadPath"])
         else:
-            self._mesh.generate_mesh(meshing_parameters['MeshingHypothesis'])
+            self._mesh.generate_mesh(meshing_parameters["MeshingHypothesis"])
 
         if meshing_parameters["SaveMesh"]:
             self._mesh.save(meshing_parameters["SavePath"])
@@ -69,18 +74,17 @@ class VolumeConductor(ABC):
         self._output_path = None
 
     @abstractmethod
-    def compute_solution(self,
-                         frequency: float
-                         ) -> None:
+    def compute_solution(self, frequency: float) -> None:
         pass
 
-    def run_full_analysis(self,
-                          compute_impedance: bool = False,
-                          export_vtk: bool = False,
-                          point_model: PointModel = False,
-                          template_space: bool = False,
-                          activation_threshold: float = None
-                          ) -> None:
+    def run_full_analysis(
+        self,
+        compute_impedance: bool = False,
+        export_vtk: bool = False,
+        point_model: PointModel = False,
+        template_space: bool = False,
+        activation_threshold: Optional[float] = None,
+    ) -> None:
         timings = {}
         grid_pts = None
         lattice_mask = None
@@ -98,14 +102,18 @@ class VolumeConductor(ABC):
 
         if compute_impedance:
             if self.is_complex:
-                self._impedances = np.ndarray(shape=(len(self.signal.frequencies)), dtype=complex)
+                self._impedances = np.ndarray(
+                    shape=(len(self.signal.frequencies)), dtype=complex
+                )
             else:
                 self._impedances = np.ndarray(shape=(len(self.signal.frequencies)))
         for idx, frequency in enumerate(self.signal.frequencies):
-            _logger.info("Computing at frequency: {}".format(frequency))
+            _logger.info(f"Computing at frequency: {frequency}")
             if not self.current_controlled:
                 _logger.debug("Get scaled voltage values")
-                voltage_values = self.get_scaled_active_contact_voltages(self.signal.amplitudes[idx])
+                voltage_values = self.get_scaled_active_contact_voltages(
+                    self.signal.amplitudes[idx]
+                )
                 self.update_contacts(voltages=voltage_values)
             time_0 = time.time()
             self.compute_solution(frequency)
@@ -129,41 +137,71 @@ class VolumeConductor(ABC):
                 time_0 = time_1
 
                 fields = self.evaluate_field_at_points(lattice)
-                field_mags = np.linalg.norm(fields, axis=1).reshape((fields.shape[0], 1))
+                field_mags = np.linalg.norm(fields, axis=1).reshape(
+                    (fields.shape[0], 1)
+                )
                 time_1 = time.time()
                 timings["FieldProbing"].append(time_1 - time_0)
                 time_0 = time_1
 
                 # Save points
-                h5f_pts = h5py.File(os.path.join(self.output_path, "oss_pts.h5"), 'w')
+                h5f_pts = h5py.File(os.path.join(self.output_path, "oss_pts.h5"), "w")
                 h5f_pts.create_dataset("points", data=lattice)
                 h5f_pts.close()
 
                 # Save potential evaluation
-                h5f_pot = h5py.File(os.path.join(self.output_path, 'oss_potentials.h5'), 'w')
+                h5f_pot = h5py.File(
+                    os.path.join(self.output_path, "oss_potentials.h5"), "w"
+                )
                 h5f_pot.create_dataset("points", data=lattice)
                 h5f_pot.create_dataset("potentials", data=potentials)
                 h5f_pot.close()
-                df_pot = pd.DataFrame(np.concatenate([lattice, potentials.reshape((potentials.shape[0], 1))], axis=1),
-                                      columns=["x-pt", "y-pt", "z-pt", "potential"])
-                df_pot.to_csv(os.path.join(self.output_path, "oss_potentials.csv"), index=False)
+                df_pot = pd.DataFrame(
+                    np.concatenate(
+                        [lattice, potentials.reshape((potentials.shape[0], 1))], axis=1
+                    ),
+                    columns=["x-pt", "y-pt", "z-pt", "potential"],
+                )
+                df_pot.to_csv(
+                    os.path.join(self.output_path, "oss_potentials.csv"), index=False
+                )
 
                 # Save electric field evaluation
-                h5f_field = h5py.File(os.path.join(self.output_path, "oss_field.h5"), 'w')
+                h5f_field = h5py.File(
+                    os.path.join(self.output_path, "oss_field.h5"), "w"
+                )
                 h5f_field.create_dataset("points", data=lattice)
                 h5f_field.create_dataset("field/field_vecs", data=fields)
                 h5f_field.create_dataset("field/field_mags", data=field_mags)
                 h5f_field.close()
-                df_field = pd.DataFrame(np.concatenate([lattice, fields, field_mags], axis=1),
-                                        columns=["x-pt", "y-pt", "z-pt", "x-field", "y-field", "z-field", "magnitude"])
+                df_field = pd.DataFrame(
+                    np.concatenate([lattice, fields, field_mags], axis=1),
+                    columns=[
+                        "x-pt",
+                        "y-pt",
+                        "z-pt",
+                        "x-field",
+                        "y-field",
+                        "z-field",
+                        "magnitude",
+                    ],
+                )
                 if template_space:
-                    df_field.to_csv(os.path.join(self.output_path, "E_field_Template_space.csv"), index=False)
+                    df_field.to_csv(
+                        os.path.join(self.output_path, "E_field_Template_space.csv"),
+                        index=False,
+                    )
                 else:
-                    df_field.to_csv(os.path.join(self.output_path, "E_field_MRI_space.csv"), index=False)
+                    df_field.to_csv(
+                        os.path.join(self.output_path, "E_field_MRI_space.csv"),
+                        index=False,
+                    )
 
                 print(type(point_model))
                 print(isinstance(point_model, Lattice))
-                if isinstance(point_model, VoxelLattice) or isinstance(point_model, Lattice):
+                if isinstance(point_model, VoxelLattice) or isinstance(
+                    point_model, Lattice
+                ):
                     field_mags_full = np.zeros(lattice_mask.shape[0], float)
                     # TODO set all values to -1?
                     # field_mags_full -= 1
@@ -174,12 +212,16 @@ class VolumeConductor(ABC):
                         suffix = "_WA"
                     else:
                         suffix = ""
-                    point_model.save_as_nifti(field_mags_full,
-                                              os.path.join(self.output_path, "E_field_solution{}.nii".format(suffix)))
-                    point_model.save_as_nifti(field_mags_full,
-                                              os.path.join(self.output_path, "VTA_solution{}.nii".format(suffix)),
-                                              binarize=True,
-                                              activation_threshold=activation_threshold)
+                    point_model.save_as_nifti(
+                        field_mags_full,
+                        os.path.join(self.output_path, f"E_field_solution{suffix}.nii"),
+                    )
+                    point_model.save_as_nifti(
+                        field_mags_full,
+                        os.path.join(self.output_path, f"VTA_solution{suffix}.nii"),
+                        binarize=True,
+                        activation_threshold=activation_threshold,
+                    )
 
                 time_1 = time.time()
                 timings["FieldExport"] = time_1 - time_0
@@ -188,9 +230,13 @@ class VolumeConductor(ABC):
         # save impedance at all frequencies to file!
         if compute_impedance:
             _logger.info("Saving impedance")
-            df = pd.DataFrame({"freq": self.signal.frequencies,
-                               "real": self.impedances.real,
-                               "imag": self.impedances.imag})
+            df = pd.DataFrame(
+                {
+                    "freq": self.signal.frequencies,
+                    "real": self.impedances.real,
+                    "imag": self.impedances.imag,
+                }
+            )
             df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
 
         return timings
@@ -205,7 +251,6 @@ class VolumeConductor(ABC):
 
         Notes
         -----
-
         Creates directory if it doesn't exist.
         """
         if not os.path.exists(path):
@@ -230,8 +275,7 @@ class VolumeConductor(ABC):
 
     @property
     def conductivity(self) -> ngsolve.CoefficientFunction:
-        """Return conductivity of latest solution
-        """
+        """Return conductivity of latest solution."""
         return self._sigma
 
     @property
@@ -268,12 +312,24 @@ class VolumeConductor(ABC):
     def get_scaled_active_contact_voltages(self, factor) -> dict:
         contact_voltages = {}
         for contact in self.contacts.active:
-            contact_voltages[contact.name] = self._base_contacts[contact.name].voltage * factor
+            contact_voltages[contact.name] = (
+                self._base_contacts[contact.name].voltage * factor
+            )
         return contact_voltages
 
-    def update_contacts(self, voltages: dict = {}, currents: dict = {}, surface_impedances: dict = {}) -> None:
-        """TODO document
-        """
+    def update_contacts(
+        self,
+        voltages: Optional[dict] = None,
+        currents: Optional[dict] = None,
+        surface_impedances: Optional[dict] = None,
+    ) -> None:
+        """TODO document."""
+        if surface_impedances is None:
+            surface_impedances = {}
+        if currents is None:
+            currents = {}
+        if voltages is None:
+            voltages = {}
         if self.is_complex:
             self._contacts.voltages = voltages
             self._contacts.currents = currents
@@ -292,7 +348,7 @@ class VolumeConductor(ABC):
         return self._frequency
 
     def evaluate_potential_at_points(self, lattice: np.ndarray) -> np.ndarray:
-        """ Return electric potential at specifed 3-D coordinates
+        """Return electric potential at specifed 3-D coordinates.
 
         Parameters
         ----------
@@ -304,7 +360,6 @@ class VolumeConductor(ABC):
 
         Notes
         -----
-
         Make sure that points outside of the computational domain
         are filtered!
         """
@@ -314,7 +369,7 @@ class VolumeConductor(ABC):
         return pots
 
     def evaluate_field_at_points(self, lattice: np.ndarray) -> np.ndarray:
-        """ Return electric field components at specifed 3-D coordinates
+        """Return electric field components at specifed 3-D coordinates.
 
         Parameters
         ----------
@@ -333,10 +388,8 @@ class VolumeConductor(ABC):
 
     @property
     def current_density(self) -> ngsolve.GridFunction:
-        """Return current density in A/mm^2
-
-        """
-        _logger.debug("Compute current density at frequency {} Hz".format(self.frequency))
+        """Return current density in A/mm^2."""
+        _logger.debug(f"Compute current density at frequency {self.frequency} Hz")
         # scale to account for mm as length unit (not yet contained in conductivity)
         return 1e-3 * self.conductivity * self.electric_field
 
@@ -345,8 +398,7 @@ class VolumeConductor(ABC):
         return -ngsolve.grad(self.potential)
 
     def compute_impedance(self) -> complex:
-        """TODO document
-        """
+        """TODO document."""
         if len(self.contacts.active) == 2:
             mesh = self._mesh.ngsolvemesh
             # do not need to account for mm because of integration
@@ -354,35 +406,35 @@ class VolumeConductor(ABC):
             # TODO integrate surface impedance
             voltage = 0
             for idx, contact in enumerate(self.contacts.active):
-                voltage += (-1)**idx * contact.voltage
+                voltage += (-1) ** idx * contact.voltage
             return voltage / power
         else:
-            raise NotImplementedError("Impedance for more than two active contacts not yet supported")
+            raise NotImplementedError(
+                "Impedance for more than two active contacts not yet supported"
+            )
 
     def vtk_export(self) -> None:
-        """Export all relevant properties to VTK
-        """
+        """Export all relevant properties to VTK."""
         ngmesh = self.mesh.ngsolvemesh
         # TODO add frequency to name
-        FieldSolution(self.potential,
-                      "potential",
-                      ngmesh,
-                      self.is_complex).save(os.path.join(self.output_path, "potential"))
+        FieldSolution(self.potential, "potential", ngmesh, self.is_complex).save(
+            os.path.join(self.output_path, "potential")
+        )
 
-        FieldSolution(self.electric_field,
-                      "E-field",
-                      ngmesh,
-                      self.is_complex).save(os.path.join(self.output_path, "E-field"))
+        FieldSolution(self.electric_field, "E-field", ngmesh, self.is_complex).save(
+            os.path.join(self.output_path, "E-field")
+        )
 
-        FieldSolution(self.conductivity,
-                      "conductivity",
-                      ngmesh,
-                      self.is_complex).save(os.path.join(self.output_path, "conductivity"))
+        FieldSolution(self.conductivity, "conductivity", ngmesh, self.is_complex).save(
+            os.path.join(self.output_path, "conductivity")
+        )
 
-        FieldSolution(self.conductivity_cf.material_distribution(self.mesh),
-                      "material",
-                      ngmesh,
-                      False).save(os.path.join(self.output_path, "material"))
+        FieldSolution(
+            self.conductivity_cf.material_distribution(self.mesh),
+            "material",
+            ngmesh,
+            False,
+        ).save(os.path.join(self.output_path, "material"))
 
     def floating_values(self) -> dict:
         floating_voltages = {}
@@ -399,16 +451,14 @@ class VolumeConductor(ABC):
 
         Notes
         -----
-
         The HDiv space is returned with a minimum order of 1.
         It is needed for the a-posteriori error estimator
         needed for adaptive mesh refinement.
 
         """
-
-        return ngsolve.HDiv(mesh=self.mesh,
-                            order=max(1, self._order - 1),
-                            complex=self._complex)
+        return ngsolve.HDiv(
+            mesh=self.mesh, order=max(1, self._order - 1), complex=self._complex
+        )
 
     def h1_space(self, boundaries: List[str]) -> ngsolve.comp.H1:
         """Return a h1 space on the mesh.
@@ -422,13 +472,14 @@ class VolumeConductor(ABC):
         -------
         ngsolve.H1
         """
-
-        dirichlet = '|'.join(boundary for boundary in boundaries)
-        return ngsolve.H1(mesh=self.mesh.ngsolvemesh,
-                          order=self._order,
-                          dirichlet=dirichlet,
-                          complex=self._complex,
-                          wb_withedges=False)
+        dirichlet = "|".join(boundary for boundary in boundaries)
+        return ngsolve.H1(
+            mesh=self.mesh.ngsolvemesh,
+            order=self._order,
+            dirichlet=dirichlet,
+            complex=self._complex,
+            wb_withedges=False,
+        )
 
     def number_space(self) -> ngsolve.comp.NumberSpace:
         """Return a number space on the mesh.
@@ -438,10 +489,9 @@ class VolumeConductor(ABC):
         ngsolve.NumberSpace
             Space with only one single (global) DOF.
         """
-
-        return ngsolve.NumberSpace(mesh=self.mesh.ngsolvemesh,
-                                   order=0,
-                                   complex=self.is_complex)
+        return ngsolve.NumberSpace(
+            mesh=self.mesh.ngsolvemesh, order=0, complex=self.is_complex
+        )
 
     def surfacel2_space(self, boundaries: List[str]) -> ngsolve.comp.SurfaceL2:
         """Return a number SurfaceL2 on the mesh.
@@ -452,14 +502,14 @@ class VolumeConductor(ABC):
 
         Notes
         -----
-
         The SurfaceL2 space is returned with a minimum order of 1.
         It is needed to impose floating potentials.
 
         """
-
-        dirichlet = '|'.join(boundary for boundary in boundaries)
-        return ngsolve.SurfaceL2(mesh=self.mesh.ngsolvemesh,
-                                 order=max(1, self._order - 1),
-                                 dirichlet=dirichlet,
-                                 complex=self.is_complex)
+        dirichlet = "|".join(boundary for boundary in boundaries)
+        return ngsolve.SurfaceL2(
+            mesh=self.mesh.ngsolvemesh,
+            order=max(1, self._order - 1),
+            dirichlet=dirichlet,
+            complex=self.is_complex,
+        )

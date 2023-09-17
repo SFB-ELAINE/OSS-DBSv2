@@ -1,12 +1,15 @@
+import logging
 from typing import List
-from .contacts import Contact
-from .encapsulation_layers import EncapsulationLayer
-from .brain_geometry import BrainGeometry
-from ossdbs.electrodes import ElectrodeModel
+
 import netgen.occ
 import numpy as np
 
-import logging
+from ossdbs.electrodes import ElectrodeModel
+
+from .brain_geometry import BrainGeometry
+from .contacts import Contact
+from .encapsulation_layers import EncapsulationLayer
+
 _logger = logging.getLogger(__name__)
 
 
@@ -21,10 +24,12 @@ class ModelGeometry:
 
     TODO refactor
     """
-    def __init__(self,
-                 brain: BrainGeometry,
-                 electrodes: List[ElectrodeModel],
-                 ) -> None:
+
+    def __init__(
+        self,
+        brain: BrainGeometry,
+        electrodes: List[ElectrodeModel],
+    ) -> None:
         self._brain = brain
         self._electrodes = electrodes
         self._contacts = []
@@ -55,21 +60,25 @@ class ModelGeometry:
             electrode.index = idx
             self._create_electrode_contacts(electrode)
             if not np.isclose(electrode.encapsulation_thickness, 0.0):
-                encapsulation = electrode.encapsulation_geometry(electrode.encapsulation_thickness)
+                encapsulation = electrode.encapsulation_geometry(
+                    electrode.encapsulation_thickness
+                )
                 # because encapsulation can extend outside brain_geo
                 encapsulation = encapsulation * brain_geo
                 # TODO naming of surfaces does not work reliably, hack below
                 # check future versions of NGSolve to enable following line
                 # encapsulation.bc("EncapsulationLayerSurface_{}".format(idx))
-                encapsulation_layer_name = "EncapsulationLayer_{}".format(idx)
+                encapsulation_layer_name = f"EncapsulationLayer_{idx}"
                 encapsulation.mat(encapsulation_layer_name)
                 brain_geo = netgen.occ.Glue([brain_geo, encapsulation])
                 # hack to name surfaces properly
                 brain_geo = brain_geo - electrode.geometry
                 for face in brain_geo.faces:
                     if face.name is None:
-                        face.name = "EncapsulationLayerSurface_{}".format(idx)
-                self._encapsulation_layers.append(EncapsulationLayer(name=encapsulation_layer_name))
+                        face.name = f"EncapsulationLayerSurface_{idx}"
+                self._encapsulation_layers.append(
+                    EncapsulationLayer(name=encapsulation_layer_name)
+                )
             else:
                 brain_geo = brain_geo - electrode.geometry
 
@@ -80,7 +89,7 @@ class ModelGeometry:
 
     @property
     def electrodes(self) -> List[ElectrodeModel]:
-        """Return collection of electrodes
+        """Return collection of electrodes.
 
         Returns
         -------
@@ -90,7 +99,7 @@ class ModelGeometry:
 
     @property
     def contacts(self) -> List[Contact]:
-        """Return collection of contacts
+        """Return collection of contacts.
 
         Returns
         -------
@@ -134,7 +143,9 @@ class ModelGeometry:
             elif setting == "Name":
                 continue
             else:
-                raise ValueError("Tried to update contact with invalid setting {}".format(setting))
+                raise ValueError(
+                    f"Tried to update contact with invalid setting {setting}"
+                )
 
         return
 
@@ -153,14 +164,16 @@ class ModelGeometry:
             elif setting == "Thickness[mm]":
                 continue
             else:
-                raise ValueError("Tried to update encapsulation layer with setting {}".format(setting))
+                raise ValueError(
+                    f"Tried to update encapsulation layer with setting {setting}"
+                )
 
         return
 
     @property
     def encapsulation_layers(self) -> List:
         """Return collection of active contacts and contacts of property
-        floating
+        floating.
 
         Returns
         -------
@@ -168,19 +181,18 @@ class ModelGeometry:
         return self._encapsulation_layers
 
     def _create_electrode_contacts(self, electrode: ElectrodeModel) -> None:
-        """Add contacts from electrode to geometry
+        """Add contacts from electrode to geometry.
 
 
         Notes
         -----
-
         The properties of the electrode are overriden.
 
         """
         new_boundary_names = {}
         for contact_index in range(1, electrode.n_contacts + 1):
-            name = 'E{}C{}'.format(electrode.index, contact_index)
-            new_boundary_names["Contact_{}".format(contact_index)] = name
+            name = f"E{electrode.index}C{contact_index}"
+            new_boundary_names[f"Contact_{contact_index}"] = name
             self._contacts.append(Contact(name=name))
         electrode.set_contact_names(new_boundary_names)
 
@@ -190,19 +202,21 @@ class ModelGeometry:
             if contact.floating:
                 floating_mode = "Floating"
                 if not np.isclose(contact.surface_impedance, 0.0j):
-                    floating_mode = 'FloatingImpedance'
+                    floating_mode = "FloatingImpedance"
                 break
         if floating_mode == "Floating":
             for contact in self.contacts:
                 if not np.isclose(contact.surface_impedance, 0.0j):
-                    _logger.warning("Mode has been set to Floating but there is a nonzero surface impedance on contact {}".format(contact.name))
+                    _logger.warning(
+                        "Mode has been set to Floating but there is a nonzero surface impedance on contact {}".format(
+                            contact.name
+                        )
+                    )
 
         return floating_mode
 
     def set_mesh_sizes(self, mesh_sizes: dict) -> None:
-        """Set mesh sizes on edges, faces, and volumes
-
-        """
+        """Set mesh sizes on edges, faces, and volumes."""
         if "Edges" in mesh_sizes:
             self.set_edge_mesh_sizes(mesh_sizes["Edges"])
         if "Faces" in mesh_sizes:
@@ -211,22 +225,19 @@ class ModelGeometry:
             self.set_volume_mesh_sizes(mesh_sizes["Volumes"])
 
     def set_edge_mesh_sizes(self, mesh_sizes: dict) -> None:
-        """Set mesh sizes on edges
-        """
+        """Set mesh sizes on edges."""
         for edge in self._geometry.shape.edges:
             if edge.name in mesh_sizes:
                 edge.maxh = mesh_sizes[edge.name]
 
     def set_face_mesh_sizes(self, mesh_sizes) -> None:
-        """Set mesh sizes on faces
-        """
+        """Set mesh sizes on faces."""
         for face in self._geometry.shape.faces:
             if face.name in mesh_sizes:
                 face.maxh = mesh_sizes[face.name]
 
     def set_volume_mesh_sizes(self, mesh_sizes: dict) -> None:
-        """Set mesh sizes on volumes
-        """
+        """Set mesh sizes on volumes."""
         for solid in self._geometry.shape.solids:
             if solid.name in mesh_sizes:
                 solid.maxh = mesh_sizes[solid.name]

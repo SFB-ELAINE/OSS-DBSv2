@@ -1,40 +1,43 @@
-import os
+import argparse
 import json
+import logging
+import os
+import pprint
+import time
+
 import ngsolve
+
 from ossdbs import set_logger
-from ossdbs.api import (load_images,
-                        generate_electrodes,
-                        prepare_dielectric_properties,
-                        create_bounding_box,
-                        prepare_solver,
-                        prepare_volume_conductor_model,
-                        run_volume_conductor_model,
-                        set_contact_and_encapsulation_layer_properties,
-                        )
+from ossdbs.api import (
+    create_bounding_box,
+    generate_electrodes,
+    load_images,
+    prepare_dielectric_properties,
+    prepare_solver,
+    prepare_volume_conductor_model,
+    run_volume_conductor_model,
+    set_contact_and_encapsulation_layer_properties,
+)
+from ossdbs.fem import ConductivityCF
+from ossdbs.model_geometry import BoundingBox, BrainGeometry, ModelGeometry
 from ossdbs.utils.settings import Settings
 from ossdbs.utils.type_check import TypeChecker
-from ossdbs.model_geometry import (ModelGeometry,
-                                   BrainGeometry,
-                                   BoundingBox)
-from ossdbs.fem import ConductivityCF
-import logging
-import time
-import pprint
-import argparse
 
 _logger = logging.getLogger(__name__)
 
 
 def main() -> None:
-
-    parser = argparse.ArgumentParser(prog="OSS-DBS",
-                                     description="Welcome to OSS-DBS v2.",
-                                     epilog="Please report bugs and errors on GitHub")
-    parser.add_argument('--loglevel', type=int, help="specify verbosity of logger",
-                        default=logging.INFO)
-    parser.add_argument('input_dictionary', type=str,
-                        help="input dictionary in JSON format"
-                        )
+    parser = argparse.ArgumentParser(
+        prog="OSS-DBS",
+        description="Welcome to OSS-DBS v2.",
+        epilog="Please report bugs and errors on GitHub",
+    )
+    parser.add_argument(
+        "--loglevel", type=int, help="specify verbosity of logger", default=logging.INFO
+    )
+    parser.add_argument(
+        "input_dictionary", type=str, help="input dictionary in JSON format"
+    )
     args = parser.parse_args()
 
     timings = {}
@@ -42,23 +45,30 @@ def main() -> None:
     set_logger(level=args.loglevel)
 
     _logger.info("Loading settings from input file")
-    _logger.debug("Input file: {}".format(args.input_dictionary))
-    with open(args.input_dictionary, 'r') as json_file:
+    _logger.debug(f"Input file: {args.input_dictionary}")
+    with open(args.input_dictionary) as json_file:
         input_settings = json.load(json_file)
 
     settings = Settings(input_settings).complete_settings()
     TypeChecker.check(settings)
 
     # add the stimulation folder (where input dict.json is stored, needed for Lead-DBS)
-    settings["StimulationFolder"] = os.path.dirname(os.path.abspath(args.input_dictionary))
+    settings["StimulationFolder"] = os.path.dirname(
+        os.path.abspath(args.input_dictionary)
+    )
 
-    _logger.debug("Final settings:\\ {}".format(settings))
+    _logger.debug(f"Final settings:\\ {settings}")
 
     # create output path
     if not os.path.isdir(settings["OutputPath"]):
         os.mkdir(settings["OutputPath"])
     # create fail flag
-    open(os.path.join(settings["StimulationFolder"], "fail_" + settings["FailFlag"] + ".txt"), 'w').close()
+    open(
+        os.path.join(
+            settings["StimulationFolder"], "fail_" + settings["FailFlag"] + ".txt"
+        ),
+        "w",
+    ).close()
 
     time_1 = time.time()
     timings["Settings"] = time_1 - time_0
@@ -80,9 +90,9 @@ def main() -> None:
     # MRI image is default choice for brain construction
     if "BrainRegion" in settings:
         _logger.debug("Generating model geometry for fixed brain region")
-        region_parameters = settings['BrainRegion']
+        region_parameters = settings["BrainRegion"]
         brain_region = create_bounding_box(region_parameters)
-        shape = settings['BrainRegion']['Shape']
+        shape = settings["BrainRegion"]["Shape"]
         brain_model = BrainGeometry(shape, brain_region)
     else:
         _logger.debug("Generating model geometry from MRI image")
@@ -90,11 +100,20 @@ def main() -> None:
         brain_region = mri_image.bounding_box
         shape = "Ellipsoid"
         # transformation to real space in geometry creation
-        _logger.debug("Generate OCC model, passing transformation matrix from MRI image")
-        brain_model = BrainGeometry(shape, brain_region, trafo_matrix=mri_image.trafo_matrix, translation=mri_image.translation)
+        _logger.debug(
+            "Generate OCC model, passing transformation matrix from MRI image"
+        )
+        brain_model = BrainGeometry(
+            shape,
+            brain_region,
+            trafo_matrix=mri_image.trafo_matrix,
+            translation=mri_image.translation,
+        )
         start, end = brain_model.geometry.bounding_box
         brain_region = BoundingBox(start, end)
-        _logger.debug("Bounding box in real space: {}, {}". format(brain_region.start, brain_region.end))
+        _logger.debug(
+            f"Bounding box in real space: {brain_region.start}, {brain_region.end}"
+        )
 
     geometry = ModelGeometry(brain_model, electrodes)
 
@@ -116,14 +135,15 @@ def main() -> None:
 
     _logger.info("Prepare conductivity coefficient function")
     materials = settings["MaterialDistribution"]["MRIMapping"]
-    conductivity = ConductivityCF(mri_image,
-                                  brain_region,
-                                  dielectric_properties,
-                                  materials,
-                                  geometry.encapsulation_layers,
-                                  complex_data=settings["EQSMode"],
-                                  dti_image=dti_image
-                                  )
+    conductivity = ConductivityCF(
+        mri_image,
+        brain_region,
+        dielectric_properties,
+        materials,
+        geometry.encapsulation_layers,
+        complex_data=settings["EQSMode"],
+        dti_image=dti_image,
+    )
 
     time_1 = time.time()
     timings["ConductivityCF"] = time_1 - time_0
@@ -132,20 +152,31 @@ def main() -> None:
     # run in parallel
     with ngsolve.TaskManager():
         solver = prepare_solver(settings)
-        volume_conductor = prepare_volume_conductor_model(settings, geometry, conductivity, solver)
+        volume_conductor = prepare_volume_conductor_model(
+            settings, geometry, conductivity, solver
+        )
         vcm_timings = run_volume_conductor_model(settings, volume_conductor)
 
     time_1 = time.time()
     timings["VolumeConductor"] = time_1 - time_0
 
-    _logger.info("Timings:\n {}".format(pprint.pformat(timings)))
-    _logger.info("Volume conductor timings:\n {}".format(pprint.pformat(vcm_timings)))
+    _logger.info(f"Timings:\n {pprint.pformat(timings)}")
+    _logger.info(f"Volume conductor timings:\n {pprint.pformat(vcm_timings)}")
 
     # write success file
-    open(os.path.join(settings["StimulationFolder"], "success_" + settings["FailFlag"] + ".txt"), 'w').close()
-    os.remove(os.path.join(settings["StimulationFolder"], "fail_" + settings["FailFlag"] + ".txt"))
+    open(
+        os.path.join(
+            settings["StimulationFolder"], "success_" + settings["FailFlag"] + ".txt"
+        ),
+        "w",
+    ).close()
+    os.remove(
+        os.path.join(
+            settings["StimulationFolder"], "fail_" + settings["FailFlag"] + ".txt"
+        )
+    )
     _logger.info("Process Completed")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

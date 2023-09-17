@@ -1,12 +1,12 @@
 from dataclasses import dataclass
+
 import numpy as np
 
 
 @dataclass
 class TimeResult:
-    """
-    TODO format of electric_field_vector needs to be clarified
-    """
+    """TODO format of electric_field_vector needs to be clarified."""
+
     points: np.ndarray
     time_steps: np.ndarray
     potential: np.ndarray
