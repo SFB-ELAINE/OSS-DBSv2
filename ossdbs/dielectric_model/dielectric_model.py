@@ -31,7 +31,7 @@ class DielectricModel(ABC):
         return np.real(self.complex_permittivity(omega))
 
     @abstractmethod
-    def complex_permittivity(self, omega: float) -> float:
+    def complex_permittivity(self, omega: float) -> complex:
         """Calculate the permittivity by the angular frequency omega.
 
         Parameters
@@ -88,4 +88,5 @@ class DielectricModel(ABC):
     @property
     @abstractmethod
     def static_conductivity(self) -> float:
+        """Return conductivity at zero Hz (static limit)."""
         pass

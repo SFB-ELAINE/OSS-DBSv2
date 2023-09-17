@@ -69,16 +69,20 @@ class ConductivityCF:
             self._material_distribution.shape, dtype=self._get_datatype()
         )
         self._materials = materials
-        self._masks = [None] * len(self._materials)
+        self._masks = [None] * len(self.materials)
         self._trafo_cf = mri_image.trafo_cf
         # Creates a boolean mask for the indices that material is present in
-        for material in self._materials:
-            material_idx = self._materials[material]
+        for material in self.materials:
+            material_idx = self.materials[material]
             self._masks[material_idx] = self._material_distribution == material_idx
 
     @property
     def is_complex(self) -> bool:
         return self._is_complex
+
+    @property
+    def materials(self) -> dict:
+        return self._materials
 
     def _get_datatype(self):
         """Return numpy datatype."""
@@ -140,8 +144,8 @@ class ConductivityCF:
         ngsolve.VoxelCoefficient
             Data structure representing the conductivity distribution in space.
         """
-        for material in self._materials:
-            material_idx = self._materials[material]
+        for material in self.materials:
+            material_idx = self.materials[material]
             # Sets conductivity values based on what indices in self._data are material_idx
             if self.is_complex:
                 self._data[self._masks[material_idx]] = self._dielectric_properties[
@@ -172,16 +176,16 @@ class ConductivityCF:
             self._mri_voxel_bounding_box.start,
             self._mri_voxel_bounding_box.end,
         )
-        materials = ngsolve.VoxelCoefficient(
+        material_voxelcf = ngsolve.VoxelCoefficient(
             start,
             end,
             self._material_distribution,
             linear=False,
             trafocf=self._trafo_cf,
         )
-        material_dict = {"Brain": materials}
+        material_dict = {"Brain": material_voxelcf}
         for encapsulation_layer in self._encapsulation_layers:
-            material_dict[encapsulation_layer.name] = self._materials[
+            material_dict[encapsulation_layer.name] = self.materials[
                 encapsulation_layer.material
             ]
         return mesh.material_coefficients(material_dict)
