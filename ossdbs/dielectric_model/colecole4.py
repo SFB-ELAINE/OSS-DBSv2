@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.constants import epsilon_0 as e0
 
-from ossdbs.dielectric_model import DielectricModel
+from .dielectric_model import DielectricModel
 
 
 @dataclass
@@ -12,9 +12,9 @@ class ColeColeParameters:
 
     eps_inf: float
     sigma: float
-    alpha: np.array  # 4 entries
-    eps_delta: np.array  # 4 entries
-    tau: np.array  # 4 entries
+    alpha: np.ndarray  # 4 entries
+    eps_delta: np.ndarray  # 4 entries
+    tau: np.ndarray  # 4 entries
 
     def __post_init__(self):
         self.alpha = np.array(self.alpha)

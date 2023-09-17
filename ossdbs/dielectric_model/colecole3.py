@@ -55,7 +55,9 @@ class ColeCole3Model(ColeCole4Model):
 
     References
     ----------
-    .. [Zimmermann2021] Zimmermann, J. and van Rienen, U. (2021) Ambiguity in the interpretation of the low-frequency dielectric properties of biological tissues.
+    .. [Zimmermann2021] Zimmermann, J. and van Rienen, U. (2021)
+                        Ambiguity in the interpretation of the low-frequency
+                        dielectric properties of biological tissues.
                         Bioelectrochemistry, 140, 107773.
                         dx.doi.org/10.1016/j.bioelechem.2021.107773
 

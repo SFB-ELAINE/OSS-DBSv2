@@ -75,17 +75,24 @@ class VolumeConductor(ABC):
 
     @abstractmethod
     def compute_solution(self, frequency: float) -> None:
+        """Compute solution at frequency."""
         pass
 
     def run_full_analysis(
         self,
         compute_impedance: bool = False,
         export_vtk: bool = False,
-        point_model: PointModel = False,
+        point_model: PointModel = None,
         template_space: bool = False,
         activation_threshold: Optional[float] = None,
     ) -> None:
-        timings = {}
+        """Run entire volume conductor model.
+
+        Notes
+        -----
+        TODO full documentation
+        """
+        timings: dict = {}
         grid_pts = None
         lattice_mask = None
         lattice = None
@@ -93,6 +100,9 @@ class VolumeConductor(ABC):
             grid_pts = point_model.points_in_mesh(self.mesh)
             lattice_mask = np.invert(grid_pts.mask)
             lattice = point_model.filtered_lattice(grid_pts)
+            # TODO how to use these masks?
+            self.get_points_in_csf(lattice)
+            self.get_points_in_encapsulation_layer(lattice)
         if lattice is not None:
             timings["PotentialProbing"] = []
             timings["FieldProbing"] = []
@@ -197,8 +207,6 @@ class VolumeConductor(ABC):
                         index=False,
                     )
 
-                print(type(point_model))
-                print(isinstance(point_model, Lattice))
                 if isinstance(point_model, VoxelLattice) or isinstance(
                     point_model, Lattice
                 ):
@@ -512,4 +520,22 @@ class VolumeConductor(ABC):
             order=max(1, self._order - 1),
             dirichlet=dirichlet,
             complex=self.is_complex,
+        )
+
+    def get_points_in_encapsulation_layer(self, points: np.ndarray) -> np.ndarray:
+        """Return mask for points in encapsulation layer."""
+        encap_cf = self.mesh.ngsolvemesh.RegionCF(
+            ngsolve.VOL, {"EncapsulationLayer_*": 1.0}, default=0
+        )
+        mesh = self.mesh.ngsolvemesh
+        x, y, z = points.T
+        return np.isclose(encap_cf(mesh(x, y, z)), 1.0)
+
+    def get_points_in_csf(self, points: np.ndarray) -> np.ndarray:
+        """Return mask for points in CSF."""
+        material_distribution = self.conductivity_cf.material_distribution(self.mesh)
+        mesh = self.mesh.ngsolvemesh
+        x, y, z = points.T
+        return np.isclose(
+            material_distribution(mesh(x, y, z)), self.conductivity_cf.materials["CSF"]
         )

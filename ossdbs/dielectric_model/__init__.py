@@ -1,11 +1,7 @@
-import logging
-
 from .colecole3 import ColeCole3Model, default_cole_cole3_parameters
 from .colecole4 import ColeCole4Model, ColeColeParameters, default_cole_cole4_parameters
 from .constant import ConstantModel, ConstantParameters, default_constant_parameters
 from .dielectric_model import DielectricModel
-
-_logger = logging.getLogger(__name__)
 
 dielectric_models = {
     "ColeCole4": ColeCole4Model,

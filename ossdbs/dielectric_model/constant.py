@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from scipy.constants import epsilon_0 as e0
 
-from ossdbs.dielectric_model import DielectricModel
+from .dielectric_model import DielectricModel
 
 
 @dataclass
