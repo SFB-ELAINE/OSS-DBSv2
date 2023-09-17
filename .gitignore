@@ -10,6 +10,7 @@ dist/
 *.egg-info/
 _build/
 docs/._*
+.idea/
 
 # Ignore file
 *.pyc
@@ -28,3 +29,4 @@ input_files/impedance.csv
 *checkpoints.ipynb
 input_files/Results
 success_oss.txt
+

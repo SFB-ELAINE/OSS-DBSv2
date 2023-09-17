@@ -10,15 +10,14 @@ stages:
     - pip install virtualenv
     - virtualenv venv
     - source venv/bin/activate
-    - pip install tox
-    - tox -e $PYTHONVERSION
+    - pytest
 
 .run:
   script:
    - pip install virtualenv
    - virtualenv venv
    - source venv/bin/activate
-   - pip install .
+   - pip install ".[test]"
    - cd input_files
    - ossdbs 'inputTest.json'
 

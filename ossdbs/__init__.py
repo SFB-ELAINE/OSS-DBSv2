@@ -1,7 +1,5 @@
 import logging
 
-from .__version__ import __version__
-
 from ossdbs.model_geometry import (BrainGeometry,
                                    ModelGeometry)
 from ossdbs.fem import (Mesh,
@@ -45,8 +43,7 @@ def set_logger(level=logging.INFO):
                 handler.setLevel(level)
 
 
-__all__ = ('__version__',
-           'set_logger',
+__all__ = ('set_logger',
            'BrainGeometry',
            'ModelGeometry',
            'ConductivityCF',
