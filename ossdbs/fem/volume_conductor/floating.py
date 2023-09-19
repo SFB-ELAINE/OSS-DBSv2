@@ -1,3 +1,5 @@
+import logging
+
 import ngsolve
 from ossdbs.fem.solver import Solver
 from ossdbs.fem.volume_conductor.volume_conductor_model import VolumeConductor
@@ -5,6 +7,8 @@ from ossdbs.model_geometry import ModelGeometry
 from ossdbs.stimulation_signals import FrequencyDomainSignal
 
 from .conductivity import ConductivityCF
+
+_logger = logging.getLogger(__name__)
 
 
 class VolumeConductorFloating(VolumeConductor):
@@ -27,6 +31,7 @@ class VolumeConductorFloating(VolumeConductor):
             meshing_parameters,
             frequency_domain_signal,
         )
+        _logger.debug("Create space")
         self._space = self.__create_space()
         self._floating_values = {}
         self._solution = ngsolve.GridFunction(space=self._space)
@@ -47,14 +52,19 @@ class VolumeConductorFloating(VolumeConductor):
             floating values of floating contacts.
         """
         self._frequency = frequency
+        _logger.debug("Get conductivity at frequency")
         self._sigma = self.conductivity_cf(self.mesh, frequency)
+        _logger.debug(f"Sigma: {self._sigma}")
         boundary_values = self.contacts.voltages
         coefficient = self.mesh.boundary_coefficients(boundary_values)
         self._potential.Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
+        _logger.debug("Bilinear form")
         bilinear_form = self.__bilinear_form(self._sigma, self._space)
+        _logger.debug("Linear form")
         linear_form = ngsolve.LinearForm(space=self._space)
-
+        _logger.debug("Solve BVP")
         self.solver.bvp(bilinear_form, linear_form, self._solution)
+        _logger.debug("Get floating values")
         components = self._solution.components[2:]
         self._floating_values = {
             contact.name: component.vec[0]
@@ -77,7 +87,9 @@ class VolumeConductorFloating(VolumeConductor):
             self.number_space() for _ in self.contacts.floating
         ]
         spaces = spaces_field + spaces_floating
+        _logger.debug("Create finite element space")
         finite_elements_space = ngsolve.FESpace(spaces=spaces)
+        _logger.debug("CompressComound finite element space")
         return ngsolve.CompressCompound(fespace=finite_elements_space)
 
     def __bilinear_form(self, sigma, space) -> ngsolve.BilinearForm:
