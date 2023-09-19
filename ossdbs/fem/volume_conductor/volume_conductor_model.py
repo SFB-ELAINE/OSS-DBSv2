@@ -53,7 +53,7 @@ class VolumeConductor(ABC):
 
         self._conductivity_cf = conductivity
         self._complex = conductivity.is_complex
-        self._signal = frequency_domain_signal
+        self.signal = frequency_domain_signal
 
         self._impedances = None
         self._mesh = Mesh(self._model_geometry.geometry, self._order)
@@ -125,19 +125,40 @@ class VolumeConductor(ABC):
                     self.signal.amplitudes[idx]
                 )
                 self.update_contacts(voltages=voltage_values)
+            else:
+                if len(self.contacts.active) == 2:
+                    voltages = {}
+                    for contact_idx, contact in enumerate(self.contacts.active):
+                        voltages[contact.name] = float(contact_idx)
+                else:
+                    raise NotImplementedError(
+                        "Current-controlled mode for multicontact not yet implemented"
+                    )
             time_0 = time.time()
             self.compute_solution(frequency)
             time_1 = time.time()
             timings["ComputeSolution"].append(time_1 - time_0)
             time_0 = time_1
-
-            if self.current_controlled:
-                # TODO implement current control
-                # Steps: compute impedance and rescale
-                raise NotImplementedError("Current-controlled mode not yet implemented")
-                continue
             if compute_impedance:
                 self._impedances[idx] = self.compute_impedance()
+            if self.current_controlled:
+                if len(self.contacts.active) == 2:
+                    impedance = (
+                        self._impedances[idx]
+                        if compute_impedance
+                        else self.compute_impedance()
+                    )
+                    # use Ohm's law U = Z * I
+                    # and that the Fourier coefficient for the current is known
+                    scale_voltage = impedance * self.signal.amplitudes[idx]
+                    self._potential.vec[:] = (
+                        scale_voltage * self._potential.vec.FV().NumPy()
+                    )
+                else:
+                    raise NotImplementedError(
+                        "Current-controlled mode for multicontact not yet implemented"
+                    )
+                continue
             if export_vtk:
                 self.vtk_export()
             if lattice is not None:
@@ -272,6 +293,19 @@ class VolumeConductor(ABC):
     @property
     def signal(self) -> FrequencyDomainSignal:
         return self._signal
+
+    @signal.setter
+    def signal(self, new_signal: FrequencyDomainSignal) -> None:
+        self._check_signal(new_signal)
+        self._signal = new_signal
+
+    def _check_signal(self, new_signal: FrequencyDomainSignal) -> None:
+        if new_signal.current_controlled:
+            sum_currents = 0.0
+            for contact in self.contacts.active:
+                sum_currents += contact.current
+            if not np.isclose(sum_currents, 0):
+                raise ValueError("The sum of all currents is not zero!")
 
     @property
     def current_controlled(self) -> bool:
