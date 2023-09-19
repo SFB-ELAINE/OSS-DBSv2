@@ -1,14 +1,15 @@
-import numpy as np
-import h5py
-import scipy
 import os
+
+import h5py
+import numpy as np
+import scipy
 
 from ossdbs.electrodes.defaults import default_electrode_parameters
 from ossdbs.utils.settings import Settings
 
 
 class LeadSettings:
-    """ Lead-DBS settings in OSS-DBS format
+    """Lead-DBS settings in OSS-DBS format.
 
     Parameters
     ----------
@@ -17,10 +18,9 @@ class LeadSettings:
     """
 
     def __init__(self, mat_file_path):
-
         # load .mat of different versions
         try:
-            self._file = h5py.File(str(mat_file_path), 'r')
+            self._file = h5py.File(str(mat_file_path), "r")
             self._h5 = True
         except:
             self._file = scipy.io.loadmat(mat_file_path)
@@ -38,8 +38,7 @@ class LeadSettings:
         self.NUM_ELECS = 1
 
     def make_oss_settings(self, hemis_idx=0, output_path=""):
-
-        """ Convert lead settings into OSS-DBS parameters
+        """Convert lead settings into OSS-DBS parameters.
 
         Parameters
         ----------
@@ -49,20 +48,27 @@ class LeadSettings:
         -------
         dict
         """
-
         # Constants
         # OSS strings used for tissue types
-        UNK, CSF, GM, WM, BLOOD = ["Unknown", "CSF", "Gray matter", "White matter", "Blood"]
+        UNK, CSF, GM, WM, BLOOD = [
+            "Unknown",
+            "CSF",
+            "Gray matter",
+            "White matter",
+            "Blood",
+        ]
 
         # folders for the output
         HEMIS_OUTPUT_PATHS = ["Results_rh", "Results_lh"]
-        SIDES = ['rh', 'lh']
+        SIDES = ["rh", "lh"]
         side = SIDES[hemis_idx]
 
         elec_dict = self.import_implantation_settings(hemis_idx)
 
         # get electrode dictionary with stimulation parameters
-        elec_dict, case_grounding = self.import_stimulation_settings(hemis_idx, elec_dict)
+        elec_dict, case_grounding = self.import_stimulation_settings(
+            hemis_idx, elec_dict
+        )
 
         # add another dict if more than one electrode at a time
         elec_dicts = [elec_dict]
@@ -72,34 +78,48 @@ class LeadSettings:
             "ModelSide": 0,  # hardcoded for now, always keep to 0 (no matter which hemisphere)
             "BrainRegion": {
                 # center at the head marker
-                "Center": {"x[mm]": self.get_imp_coord()[hemis_idx, 0],
-                           "y[mm]": self.get_imp_coord()[hemis_idx, 1],
-                           "z[mm]": self.get_imp_coord()[hemis_idx, 2]}
+                "Center": {
+                    "x[mm]": self.get_imp_coord()[hemis_idx, 0],
+                    "y[mm]": self.get_imp_coord()[hemis_idx, 1],
+                    "z[mm]": self.get_imp_coord()[hemis_idx, 2],
+                }
             },
             "Electrodes": elec_dicts,
-            "Surfaces": [{
-                "Name": "BrainSurface",
-                "Active": bool(case_grounding),
-                "Current[A]": 0.0,
-                "Voltage[V]": 0.0}],
+            "Surfaces": [
+                {
+                    "Name": "BrainSurface",
+                    "Active": bool(case_grounding),
+                    "Current[A]": 0.0,
+                    "Voltage[V]": 0.0,
+                }
+            ],
             "MaterialDistribution": {
                 "MRIPath": self.get_mri_name(),
                 "MRIMapping": {
                     # Make UNK map to one lower than the indices provided in the lead settings
-                    UNK: int(min([self.get_csf_idx(), self.get_gm_idx(), self.get_wm_idx()]) - 1),
+                    UNK: int(
+                        min([self.get_csf_idx(), self.get_gm_idx(), self.get_wm_idx()])
+                        - 1
+                    ),
                     CSF: self.get_csf_idx(),
                     WM: self.get_wm_idx(),
                     GM: self.get_gm_idx(),
                     # Make BLOOD map to one higher than the indices provided in the lead settings
-                    BLOOD: int(max([self.get_csf_idx(), self.get_gm_idx(), self.get_wm_idx()]) + 1)},
+                    BLOOD: int(
+                        max([self.get_csf_idx(), self.get_gm_idx(), self.get_wm_idx()])
+                        + 1
+                    ),
+                },
                 "DiffusionTensorActive": len(self.get_dti_name()) > 0,
-                "DTIPath": self.get_dti_name()},
+                "DTIPath": self.get_dti_name(),
+            },
             "StimulationSignal": {"CurrentControlled": self.get_cur_ctrl()[hemis_idx]},
             "CalcAxonActivation": self.get_calc_axon_act(),
             "ActivationThresholdVTA": self.get_act_thresh_vta(),
             "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATHS[hemis_idx]),
             "FailFlag": side,
-            "TemplateSpace": self.get_est_in_temp()}
+            "TemplateSpace": self.get_est_in_temp(),
+        }
 
         partial_settings = Settings(partial_dict)
         return partial_settings.complete_settings()
@@ -121,7 +141,8 @@ class LeadSettings:
 
     # MRIPath
     def get_mri_name(self):
-        return self._get_str("MRI_data_name")
+        mri_file = self._get_str("MRI_data_name")
+        return os.path.abspath(mri_file)
 
     def get_dti_name(self):
         return self._get_str("DTI_data_name")
@@ -205,13 +226,13 @@ class LeadSettings:
         return self._get_str("connectomePath")
 
     def get_connectome_tract_names(self):
-        """Get tract names in the connectome
+        """Get tract names in the connectome.
 
         Returns
         -------
         list
         """
-        ref_arr = self._settings['connectomeTractNames'][0]
+        ref_arr = self._settings["connectomeTractNames"][0]
 
         # Initialize the tract names array
         tract_names = np.empty(len(ref_arr), dtype=object)
@@ -222,14 +243,14 @@ class LeadSettings:
             ascii_codes = np.ndarray(entry.shape[0])
             for j in range(entry.shape[0]):
                 ascii_codes[j] = entry[j][0]
-            tract_names[i] = ''.join(np.vectorize(chr)(ascii_codes.astype(int)))
+            tract_names[i] = "".join(np.vectorize(chr)(ascii_codes.astype(int)))
         return tract_names
 
     def get_inter_mode(self):
         return self._get_num("interactiveMode")
 
     def get_tip_position(self, oss_elec_name):
-        """Get tip and implantation trajectory from head (Implantation_coordinate) and tail (Second_coordinate)
+        """Get tip and implantation trajectory from head (Implantation_coordinate) and tail (Second_coordinate).
 
         Parameters
         ----------
@@ -239,7 +260,6 @@ class LeadSettings:
         -------
         numpy.ndarray, numpy.ndarray
         """
-
         elec_params = default_electrode_parameters[oss_elec_name]
         imp_coords = np.array(self.get_imp_coord())
         sec_coords = np.array(self.get_sec_coord())
@@ -250,8 +270,7 @@ class LeadSettings:
         return unit_directions, tip_position
 
     def import_implantation_settings(self, hemis_idx, elec_dict=None):
-
-        """Convert Lead-DBS implantation settings to OSS-DBS parameters
+        """Convert Lead-DBS implantation settings to OSS-DBS parameters.
 
         Parameters
         ----------
@@ -263,7 +282,6 @@ class LeadSettings:
         elec_dict: dict
         case_grounding: bool
         """
-
         # Convert the electrode name to OSS-DBS format
         electrode_name = self.get_elec_type().replace(" ", "")
         # Check that oss electrode name is valid
@@ -278,13 +296,17 @@ class LeadSettings:
             "Name": electrode_name,
             "PathToCustomParameters": "",
             "Rotation[Degrees]": self.get_rot_z(hemis_idx),
-            "Direction": {"x[mm]": unit_directions[hemis_idx, 0],
-                          "y[mm]": unit_directions[hemis_idx, 1],
-                          "z[mm]": unit_directions[hemis_idx, 2]},
+            "Direction": {
+                "x[mm]": unit_directions[hemis_idx, 0],
+                "y[mm]": unit_directions[hemis_idx, 1],
+                "z[mm]": unit_directions[hemis_idx, 2],
+            },
             "TipPosition": {
                 "x[mm]": tip_pos[hemis_idx, 0],
                 "y[mm]": tip_pos[hemis_idx, 1],
-                "z[mm]": tip_pos[hemis_idx, 2]}}
+                "z[mm]": tip_pos[hemis_idx, 2],
+            },
+        }
         if elec_dict is None:
             elec_dict = elec_dict_imp
         else:
@@ -293,7 +315,7 @@ class LeadSettings:
         return elec_dict
 
     def import_stimulation_settings(self, hemis_idx, elec_dict=None):
-        """Convert Lead-DBS stim settings to OSS-DBS parameters, update electrode dictionary
+        """Convert Lead-DBS stim settings to OSS-DBS parameters, update electrode dictionary.
 
         Parameters
         ----------
@@ -305,7 +327,6 @@ class LeadSettings:
         elec_dict: dict
         case_grounding: bool
         """
-
         # stimulation vector over electrode contacts (negative - cathode)
         pulse_amps = self.get_phi_vec()
 
@@ -323,13 +344,12 @@ class LeadSettings:
             pulse_amp_key = "Voltage[V]"
             not_pulse_amp_key = "Current[A]"
             # Fix of VC random grounding bug for Lead-DBS stim settings
-            pulse_amps[pulse_amps == 0] = float('nan')
+            pulse_amps[pulse_amps == 0] = float("nan")
 
             # make list of dictionaries for the electrode settings
         # for now use one electrode at a time
 
         for index_side in [hemis_idx]:
-
             pulse_amp = pulse_amps[index_side, :]
 
             if self.get_cur_ctrl()[index_side]:
@@ -351,7 +371,8 @@ class LeadSettings:
                         "Contact_ID": i + 1,
                         "Active": True,
                         pulse_amp_key: pulse_amp[i],
-                        not_pulse_amp_key: False}
+                        not_pulse_amp_key: False,
+                    }
                     cntcts_made += 1
 
         if elec_dict is None:
@@ -373,14 +394,14 @@ class LeadSettings:
             return self._settings[field_name][0][0][0][0]
 
     def _get_str(self, field_name):
-        entry = ''
+        entry = ""
         if self._is_h5():
             ascii_codes = self._settings[field_name][:, 0]
-            entry = ''.join(np.vectorize(chr)(ascii_codes))
+            entry = "".join(np.vectorize(chr)(ascii_codes))
         else:
             entry = self._settings[field_name][0][0][0]
-        if entry == 'no dti':
-            entry = ''
+        if entry == "no dti":
+            entry = ""
         return entry
 
     def _get_arr(self, field_name):
