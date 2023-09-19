@@ -25,7 +25,7 @@ def load_default_for_lead(settings):
 
     settings["PointModel"]["VoxelLattice"] = {"Active": False,
                                               "Shape": {'x': 31, 'y': 31, 'z': 41}}
-    settings["Electrodes"][settings["ModelSide"]]["EncapsulationLayer"]["Thickness"] = 0.1
+    settings["Electrodes"][settings["ModelSide"]]["EncapsulationLayer"]["Thickness[mm]"] = 0.1
     settings["Electrodes"][settings["ModelSide"]]["EncapsulationLayer"]["Material"] = "White matter"
     settings["CalcAxonActivation"] = False
     settings["ExportVTK"] = True
