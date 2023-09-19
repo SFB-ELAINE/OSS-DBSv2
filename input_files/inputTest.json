@@ -42,6 +42,18 @@
         },
         {
           "Contact_ID": 2,
+          "Active": false,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSizeEdge": 0.01
+        },
+        {
+          "Contact_ID": 3,
           "Active": true,
           "Current[A]": 0.0,
           "Voltage[V]": 0.0,
