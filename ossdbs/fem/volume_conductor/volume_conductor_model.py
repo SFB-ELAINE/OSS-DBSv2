@@ -217,9 +217,9 @@ class VolumeConductor(ABC):
                     field_mags_full[lattice_mask[:, 0]] = field_mags[:, 0]
 
                     if type(point_model) == VoxelLattice:
-                        suffix = "_WA"
-                    else:
                         suffix = ""
+                    else:
+                        suffix = "_WA"
                     point_model.save_as_nifti(
                         field_mags_full,
                         os.path.join(self.output_path, f"E_field_solution{suffix}.nii"),
