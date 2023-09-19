@@ -1,5 +1,4 @@
 import ngsolve
-
 from ossdbs.fem.solver import Solver
 from ossdbs.fem.volume_conductor.volume_conductor_model import VolumeConductor
 from ossdbs.model_geometry import ModelGeometry
@@ -49,7 +48,7 @@ class VolumeConductorFloating(VolumeConductor):
         """
         self._frequency = frequency
         self._sigma = self.conductivity_cf(self.mesh, frequency)
-        boundary_values = self.model_geometry.contacts.voltages
+        boundary_values = self.contacts.voltages
         coefficient = self.mesh.boundary_coefficients(boundary_values)
         self._potential.Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
         bilinear_form = self.__bilinear_form(self._sigma, self._space)
@@ -60,14 +59,14 @@ class VolumeConductorFloating(VolumeConductor):
         self._floating_values = {
             contact.name: component.vec[0]
             for contact, component in zip(
-                self.model_geometry.contacts.floating, components
+                self.contacts.floating, components
             )
         }
 
     def __create_space(self):
-        boundaries = [contact.name for contact in self.model_geometry.contacts.active]
+        boundaries = [contact.name for contact in self.contacts.active]
         boundaries_nonfloating = [
-            contact.name for contact in self.model_geometry.contacts.unused
+            contact.name for contact in self.contacts.unused
         ]
         boundaries_nonfloating.extend(boundaries)
         spaces_field = [
@@ -75,7 +74,7 @@ class VolumeConductorFloating(VolumeConductor):
             self.surfacel2_space(boundaries_nonfloating),
         ]
         spaces_floating = [
-            self.number_space() for _ in self.model_geometry.contacts.floating
+            self.number_space() for _ in self.contacts.floating
         ]
         spaces = spaces_field + spaces_floating
         finite_elements_space = ngsolve.FESpace(spaces=spaces)
@@ -88,7 +87,7 @@ class VolumeConductorFloating(VolumeConductor):
         v, mu = test[:2]
         bilinear_form = ngsolve.BilinearForm(space)
         bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
-        boundaries = [contact.name for contact in self.model_geometry.contacts.floating]
+        boundaries = [contact.name for contact in self.contacts.floating]
         for ufix, vfix, boundary in zip(trial[2:], test[2:], boundaries):
             bilinear_form += (u * mu + v * lam) * ngsolve.ds(boundary)
             bilinear_form += -(ufix * mu + vfix * lam) * ngsolve.ds(boundary)
