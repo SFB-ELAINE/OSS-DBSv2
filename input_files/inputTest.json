@@ -38,7 +38,7 @@
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.01
+          "MaxMeshSizeEdge": 0.1
         },
         {
           "Contact_ID": 2,
@@ -50,7 +50,7 @@
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.01
+          "MaxMeshSizeEdge": 0.1
         },
         {
           "Contact_ID": 3,
@@ -62,14 +62,14 @@
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.01
+          "MaxMeshSizeEdge": 0.1
         }
       ],
       "EncapsulationLayer": {
         "Thickness[mm]": 0.0,
         "Material": "Blood",
         "DielectricModel": "ColeCole4",
-        "MaxMeshSize": 0.01
+        "MaxMeshSize": 0.1
       }
     }
   ],
@@ -92,15 +92,13 @@
     "LoadMesh": false,
     "MeshElementOrder": 2,
     "MeshingHypothesis": {
-      "Type": "Default",
+      "Type": "Fine",
       "MaxMeshSize": 0.1
     },
     "MeshSize": {
       "Edges": {},
       "Faces": {},
-      "Volumes": {
-        "Brain": 0.1
-      }
+      "Volumes": {}
     },
     "SaveMesh": false
   },
@@ -116,7 +114,7 @@
   },
   "Solver": {
     "Type": "CG",
-    "Preconditioner": "bddc",
+    "Preconditioner": "local",
     "PrintRates": true,
     "MaximumSteps": 200,
     "Precision": 1e-8
