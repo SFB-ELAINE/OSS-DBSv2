@@ -38,19 +38,19 @@
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.1
+          "MaxMeshSizeEdge": 0.05
         },
         {
           "Contact_ID": 2,
           "Active": false,
           "Current[A]": 0.0,
           "Voltage[V]": 0.0,
-          "Floating": true,
+          "Floating": false,
           "SurfaceImpedance[Ohmm]": {
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.1
+          "MaxMeshSizeEdge": 0.05
         },
         {
           "Contact_ID": 3,
@@ -62,7 +62,7 @@
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.1
+          "MaxMeshSizeEdge": 0.05
         }
       ],
       "EncapsulationLayer": {
@@ -93,7 +93,7 @@
     "MeshElementOrder": 2,
     "MeshingHypothesis": {
       "Type": "Fine",
-      "MaxMeshSize": 0.1
+      "MaxMeshSize": 1
     },
     "MeshSize": {
       "Edges": {},
@@ -113,8 +113,9 @@
     ]
   },
   "Solver": {
-    "Type": "CG",
+    "Type": "Direct",
     "Preconditioner": "local",
+    "PreconditionerKwargs": {},
     "PrintRates": true,
     "MaximumSteps": 200,
     "Precision": 1e-8

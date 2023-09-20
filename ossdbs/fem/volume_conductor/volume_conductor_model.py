@@ -231,9 +231,9 @@ class VolumeConductor(ABC):
                         activation_threshold=activation_threshold,
                     )
 
-                time_1 = time.time()
-                timings["FieldExport"] = time_1 - time_0
-                time_0 = time_1
+            time_1 = time.time()
+            timings["FieldExport"] = time_1 - time_0
+            time_0 = time_1
 
         # save impedance at all frequencies to file!
         if compute_impedance:
