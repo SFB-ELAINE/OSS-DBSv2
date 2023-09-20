@@ -1,5 +1,4 @@
 import os
-import pdb
 import h5py
 import numpy as np
 import scipy
@@ -28,7 +27,7 @@ class LeadSettings:
 
         self._settings = self._file["settings"]
 
-        # Check that both electrodes are either current controlled or voltage controlled
+        # Check that both electrodes are either CC or VC
         cur_ctrl_arr = self.get_cur_ctrl()
         if all(~np.isnan(cur_ctrl_arr)):
             if cur_ctrl_arr[0] != cur_ctrl_arr[1]:
@@ -75,7 +74,7 @@ class LeadSettings:
 
         # MAKE THE DICTIONARY
         partial_dict = {
-            "ModelSide": 0,  # hardcoded for now, always keep to 0 (no matter which hemisphere)
+            "ModelSide": 0,  # hardcoded for now, always keep to 0
             "BrainRegion": {
                 # center at the head marker
                 "Center": {
@@ -96,7 +95,8 @@ class LeadSettings:
             "MaterialDistribution": {
                 "MRIPath": self.get_mri_name(),
                 "MRIMapping": {
-                    # Make UNK map to one lower than the indices provided in the lead settings
+                    # Make UNK map to one lower than the indices provided in
+                    # the lead settings
                     UNK: int(
                         min([self.get_csf_idx(), self.get_gm_idx(), self.get_wm_idx()])
                         - 1
@@ -104,7 +104,8 @@ class LeadSettings:
                     CSF: self.get_csf_idx(),
                     WM: self.get_wm_idx(),
                     GM: self.get_gm_idx(),
-                    # Make BLOOD map to one higher than the indices provided in the lead settings
+                    # Make BLOOD map to one higher than the indices provided
+                    # in the lead settings
                     BLOOD: int(
                         max([self.get_csf_idx(), self.get_gm_idx(), self.get_wm_idx()])
                         + 1
@@ -250,7 +251,8 @@ class LeadSettings:
         return self._get_num("interactiveMode")
 
     def get_tip_position(self, oss_elec_name):
-        """Get tip and implantation trajectory from head (Implantation_coordinate) and tail (Second_coordinate).
+        """Get tip and implantation trajectory from head
+        (Implantation_coordinate) and tail (Second_coordinate).
 
         Parameters
         ----------
@@ -293,7 +295,8 @@ class LeadSettings:
             "Abbott ActiveTip (6146-6149)": "AbbottStJudeActiveTip6146_6149",
             "Abbott ActiveTip (6142-6145)": "AbbottStJudeActiveTip6142_6145",
             "Boston Scientific Vercise": "BostonScientificVercise",
-            "Boston Scientific Vercise Directed": "BostonScientificVerciseDirected",
+            "Boston Scientific Vercise Directed":
+            "BostonScientificVerciseDirected",
             "Boston Scientific Vercise Cartesia HX": "",
             "Boston Scientific Vercise Cartesia X": "",
             "ELAINE Rat Electrode": "MicroProbesRodentElectrode",
@@ -312,7 +315,8 @@ class LeadSettings:
 
         # Check that oss electrode name is valid
         if electrode_name not in default_electrode_parameters.keys():
-            raise Exception(electrode_name + " is not a recognized electrode type")
+            raise Exception(electrode_name +
+                            " is not a recognized electrode type")
 
         # get tip position from the head and tail markers
         unit_directions, tip_pos = self.get_tip_position(electrode_name)
@@ -341,7 +345,8 @@ class LeadSettings:
         return elec_dict
 
     def import_stimulation_settings(self, hemis_idx, elec_dict=None):
-        """Convert Lead-DBS stim settings to OSS-DBS parameters, update electrode dictionary.
+        """Convert Lead-DBS stim settings to OSS-DBS parameters,
+        update electrode dictionary.
 
         Parameters
         ----------
@@ -379,13 +384,15 @@ class LeadSettings:
             pulse_amp = pulse_amps[index_side, :]
 
             if self.get_cur_ctrl()[index_side]:
-                # for CC, check if currents sum up to 0.0. If not, enable case grounding
+                # for CC, check if currents sum up to 0.0.
+                # If not, enable case grounding
                 case_grounding = np.sum(pulse_amp[~np.isnan(pulse_amp)]) != 0
             else:
                 # for VC, case grounding is defined explicitly
                 case_grounding = bool(self.get_case_grnd()[index_side])
 
-            # cntct_dicts is a list of the contacts that will go in the json for this electrode
+            # cntct_dicts is a list of the contacts that will go in the json
+            # for this electrode
             # We only include the active ones for now
             cntct_dicts = np.empty(np.sum(~np.isnan(pulse_amp)), dtype=object)
             cntcts_made = 0
