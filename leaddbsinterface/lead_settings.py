@@ -1,5 +1,5 @@
 import os
-
+import pdb
 import h5py
 import numpy as np
 import scipy
@@ -283,7 +283,33 @@ class LeadSettings:
         case_grounding: bool
         """
         # Convert the electrode name to OSS-DBS format
-        electrode_name = self.get_elec_type().replace(" ", "")
+        electrode_name = self.get_elec_type()
+
+        # Cateisa not available is OSS-DBS, SNEX not available in Lead
+        electrode_names = {
+            "Abbott Directed 6172 (short)": "AbbottStJudeDirected6172",
+            "St. Jude Directed 6180": "AbbottStJudeDirected6172",
+            "Abbott Directed 6173 (long)": "AbbottStJudeDirected6173",
+            "Abbott ActiveTip (6146-6149)": "AbbottStJudeActiveTip6146_6149",
+            "Abbott ActiveTip (6142-6145)": "AbbottStJudeActiveTip6142_6145",
+            "Boston Scientific Vercise": "BostonScientificVercise",
+            "Boston Scientific Vercise Directed": "BostonScientificVerciseDirected",
+            "Boston Scientific Vercise Cartesia HX": "",
+            "Boston Scientific Vercise Cartesia X": "",
+            "ELAINE Rat Electrode": "MicroProbesRodentElectrode",
+            "Medtronic 3387": "Medtronic3387",
+            "Medtronic 3389": "Medtronic3389",
+            "Medtronic 3391": "Medtronic3391",
+            "Medtronic B33005": "MedtronicSenSightB33005",
+            "Medtronic B33015": "MedtronicSenSightB33015",
+            "PINS Medical L301": "PINSMedicalL301",
+            "PINS Medical L302": "PINSMedicalL302",
+            "PINS Medical L303": "PINSMedicalL303"
+            }
+
+        for lead, ossdbs in electrode_names.items():
+            electrode_name = electrode_name.replace(lead, ossdbs)
+
         # Check that oss electrode name is valid
         if electrode_name not in default_electrode_parameters.keys():
             raise Exception(electrode_name + " is not a recognized electrode type")
