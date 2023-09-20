@@ -55,7 +55,8 @@ class CGSolver(Solver):
         linear_form: ngsolve.LinearForm
         grid_function: ngsolve.GridFunction
         """
-        preconditioner = ngsolve.Preconditioner(bf=bilinear_form, **self._precond_par)
+        preconditioner = ngsolve.Preconditioner(bf=bilinear_form,
+                                                **self._precond_par)
 
         bilinear_form.Assemble()
         linear_form.Assemble()
@@ -108,7 +109,8 @@ class GMRESSolver(Solver):
         linear_form: ngsolve.LinearForm
         grid_function: ngsolve.GridFunction
         """
-        preconditioner = ngsolve.Preconditioner(bf=bilinear_form, **self._precond_par)
+        preconditioner = ngsolve.Preconditioner(bf=bilinear_form,
+                                                **self._precond_par)
 
         bilinear_form.Assemble()
         linear_form.Assemble()
@@ -162,12 +164,12 @@ class DirectSolver(Solver):
         linear_form: ngsolve.LinearForm
         grid_function: ngsolve.GridFunction
         """
-
         bilinear_form.Assemble()
         linear_form.Assemble()
-        print("Start inverting")
-        inverse = bilinear_form.mat.Inverse(inverse="pardiso")
-        print("Inverted")
+        inverse = bilinear_form.mat.Inverse(
+            freedofs=grid_function.space.FreeDofs(),
+            inverse="pardiso"
+        )
         r = linear_form.vec.CreateVector()
         r.data = linear_form.vec - bilinear_form.mat * grid_function.vec
         grid_function.vec.data = grid_function.vec.data + inverse * r
