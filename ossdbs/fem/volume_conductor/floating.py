@@ -33,6 +33,7 @@ class VolumeConductorFloating(VolumeConductor):
         )
         _logger.debug("Create space")
         self._space = self.__create_space()
+        print("Ndofs compressed fes", self._space.ndof)
         self._floating_values = {}
         self._solution = ngsolve.GridFunction(space=self._space)
         self._potential = self._solution.components[0]
@@ -90,6 +91,7 @@ class VolumeConductorFloating(VolumeConductor):
         _logger.debug("Create finite element space")
         finite_elements_space = ngsolve.FESpace(spaces=spaces)
         _logger.debug("CompressComound finite element space")
+        print("Ndofs finite_element_space", finite_elements_space.ndof)
         return ngsolve.CompressCompound(fespace=finite_elements_space)
 
     def __bilinear_form(self, sigma, space) -> ngsolve.BilinearForm:

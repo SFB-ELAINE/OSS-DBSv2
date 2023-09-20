@@ -6,7 +6,7 @@ from .preconditioner import (
     LocalPreconditioner,
     MultigridPreconditioner,
 )
-from .solver import CGSolver, GMRESSolver, Solver
+from .solver import CGSolver, GMRESSolver, DirectSolver, Solver
 from .volume_conductor import (
     ConductivityCF,
     VolumeConductor,
@@ -15,7 +15,7 @@ from .volume_conductor import (
     VolumeConductorNonFloating,
 )
 
-SOLVERS = {"CG": CGSolver, "GMRES": GMRESSolver}
+SOLVERS = {"CG": CGSolver, "GMRES": GMRESSolver, "Direct": DirectSolver}
 
 
 PRECONDITIONERS = {
