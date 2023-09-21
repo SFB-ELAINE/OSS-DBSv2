@@ -116,7 +116,8 @@ class VolumeConductor(ABC):
                     shape=(len(self.signal.frequencies)), dtype=complex
                 )
             else:
-                self._impedances = np.ndarray(shape=(len(self.signal.frequencies)))
+                self._impedances = np.ndarray(
+                    shape=(len(self.signal.frequencies)))
         for idx, frequency in enumerate(self.signal.frequencies):
             _logger.info(f"Computing at frequency: {frequency}")
             if not self.current_controlled:
@@ -127,9 +128,8 @@ class VolumeConductor(ABC):
                 self.update_contacts(voltages=voltage_values)
             else:
                 if len(self.contacts.active) == 2:
-                    voltages = {}
                     for contact_idx, contact in enumerate(self.contacts.active):
-                        voltages[contact.name] = float(contact_idx)
+                        self.contacts[contact.name].voltage = float(contact_idx)
                 else:
                     raise NotImplementedError(
                         "Current-controlled mode for multicontact not yet implemented"
@@ -158,7 +158,7 @@ class VolumeConductor(ABC):
                     raise NotImplementedError(
                         "Current-controlled mode for multicontact not yet implemented"
                     )
-                continue
+                    continue
             if export_vtk:
                 self.vtk_export()
             if lattice is not None:
@@ -219,12 +219,14 @@ class VolumeConductor(ABC):
                 )
                 if template_space:
                     df_field.to_csv(
-                        os.path.join(self.output_path, "E_field_Template_space.csv"),
+                        os.path.join(
+                            self.output_path, "E_field_Template_space.csv"),
                         index=False,
                     )
                 else:
                     df_field.to_csv(
-                        os.path.join(self.output_path, "E_field_MRI_space.csv"),
+                        os.path.join(
+                            self.output_path, "E_field_MRI_space.csv"),
                         index=False,
                     )
 
@@ -243,11 +245,13 @@ class VolumeConductor(ABC):
                         suffix = "_WA"
                     point_model.save_as_nifti(
                         field_mags_full,
-                        os.path.join(self.output_path, f"E_field_solution{suffix}.nii"),
+                        os.path.join(
+                            self.output_path, f"E_field_solution{suffix}.nii"),
                     )
                     point_model.save_as_nifti(
                         field_mags_full,
-                        os.path.join(self.output_path, f"VTA_solution{suffix}.nii"),
+                        os.path.join(
+                            self.output_path, f"VTA_solution{suffix}.nii"),
                         binarize=True,
                         activation_threshold=activation_threshold,
                     )
@@ -266,7 +270,8 @@ class VolumeConductor(ABC):
                     "imag": self.impedances.imag,
                 }
             )
-            df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
+            df.to_csv(os.path.join(
+                self.output_path, "impedance.csv"), index=False)
 
         return timings
 
