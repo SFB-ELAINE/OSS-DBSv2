@@ -502,9 +502,45 @@ class VolumeConductor(ABC):
             os.path.join(self.output_path, "E-field")
         )
 
-        FieldSolution(self.conductivity, "conductivity", ngmesh, self.is_complex).save(
-            os.path.join(self.output_path, "conductivity")
-        )
+        if self.conductivity_cf.is_tensor:
+            # Naming convention by ParaView!
+            cf_list = (
+                self.conductivity[0],  # xx
+                self.conductivity[4],  # yy
+                self.conductivity[8],  # zz
+                self.conductivity[1],  # xy
+                self.conductivity[5],  # yz
+                self.conductivity[2],  # xz
+            )
+            conductivity_export = ngsolve.CoefficientFunction(cf_list, dims=(6,))
+        else:
+            conductivity_export = self.conductivity
+        FieldSolution(
+            conductivity_export, "conductivity", ngmesh, self.is_complex
+        ).save(os.path.join(self.output_path, "conductivity"))
+
+        if self.conductivity_cf.is_tensor:
+            dti_voxel = self.conductivity_cf.dti_voxel_distribution
+            # Naming convention by ParaView!
+            cf_list = (
+                dti_voxel[0],  # xx
+                dti_voxel[4],  # yy
+                dti_voxel[8],  # zz
+                dti_voxel[1],  # xy
+                dti_voxel[5],  # yz
+                dti_voxel[2],  # xz
+            )
+            dti_export = ngsolve.CoefficientFunction(cf_list, dims=(6,))
+            FieldSolution(dti_export, "dti", ngmesh, False).save(
+                os.path.join(self.output_path, "dti")
+            )
+
+        FieldSolution(
+            self.conductivity_cf.material_distribution(self.mesh),
+            "material",
+            ngmesh,
+            False,
+        ).save(os.path.join(self.output_path, "material"))
 
         FieldSolution(
             self.conductivity_cf.material_distribution(self.mesh),
@@ -514,6 +550,7 @@ class VolumeConductor(ABC):
         ).save(os.path.join(self.output_path, "material"))
 
     def floating_values(self) -> dict:
+        """Read out floating potentials."""
         floating_voltages = {}
         for contact in self.contacts.floating:
             floating_voltages[contact.name] = contact.voltage
