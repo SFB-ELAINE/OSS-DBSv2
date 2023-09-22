@@ -1,6 +1,7 @@
 import logging
 
 import ngsolve
+
 from ossdbs.fem.solver import Solver
 from ossdbs.fem.volume_conductor.volume_conductor_model import VolumeConductor
 from ossdbs.model_geometry import ModelGeometry
@@ -69,24 +70,18 @@ class VolumeConductorFloating(VolumeConductor):
         components = self._solution.components[2:]
         self._floating_values = {
             contact.name: component.vec[0]
-            for contact, component in zip(
-                self.contacts.floating, components
-            )
+            for contact, component in zip(self.contacts.floating, components)
         }
 
     def __create_space(self):
         boundaries = [contact.name for contact in self.contacts.active]
-        boundaries_nonfloating = [
-            contact.name for contact in self.contacts.unused
-        ]
+        boundaries_nonfloating = [contact.name for contact in self.contacts.unused]
         boundaries_nonfloating.extend(boundaries)
         spaces_field = [
             self.h1_space(boundaries),
             self.surfacel2_space(boundaries_nonfloating),
         ]
-        spaces_floating = [
-            self.number_space() for _ in self.contacts.floating
-        ]
+        spaces_floating = [self.number_space() for _ in self.contacts.floating]
         spaces = spaces_field + spaces_floating
         _logger.debug("Create finite element space")
         finite_elements_space = ngsolve.FESpace(spaces=spaces)

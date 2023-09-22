@@ -1,3 +1,5 @@
+"""FEM part of OSS-DBS."""
+
 from .mesh import Mesh
 from .preconditioner import (
     AMGPreconditioner,
@@ -6,7 +8,7 @@ from .preconditioner import (
     LocalPreconditioner,
     MultigridPreconditioner,
 )
-from .solver import CGSolver, GMRESSolver, DirectSolver, Solver
+from .solver import CGSolver, DirectSolver, GMRESSolver, Solver
 from .volume_conductor import (
     ConductivityCF,
     VolumeConductor,
