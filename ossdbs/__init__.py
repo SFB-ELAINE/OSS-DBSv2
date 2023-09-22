@@ -1,3 +1,4 @@
+"""Open-source software for deep brain stimulation."""
 import logging
 
 import ngsolve
@@ -26,6 +27,7 @@ _logger.addHandler(logging.NullHandler())
 
 
 def set_logger(level=logging.INFO):
+    """Set log level."""
     _logger.setLevel(level)
     if level == logging.DEBUG:
         ngsolve.ngsglobals.msg_level = 10
