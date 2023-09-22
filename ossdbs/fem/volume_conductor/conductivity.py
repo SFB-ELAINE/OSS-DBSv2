@@ -81,6 +81,10 @@ class ConductivityCF:
         return self._is_complex
 
     @property
+    def is_tensor(self) -> bool:
+        return self._dti_voxel_cf is not None
+
+    @property
     def materials(self) -> dict:
         return self._materials
 
@@ -191,6 +195,13 @@ class ConductivityCF:
         return mesh.material_coefficients(material_dict)
 
     def create_dti_voxel_cf(self, dti_data, dti_voxel_bounding_box, dti_image):
+        """Map DTI image on NGSolve VoxelCoefficient function.
+
+        Notes
+        -----
+        The DTI images assume symmetry of the tensor.
+        This is not (yet) the case in NGSolve.
+        """
         start, end = dti_voxel_bounding_box.start, dti_voxel_bounding_box.end
         dti_flat_matrix = []
         for _component, index in dti_image.components.items():
@@ -207,3 +218,8 @@ class ConductivityCF:
                 )
             )
         return ngsolve.CoefficientFunction(tuple(dti_flat_matrix), dims=(3, 3))
+
+    @property
+    def dti_voxel_distribution(self) -> ngsolve.VoxelCoefficient:
+        """Return DTI data as VoxelCoefficient before scaling by conductivity."""
+        return self._dti_voxel_cf

@@ -53,7 +53,7 @@ class VolumeConductor(ABC):
 
         self._conductivity_cf = conductivity
         self._complex = conductivity.is_complex
-        self._signal = frequency_domain_signal
+        self.signal = frequency_domain_signal
 
         self._impedances = None
         self._mesh = Mesh(self._model_geometry.geometry, self._order)
@@ -85,7 +85,7 @@ class VolumeConductor(ABC):
         point_model: PointModel = None,
         template_space: bool = False,
         activation_threshold: Optional[float] = None,
-    ) -> None:
+    ) -> dict:
         """Run entire volume conductor model.
 
         Notes
@@ -106,8 +106,9 @@ class VolumeConductor(ABC):
         if lattice is not None:
             timings["PotentialProbing"] = []
             timings["FieldProbing"] = []
-        if export_vtk:
             timings["FieldExport"] = []
+        if export_vtk:
+            timings["VTKExport"] = []
         timings["ComputeSolution"] = []
 
         if compute_impedance:
@@ -125,21 +126,52 @@ class VolumeConductor(ABC):
                     self.signal.amplitudes[idx]
                 )
                 self.update_contacts(voltages=voltage_values)
+            else:
+                if len(self.contacts.active) == 2:
+                    for contact_idx, contact in enumerate(self.contacts.active):
+                        self.contacts[contact.name].voltage = float(contact_idx)
+                else:
+                    raise NotImplementedError(
+                        "Current-controlled mode for multicontact not yet implemented"
+                    )
             time_0 = time.time()
             self.compute_solution(frequency)
             time_1 = time.time()
             timings["ComputeSolution"].append(time_1 - time_0)
             time_0 = time_1
-
-            if self.current_controlled:
-                # TODO implement current control
-                # Steps: compute impedance and rescale
-                raise NotImplementedError("Current-controlled mode not yet implemented")
-                continue
             if compute_impedance:
                 self._impedances[idx] = self.compute_impedance()
+            if self.current_controlled:
+                if len(self.contacts.active) == 2:
+                    impedance = (
+                        self.impedances[idx]
+                        if compute_impedance
+                        else self.compute_impedance()
+                    )
+                    # use Ohm's law U = Z * I
+                    # and that the Fourier coefficient for the current is known
+                    amplitude = self.contacts.active[0].current
+                    # use positive current by construction
+                    if self.is_complex:
+                        sign = np.sign(amplitude.real)
+                    else:
+                        sign = np.sign(amplitude)
+                    amplitude *= sign
+
+                    scale_voltage = impedance * amplitude
+                    # directly access GridFunction here
+                    self._potential.vec[:] = (
+                        scale_voltage * self._potential.vec.FV().NumPy()
+                    )
+                else:
+                    raise NotImplementedError(
+                        "Current-controlled mode for multicontact not yet implemented"
+                    )
             if export_vtk:
+                time_1 = time.time()
                 self.vtk_export()
+                timings["VTKExport"].append(time_1 - time_0)
+                time_0 = time_1
             if lattice is not None:
                 potentials = self.evaluate_potential_at_points(lattice)
                 time_1 = time.time()
@@ -272,6 +304,19 @@ class VolumeConductor(ABC):
     @property
     def signal(self) -> FrequencyDomainSignal:
         return self._signal
+
+    @signal.setter
+    def signal(self, new_signal: FrequencyDomainSignal) -> None:
+        self._check_signal(new_signal)
+        self._signal = new_signal
+
+    def _check_signal(self, new_signal: FrequencyDomainSignal) -> None:
+        if new_signal.current_controlled:
+            sum_currents = 0.0
+            for contact in self.contacts.active:
+                sum_currents += contact.current
+            if not np.isclose(sum_currents, 0):
+                raise ValueError("The sum of all currents is not zero!")
 
     @property
     def current_controlled(self) -> bool:
@@ -406,16 +451,40 @@ class VolumeConductor(ABC):
         return -ngsolve.grad(self.potential)
 
     def compute_impedance(self) -> complex:
-        """TODO document."""
+        """Compute impedance at most recent solution.
+
+        Notes
+        -----
+        The impedance is so far only available for two
+        active contacts. It is computed by volume integration.
+        This approach is superior to integration of the
+        normal current density. It has been described for
+        example in [Zimmermann2021a]_.
+        Since the voltage drop is not known, we infer it
+        from the voltages of the two contacts.
+        By construction, the voltage is a positive value
+        (or in the complex case, the real part).
+
+        References
+        ----------
+        .. [Zimmermann2021a] Zimmermann, J., et al. (2021).
+                             Frontiers in Bioengineering and Biotechnology, 9, 765516.
+                             https://doi.org/10.3389/fbioe.2021.765516
+
+        """
         if len(self.contacts.active) == 2:
             mesh = self._mesh.ngsolvemesh
             # do not need to account for mm because of integration
             power = ngsolve.Integrate(self.electric_field * self.current_density, mesh)
-            # TODO integrate surface impedance
+            # TODO integrate surface impedance by thin layer
             voltage = 0
             for idx, contact in enumerate(self.contacts.active):
                 voltage += (-1) ** idx * contact.voltage
-            return voltage / power
+            if self.is_complex:
+                sign = np.sign(voltage.real)
+            else:
+                sign = np.sign(voltage)
+            return sign * voltage / power
         else:
             raise NotImplementedError(
                 "Impedance for more than two active contacts not yet supported"
@@ -433,9 +502,45 @@ class VolumeConductor(ABC):
             os.path.join(self.output_path, "E-field")
         )
 
-        FieldSolution(self.conductivity, "conductivity", ngmesh, self.is_complex).save(
-            os.path.join(self.output_path, "conductivity")
-        )
+        if self.conductivity_cf.is_tensor:
+            # Naming convention by ParaView!
+            cf_list = (
+                self.conductivity[0],  # xx
+                self.conductivity[4],  # yy
+                self.conductivity[8],  # zz
+                self.conductivity[1],  # xy
+                self.conductivity[5],  # yz
+                self.conductivity[2],  # xz
+            )
+            conductivity_export = ngsolve.CoefficientFunction(cf_list, dims=(6,))
+        else:
+            conductivity_export = self.conductivity
+        FieldSolution(
+            conductivity_export, "conductivity", ngmesh, self.is_complex
+        ).save(os.path.join(self.output_path, "conductivity"))
+
+        if self.conductivity_cf.is_tensor:
+            dti_voxel = self.conductivity_cf.dti_voxel_distribution
+            # Naming convention by ParaView!
+            cf_list = (
+                dti_voxel[0],  # xx
+                dti_voxel[4],  # yy
+                dti_voxel[8],  # zz
+                dti_voxel[1],  # xy
+                dti_voxel[5],  # yz
+                dti_voxel[2],  # xz
+            )
+            dti_export = ngsolve.CoefficientFunction(cf_list, dims=(6,))
+            FieldSolution(dti_export, "dti", ngmesh, False).save(
+                os.path.join(self.output_path, "dti")
+            )
+
+        FieldSolution(
+            self.conductivity_cf.material_distribution(self.mesh),
+            "material",
+            ngmesh,
+            False,
+        ).save(os.path.join(self.output_path, "material"))
 
         FieldSolution(
             self.conductivity_cf.material_distribution(self.mesh),
@@ -445,6 +550,7 @@ class VolumeConductor(ABC):
         ).save(os.path.join(self.output_path, "material"))
 
     def floating_values(self) -> dict:
+        """Read out floating potentials."""
         floating_voltages = {}
         for contact in self.contacts.floating:
             floating_voltages[contact.name] = contact.voltage

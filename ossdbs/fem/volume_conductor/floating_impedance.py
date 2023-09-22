@@ -48,7 +48,7 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
             floating values of floating contacts.
         """
         self._frequency = frequency
-        boundary_values = self.model_geometry.contacts.voltages
+        boundary_values = self.contacts.voltages
         coefficient = self.mesh.boundary_coefficients(boundary_values)
         solution = ngsolve.GridFunction(space=self._space)
         solution.components[0].Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
@@ -61,16 +61,16 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         self._floating_values = {
             contact.name: component.vec[0]
             for (contact, component) in zip(
-                self.model_geometry.contacts.floating, components
+                self.contacts.floating, components
             )
         }
 
     def __create_space(self):
-        boundaries = [contact.name for contact in self.model_geometry.contacts.active]
+        boundaries = [contact.name for contact in self.contacts.active]
 
         h1_space = self.h1_space(boundaries=boundaries)
         number_spaces = [
-            self.number_space() for _ in self.model_geometry.contacts.floating
+            self.number_space() for _ in self.contacts.floating
         ]
         spaces = [h1_space, *number_spaces]
         finite_elements_space = ngsolve.FESpace(spaces=spaces)
@@ -84,8 +84,8 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         u = trial[0]
         v = test[0]
         bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
-        surface_impedances = self.model_geometry.contacts.floating_impedance_values()
-        boundaries = [contact.name for contact in self.model_geometry.contacts.floating]
+        surface_impedances = self.contacts.floating_impedance_values()
+        boundaries = [contact.name for contact in self.contacts.floating]
         for ufix, vfix, boundary in zip(trial[1:], test[1:], boundaries):
             a = ngsolve.CoefficientFunction(1 / surface_impedances[boundary])
             bilinear_form += a * (u - ufix) * (v - vfix) * ngsolve.ds(boundary)

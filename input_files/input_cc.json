@@ -31,8 +31,8 @@
         {
           "Contact_ID": 1,
           "Active": true,
-          "Current[A]": 0.0,
-          "Voltage[V]": 1.0,
+          "Current[A]": 0.004,
+          "Voltage[V]": 0.0,
           "Floating": false,
           "SurfaceImpedance[Ohmm]": {
             "real": 0.0,
@@ -43,7 +43,7 @@
         {
           "Contact_ID": 2,
           "Active": true,
-          "Current[A]": 0.0,
+          "Current[A]": -0.004,
           "Voltage[V]": 0.0,
           "Floating": false,
           "SurfaceImpedance[Ohmm]": {
@@ -94,7 +94,7 @@
   "FEMOrder": 2,
   "ComputeImpedance": true,
   "StimulationSignal": {
-    "CurrentControlled": false,
+    "CurrentControlled": true,
     "Type": "Multisine",
     "ListOfFrequencies": [
       10000.0
@@ -133,7 +133,7 @@
       "PointDistance[mm]": 1
     }
   },
-  "OutputPath": "Results",
+  "OutputPath": "ResultsCC",
   "SaveImpedance": true,
   "ExportVTK": true
 }
