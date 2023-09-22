@@ -38,7 +38,7 @@
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.01
+          "MaxMeshSizeEdge": 0.05
         },
         {
           "Contact_ID": 2,
@@ -50,28 +50,17 @@
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.01
+          "MaxMeshSizeEdge": 0.05
         }
       ],
       "EncapsulationLayer": {
         "Thickness[mm]": 0.0,
-        "Material": "Gray matter",
+        "Material": "Blood",
         "DielectricModel": "ColeCole4",
-        "MaxMeshSize": 0.01
+        "MaxMeshSize": 0.1
       }
     }
   ],
-  "Surfaces":
-    [
-        {
-            "Name": "BrainSurface",
-            "Active": false,
-            "Current[A]": -2.0,
-            "Voltage[V]": 0.0,
-            "Floating": false,
-            "SurfaceImpedance[Ohmm]": { "real": 0.0, "imag": 0.0 }
-         }
-    ],
   "MaterialDistribution": {
     "MRIPath": "icbm_avg_152_segmented.nii.gz",
     "MRIMapping": {
@@ -144,7 +133,7 @@
       "PointDistance[mm]": 1
     }
   },
-  "OutputPath": "Results",
+  "OutputPath": "ResultsCC",
   "SaveImpedance": true,
   "ExportVTK": true
 }

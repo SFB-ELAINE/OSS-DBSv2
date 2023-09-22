@@ -51,3 +51,20 @@ ossdbs input.json
 ```
 
 Also check out the `examples` directory and the documentation.
+
+Development
+-----------
+
+The code uses the `input_files` and `tests` directories to check the functionality
+upon each commit. If you add a new feature, please add a test to `tests`.
+Make sure that the test does not run long and does not consume much memory.
+It shall be rather a unit test than a full simulation run.
+Likewise, only change `input_files` after opening an issue.
+
+The `examples` directory is meant for users to understand what has been implemented.
+Place heavy and/or experimental code there (e.g., code that may crash or consume many resources).
+
+The code development follows different coding styles that are checked
+by git pre-commit hooks.
+Install `pre-commit` via `pip install pre-commit` and run
+`pre-commit install` to activate it. 
