@@ -2,6 +2,8 @@ from .materials import MATERIALS
 
 
 class Settings:
+    """Default settings of OSS-DBS."""
+
     CUSTOM_SETTING = {
         "BrainRegion": {
             "Center": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 0},
@@ -107,13 +109,14 @@ class Settings:
         self._partial_settings = partial_settings
 
     def complete_settings(self) -> dict:
+        """Complete dictionary provided by user with default settings."""
         settings = self.CUSTOM_SETTING.copy()
         settings.update(self.SETTING.copy())
         self._update(settings, self._partial_settings)
         self._update_electrodes(settings)
         return settings
 
-    def _update(self, target: dict, settings: dict) -> dict:
+    def _update(self, target: dict, settings: dict) -> None:
         for key in [key for key in target.keys() if key in settings.keys()]:
             if isinstance(target[key], dict):
                 self._update(target[key], settings[key])

@@ -297,6 +297,7 @@ def prepare_volume_conductor_model(
     floating_mode = model_geometry.get_floating_mode()
     frequency_domain_signal = prepare_stimulation_signal(settings)
     if floating_mode == "Floating":
+        _logger.debug("Floating mode selected")
         return VolumeConductorFloating(
             model_geometry,
             conductivity,
@@ -307,6 +308,7 @@ def prepare_volume_conductor_model(
         )
 
     elif floating_mode == "FloatingImpedance":
+        _logger.debug("FloatingImpedance mode selected")
         return VolumeConductorFloatingImpedance(
             model_geometry,
             conductivity,
@@ -315,7 +317,7 @@ def prepare_volume_conductor_model(
             mesh_parameters,
             frequency_domain_signal,
         )
-
+    _logger.debug("Non floating mode selected")
     return VolumeConductorNonFloating(
         model_geometry,
         conductivity,
