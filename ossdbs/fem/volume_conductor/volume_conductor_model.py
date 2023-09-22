@@ -150,7 +150,14 @@ class VolumeConductor(ABC):
                     )
                     # use Ohm's law U = Z * I
                     # and that the Fourier coefficient for the current is known
-                    scale_voltage = impedance * self.signal.amplitudes[idx]
+                    # export unscaled solution
+                    ngmesh = self.mesh.ngsolvemesh
+                    FieldSolution(self.potential, "potential", ngmesh, self.is_complex).save(
+                        os.path.join(self.output_path, "potential_unscaled")
+                    )
+                    # estimate amplitude in bipolar case
+                    amplitude = np.abs(self.contacts.active[0].current)
+                    scale_voltage = impedance * amplitude
                     self._potential.vec[:] = (
                         scale_voltage * self._potential.vec.FV().NumPy()
                     )
