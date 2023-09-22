@@ -85,7 +85,7 @@ class VolumeConductor(ABC):
         point_model: PointModel = None,
         template_space: bool = False,
         activation_threshold: Optional[float] = None,
-    ) -> None:
+    ) -> dict:
         """Run entire volume conductor model.
 
         Notes
@@ -106,8 +106,9 @@ class VolumeConductor(ABC):
         if lattice is not None:
             timings["PotentialProbing"] = []
             timings["FieldProbing"] = []
-        if export_vtk:
             timings["FieldExport"] = []
+        if export_vtk:
+            timings["VTKExport"] = []
         timings["ComputeSolution"] = []
 
         if compute_impedance:
@@ -116,8 +117,7 @@ class VolumeConductor(ABC):
                     shape=(len(self.signal.frequencies)), dtype=complex
                 )
             else:
-                self._impedances = np.ndarray(
-                    shape=(len(self.signal.frequencies)))
+                self._impedances = np.ndarray(shape=(len(self.signal.frequencies)))
         for idx, frequency in enumerate(self.signal.frequencies):
             _logger.info(f"Computing at frequency: {frequency}")
             if not self.current_controlled:
@@ -144,20 +144,22 @@ class VolumeConductor(ABC):
             if self.current_controlled:
                 if len(self.contacts.active) == 2:
                     impedance = (
-                        self._impedances[idx]
+                        self.impedances[idx]
                         if compute_impedance
                         else self.compute_impedance()
                     )
                     # use Ohm's law U = Z * I
                     # and that the Fourier coefficient for the current is known
-                    # export unscaled solution
-                    ngmesh = self.mesh.ngsolvemesh
-                    FieldSolution(self.potential, "potential", ngmesh, self.is_complex).save(
-                        os.path.join(self.output_path, "potential_unscaled")
-                    )
-                    # estimate amplitude in bipolar case
-                    amplitude = np.abs(self.contacts.active[0].current)
+                    amplitude = self.contacts.active[0].current
+                    # use positive current by construction
+                    if self.is_complex:
+                        sign = np.sign(amplitude.real)
+                    else:
+                        sign = np.sign(amplitude)
+                    amplitude *= sign
+
                     scale_voltage = impedance * amplitude
+                    # directly access GridFunction here
                     self._potential.vec[:] = (
                         scale_voltage * self._potential.vec.FV().NumPy()
                     )
@@ -165,9 +167,11 @@ class VolumeConductor(ABC):
                     raise NotImplementedError(
                         "Current-controlled mode for multicontact not yet implemented"
                     )
-                    continue
             if export_vtk:
+                time_1 = time.time()
                 self.vtk_export()
+                timings["VTKExport"].append(time_1 - time_0)
+                time_0 = time_1
             if lattice is not None:
                 potentials = self.evaluate_potential_at_points(lattice)
                 time_1 = time.time()
@@ -226,14 +230,12 @@ class VolumeConductor(ABC):
                 )
                 if template_space:
                     df_field.to_csv(
-                        os.path.join(
-                            self.output_path, "E_field_Template_space.csv"),
+                        os.path.join(self.output_path, "E_field_Template_space.csv"),
                         index=False,
                     )
                 else:
                     df_field.to_csv(
-                        os.path.join(
-                            self.output_path, "E_field_MRI_space.csv"),
+                        os.path.join(self.output_path, "E_field_MRI_space.csv"),
                         index=False,
                     )
 
@@ -252,20 +254,18 @@ class VolumeConductor(ABC):
                         suffix = "_WA"
                     point_model.save_as_nifti(
                         field_mags_full,
-                        os.path.join(
-                            self.output_path, f"E_field_solution{suffix}.nii"),
+                        os.path.join(self.output_path, f"E_field_solution{suffix}.nii"),
                     )
                     point_model.save_as_nifti(
                         field_mags_full,
-                        os.path.join(
-                            self.output_path, f"VTA_solution{suffix}.nii"),
+                        os.path.join(self.output_path, f"VTA_solution{suffix}.nii"),
                         binarize=True,
                         activation_threshold=activation_threshold,
                     )
 
-            time_1 = time.time()
-            timings["FieldExport"] = time_1 - time_0
-            time_0 = time_1
+                time_1 = time.time()
+                timings["FieldExport"] = time_1 - time_0
+                time_0 = time_1
 
         # save impedance at all frequencies to file!
         if compute_impedance:
@@ -277,8 +277,7 @@ class VolumeConductor(ABC):
                     "imag": self.impedances.imag,
                 }
             )
-            df.to_csv(os.path.join(
-                self.output_path, "impedance.csv"), index=False)
+            df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
 
         return timings
 
@@ -452,16 +451,40 @@ class VolumeConductor(ABC):
         return -ngsolve.grad(self.potential)
 
     def compute_impedance(self) -> complex:
-        """TODO document."""
+        """Compute impedance at most recent solution.
+
+        Notes
+        -----
+        The impedance is so far only available for two
+        active contacts. It is computed by volume integration.
+        This approach is superior to integration of the
+        normal current density. It has been described for
+        example in [Zimmermann2021a]_.
+        Since the voltage drop is not known, we infer it
+        from the voltages of the two contacts.
+        By construction, the voltage is a positive value
+        (or in the complex case, the real part).
+
+        References
+        ----------
+        .. [Zimmermann2021a] Zimmermann, J., et al. (2021).
+                             Frontiers in Bioengineering and Biotechnology, 9, 765516.
+                             https://doi.org/10.3389/fbioe.2021.765516
+
+        """
         if len(self.contacts.active) == 2:
             mesh = self._mesh.ngsolvemesh
             # do not need to account for mm because of integration
             power = ngsolve.Integrate(self.electric_field * self.current_density, mesh)
-            # TODO integrate surface impedance
+            # TODO integrate surface impedance by thin layer
             voltage = 0
             for idx, contact in enumerate(self.contacts.active):
                 voltage += (-1) ** idx * contact.voltage
-            return voltage / power
+            if self.is_complex:
+                sign = np.sign(voltage.real)
+            else:
+                sign = np.sign(voltage)
+            return sign * voltage / power
         else:
             raise NotImplementedError(
                 "Impedance for more than two active contacts not yet supported"
