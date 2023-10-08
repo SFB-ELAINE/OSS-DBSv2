@@ -9,14 +9,21 @@ from .electrode_model_template import ElectrodeModel
 
 
 @dataclass
-class BostonScientificVerciseParameters:
+class BostonScientificVerciseDirectedParameters:
     # dimensions [mm]
     tip_length: float
     contact_length: float
     contact_spacing: float
     lead_diameter: float
     total_length: float
-    offset: float
+
+    def get_center_first_contact(self) -> float:
+        """Returns distance between electrode tip and center of first contact."""
+        return 0.5 * self.tip_length
+
+    def get_distance_l1_l4(self) -> float:
+        """Returns distance between first level contact and fourth level contacts"""
+        return 3 * (self.contact_length + self.contact_spacing)
 
 
 class BostonScientificVerciseDirectedModel(ElectrodeModel):
@@ -210,6 +217,24 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         return (x, y, not z)
 
 
+@dataclass
+class BostonScientificVerciseParameters:
+    # dimensions [mm]
+    tip_length: float
+    contact_length: float
+    contact_spacing: float
+    lead_diameter: float
+    total_length: float
+
+    def get_center_first_contact(self) -> float:
+        """Returns distance between electrode tip and center of first contact."""
+        return self.tip_length + 0.5 * self.contact_length
+
+    def get_distance_l1_l4(self) -> float:
+        """Returns distance between first level contact and fourth level contacts"""
+        return 7 * (self.contact_length + self.contact_spacing)
+
+
 class BostonScientificVerciseModel(ElectrodeModel):
     """Boston Scientific (Marlborough, Massachusetts, USA) vercise standard lead electrode.
 
@@ -254,13 +279,13 @@ class BostonScientificVerciseModel(ElectrodeModel):
         lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         encapsulation = tip + lead
         encapsulation.mat("EncapsulationLayer")
-        return encapsulation.Move(self._position) - self.geometry
+        return encapsulation.Move(v=self._position) - self.geometry
 
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         contacts = self.__contacts()
         # TODO check
         electrode = netgen.occ.Glue([self.__body() - contacts, contacts])
-        return electrode.Move(self._position)
+        return electrode.Move(v=self._position)
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self._parameters.lead_diameter * 0.5

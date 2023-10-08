@@ -1,4 +1,6 @@
 import os
+from dataclasses import asdict
+
 import h5py
 import numpy as np
 import scipy
@@ -62,7 +64,7 @@ class LeadSettings:
         SIDES = ["rh", "lh"]
         side = SIDES[hemis_idx]
 
-        elec_dict = self.import_implantation_settings(hemis_idx)
+        elec_dict, unit_directions = self.import_implantation_settings(hemis_idx)
 
         # get electrode dictionary with stimulation parameters
         elec_dict, case_grounding = self.import_stimulation_settings(
@@ -114,6 +116,23 @@ class LeadSettings:
                 "DiffusionTensorActive": len(self.get_dti_name()) > 0,
                 "DTIPath": self.get_dti_name(),
             },
+            "PointModel": {
+                "Lattice": {
+                    "Active": True,
+                    "Center": {
+                        "x[mm]": self.get_imp_coord()[hemis_idx, 0],
+                        "y[mm]": self.get_imp_coord()[hemis_idx, 1],
+                        "z[mm]": self.get_imp_coord()[hemis_idx, 2],
+                    },
+                    "Shape": {"x": 31, "y": 31, "z": 41},
+                    "Direction": {
+                        "x[mm]": unit_directions[hemis_idx, 0],
+                        "y[mm]": unit_directions[hemis_idx, 0],
+                        "z[mm]": unit_directions[hemis_idx, 0],
+                    },
+                    "PointDistance[mm]": 0.5,
+                }
+            },
             "StimulationSignal": {"CurrentControlled": self.get_cur_ctrl()[hemis_idx]},
             "CalcAxonActivation": self.get_calc_axon_act(),
             "ActivationThresholdVTA": self.get_act_thresh_vta(),
@@ -162,6 +181,35 @@ class LeadSettings:
 
     def get_elec_type(self):
         return self._get_str("Electrode_type")
+
+    # TODO check if calculation matches Lead-DBS (Konstantin)
+    def get_specs_array_length(self, oss_elec_name):
+        elec_params = default_electrode_parameters[oss_elec_name]
+        return elec_params.get_distance_l1_l4()
+
+    def get_stretch_factor(self, specs_array_length, hemis_idx=0) -> float:
+        """Compute stretch/squeeze factor between the first and the last
+        contact. Relevant for normative space computations since the
+        electrodes are non-linearly warped.
+
+        Parameters
+        ----------
+        hemis_idx: int
+            hemisphere ID (0 - right, 1 - left)
+        specs_array_length: float
+            distance between the first and the last contact according to the electrode specs
+
+        Returns
+        -------
+        stretch_factor: float
+            describes stretching for the electrode
+        """
+        C1_coords = self.get_imp_coord()[hemis_idx, :]
+        C_last_coords = self.get_sec_coord()[hemis_idx, :]
+        el_array_length = np.sqrt((C1_coords[0] - C_last_coords[0]) ** 2 +
+                                  (C1_coords[1] - C_last_coords[1]) ** 2 +
+                                  (C1_coords[2] - C_last_coords[2]) ** 2)
+        return el_array_length / specs_array_length
 
     def get_cntct_loc(self):
         e1 = np.asarray(self._file[self._settings["contactLocation"][0, 0]][:, :])
@@ -250,7 +298,24 @@ class LeadSettings:
     def get_inter_mode(self):
         return self._get_num("interactiveMode")
 
-    def get_tip_position(self, oss_elec_name):
+    def stretch_electrode(self, oss_electrode_name, hemi_idx):
+        stretch_list = ["tip_length", "contact_length", "contact_spacing"]
+        specs_array_length = self.get_specs_array_length(oss_electrode_name)
+        stretch_factor = self.get_stretch_factor(specs_array_length, hemi_idx)
+        if abs(stretch_factor - 1.0) < 0.01:  # 1% tolerance
+            stretch_factor = 1.0
+        default_parameters = default_electrode_parameters[oss_electrode_name]
+        stretched_parameters = {}
+        for parameter, value in zip(
+            asdict(default_parameters), asdict(default_parameters).values()
+        ):
+            if parameter in stretch_list:
+                stretched_parameters[parameter] = value * stretch_factor
+            else:
+                stretched_parameters[parameter] = value
+        return stretched_parameters
+
+    def get_tip_position(self, oss_elec_name, hemi_idx):
         """Get tip and implantation trajectory from head
         (Implantation_coordinate) and tail (Second_coordinate).
 
@@ -267,7 +332,13 @@ class LeadSettings:
         sec_coords = np.array(self.get_sec_coord())
         directions = sec_coords - imp_coords
         unit_directions = directions / np.linalg.norm(directions, axis=1)[:, np.newaxis]
-        tip_position = imp_coords - elec_params.offset * unit_directions
+        specs_array_length = self.get_specs_array_length(oss_elec_name)
+        stretch_factor = self.get_stretch_factor(specs_array_length, hemi_idx)
+        print("Stretch:", stretch_factor)
+        if abs(stretch_factor - 1.0) < 0.01:  # 1% tolerance
+            stretch_factor = 1.0
+        offset = elec_params.get_center_first_contact() * stretch_factor
+        tip_position = imp_coords - offset * unit_directions
 
         return unit_directions, tip_position
 
@@ -286,7 +357,6 @@ class LeadSettings:
         """
         # Convert the electrode name to OSS-DBS format
         electrode_name = self.get_elec_type()
-
         # Cateisa not available is OSS-DBS, SNEX not available in Lead
         electrode_names = {
             "Abbott Directed 6172 (short)": "AbbottStJudeDirected6172",
@@ -295,8 +365,7 @@ class LeadSettings:
             "Abbott ActiveTip (6146-6149)": "AbbottStJudeActiveTip6146_6149",
             "Abbott ActiveTip (6142-6145)": "AbbottStJudeActiveTip6142_6145",
             "Boston Scientific Vercise": "BostonScientificVercise",
-            "Boston Scientific Vercise Directed":
-            "BostonScientificVerciseDirected",
+            "Boston Scientific Vercise Directed": "BostonScientificVerciseDirected",
             "Boston Scientific Vercise Cartesia HX": "",
             "Boston Scientific Vercise Cartesia X": "",
             "ELAINE Rat Electrode": "MicroProbesRodentElectrode",
@@ -307,24 +376,27 @@ class LeadSettings:
             "Medtronic B33015": "MedtronicSenSightB33015",
             "PINS Medical L301": "PINSMedicalL301",
             "PINS Medical L302": "PINSMedicalL302",
-            "PINS Medical L303": "PINSMedicalL303"
-            }
+            "PINS Medical L303": "PINSMedicalL303",
+        }
 
-        for lead, ossdbs in electrode_names.items():
-            electrode_name = electrode_name.replace(lead, ossdbs)
+        for lead in electrode_names.keys():
+            if lead == electrode_name:
+                electrode_name = electrode_names[lead]
 
         # Check that oss electrode name is valid
         if electrode_name not in default_electrode_parameters.keys():
             raise Exception(electrode_name +
                             " is not a recognized electrode type")
 
+        stretched_parameters = self.stretch_electrode(electrode_name, hemis_idx)
+
         # get tip position from the head and tail markers
-        unit_directions, tip_pos = self.get_tip_position(electrode_name)
+        unit_directions, tip_pos = self.get_tip_position(electrode_name, hemis_idx)
 
         elec_dict_imp = {
             # Assuming both electrodes are the same type
-            "Name": electrode_name,
-            "PathToCustomParameters": "",
+            "Name": electrode_name + "Custom",
+            "CustomParameters": stretched_parameters,
             "Rotation[Degrees]": self.get_rot_z(hemis_idx),
             "Direction": {
                 "x[mm]": unit_directions[hemis_idx, 0],
@@ -342,7 +414,7 @@ class LeadSettings:
         else:
             elec_dict.update(elec_dict_imp)
 
-        return elec_dict
+        return elec_dict, unit_directions
 
     def import_stimulation_settings(self, hemis_idx, elec_dict=None):
         """Convert Lead-DBS stim settings to OSS-DBS parameters,

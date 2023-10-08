@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="455mm"
+   height="185mm"
+   viewBox="0 0 455 185"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="AlphaOmega_MicroElectrode.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.69664703"
+     inkscape:cx="872.03415"
+     inkscape:cy="445.70635"
+     inkscape:window-width="1850"
+     inkscape:window-height="1016"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     units="mm"
+     width="310mm" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g110"
+       transform="matrix(0.50367261,0,0,0.50367261,147.12051,-250.75833)">
+      <g
+         id="Background" />
+      <g
+         id="g279" />
+      <g
+         id="g281" />
+      <g
+         id="g283" />
+      <g
+         id="g285" />
+      <g
+         id="g287" />
+      <g
+         id="MicroProbesCustomRodent">
+        <g
+           id="g303">
+          <rect
+             style="fill:#eab12f;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-opacity:1"
+             x="-140"
+             y="620"
+             width="621.724"
+             height="80"
+             rx="0"
+             ry="0"
+             id="rect297" />
+          <text
+             font-size="12.8px"
+             style="font-style:normal;font-weight:normal;font-family:sans-serif;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+             x="170.862"
+             y="663.88098"
+             id="text301"><tspan
+               x="170.862"
+               y="663.88098"
+               id="tspan299" /></text>
+        </g>
+        <text
+           font-size="16.9333px"
+           style="font-style:normal;font-weight:normal;font-family:sans-serif;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
+           x="540"
+           y="680"
+           id="text307"><tspan
+             x="540"
+             y="680"
+             id="tspan305">1.0 mm</tspan></text>
+        <text
+           font-size="22.5778px"
+           style="font-style:normal;font-weight:normal;font-family:sans-serif;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
+           x="-5.7985119e-08"
+           y="520"
+           id="text311"><tspan
+             x="-5.7985119e-08"
+             y="520"
+             id="tspan309">Alpha Omega Micro Electrode</tspan></text>
+        <g
+           id="g319"
+           transform="matrix(1.0042621,0,0,0.7573953,-59.416285,159.44495)">
+          <rect
+             style="fill:#ba3100;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-opacity:1"
+             x="-140"
+             y="620"
+             width="60"
+             height="80"
+             rx="0"
+             ry="0"
+             id="rect313" />
+          <text
+             font-size="12.8px"
+             style="font-style:normal;font-weight:normal;font-family:sans-serif;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none"
+             x="-110"
+             y="663.88098"
+             id="text317"><tspan
+               x="-110"
+               y="663.88098"
+               id="tspan315" /></text>
+        </g>
+        <text
+           font-size="16.9333px"
+           style="font-style:normal;font-weight:normal;font-family:sans-serif;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
+           x="-290.5824"
+           y="667.35419"
+           id="text323"><tspan
+             x="-290.5824"
+             y="667.35419"
+             id="tspan321">0.7 mm</tspan></text>
+        <text
+           font-size="16.9333px"
+           style="font-style:normal;font-weight:normal;font-family:sans-serif;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
+           x="-197.82208"
+           y="787.39282"
+           id="text327"><tspan
+             x="-197.82208"
+             y="787.39282"
+             id="tspan325">1.0 mm</tspan></text>
+        <g
+           id="g335"
+           transform="translate(-17.860475)">
+          <line
+             style="fill:none;stroke:#000000;stroke-width:1.60474;stroke-opacity:1"
+             x1="-179.73045"
+             y1="760"
+             x2="-121.10889"
+             y2="760"
+             id="line329" />
+          <polyline
+             style="fill:none;stroke:#000000;stroke-width:2;stroke-opacity:1"
+             points="-167.764,755 -177.764,760 -167.764,765 "
+             id="polyline331"
+             transform="translate(-2.1012326)" />
+          <polyline
+             style="fill:none;stroke:#000000;stroke-width:2;stroke-opacity:1"
+             points="-92.2361,765 -82.2361,760 -92.2361,755 "
+             id="polyline333"
+             transform="translate(-38.872795)" />
+        </g>
+        <g
+           id="g343"
+           transform="matrix(1,0,0,0.83987732,-21.502419,103.90695)">
+          <line
+             style="fill:none;stroke:#000000;stroke-width:2;stroke-opacity:1"
+             x1="-200"
+             y1="695.52802"
+             x2="-200"
+             y2="624.47198"
+             id="line337" />
+          <polyline
+             style="fill:none;stroke:#000000;stroke-width:2;stroke-opacity:1"
+             points="-205,687.764 -200,697.764 -195,687.764 "
+             id="polyline339" />
+          <polyline
+             style="fill:none;stroke:#000000;stroke-width:2;stroke-opacity:1"
+             points="-195,632.236 -200,622.236 -205,632.236 "
+             id="polyline341" />
+        </g>
+        <line
+           style="fill:none;stroke:#000000;stroke-width:2.28547;stroke-dasharray:4.57094;stroke-opacity:1"
+           x1="-140"
+           y1="627.35419"
+           x2="-218.35057"
+           y2="627.35419"
+           id="line345" />
+        <line
+           style="fill:none;stroke:#000000;stroke-width:2.35229;stroke-dasharray:4.70457;stroke-opacity:1"
+           x1="-140"
+           y1="690.54462"
+           x2="-222.99858"
+           y2="690.54462"
+           id="line347" />
+        <g
+           id="g355">
+          <line
+             style="fill:none;stroke:#000000;stroke-width:2;stroke-opacity:1"
+             x1="520"
+             y1="695.52802"
+             x2="520"
+             y2="624.47198"
+             id="line349" />
+          <polyline
+             style="fill:none;stroke:#000000;stroke-width:2;stroke-opacity:1"
+             points="515,687.764 520,697.764 525,687.764 "
+             id="polyline351" />
+          <polyline
+             style="fill:none;stroke:#000000;stroke-width:2;stroke-opacity:1"
+             points="525,632.236 520,622.236 515,632.236 "
+             id="polyline353" />
+        </g>
+        <line
+           style="fill:none;stroke:#000000;stroke-width:2;stroke-dasharray:4;stroke-opacity:1"
+           x1="481.724"
+           y1="620"
+           x2="520"
+           y2="620"
+           id="line357" />
+        <line
+           style="fill:none;stroke:#000000;stroke-width:2;stroke-dasharray:4;stroke-opacity:1"
+           x1="481.724"
+           y1="700"
+           x2="520"
+           y2="700"
+           id="line359" />
+        <line
+           style="fill:none;stroke:#000000;stroke-width:2;stroke-dasharray:4;stroke-opacity:1"
+           x1="-199.96165"
+           y1="760"
+           x2="-199.96165"
+           y2="660"
+           id="line361" />
+        <line
+           style="fill:none;stroke:#000000;stroke-width:2;stroke-dasharray:4;stroke-opacity:1"
+           x1="-139.88495"
+           y1="760"
+           x2="-139.88495"
+           y2="700"
+           id="line363" />
+        <line
+           style="fill:none;stroke:#000000;stroke-width:2;stroke-dasharray:4;stroke-opacity:1"
+           x1="-199.96165"
+           y1="820"
+           x2="-199.96165"
+           y2="660"
+           id="line365" />
+        <line
+           style="fill:none;stroke:#000000;stroke-width:2;stroke-dasharray:4;stroke-opacity:1"
+           x1="480"
+           y1="820"
+           x2="481.724"
+           y2="700"
+           id="line367" />
+        <g
+           id="g375"
+           transform="matrix(1.0338623,0,0,1,-16.178165,0)">
+          <line
+             style="fill:none;stroke:#000000;stroke-width:2;stroke-opacity:1"
+             x1="-175.528"
+             y1="820"
+             x2="475.52802"
+             y2="820"
+             id="line369" />
+          <polyline
+             style="fill:none;stroke:#000000;stroke-width:2;stroke-opacity:1"
+             points="-167.764,815 -177.764,820 -167.764,825 "
+             id="polyline371" />
+          <polyline
+             style="fill:none;stroke:#000000;stroke-width:2;stroke-opacity:1"
+             points="467.764,825 477.764,820 467.764,815 "
+             id="polyline373" />
+        </g>
+        <text
+           font-size="16.9333px"
+           style="font-style:normal;font-weight:normal;font-family:sans-serif;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none"
+           x="-160"
+           y="860"
+           id="text379"><tspan
+             x="-160"
+             y="860"
+             id="tspan377">200.0 mm</tspan></text>
+      </g>
+    </g>
+  </g>
+</svg>
