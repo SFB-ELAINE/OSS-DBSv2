@@ -78,7 +78,9 @@ def generate_electrodes(settings: dict):
         else:
             electrode_type = ELECTRODES[name]
             electrode = electrode_type(
-                direction=direction, position=position, rotation=rotation
+                direction=direction,
+                position=position,
+                rotation=rotation,
             )
 
         if "EncapsulationLayer" in electrode_parameters:

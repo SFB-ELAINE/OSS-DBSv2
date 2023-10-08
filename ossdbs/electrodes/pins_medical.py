@@ -1,5 +1,4 @@
 # PINS Medical L301
-from abc import ABC
 from dataclasses import asdict, dataclass
 
 import netgen
@@ -10,14 +9,21 @@ from .electrode_model_template import ElectrodeModel
 
 
 @dataclass
-class PINSMedicalParameters(ABC):
+class PINSMedicalParameters:
     # dimensions [mm]
     tip_length: float
     contact_length: float
     contact_spacing: float
     lead_diameter: float
     total_length: float
-    offset: float
+
+    def get_center_first_contact(self) -> float:
+        """Returns distance between electrode tip and center of first contact."""
+        return self.tip_length + 0.5 * self.contact_length
+
+    def get_distance_l1_l4(self) -> float:
+        """Returns distance between first level contact and fourth level contact."""
+        return 3 * (self.contact_length + self.contact_spacing)
 
 
 class PINSMedicalModel(ElectrodeModel):
