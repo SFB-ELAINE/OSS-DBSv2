@@ -20,7 +20,14 @@ class MicroProbesRodentElectrodeParameters:
     total_length: float
     # wire_radius:
     wire_radius: float
-    offset: float
+
+    def get_center_first_contact(self) -> float:
+        """Returns distance between electrode tip and center of first contact."""
+        return 0.5 * self.contact_radius
+
+    def get_distance_l1_l4(self) -> float:
+        """Returns distance between first level contact and fourth level contact."""
+        return -1.0
 
 
 class MicroProbesRodentElectrodeModel(ElectrodeModel):
@@ -246,7 +253,14 @@ class MicroProbesSNEX100Parameters:
     outer_electrode_diameter: float
     outer_tubing_diameter: float
     total_length: float
-    offset: float
+
+    def get_center_first_contact(self) -> float:
+        """Returns distance between electrode tip and center of first contact."""
+        return 0.5 * self.core_electrode_length
+
+    def get_distance_l1_l4(self) -> float:
+        """Returns distance between first level contact and fourth level contact."""
+        return -1.0
 
 
 class MicroProbesSNEX100Model(ElectrodeModel):

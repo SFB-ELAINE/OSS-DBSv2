@@ -16,7 +16,14 @@ class MedtronicParameters:
     contact_spacing: float
     lead_diameter: float
     total_length: float
-    offset: float
+
+    def get_center_first_contact(self) -> float:
+        """Returns distance between electrode tip and center of first contact."""
+        return self.tip_length + 0.5 * self.contact_length
+
+    def get_distance_l1_l4(self) -> float:
+        """Returns distance between first level contact and fourth level contact."""
+        return 3 * (self.contact_length + self.contact_spacing)
 
 
 class MedtronicModel(ElectrodeModel):
@@ -71,7 +78,6 @@ class MedtronicModel(ElectrodeModel):
 
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         contacts = self.__contacts()
-        # TODO check
         electrode = contacts
         electrode = netgen.occ.Glue([self.__body() - contacts, contacts])
         return electrode.Move(v=self._position)

@@ -50,6 +50,7 @@ class ElectrodeModel(ABC):
 
         self._parameters = parameters
         self.parameter_check()
+
         self._geometry = self._construct_geometry()
         self._encapsulation_geometry = None
         self._encapsulation_thickness = 0.0
