@@ -21,6 +21,7 @@ stages:
    - pip install "."
    - cd input_files
    - ossdbs 'inputTest.json'
+   - ossdbs 'input_cc.json'
 
 test-3.8:
    extends: ".test"
