@@ -131,9 +131,12 @@ class VolumeConductor(ABC):
                     for contact_idx, contact in enumerate(self.contacts.active):
                         self.contacts[contact.name].voltage = float(contact_idx)
                 else:
-                    raise NotImplementedError(
-                        "Current-controlled mode for multicontact not yet implemented"
-                    )
+                    _logger.debug("Get scaled current values")
+                    for contact in self.contacts.active:
+                        if not np.isclose(contact.voltage, 0):
+                            raise ValueError("In multicontact current-controlled mode, only ground voltage (0V) can be set on active contacts!")
+                    current_values = self.get_scaled_contact_currents(self.signal.amplitudes[idx])
+                    self.update_contacts(currents=current_values)
             time_0 = time.time()
             self.compute_solution(frequency)
             time_1 = time.time()
@@ -141,32 +144,28 @@ class VolumeConductor(ABC):
             time_0 = time_1
             if compute_impedance:
                 self._impedances[idx] = self.compute_impedance()
-            if self.current_controlled:
-                if len(self.contacts.active) == 2:
-                    impedance = (
-                        self.impedances[idx]
-                        if compute_impedance
-                        else self.compute_impedance()
-                    )
-                    # use Ohm's law U = Z * I
-                    # and that the Fourier coefficient for the current is known
-                    amplitude = self.contacts.active[0].current
-                    # use positive current by construction
-                    if self.is_complex:
-                        sign = np.sign(amplitude.real)
-                    else:
-                        sign = np.sign(amplitude)
-                    amplitude *= sign
-
-                    scale_voltage = impedance * amplitude
-                    # directly access GridFunction here
-                    self._potential.vec[:] = (
-                        scale_voltage * self._potential.vec.FV().NumPy()
-                    )
+            # multicontact is covered by floating approach
+            if self.current_controlled and len(self.contacts.active) == 2:
+                impedance = (
+                    self.impedances[idx]
+                    if compute_impedance
+                    else self.compute_impedance()
+                )
+                # use Ohm's law U = Z * I
+                # and that the Fourier coefficient for the current is known
+                amplitude = self.contacts.active[0].current
+                # use positive current by construction
+                if self.is_complex:
+                    sign = np.sign(amplitude.real)
                 else:
-                    raise NotImplementedError(
-                        "Current-controlled mode for multicontact not yet implemented"
-                    )
+                    sign = np.sign(amplitude)
+                amplitude *= sign
+
+                scale_voltage = impedance * amplitude
+                # directly access GridFunction here
+                self._potential.vec[:] = (
+                    scale_voltage * self._potential.vec.FV().NumPy()
+                )
             if export_vtk:
                 time_1 = time.time()
                 self.vtk_export()
@@ -369,6 +368,21 @@ class VolumeConductor(ABC):
                 self._base_contacts[contact.name].voltage * factor
             )
         return contact_voltages
+
+    def get_scaled_contact_currents(self, factor) -> dict:
+        contact_currents = {}
+        contacts = [contact for contact in self.contacts.active]
+        contacts_floating = [contact for contact in self.contacts.floating]
+        contacts.extend(contacts_floating)
+
+        total_current = 0
+        for contact in contacts:
+            contact_current = self._base_contacts[contact.name].current * factor
+            contact_currents[contact.name] = contact_current
+            total_current += contact_current
+        if not np.isclose(total_current, 0):
+            raise RuntimeError("Sum of currents is not zero!")
+        return contact_currents
 
     def update_contacts(
         self,
