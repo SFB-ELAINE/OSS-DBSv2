@@ -118,7 +118,12 @@ class Settings:
 
     def _update(self, target: dict, settings: dict) -> None:
         for key in [key for key in target.keys() if key in settings.keys()]:
+            is_dict = False
             if isinstance(target[key], dict):
+                # empty dicts yield False
+                is_dict = bool(target[key])
+
+            if is_dict:
                 self._update(target[key], settings[key])
             else:
                 target[key] = settings[key]

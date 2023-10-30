@@ -90,11 +90,12 @@ class VolumeConductorFloating(VolumeConductor):
         return bilinear_form
 
     def __linear_form(self, space) -> ngsolve.LinearForm:
+        v = space.TestFunction()
         contacts = [contact for contact in self.contacts.active]
         contacts_floating = [contact for contact in self.contacts.floating]
         contacts.extend(contacts_floating)
         f = ngsolve.LinearForm(space=self._space)
         for contact in contacts:
-            length = ngsolve.Integrate(ngsolve.CoefficientFunction(1.0) * ngsolve.ds(boundary), self.mesh.ngsolvemesh)
+            length = ngsolve.Integrate(ngsolve.CoefficientFunction(1.0) * ngsolve.ds(contact.name), self.mesh.ngsolvemesh)
             f +=  contact.current / length * v * ngsolve.ds(contact.name)
         return f 
