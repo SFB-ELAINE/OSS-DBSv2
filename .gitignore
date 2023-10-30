@@ -11,6 +11,7 @@ dist/
 _build/
 docs/._*
 .idea/
+.ipynb_checkpoints/
 
 # Ignore file
 *.pyc
