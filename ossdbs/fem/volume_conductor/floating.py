@@ -34,10 +34,8 @@ class VolumeConductorFloating(VolumeConductor):
         )
         _logger.debug("Create space")
         self._space = self.__create_space()
-        print("Ndofs compressed fes", self._space.ndof)
         self._floating_values = {}
-        self._solution = ngsolve.GridFunction(space=self._space)
-        self._potential = self._solution.components[0]
+        self._potential = ngsolve.GridFunction(space=self._space)
 
     def compute_solution(self, frequency: float) -> ngsolve.comp.GridFunction:
         """Evaluate electrical potential of volume conductor.
@@ -63,42 +61,40 @@ class VolumeConductorFloating(VolumeConductor):
         _logger.debug("Bilinear form")
         bilinear_form = self.__bilinear_form(self._sigma, self._space)
         _logger.debug("Linear form")
-        linear_form = ngsolve.LinearForm(space=self._space)
+        linear_form = self.__linear_form(self._space)
         _logger.debug("Solve BVP")
-        self.solver.bvp(bilinear_form, linear_form, self._solution)
+        self.solver.bvp(bilinear_form, linear_form, self._potential)
         _logger.debug("Get floating values")
-        components = self._solution.components[2:]
         self._floating_values = {
-            contact.name: component.vec[0]
-            for contact, component in zip(self.contacts.floating, components)
+                # TODO
         }
 
-    def __create_space(self):
+    def __create_space(self) -> ngsolve.H1 :
         boundaries = [contact.name for contact in self.contacts.active]
-        boundaries_nonfloating = [contact.name for contact in self.contacts.unused]
-        boundaries_nonfloating.extend(boundaries)
-        spaces_field = [
-            self.h1_space(boundaries),
-            self.surfacel2_space(boundaries_nonfloating),
-        ]
-        spaces_floating = [self.number_space() for _ in self.contacts.floating]
-        spaces = spaces_field + spaces_floating
+        if len(boundaries) == 0:
+            raise RuntimeError("At least one boundary with a fixed voltage has to be specified!")
+        boundaries_floating = [contact.name for contact in self.contacts.floating]
+        space_field = self.h1_space(boundaries)
+        plateaus = []
+        for boundary in boundaries_floating:
+            plateaus.append(self.mesh.ngsolvemesh.Boundaries(boundary))
         _logger.debug("Create finite element space")
-        finite_elements_space = ngsolve.FESpace(spaces=spaces)
-        _logger.debug("CompressComound finite element space")
-        print("Ndofs finite_element_space", finite_elements_space.ndof)
-        return ngsolve.CompressCompound(fespace=finite_elements_space)
+        finite_element_space = ngsolve.PlateauFESpace(space_field, plateaus)
+        return finite_element_space
 
     def __bilinear_form(self, sigma, space) -> ngsolve.BilinearForm:
-        trial = space.TrialFunction()
-        test = space.TestFunction()
-        u, lam = trial[:2]
-        v, mu = test[:2]
+        u = space.TrialFunction()
+        v = space.TestFunction()
         bilinear_form = ngsolve.BilinearForm(space)
         bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
-        boundaries = [contact.name for contact in self.contacts.floating]
-        for ufix, vfix, boundary in zip(trial[2:], test[2:], boundaries):
-            bilinear_form += (u * mu + v * lam) * ngsolve.ds(boundary)
-            bilinear_form += -(ufix * mu + vfix * lam) * ngsolve.ds(boundary)
-
         return bilinear_form
+
+    def __linear_form(self, space) -> ngsolve.LinearForm:
+        contacts = [contact for contact in self.contacts.active]
+        contacts_floating = [contact for contact in self.contacts.floating]
+        contacts.extend(contacts_floating)
+        f = ngsolve.LinearForm(space=self._space)
+        for contact in contacts:
+            length = ngsolve.Integrate(ngsolve.CoefficientFunction(1.0) * ngsolve.ds(boundary), self.mesh.ngsolvemesh)
+            f +=  contact.current / length * v * ngsolve.ds(contact.name)
+        return f 

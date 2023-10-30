@@ -574,7 +574,7 @@ class VolumeConductor(ABC):
             mesh=self.mesh, order=max(1, self._order - 1), complex=self._complex
         )
 
-    def h1_space(self, boundaries: List[str]) -> ngsolve.comp.H1:
+    def h1_space(self, boundaries: List[str]) -> ngsolve.H1:
         """Return a h1 space on the mesh.
 
         Parameters
@@ -605,27 +605,6 @@ class VolumeConductor(ABC):
         """
         return ngsolve.NumberSpace(
             mesh=self.mesh.ngsolvemesh, order=0, complex=self.is_complex
-        )
-
-    def surfacel2_space(self, boundaries: List[str]) -> ngsolve.comp.SurfaceL2:
-        """Return a number SurfaceL2 on the mesh.
-
-        Returns
-        -------
-        ngsolve.SurfaceL2
-
-        Notes
-        -----
-        The SurfaceL2 space is returned with a minimum order of 1.
-        It is needed to impose floating potentials.
-
-        """
-        dirichlet = "|".join(boundary for boundary in boundaries)
-        return ngsolve.SurfaceL2(
-            mesh=self.mesh.ngsolvemesh,
-            order=max(1, self._order - 1),
-            dirichlet=dirichlet,
-            complex=self.is_complex,
         )
 
     def get_points_in_encapsulation_layer(self, points: np.ndarray) -> np.ndarray:
