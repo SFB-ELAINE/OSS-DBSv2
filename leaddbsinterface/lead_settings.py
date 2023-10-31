@@ -14,7 +14,11 @@ class LeadSettings:
 
     Parameters
     ----------
-    mat_file_path : str, lead-dbs settings created in ea_genvat_butenko.m (usually stored in oss-dbs_parameters.mat)
+    mat_file_path : str, lead-dbs settings created in ea_genvat_butenko.m
+
+    Notes
+    -----
+    The lead-dbs settings are usually stored in oss-dbs_parameters.mat
 
     """
 
@@ -73,6 +77,9 @@ class LeadSettings:
 
         # add another dict if more than one electrode at a time
         elec_dicts = [elec_dict]
+
+        # define if current-controlled
+        current_controlled = self.get_cur_ctrl()[hemis_idx]
 
         # MAKE THE DICTIONARY
         partial_dict = {
@@ -133,7 +140,7 @@ class LeadSettings:
                     "PointDistance[mm]": 0.5,
                 }
             },
-            "StimulationSignal": {"CurrentControlled": self.get_cur_ctrl()[hemis_idx]},
+            "StimulationSignal": {"CurrentControlled": current_controlled},
             "CalcAxonActivation": self.get_calc_axon_act(),
             "ActivationThresholdVTA": self.get_act_thresh_vta(),
             "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATHS[hemis_idx]),
@@ -142,7 +149,14 @@ class LeadSettings:
         }
 
         partial_settings = Settings(partial_dict)
-        return partial_settings.complete_settings()
+        complete_settings = partial_settings.complete_settings()
+        # do not use h1amg as coarsetype preconditioner
+        # if floating potentials are involved
+        if current_controlled:
+            complete_settings["Solver"]["PreconditionerKwargs"] = {
+                "coarsetype": "local"
+            }
+        return complete_settings
 
     # def save_to_oss_json(self, json_path, hemis_idx=0):
     #
@@ -206,9 +220,11 @@ class LeadSettings:
         """
         C1_coords = self.get_imp_coord()[hemis_idx, :]
         C_last_coords = self.get_sec_coord()[hemis_idx, :]
-        el_array_length = np.sqrt((C1_coords[0] - C_last_coords[0]) ** 2 +
-                                  (C1_coords[1] - C_last_coords[1]) ** 2 +
-                                  (C1_coords[2] - C_last_coords[2]) ** 2)
+        el_array_length = np.sqrt(
+            (C1_coords[0] - C_last_coords[0]) ** 2
+            + (C1_coords[1] - C_last_coords[1]) ** 2
+            + (C1_coords[2] - C_last_coords[2]) ** 2
+        )
         return el_array_length / specs_array_length
 
     def get_cntct_loc(self):
@@ -385,8 +401,7 @@ class LeadSettings:
 
         # Check that oss electrode name is valid
         if electrode_name not in default_electrode_parameters.keys():
-            raise Exception(electrode_name +
-                            " is not a recognized electrode type")
+            raise Exception(electrode_name + " is not a recognized electrode type")
 
         stretched_parameters = self.stretch_electrode(electrode_name, hemis_idx)
 
