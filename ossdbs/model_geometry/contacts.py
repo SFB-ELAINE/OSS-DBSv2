@@ -187,3 +187,6 @@ class Contacts:
         for contact in self._all_contacts:
             if name == contact.name:
                 return contact
+
+    def __iter__(self):
+        return iter(self._all_contacts)

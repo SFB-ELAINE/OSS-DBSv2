@@ -170,6 +170,11 @@ class VolumeConductor(ABC):
                 self._potential.vec[:] = (
                     scale_voltage * self._potential.vec.FV().NumPy()
                 )
+            if _logger.getEffectiveLevel() == logging.DEBUG:
+                estimated_currents = self.estimate_currents()
+                _logger.debug(
+                    f"Estimated currents through contacts: {estimated_currents}"
+                )
             if export_vtk:
                 time_1 = time.time()
                 self.vtk_export()
@@ -468,7 +473,6 @@ class VolumeConductor(ABC):
     @property
     def current_density(self) -> ngsolve.GridFunction:
         """Return current density in A/mm^2."""
-        _logger.debug(f"Compute current density at frequency {self.frequency} Hz")
         # scale to account for mm as length unit (not yet contained in conductivity)
         return 1e-3 * self.conductivity * self.electric_field
 
@@ -515,6 +519,26 @@ class VolumeConductor(ABC):
             raise NotImplementedError(
                 "Impedance for more than two active contacts not yet supported"
             )
+
+    def estimate_currents(self) -> dict:
+        """Estimate currents by integration of normal component.
+
+        Notes
+        -----
+        Meant for debugging purposes.
+        If singularities are present, this method will not be accurate.
+        """
+        normal_vector = ngsolve.specialcf.normal(3)
+        estimated_currents = {}
+        for contact in self.contacts:
+            normal_current_density = normal_vector * ngsolve.BoundaryFromVolumeCF(
+                self.current_density
+            )
+            current = ngsolve.Integrate(
+                normal_current_density * ngsolve.ds(contact.name), self.mesh.ngsolvemesh
+            )
+            estimated_currents[contact.name] = current
+        return estimated_currents
 
     def vtk_export(self) -> None:
         """Export all relevant properties to VTK."""
