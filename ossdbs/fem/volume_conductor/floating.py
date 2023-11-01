@@ -34,7 +34,6 @@ class VolumeConductorFloating(VolumeConductor):
         )
         _logger.debug("Create space")
         self._space = self.__create_space()
-        self._floating_values = {}
         self._potential = ngsolve.GridFunction(space=self._space)
 
     def compute_solution(self, frequency: float) -> ngsolve.comp.GridFunction:
@@ -65,9 +64,7 @@ class VolumeConductorFloating(VolumeConductor):
         _logger.debug("Solve BVP")
         self.solver.bvp(bilinear_form, linear_form, self._potential)
         _logger.debug("Get floating values")
-        self._floating_values = {
-            # TODO
-        }
+        self._update_floating_voltages()
 
     def __create_space(self) -> ngsolve.H1:
         boundaries = [contact.name for contact in self.contacts.active]
@@ -105,3 +102,15 @@ class VolumeConductorFloating(VolumeConductor):
             )
             f += contact.current / length * v * ngsolve.ds(contact.name)
         return f
+
+    def _update_floating_voltages(self) -> None:
+        for contact in self.contacts.floating:
+            length = ngsolve.Integrate(
+                ngsolve.CoefficientFunction(1.0) * ngsolve.ds(contact.name),
+                self.mesh.ngsolvemesh,
+            )
+            floating_potential = ngsolve.Integrate(
+                self._potential * ngsolve.ds(contact.name),
+                self.mesh.ngsolvemesh,
+            )
+            contact.voltage = floating_potential / length
