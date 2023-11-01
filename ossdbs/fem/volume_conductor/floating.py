@@ -66,13 +66,15 @@ class VolumeConductorFloating(VolumeConductor):
         self.solver.bvp(bilinear_form, linear_form, self._potential)
         _logger.debug("Get floating values")
         self._floating_values = {
-                # TODO
+            # TODO
         }
 
-    def __create_space(self) -> ngsolve.H1 :
+    def __create_space(self) -> ngsolve.H1:
         boundaries = [contact.name for contact in self.contacts.active]
         if len(boundaries) == 0:
-            raise RuntimeError("At least one boundary with a fixed voltage has to be specified!")
+            raise RuntimeError(
+                "At least one boundary with a fixed voltage has to be specified!"
+            )
         boundaries_floating = [contact.name for contact in self.contacts.floating]
         space_field = self.h1_space(boundaries)
         plateaus = []
@@ -91,11 +93,15 @@ class VolumeConductorFloating(VolumeConductor):
 
     def __linear_form(self, space) -> ngsolve.LinearForm:
         v = space.TestFunction()
-        contacts = [contact for contact in self.contacts.active]
-        contacts_floating = [contact for contact in self.contacts.floating]
+        contacts = list(self.contacts.active)
+        contacts_floating = list(self.contacts.floating)
         contacts.extend(contacts_floating)
         f = ngsolve.LinearForm(space=self._space)
         for contact in contacts:
-            length = ngsolve.Integrate(ngsolve.CoefficientFunction(1.0) * ngsolve.ds(contact.name), self.mesh.ngsolvemesh)
-            f +=  contact.current / length * v * ngsolve.ds(contact.name)
-        return f 
+            # account for mm as length unit
+            length = ngsolve.Integrate(
+                ngsolve.CoefficientFunction(1e-3) * ngsolve.ds(contact.name),
+                self.mesh.ngsolvemesh,
+            )
+            f += contact.current / length * v * ngsolve.ds(contact.name)
+        return f
