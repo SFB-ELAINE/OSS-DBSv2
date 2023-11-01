@@ -134,8 +134,12 @@ class VolumeConductor(ABC):
                     _logger.debug("Get scaled current values")
                     for contact in self.contacts.active:
                         if not np.isclose(contact.voltage, 0):
-                            raise ValueError("In multicontact current-controlled mode, only ground voltage (0V) can be set on active contacts!")
-                    current_values = self.get_scaled_contact_currents(self.signal.amplitudes[idx])
+                            raise ValueError(
+                                "In multicontact current-controlled mode, only ground voltage (0V) can be set on active contacts!"
+                            )
+                    current_values = self.get_scaled_contact_currents(
+                        self.signal.amplitudes[idx]
+                    )
                     self.update_contacts(currents=current_values)
             time_0 = time.time()
             self.compute_solution(frequency)
@@ -312,7 +316,15 @@ class VolumeConductor(ABC):
     def _check_signal(self, new_signal: FrequencyDomainSignal) -> None:
         if new_signal.current_controlled:
             sum_currents = 0.0
-            for contact in self.contacts.active:
+            voltages_active = np.zeros(len(self.contacts.active))
+            for idx, contact in enumerate(self.contacts.active):
+                sum_currents += contact.current
+                voltages_active[idx] = contact.voltage
+            for contact in self.contacts.floating:
+                if not np.all(np.isclose(voltages_active, 0.0)):
+                    raise ValueError(
+                        "In multipolar current-controlled mode, all active contacts have to be grounded!"
+                    )
                 sum_currents += contact.current
             if not np.isclose(sum_currents, 0):
                 raise ValueError("The sum of all currents is not zero!")
@@ -371,8 +383,8 @@ class VolumeConductor(ABC):
 
     def get_scaled_contact_currents(self, factor) -> dict:
         contact_currents = {}
-        contacts = [contact for contact in self.contacts.active]
-        contacts_floating = [contact for contact in self.contacts.floating]
+        contacts = list(self.contacts.active)
+        contacts_floating = list(self.contacts.floating)
         contacts.extend(contacts_floating)
 
         total_current = 0
