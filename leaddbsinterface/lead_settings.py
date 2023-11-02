@@ -70,16 +70,24 @@ class LeadSettings:
 
         elec_dict, unit_directions = self.import_implantation_settings(hemis_idx)
 
+        # define if current-controlled
+        current_controlled = bool(self.get_cur_ctrl()[hemis_idx])
+
         # get electrode dictionary with stimulation parameters
         elec_dict, case_grounding = self.import_stimulation_settings(
-            hemis_idx, elec_dict
+            hemis_idx, current_controlled, elec_dict
         )
 
         # add another dict if more than one electrode at a time
         elec_dicts = [elec_dict]
 
-        # define if current-controlled
-        current_controlled = self.get_cur_ctrl()[hemis_idx]
+        # enforce case grounding for current-controlled
+        if current_controlled:
+            case_grounding = True
+            # SHOULD BE REMOVED LATER, only V = 0 is enough
+            pulses_sign_amplitude = self.get_phi_vec() * 0.001  # switch to A
+            pulse_sign_amplitude = pulses_sign_amplitude[hemis_idx,:]
+            grounded_current = -1 * np.round(np.sum(pulse_sign_amplitude[~np.isnan(pulse_sign_amplitude)]), 6) # could be 0
 
         # MAKE THE DICTIONARY
         partial_dict = {
@@ -97,7 +105,7 @@ class LeadSettings:
                 {
                     "Name": "BrainSurface",
                     "Active": bool(case_grounding),
-                    "Current[A]": 0.0,
+                    "Current[A]": grounded_current,
                     "Voltage[V]": 0.0,
                 }
             ],
@@ -431,7 +439,7 @@ class LeadSettings:
 
         return elec_dict, unit_directions
 
-    def import_stimulation_settings(self, hemis_idx, elec_dict=None):
+    def import_stimulation_settings(self, hemis_idx, current_controlled, elec_dict=None):
         """Convert Lead-DBS stim settings to OSS-DBS parameters,
         update electrode dictionary.
 
@@ -480,20 +488,44 @@ class LeadSettings:
 
             # cntct_dicts is a list of the contacts that will go in the json
             # for this electrode
-            # We only include the active ones for now
-            cntct_dicts = np.empty(np.sum(~np.isnan(pulse_amp)), dtype=object)
+
+            cntct_dicts = np.empty(len(pulse_amp), dtype=object)
             cntcts_made = 0
 
             for i in range(len(pulse_amp)):
-                if not np.isnan(pulse_amp[i]):
+
+                # all (truly) non-active contacts are floating with 0A
+                if np.isnan(pulse_amp[i]):
                     cntct_dicts[cntcts_made] = {
                         # Assuming one-indexed contact ids
                         "Contact_ID": i + 1,
-                        "Active": True,
-                        pulse_amp_key: pulse_amp[i],
-                        not_pulse_amp_key: False,
+                        "Active": False,
+                        "Current[A]": 0.0,
+                        "Voltage[V]": False,
+                        "Floating": True,
                     }
-                    cntcts_made += 1
+                else:
+                    # for current-controlled, we have a pseudo non-active contact
+                    if current_controlled:
+                        cntct_dicts[cntcts_made] = {
+                            # Assuming one-indexed contact ids
+                            "Contact_ID": i + 1,
+                            "Active": False,
+                            "Current[A]": pulse_amp[i],
+                            "Voltage[V]": False,
+                            "Floating": True,
+                        }
+                    else:
+                        cntct_dicts[cntcts_made] = {
+                            # Assuming one-indexed contact ids
+                            "Contact_ID": i + 1,
+                            "Active": True,
+                            "Current[A]": False,
+                            "Voltage[V]": pulse_amp[i],
+                            "Floating": False,
+                        }
+
+                cntcts_made += 1
 
         if elec_dict is None:
             elec_dict = {}  # or you could set default to {}

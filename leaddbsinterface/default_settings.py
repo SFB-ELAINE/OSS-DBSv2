@@ -30,7 +30,7 @@ def load_default_for_lead(settings):
     settings["CalcAxonActivation"] = False
     settings["ExportVTK"] = True
     settings["Mesh"]["MeshingHypothesis"]["Type"] = "Fine"
-    settings["FEMOrder"] = 2
+    settings["FEMOrder"] = 3
     settings["ComputeImpedance"] = False
     settings["SaveImpedance"] = False
 
