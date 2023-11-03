@@ -88,7 +88,10 @@ class LeadSettings:
             pulses_sign_amplitude = self.get_phi_vec() * 0.001  # switch to A
             pulse_sign_amplitude = pulses_sign_amplitude[hemis_idx,:]
             grounded_current = -1 * np.round(np.sum(pulse_sign_amplitude[~np.isnan(pulse_sign_amplitude)]), 6) # could be 0
-
+        else:
+            # otherwise not relevant, but set to 0.0 if non-active contacts present
+            grounded_current = 0.0
+            
         # MAKE THE DICTIONARY
         partial_dict = {
             "ModelSide": 0,  # hardcoded for now, always keep to 0
