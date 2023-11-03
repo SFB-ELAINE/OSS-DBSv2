@@ -10,15 +10,11 @@ from .electrode_model_template import ElectrodeModel
 @dataclass
 class MicroProbesRodentElectrodeParameters:
     # dimensions [mm]
-    # exposed: The length of the exposed wire (if any)
+    # exposed: The length of the exposed wire between tip and lead (if any)
     exposed_wire: float
-    # contact_radius: radius of the contact tip
     contact_radius: float
-    # lead_radius: radius of the lead or body of the electrode
     lead_radius: float
-    # total_length: total length of the entire electrode
     total_length: float
-    # wire_radius:
     wire_radius: float
 
     def get_center_first_contact(self) -> float:
@@ -96,6 +92,19 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         # define half space at tip_center to construct a hemsiphere as the contact tip
         half_space = netgen.occ.HalfSpace(p=encap_tip_center, n=self._direction)
         encap_tip = encap_tip * half_space
+
+        encap_lead_ht = self._parameters.total_length - (
+            self._parameters.exposed_wire + self._parameters.contact_radius
+        )
+        encap_lead = occ.Cylinder(
+            p=encap_tip_center,
+            d=self._direction,
+            r=encap_tip_radius,
+            h=encap_lead_ht,
+        )
+
+        """
+        Note: the following code was used to fillet the encapsulation layer
 
         # Find tip edge with the max z value for fillet
         max_edge_z_val = float("-inf")
@@ -177,14 +186,15 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
             #    encapsulation = encapsulation.MakeFillet([fillet_leadE], encap_lead_radius / 50)
             # TODO: Issues with the following command
             # encapsulation = encapsulation.MakeFillet([fillet_tipE], 0.00001)
+        """
 
+        encapsulation = encap_tip + encap_lead
         encapsulation.bc("EncapsulationLayerSurface")
         encapsulation.mat("EncapsulationLayer")
         return encapsulation.Move(v=self._position) - self.geometry
 
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         contacts = self.__contacts()
-        # TODO check
         electrode = netgen.occ.Glue([self.__body() - contacts, contacts])
         return electrode.Move(v=self._position)
 
@@ -204,17 +214,18 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         body.bc(self._boundaries["Body"])
         return body
 
-    # Contact is defined as two cases:
-    # If wire exists, we include the wire and tip as part of the contact object
-    # If wire doesn't exist, we only include the tip
     def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         direction = self._direction
         contact_radius = self._parameters.contact_radius
         tip_center = tuple(np.array(self._direction) * self._parameters.contact_radius)
         tip = occ.Sphere(c=tip_center, r=contact_radius)
-        # define half space at tip_center to use to construct a hemsiphere as the contact tip
-        half_space = netgen.occ.HalfSpace(p=tip_center, n=direction)
+        # If exposed wire exists, we include the wire and tip as part of the contact object
         if self.wire_exists:
+            lead_start_pt = tuple(
+                np.array(self._direction)
+                * (self._parameters.exposed_wire + self._parameters.contact_radius)
+            )
+            half_space = netgen.occ.HalfSpace(p=lead_start_pt, n=direction)
             wire_height = self._parameters.exposed_wire
             wire_start_pt = tip_center
             wire = occ.Cylinder(
@@ -225,6 +236,7 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
             )
             contact = (tip * half_space) + wire
         else:
+            half_space = netgen.occ.HalfSpace(p=tip_center, n=direction)
             contact = tip * half_space
 
         contact.bc(self._boundaries["Contact_1"])
