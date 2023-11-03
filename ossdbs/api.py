@@ -381,10 +381,13 @@ def run_volume_conductor_model(settings, volume_conductor):
         if settings["ComputeImpedance"]:
             _logger.info("Will compute impedance at each frequency")
             compute_impedance = True
-    if "ExportVTK" in settings:
-        if settings["ExportVTK"]:
+    if "ExportVTK" in settings:     
+        export_vtk = settings["ExportVTK"]
+        if export_vtk:
             _logger.info("Will export solution to VTK")
-            export_vtk = True
+    else:
+        export_vtk = False
+
     point_model = generate_neuron_grid(settings)
     template_space = settings["TemplateSpace"]
     vcm_timings = volume_conductor.run_full_analysis(
