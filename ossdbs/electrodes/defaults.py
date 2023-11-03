@@ -136,7 +136,7 @@ default_electrode_parameters = {
         contact_radius=0.1125,
         lead_radius=0.1175,
         total_length=100.0,
-        wire_radius=0.0,
+        wire_radius=0.1125,
     ),
     "PINSMedicalL301": PINSMedicalParameters(
         tip_length=1.5,
