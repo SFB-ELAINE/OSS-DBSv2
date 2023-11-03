@@ -531,7 +531,8 @@ class VolumeConductor(ABC):
         normal_vector = ngsolve.specialcf.normal(3)
         estimated_currents = {}
         for contact in self.contacts:
-            normal_current_density = normal_vector * ngsolve.BoundaryFromVolumeCF(
+            # use that normal_vector always points outwards
+            normal_current_density = -normal_vector * ngsolve.BoundaryFromVolumeCF(
                 self.current_density
             )
             current = ngsolve.Integrate(
