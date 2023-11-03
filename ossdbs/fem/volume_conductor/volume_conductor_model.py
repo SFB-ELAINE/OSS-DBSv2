@@ -593,13 +593,6 @@ class VolumeConductor(ABC):
             False,
         ).save(os.path.join(self.output_path, "material"))
 
-        FieldSolution(
-            self.conductivity_cf.material_distribution(self.mesh),
-            "material",
-            ngmesh,
-            False,
-        ).save(os.path.join(self.output_path, "material"))
-
     def floating_values(self) -> dict:
         """Read out floating potentials."""
         floating_voltages = {}
