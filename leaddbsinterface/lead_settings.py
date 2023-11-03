@@ -74,7 +74,7 @@ class LeadSettings:
         current_controlled = bool(self.get_cur_ctrl()[hemis_idx])
 
         # get electrode dictionary with stimulation parameters
-        elec_dict, case_grounding = self.import_stimulation_settings(
+        elec_dict, case_grounding, floating = self.import_stimulation_settings(
             hemis_idx, current_controlled, elec_dict
         )
 
@@ -160,7 +160,11 @@ class LeadSettings:
         complete_settings = partial_settings.complete_settings()
         # do not use h1amg as coarsetype preconditioner
         # if floating potentials are involved
-        if current_controlled:
+        # set also to floating if multicontact current-controlled
+        if not floating:
+            if current_controlled:
+                floating = True
+        if floating:
             complete_settings["Solver"]["PreconditionerKwargs"] = {
                 "coarsetype": "local"
             }
@@ -453,6 +457,8 @@ class LeadSettings:
         elec_dict: dict
         case_grounding: bool
         """
+        # store if floating or not
+        floating = False
         # stimulation vector over electrode contacts (negative - cathode)
         pulse_amps = self.get_phi_vec()
 
@@ -472,7 +478,7 @@ class LeadSettings:
             # Fix of VC random grounding bug for Lead-DBS stim settings
             pulse_amps[pulse_amps == 0] = float("nan")
 
-            # make list of dictionaries for the electrode settings
+        # make list of dictionaries for the electrode settings
         # for now use one electrode at a time
 
         for index_side in [hemis_idx]:
@@ -493,9 +499,9 @@ class LeadSettings:
             cntcts_made = 0
 
             for i in range(len(pulse_amp)):
-
                 # all (truly) non-active contacts are floating with 0A
                 if np.isnan(pulse_amp[i]):
+                    floating = True
                     cntct_dicts[cntcts_made] = {
                         # Assuming one-indexed contact ids
                         "Contact_ID": i + 1,
@@ -531,7 +537,7 @@ class LeadSettings:
             elec_dict = {}  # or you could set default to {}
         elec_dict["Contacts"] = cntct_dicts.tolist()
 
-        return elec_dict, case_grounding
+        return elec_dict, case_grounding, floating
 
     # Private fxns
 
