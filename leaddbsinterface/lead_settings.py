@@ -426,9 +426,8 @@ class LeadSettings:
 
         elec_dict_imp = {
             # Assuming both electrodes are the same type
-            #"Name": electrode_name + "Custom",
-            #"CustomParameters": stretched_parameters,
-            "Name": electrode_name,
+            "Name": electrode_name + "Custom",
+            "CustomParameters": stretched_parameters,
             "Rotation[Degrees]": self.get_rot_z(hemis_idx),
             "Direction": {
                 "x[mm]": unit_directions[hemis_idx, 0],
