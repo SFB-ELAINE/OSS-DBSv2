@@ -516,6 +516,8 @@ class VolumeConductor(ABC):
                 sign = np.sign(voltage)
             return sign * voltage / power
         else:
+            # TODO implement meaningful way to access contribution of individual
+            # electrode to impedance
             raise NotImplementedError(
                 "Impedance for more than two active contacts not yet supported"
             )
