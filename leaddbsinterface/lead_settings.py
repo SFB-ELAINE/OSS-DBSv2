@@ -490,8 +490,8 @@ class LeadSettings:
             pulse_amp = pulse_amps[index_side, :]
 
             # shift all voltages if bipolar case to have 0V and cathodes (as in the stimulators)
-            if max(pulse_amp) > 0.0:
-                pulse_amp[:] = pulse_amp[:] - max(pulse_amp)
+            if np.nanmax(pulse_amp) > 0.0:
+                pulse_amp[:] = pulse_amp[:] - np.nanmax(pulse_amp)
 
             if self.get_cur_ctrl()[index_side]:
                 # for CC, check if currents sum up to 0.0.
