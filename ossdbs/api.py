@@ -240,13 +240,14 @@ def generate_neuron_grid(settings: dict) -> PointModel:
         )
     elif settings["PointModel"]["VoxelLattice"]["Active"]:
         _logger.info("from voxel lattice")
-        imp = imp_coord(settings)
+        center_par = settings["PointModel"]["Lattice"]["Center"]
+        center = center_par["x[mm]"], center_par["y[mm]"], center_par["z[mm]"]
         mri_image = MagneticResonanceImage(settings["MaterialDistribution"]["MRIPath"])
         affine = mri_image.affine
         header = mri_image.header
         shape_par = settings["PointModel"]["VoxelLattice"]["Shape"]
         shape = np.array([shape_par["x"], shape_par["y"], shape_par["z"]])
-        return VoxelLattice(imp, affine, shape, header)
+        return VoxelLattice(center, affine, shape, header)
     return None
 
 

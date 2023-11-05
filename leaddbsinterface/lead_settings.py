@@ -68,7 +68,7 @@ class LeadSettings:
         SIDES = ["rh", "lh"]
         side = SIDES[hemis_idx]
 
-        elec_dict, unit_directions = self.import_implantation_settings(hemis_idx)
+        elec_dict, unit_directions, specs_array_length = self.import_implantation_settings(hemis_idx)
 
         # define if current-controlled
         current_controlled = bool(self.get_cur_ctrl()[hemis_idx])
@@ -138,15 +138,16 @@ class LeadSettings:
                 "Lattice": {
                     "Active": True,
                     "Center": {
-                        "x[mm]": self.get_imp_coord()[hemis_idx, 0],
-                        "y[mm]": self.get_imp_coord()[hemis_idx, 1],
-                        "z[mm]": self.get_imp_coord()[hemis_idx, 2],
+                        # center at the middle of the electrode array
+                        "x[mm]": self.get_imp_coord()[hemis_idx, 0] + unit_directions[hemis_idx, 0] * specs_array_length/2,
+                        "y[mm]": self.get_imp_coord()[hemis_idx, 1] + unit_directions[hemis_idx, 1] * specs_array_length/2,
+                        "z[mm]": self.get_imp_coord()[hemis_idx, 2] + unit_directions[hemis_idx, 2] * specs_array_length/2
                     },
                     "Shape": {"x": 31, "y": 31, "z": 41},
                     "Direction": {
-                        "x[mm]": unit_directions[hemis_idx, 0],
-                        "y[mm]": unit_directions[hemis_idx, 0],
-                        "z[mm]": unit_directions[hemis_idx, 0],
+                        "x[mm]": 0,
+                        "y[mm]": 0,
+                        "z[mm]": 1,
                     },
                     "PointDistance[mm]": 0.5,
                 }
@@ -365,13 +366,13 @@ class LeadSettings:
         unit_directions = directions / np.linalg.norm(directions, axis=1)[:, np.newaxis]
         specs_array_length = self.get_specs_array_length(oss_elec_name)
         stretch_factor = self.get_stretch_factor(specs_array_length, hemi_idx)
-        print("Stretch:", stretch_factor)
+
         if abs(stretch_factor - 1.0) < 0.01:  # 1% tolerance
             stretch_factor = 1.0
         offset = elec_params.get_center_first_contact() * stretch_factor
         tip_position = imp_coords - offset * unit_directions
 
-        return unit_directions, tip_position
+        return unit_directions, tip_position, specs_array_length
 
     def import_implantation_settings(self, hemis_idx, elec_dict=None):
         """Convert Lead-DBS implantation settings to OSS-DBS parameters.
@@ -421,12 +422,13 @@ class LeadSettings:
         stretched_parameters = self.stretch_electrode(electrode_name, hemis_idx)
 
         # get tip position from the head and tail markers
-        unit_directions, tip_pos = self.get_tip_position(electrode_name, hemis_idx)
+        unit_directions, tip_pos, specs_array_length = self.get_tip_position(electrode_name, hemis_idx)
 
         elec_dict_imp = {
             # Assuming both electrodes are the same type
-            "Name": electrode_name + "Custom",
-            "CustomParameters": stretched_parameters,
+            #"Name": electrode_name + "Custom",
+            #"CustomParameters": stretched_parameters,
+            "Name": electrode_name,
             "Rotation[Degrees]": self.get_rot_z(hemis_idx),
             "Direction": {
                 "x[mm]": unit_directions[hemis_idx, 0],
@@ -444,7 +446,7 @@ class LeadSettings:
         else:
             elec_dict.update(elec_dict_imp)
 
-        return elec_dict, unit_directions
+        return elec_dict, unit_directions, specs_array_length
 
     def import_stimulation_settings(self, hemis_idx, current_controlled, elec_dict=None):
         """Convert Lead-DBS stim settings to OSS-DBS parameters,
@@ -481,11 +483,16 @@ class LeadSettings:
             # Fix of VC random grounding bug for Lead-DBS stim settings
             pulse_amps[pulse_amps == 0] = float("nan")
 
+
         # make list of dictionaries for the electrode settings
         # for now use one electrode at a time
 
         for index_side in [hemis_idx]:
             pulse_amp = pulse_amps[index_side, :]
+
+            # shift all voltages if bipolar case to have 0V and cathodes (as in the stimulators)
+            if max(pulse_amp) > 0.0:
+                pulse_amp[:] = pulse_amp[:] - max(pulse_amp)
 
             if self.get_cur_ctrl()[index_side]:
                 # for CC, check if currents sum up to 0.0.
