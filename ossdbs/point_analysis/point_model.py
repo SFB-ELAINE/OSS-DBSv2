@@ -32,7 +32,7 @@ class PointModel(ABC):
             self.coordinates, np.column_stack((mask, mask, mask)), copy=True
         )
 
-    def filtered_lattice(self, grid_pts: np.ma.MaskedArray):
+    def filter_for_geometry(self, grid_pts: np.ma.MaskedArray) -> np.ndarray:
         """Return a lattice that NGSolve can process.
 
         Notes
@@ -55,6 +55,18 @@ class PointModel(ABC):
         return lattice
 
     @abstractmethod
+    def filter_csf_encap(self, inside_csf: np.ndarray, inside_encap: np.ndarray):
+        """Remove points in CSF or encapsulation layer.
+
+
+        Parameters
+        ----------
+        inside_csf: list of points in csf
+        inside_encap: list of points in encapsulation layer
+        """
+        pass
+
+    @abstractmethod
     def save_as_nifti(
         self,
         scalar_field: np.ndarray,
@@ -71,5 +83,28 @@ class PointModel(ABC):
         binarize: bool, thresholds the scalar field and saves the binarized result
         activation_threshold: float, threshold for the binarized result
 
+        """
+        pass
+
+    @abstractmethod
+    def save_hdf5(
+        self,
+        axon_mask: list,
+        lattice: np.ndarray,
+        potentials: np.ndarray,
+        fields: np.ndarray,
+        field_mags: np.ndarray,
+        output_path: str,
+    ) -> None:
+        """Stores results for pathway analysis in hdf5 format.
+
+        Parameters
+        ----------
+        axon_mask: list
+        lattice: np.ndarray
+        potentials: np.ndarray
+        fields: np.ndarray
+        field_mags: np.ndarray
+        output_path: str
         """
         pass

@@ -146,3 +146,18 @@ class Lattice(PointModel):
         file.create_dataset(
             "Electric field vector z[Vm^(-1)]", data=data.electric_field_vector[2]
         )
+
+    def filter_csf_encap(self, inside_csf: np.ndarray, inside_encap: np.ndarray):
+        # TODO implement
+        raise NotImplementedError("Filtering for lattice not implemented yet.")
+
+    def save_hdf5(
+        self,
+        axon_mask: list,
+        lattice: np.ndarray,
+        potentials: np.ndarray,
+        fields: np.ndarray,
+        field_mags: np.ndarray,
+        output_path: str,
+    ) -> None:
+        raise NotImplementedError("Lattice results can not be stored in HDF5 format.")
