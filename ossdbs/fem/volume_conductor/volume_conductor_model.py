@@ -4,7 +4,6 @@ import time
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-import h5py
 import ngsolve
 import numpy as np
 import pandas as pd
@@ -12,7 +11,7 @@ import pandas as pd
 from ossdbs.fem.mesh import Mesh
 from ossdbs.fem.solver import Solver
 from ossdbs.model_geometry import Contacts, ModelGeometry
-from ossdbs.point_analysis import Lattice, PointModel, VoxelLattice
+from ossdbs.point_analysis import Lattice, Pathway, PointModel, VoxelLattice
 from ossdbs.stimulation_signals import FrequencyDomainSignal
 from ossdbs.utils.vtk_export import FieldSolution
 
@@ -93,19 +92,7 @@ class VolumeConductor(ABC):
         TODO full documentation
         """
         timings: dict = {}
-        grid_pts = None
-        lattice_mask = None
-        lattice = None
         if point_model is not None:
-            grid_pts = point_model.points_in_mesh(self.mesh)
-            lattice_mask = np.invert(grid_pts.mask)
-            lattice = point_model.filtered_lattice(grid_pts)
-            # TODO how to use these masks?
-            self.get_points_in_csf(lattice)
-            self.get_points_in_encapsulation_layer(lattice)
-        if lattice is not None:
-            timings["PotentialProbing"] = []
-            timings["FieldProbing"] = []
             timings["FieldExport"] = []
         if export_vtk:
             timings["VTKExport"] = []
@@ -176,101 +163,12 @@ class VolumeConductor(ABC):
                     f"Estimated currents through contacts: {estimated_currents}"
                 )
             if export_vtk:
-                time_1 = time.time()
                 self.vtk_export()
+                time_1 = time.time()
                 timings["VTKExport"].append(time_1 - time_0)
                 time_0 = time_1
-            if lattice is not None:
-                potentials = self.evaluate_potential_at_points(lattice)
-                time_1 = time.time()
-                timings["PotentialProbing"].append(time_1 - time_0)
-                time_0 = time_1
-
-                fields = self.evaluate_field_at_points(lattice)
-                field_mags = np.linalg.norm(fields, axis=1).reshape(
-                    (fields.shape[0], 1)
-                )
-                time_1 = time.time()
-                timings["FieldProbing"].append(time_1 - time_0)
-                time_0 = time_1
-
-                # Save points
-                h5f_pts = h5py.File(os.path.join(self.output_path, "oss_pts.h5"), "w")
-                h5f_pts.create_dataset("points", data=lattice)
-                h5f_pts.close()
-
-                # Save potential evaluation
-                h5f_pot = h5py.File(
-                    os.path.join(self.output_path, "oss_potentials.h5"), "w"
-                )
-                h5f_pot.create_dataset("points", data=lattice)
-                h5f_pot.create_dataset("potentials", data=potentials)
-                h5f_pot.close()
-                df_pot = pd.DataFrame(
-                    np.concatenate(
-                        [lattice, potentials.reshape((potentials.shape[0], 1))], axis=1
-                    ),
-                    columns=["x-pt", "y-pt", "z-pt", "potential"],
-                )
-                df_pot.to_csv(
-                    os.path.join(self.output_path, "oss_potentials.csv"), index=False
-                )
-
-                # Save electric field evaluation
-                h5f_field = h5py.File(
-                    os.path.join(self.output_path, "oss_field.h5"), "w"
-                )
-                h5f_field.create_dataset("points", data=lattice)
-                h5f_field.create_dataset("field/field_vecs", data=fields)
-                h5f_field.create_dataset("field/field_mags", data=field_mags)
-                h5f_field.close()
-                df_field = pd.DataFrame(
-                    np.concatenate([lattice, fields, field_mags], axis=1),
-                    columns=[
-                        "x-pt",
-                        "y-pt",
-                        "z-pt",
-                        "x-field",
-                        "y-field",
-                        "z-field",
-                        "magnitude",
-                    ],
-                )
-                if template_space:
-                    df_field.to_csv(
-                        os.path.join(self.output_path, "E_field_Template_space.csv"),
-                        index=False,
-                    )
-                else:
-                    df_field.to_csv(
-                        os.path.join(self.output_path, "E_field_MRI_space.csv"),
-                        index=False,
-                    )
-
-                if isinstance(point_model, VoxelLattice) or isinstance(
-                    point_model, Lattice
-                ):
-                    field_mags_full = np.zeros(lattice_mask.shape[0], float)
-                    # TODO set all values to -1?
-                    # field_mags_full -= 1
-                    # overwrite values inside mesh
-                    field_mags_full[lattice_mask[:, 0]] = field_mags[:, 0]
-
-                    if type(point_model) == VoxelLattice:
-                        suffix = ""
-                    else:
-                        suffix = "_WA"
-                    point_model.save_as_nifti(
-                        field_mags_full,
-                        os.path.join(self.output_path, f"E_field_solution{suffix}.nii"),
-                    )
-                    point_model.save_as_nifti(
-                        field_mags_full,
-                        os.path.join(self.output_path, f"VTA_solution{suffix}.nii"),
-                        binarize=True,
-                        activation_threshold=activation_threshold,
-                    )
-
+            if point_model is not None:
+                self.export_points(point_model, activation_threshold, template_space)
                 time_1 = time.time()
                 timings["FieldExport"] = time_1 - time_0
                 time_0 = time_1
@@ -291,6 +189,7 @@ class VolumeConductor(ABC):
 
     @property
     def output_path(self) -> str:
+        """Returns the path to output."""
         return self._output_path
 
     @output_path.setter
@@ -307,6 +206,7 @@ class VolumeConductor(ABC):
 
     @property
     def conductivity_cf(self) -> ConductivityCF:
+        """Retruns the coefficient function of the conductivity."""
         return self._conductivity_cf
 
     @property
@@ -594,6 +494,135 @@ class VolumeConductor(ABC):
             ngmesh,
             False,
         ).save(os.path.join(self.output_path, "material"))
+
+    def export_points(
+        self, point_model, activation_threshold: float, template_space: bool
+    ) -> None:
+        """Export all relevant properties to CSV, HDF5, or Nifty format.
+
+        Notes
+        -----
+        Only for pathways a HDF5 file is generated and only for the lattice
+        model, a Nifty file is generated
+
+        Parameters
+        ----------
+        point_model: oss_dbs point_model
+            Contains the points on which to evaluate the solution
+
+        activation_threshold: float
+
+        template_space: bool
+        """
+        grid_pts = point_model.points_in_mesh(self.mesh)
+        lattice_mask = np.invert(grid_pts.mask)
+        lattice = point_model.filter_for_geometry(grid_pts)
+        inside_csf = self.get_points_in_csf(lattice)
+        inside_encap = self.get_points_in_encapsulation_layer(lattice)
+        if isinstance(point_model, Pathway):
+            # if pathway, always mark complete axons
+            axon_mask = point_model._axon_mask
+            [inside_csf, inside_encap] = point_model.filter_csf_encap(
+                inside_csf, inside_encap
+            )
+            # create index for axons
+            index = point_model.create_index(lattice)
+        else:
+            index = np.reshape(np.arange(len(lattice)), (len(lattice), 1))
+
+        potentials = self.evaluate_potential_at_points(lattice)
+
+        fields = self.evaluate_field_at_points(lattice)
+        field_mags = np.linalg.norm(fields, axis=1).reshape((fields.shape[0], 1))
+
+        # CSV exports
+        df_pot = pd.DataFrame(
+            np.concatenate(
+                [
+                    index,
+                    lattice,
+                    potentials.reshape((potentials.shape[0], 1)),
+                    inside_csf,
+                    inside_encap,
+                ],
+                axis=1,
+            ),
+            columns=[
+                "index",
+                "x-pt",
+                "y-pt",
+                "z-pt",
+                "potential",
+                "inside_csf",
+                "inside_encap",
+            ],
+        )
+        df_pot.to_csv(os.path.join(self.output_path, "oss_potentials.csv"), index=False)
+        df_field = pd.DataFrame(
+            np.concatenate(
+                [index, lattice, fields, field_mags, inside_csf, inside_encap],
+                axis=1,
+            ),
+            columns=[
+                "index",
+                "x-pt",
+                "y-pt",
+                "z-pt",
+                "x-field",
+                "y-field",
+                "z-field",
+                "magnitude",
+                "inside_csf",
+                "inside_encap",
+            ],
+        )
+        if template_space:
+            df_field.to_csv(
+                os.path.join(self.output_path, "E_field_Template_space.csv"),
+                index=False,
+            )
+        else:
+            df_field.to_csv(
+                os.path.join(self.output_path, "E_field_MRI_space.csv"),
+                index=False,
+            )
+
+        # HDF5 exports only for Pathways
+        if isinstance(point_model, Pathway):
+            if axon_mask is None:
+                raise RuntimeError("The creation of the axon_mask did not work")
+            else:
+                point_model.save_hdf5(
+                    axon_mask,
+                    lattice,
+                    potentials,
+                    fields,
+                    field_mags,
+                    self.output_path,
+                )
+
+        # Nifti exports
+        if isinstance(point_model, VoxelLattice) or isinstance(point_model, Lattice):
+            field_mags_full = np.zeros(lattice_mask.shape[0], float)
+            # TODO set all values to -1?
+            # field_mags_full -= 1
+            # overwrite values inside mesh
+            field_mags_full[lattice_mask[:, 0]] = field_mags[:, 0]
+
+            if type(point_model) == VoxelLattice:
+                suffix = ""
+            elif isinstance(point_model, Lattice):
+                suffix = "_WA"
+            point_model.save_as_nifti(
+                field_mags_full,
+                os.path.join(self.output_path, f"E_field_solution{suffix}.nii"),
+            )
+            point_model.save_as_nifti(
+                field_mags_full,
+                os.path.join(self.output_path, f"VTA_solution{suffix}.nii"),
+                binarize=True,
+                activation_threshold=activation_threshold,
+            )
 
     def floating_values(self) -> dict:
         """Read out floating potentials."""
