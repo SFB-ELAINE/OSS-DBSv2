@@ -233,10 +233,12 @@ def generate_neuron_grid(settings: dict) -> PointModel:
         dir_par = settings["PointModel"]["Lattice"]["Direction"]
         direction = dir_par["x[mm]"], dir_par["y[mm]"], dir_par["z[mm]"]
         distance = settings["PointModel"]["Lattice"]["PointDistance[mm]"]
+        collapse_vta = settings["PointModel"]["Lattice"]["CollapseVTA"]
+
 
         _logger.info("from lattice")
         return Lattice(
-            shape=shape, center=center, distance=distance, direction=direction
+            shape=shape, center=center, distance=distance, direction=direction, collapse_vta=collapse_vta
         )
     elif settings["PointModel"]["VoxelLattice"]["Active"]:
         _logger.info("from voxel lattice")
