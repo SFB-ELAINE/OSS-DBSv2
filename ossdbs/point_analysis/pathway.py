@@ -340,3 +340,6 @@ class Pathway(PointModel):
         self, scalar_field, filename, binarize=False, activation_threshold=None
     ):
         raise NotImplementedError("Pathway results can not be stored in Nifti format.")
+
+    def collapse_VTA(self, field_on_points, implantation_coordinate, lead_direction, lead_diam):
+        raise NotImplementedError("Collapse VTA for pathways not implemented")
