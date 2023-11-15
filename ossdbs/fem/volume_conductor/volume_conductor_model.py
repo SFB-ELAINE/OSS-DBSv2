@@ -592,17 +592,24 @@ class VolumeConductor(ABC):
                                                                         lead_direction, 
                                                                         lead_diam
                                                                         )
-            df_collapsed_field = pd.DataFrame(field_on_probed_points_collapsed,
-                                                columns=[
-                                                    "x-pt",
-                                                    "y-pt",
-                                                    "z-pt",
-                                                    "x-field",
-                                                    "y-field",
-                                                    "z-field",
-                                                    "magnitude",
-                                                    ],
-                                                )
+
+            df_collapsed_field = pd.DataFrame(
+                np.concatenate(
+                    [index, field_on_probed_points_collapsed, inside_csf, inside_encap],
+                    axis=1),
+                columns=[
+                    "index",
+                    "x-pt",
+                    "y-pt",
+                    "z-pt",
+                    "x-field",
+                    "y-field",
+                    "z-field",
+                    "magnitude",
+                    "inside_csf",
+                    "inside_encap",
+                    ],
+                )
             if template_space:
                 df_collapsed_field.to_csv(
                     os.path.join(self.output_path, "E_field_Template_space.csv"),
