@@ -1,8 +1,9 @@
 import argparse
 import json
 
-from .default_settings import load_default_for_lead
+from .default_settings import load_default_for_lead, initialize_default_settings,update_default_dict
 from .lead_settings import LeadSettings
+from ossdbs.utils.settings import Settings
 
 
 def main():
@@ -32,20 +33,28 @@ def main():
     )
     args = parser.parse_args()
 
+    # get default settings (alternatively, set using GUI)
+    settings = initialize_default_settings()
+    settings = load_default_for_lead(settings)
+
     # get settings from oss-dbs_parameters.mat
     ls = LeadSettings(args.leaddbs_dictionary)
-    settings = ls.make_oss_settings(
+    settings_leaddbs = ls.make_oss_settings(
         hemis_idx=args.hemi_side, output_path=args.output_path
     )
 
-    # add default settings (alternatively, set using GUI)
-    settings = load_default_for_lead(settings)
+    # merge with default, overwrite if necessary
+    settings = update_default_dict(settings, settings_leaddbs)
+
+    # complete the input dictionary
+    partial_settings = Settings(settings)
+    complete_settings = partial_settings.complete_settings()
 
     # replace ending in input dictionaries
     new_input = args.leaddbs_dictionary.replace(".mat", ".json")
 
     # export json dict
-    json_settings = json.dumps(settings, indent=2)
+    json_settings = json.dumps(complete_settings, indent=2)
     with open(new_input, "w") as outfile:
         outfile.write(json_settings)
 

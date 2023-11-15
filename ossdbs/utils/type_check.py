@@ -72,6 +72,7 @@ class TypeChecker:
                     "y[mm]": (int, float),
                     "z[mm]": (int, float),
                 },
+                "CollapseVTA": bool,
                 "PointDistance[mm]": (int, float),
                 "Shape": {"x": int, "y": int, "z": int},
             },

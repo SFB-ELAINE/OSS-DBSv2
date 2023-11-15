@@ -170,14 +170,14 @@ class Lattice(PointModel):
 
         Parameters
         ----------
-        field_on_points : Nx4 numpy.ndarray of scalar values on the lattice
+        field_on_points : Nx7 numpy.ndarray of scalar values on the lattice
         implantation_coordinate: 1-D numpy array, center of the first contact
         lead_direction: 1-D numpy array, direction of the lead (from head to tail)
         lead_diam: float, diameter of the electrode that will be compensated by the inward collapse
 
         Returns
         -------
-        field_on_points_collided: Nx4 numpy.ndarray of scalar values on adjusted lattice
+        field_on_points_collided: Nx7 numpy.ndarray of scalar values on adjusted lattice
 
         """
         # get unit vector for direction
