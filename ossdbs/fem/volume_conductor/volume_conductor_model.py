@@ -5,8 +5,11 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 import ngsolve
+from ngsolve import Mesh as NGMesh
+from ngsolve import VTKOutput, BND
 import numpy as np
 import pandas as pd
+import netgen.occ as occ
 
 from ossdbs.fem.mesh import Mesh
 from ossdbs.fem.solver import Solver
@@ -164,6 +167,7 @@ class VolumeConductor(ABC):
                 )
             if export_vtk:
                 self.vtk_export()
+                self.export_electrode()
                 time_1 = time.time()
                 timings["VTKExport"].append(time_1 - time_0)
                 time_0 = time_1
@@ -494,6 +498,26 @@ class VolumeConductor(ABC):
             ngmesh,
             False,
         ).save(os.path.join(self.output_path, "material"))
+
+    def export_electrode(self) -> None:
+        """Export electrode as VTK file."""
+        _logger.info("Export electrode as VTK file")
+        electrodes = self.model_geometry.electrodes
+        for electrode in electrodes:
+            occgeo = occ.OCCGeometry(electrode.geometry)
+            mesh_electrode = NGMesh(occgeo.GenerateMesh())      
+            bnd_dict = {}
+            for idx, contact in enumerate(electrode.boundaries):
+                bnd_dict[contact] = idx
+            boundary_cf = mesh_electrode.BoundaryCF(bnd_dict, default=-1)
+
+            VTKOutput(
+                ma=mesh_electrode,
+                coefs=[boundary_cf],
+                names=["boundaries"],
+                filename=f"{self.output_path}/electrode_{electrode.index}",
+                subdivision=0,
+            ).Do(vb=BND)
 
     def export_points(
         self, point_model, activation_threshold: float, template_space: bool
