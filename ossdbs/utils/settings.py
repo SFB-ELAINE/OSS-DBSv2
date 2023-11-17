@@ -99,6 +99,7 @@ class Settings:
         "OutputPath": "Results",
         "SaveImpedance": False,
         "ExportVTK": False,
+        "ExportElectrode": False,
         "TemplateSpace": True,
         "ModelSide": 0,
         "CalcAxonActivation": False,

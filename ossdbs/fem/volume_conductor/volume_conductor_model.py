@@ -5,11 +5,8 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 import ngsolve
-from ngsolve import Mesh as NGMesh
-from ngsolve import VTKOutput, BND
 import numpy as np
 import pandas as pd
-import netgen.occ as occ
 
 from ossdbs.fem.mesh import Mesh
 from ossdbs.fem.solver import Solver
@@ -167,7 +164,6 @@ class VolumeConductor(ABC):
                 )
             if export_vtk:
                 self.vtk_export()
-                self.export_electrode()
                 time_1 = time.time()
                 timings["VTKExport"].append(time_1 - time_0)
                 time_0 = time_1
@@ -499,26 +495,6 @@ class VolumeConductor(ABC):
             False,
         ).save(os.path.join(self.output_path, "material"))
 
-    def export_electrode(self) -> None:
-        """Export electrode as VTK file."""
-        _logger.info("Export electrode as VTK file")
-        electrodes = self.model_geometry.electrodes
-        for electrode in electrodes:
-            occgeo = occ.OCCGeometry(electrode.geometry)
-            mesh_electrode = NGMesh(occgeo.GenerateMesh())      
-            bnd_dict = {}
-            for idx, contact in enumerate(electrode.boundaries):
-                bnd_dict[contact] = idx
-            boundary_cf = mesh_electrode.BoundaryCF(bnd_dict, default=-1)
-
-            VTKOutput(
-                ma=mesh_electrode,
-                coefs=[boundary_cf],
-                names=["boundaries"],
-                filename=f"{self.output_path}/electrode_{electrode.index}",
-                subdivision=0,
-            ).Do(vb=BND)
-
     def export_points(
         self, point_model, activation_threshold: float, template_space: bool
     ) -> None:
@@ -603,7 +579,9 @@ class VolumeConductor(ABC):
         if isinstance(point_model, Lattice) and point_model._collapse_vta:
             # only collapse VTA if slected and point model is lattice
             _logger.info("Collapse VTA by virtually removing the electrode")
-            field_on_probed_points = np.concatenate([lattice, fields, field_mags], axis=1)
+            field_on_probed_points = np.concatenate(
+                [lattice, fields, field_mags], axis=1
+            )
 
             electrode = self.model_geometry.electrodes[0]
             implantation_coordinate = electrode._position
@@ -611,16 +589,17 @@ class VolumeConductor(ABC):
             lead_diam = electrode._parameters.lead_diameter
 
             field_on_probed_points_collapsed = point_model.collapse_VTA(
-                                                                        field_on_probed_points, 
-                                                                        implantation_coordinate, 
-                                                                        lead_direction, 
-                                                                        lead_diam
-                                                                        )
+                field_on_probed_points,
+                implantation_coordinate,
+                lead_direction,
+                lead_diam,
+            )
 
             df_collapsed_field = pd.DataFrame(
                 np.concatenate(
                     [index, field_on_probed_points_collapsed, inside_csf, inside_encap],
-                    axis=1),
+                    axis=1,
+                ),
                 columns=[
                     "index",
                     "x-pt",
@@ -632,8 +611,8 @@ class VolumeConductor(ABC):
                     "magnitude",
                     "inside_csf",
                     "inside_encap",
-                    ],
-                )
+                ],
+            )
             if template_space:
                 df_collapsed_field.to_csv(
                     os.path.join(self.output_path, "E_field_Template_space.csv"),
@@ -687,9 +666,11 @@ class VolumeConductor(ABC):
                 field_mags_full,
                 os.path.join(self.output_path, f"E_field_solution{suffix}.nii"),
             )
-            if activation_threshold == None:
-                raise ValueError("Activation threshhold needs to be define in the inputs.")
-            
+            if activation_threshold is None:
+                raise ValueError(
+                    "Activation threshhold needs to be define in the inputs."
+                )
+
             point_model.save_as_nifti(
                 field_mags_full,
                 os.path.join(self.output_path, f"VTA_solution{suffix}.nii"),
