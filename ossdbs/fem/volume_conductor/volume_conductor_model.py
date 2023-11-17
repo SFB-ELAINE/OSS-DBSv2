@@ -576,16 +576,65 @@ class VolumeConductor(ABC):
                 "inside_encap",
             ],
         )
-        if template_space:
-            df_field.to_csv(
-                os.path.join(self.output_path, "E_field_Template_space.csv"),
-                index=False,
+        if isinstance(point_model, Lattice) and point_model._collapse_vta:
+            # only collapse VTA if slected and point model is lattice
+            _logger.info("Collapse VTA by virtually removing the electrode")
+            field_on_probed_points = np.concatenate(
+                [lattice, fields, field_mags], axis=1
             )
+
+            electrode = self.model_geometry.electrodes[0]
+            implantation_coordinate = electrode._position
+            lead_direction = electrode._direction
+            lead_diam = electrode._parameters.lead_diameter
+
+            field_on_probed_points_collapsed = point_model.collapse_VTA(
+                field_on_probed_points,
+                implantation_coordinate,
+                lead_direction,
+                lead_diam,
+            )
+
+            df_collapsed_field = pd.DataFrame(
+                np.concatenate(
+                    [index, field_on_probed_points_collapsed, inside_csf, inside_encap],
+                    axis=1,
+                ),
+                columns=[
+                    "index",
+                    "x-pt",
+                    "y-pt",
+                    "z-pt",
+                    "x-field",
+                    "y-field",
+                    "z-field",
+                    "magnitude",
+                    "inside_csf",
+                    "inside_encap",
+                ],
+            )
+            if template_space:
+                df_collapsed_field.to_csv(
+                    os.path.join(self.output_path, "E_field_Template_space.csv"),
+                    index=False,
+                )
+            else:
+                df_collapsed_field.to_csv(
+                    os.path.join(self.output_path, "E_field_MRI_space.csv"),
+                    index=False,
+                )
+
         else:
-            df_field.to_csv(
-                os.path.join(self.output_path, "E_field_MRI_space.csv"),
-                index=False,
-            )
+            if template_space:
+                df_field.to_csv(
+                    os.path.join(self.output_path, "E_field_Template_space.csv"),
+                    index=False,
+                )
+            else:
+                df_field.to_csv(
+                    os.path.join(self.output_path, "E_field_MRI_space.csv"),
+                    index=False,
+                )
 
         # HDF5 exports only for Pathways
         if isinstance(point_model, Pathway):
@@ -617,6 +666,11 @@ class VolumeConductor(ABC):
                 field_mags_full,
                 os.path.join(self.output_path, f"E_field_solution{suffix}.nii"),
             )
+            if activation_threshold is None:
+                raise ValueError(
+                    "Activation threshhold needs to be define in the inputs."
+                )
+
             point_model.save_as_nifti(
                 field_mags_full,
                 os.path.join(self.output_path, f"VTA_solution{suffix}.nii"),

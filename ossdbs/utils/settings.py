@@ -89,6 +89,7 @@ class Settings:
                 "Shape": {"x": 10, "y": 10, "z": 10},
                 "Direction": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 1},
                 "PointDistance[mm]": 0.1,
+                "CollapseVTA": False,
             },
             "VoxelLattice": {
                 "Active": False,
@@ -98,6 +99,7 @@ class Settings:
         "OutputPath": "Results",
         "SaveImpedance": False,
         "ExportVTK": False,
+        "ExportElectrode": False,
         "TemplateSpace": True,
         "ModelSide": 0,
         "CalcAxonActivation": False,
