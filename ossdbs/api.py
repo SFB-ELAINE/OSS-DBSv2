@@ -18,7 +18,7 @@ from ossdbs.fem import (
     VolumeConductorNonFloating,
 )
 from ossdbs.model_geometry import BoundingBox, BrainGeometry, ModelGeometry
-from ossdbs.point_analysis import Lattice, Pathway, PointModel, VoxelLattice, imp_coord
+from ossdbs.point_analysis import Lattice, Pathway, PointModel, VoxelLattice
 from ossdbs.stimulation_signals import (
     FrequencyDomainSignal,
     RectangleSignal,
@@ -382,7 +382,7 @@ def run_volume_conductor_model(settings, volume_conductor):
         if settings["ComputeImpedance"]:
             _logger.info("Will compute impedance at each frequency")
             compute_impedance = True
-    if "ExportVTK" in settings:     
+    if "ExportVTK" in settings:
         export_vtk = settings["ExportVTK"]
         if export_vtk:
             _logger.info("Will export solution to VTK")

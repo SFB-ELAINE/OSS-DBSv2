@@ -29,8 +29,6 @@ class VolumeConductor(ABC):
     conductivity : ConductivityCF
     model_geometry : ModelGeometry
     solver : Solver
-
-    # TODO add more abstractmethod ?
     """
 
     def __init__(
@@ -57,7 +55,6 @@ class VolumeConductor(ABC):
         self._impedances = None
         self._mesh = Mesh(self._model_geometry.geometry, self._order)
         if meshing_parameters["LoadMesh"]:
-            # TODO check that LoadPath is there if LoadMesh
             self._mesh.load_mesh(meshing_parameters["LoadPath"])
         else:
             self._mesh.generate_mesh(meshing_parameters["MeshingHypothesis"])
@@ -72,6 +69,10 @@ class VolumeConductor(ABC):
         # to write results
         self._output_path = None
 
+        # frequency at which VTK shall be exported
+        # TODO define export_frequency at mean conductivity
+        self._export_frequency = None
+
     @abstractmethod
     def compute_solution(self, frequency: float) -> None:
         """Compute solution at frequency."""
@@ -85,13 +86,29 @@ class VolumeConductor(ABC):
         template_space: bool = False,
         activation_threshold: Optional[float] = None,
     ) -> dict:
-        """Run entire volume conductor model.
+        """Run volume conductor model at all frequencies.
+
+        Parameters
+        ----------
+        compute_impedance: bool
+            If True, the impedance will be computed at each frequency.
+        export_vtk: bool
+            VTK export for visualization in ParaView
+        point_model: PointModel
+            PointModel to extract solution at points for VTA / PAM
+        template_space: bool
+            TODO documentation
+        activation_threshold: float
+            If VTA is estimated by threshold, provide it here.
 
         Notes
         -----
         TODO full documentation
+        The volume conductor model is run at all frequencies
+        and the time-domain signal is computed (if relevant).
         """
         timings: dict = {}
+        self._export_frequency = np.median(self.signal.frequencies)
         if point_model is not None:
             timings["FieldExport"] = []
         if export_vtk:
@@ -162,13 +179,17 @@ class VolumeConductor(ABC):
                 _logger.debug(
                     f"Estimated currents through contacts: {estimated_currents}"
                 )
-            if export_vtk:
+            if export_vtk and np.isclose(frequency, self._export_frequency):
+                # TODO in time / frequency domain?
                 self.vtk_export()
                 time_1 = time.time()
                 timings["VTKExport"].append(time_1 - time_0)
                 time_0 = time_1
             if point_model is not None:
-                self.export_points(point_model, activation_threshold, template_space)
+                # TODO in time / frequency domain?
+                self.export_points(
+                    frequency, point_model, activation_threshold, template_space
+                )
                 time_1 = time.time()
                 timings["FieldExport"] = time_1 - time_0
                 time_0 = time_1
@@ -307,7 +328,9 @@ class VolumeConductor(ABC):
         currents: Optional[dict] = None,
         surface_impedances: Optional[dict] = None,
     ) -> None:
-        """TODO document."""
+        """Overwrite the values at the contacts.
+        Needed for boundary conditions in time-dependent runs.
+        """
         if surface_impedances is None:
             surface_impedances = {}
         if currents is None:
@@ -325,10 +348,12 @@ class VolumeConductor(ABC):
 
     @property
     def potential(self) -> ngsolve.GridFunction:
+        """Return solution at most recent frequency."""
         return self._potential
 
     @property
     def frequency(self) -> float:
+        """Most recent frequency, not equal to the frequency of the signal!."""
         return self._frequency
 
     def evaluate_potential_at_points(self, lattice: np.ndarray) -> np.ndarray:
@@ -496,7 +521,11 @@ class VolumeConductor(ABC):
         ).save(os.path.join(self.output_path, "material"))
 
     def export_points(
-        self, point_model, activation_threshold: float, template_space: bool
+        self,
+        frequency: float,
+        point_model: PointModel,
+        activation_threshold: float,
+        template_space: bool,
     ) -> None:
         """Export all relevant properties to CSV, HDF5, or Nifty format.
 
@@ -602,27 +631,26 @@ class VolumeConductor(ABC):
                 )
 
         # Nifti exports
+        # TODO wrap in function
         if isinstance(point_model, VoxelLattice) or isinstance(point_model, Lattice):
-            field_mags_full = np.zeros(lattice_mask.shape[0], float)
-            # TODO set all values to -1?
-            # field_mags_full -= 1
-            # overwrite values inside mesh
-            field_mags_full[lattice_mask[:, 0]] = field_mags[:, 0]
+            if np.isclose(frequency, self._export_frequency):
+                field_mags_full = np.zeros(lattice_mask.shape[0], float)
+                field_mags_full[lattice_mask[:, 0]] = field_mags[:, 0]
 
-            if type(point_model) == VoxelLattice:
-                suffix = ""
-            elif isinstance(point_model, Lattice):
-                suffix = "_WA"
-            point_model.save_as_nifti(
-                field_mags_full,
-                os.path.join(self.output_path, f"E_field_solution{suffix}.nii"),
-            )
-            point_model.save_as_nifti(
-                field_mags_full,
-                os.path.join(self.output_path, f"VTA_solution{suffix}.nii"),
-                binarize=True,
-                activation_threshold=activation_threshold,
-            )
+                if isinstance(point_model, VoxelLattice):
+                    suffix = ""
+                elif isinstance(point_model, Lattice):
+                    suffix = "_WA"
+                point_model.save_as_nifti(
+                    field_mags_full,
+                    os.path.join(self.output_path, f"E_field_solution{suffix}.nii"),
+                )
+                point_model.save_as_nifti(
+                    field_mags_full,
+                    os.path.join(self.output_path, f"VTA_solution{suffix}.nii"),
+                    binarize=True,
+                    activation_threshold=activation_threshold,
+                )
 
     def floating_values(self) -> dict:
         """Read out floating potentials."""

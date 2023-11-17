@@ -1,3 +1,4 @@
+import os
 from typing import List
 
 import netgen.meshing
@@ -31,6 +32,8 @@ class Mesh:
         self._mesh.Curve(order=self.order)
 
     def load_mesh(self, filename: str) -> None:
+        if not os.path.isfile(filename):
+            raise ValueError("Provide a correct filename to load the mesh")
         self._mesh = ngsolve.Mesh(filename=filename)
         self._mesh.ngmesh.SetGeometry(self._geometry)
         self._mesh.Curve(order=self.order)
