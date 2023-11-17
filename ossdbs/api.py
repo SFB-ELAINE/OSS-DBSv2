@@ -88,6 +88,13 @@ def generate_electrodes(settings: dict):
                 "EncapsulationLayer"
             ]["Thickness[mm]"]
         electrodes.append(electrode)
+
+    if settings["ExportElectrode"]:
+        n_electrode = 0
+        for electrode in electrodes:
+            n_electrode = n_electrode + 1
+            electrode.export_electrode(settings["OutputPath"], n_electrode)
+
     return electrodes
 
 
@@ -233,10 +240,15 @@ def generate_neuron_grid(settings: dict) -> PointModel:
         dir_par = settings["PointModel"]["Lattice"]["Direction"]
         direction = dir_par["x[mm]"], dir_par["y[mm]"], dir_par["z[mm]"]
         distance = settings["PointModel"]["Lattice"]["PointDistance[mm]"]
+        collapse_vta = settings["PointModel"]["Lattice"]["CollapseVTA"]
 
         _logger.info("from lattice")
         return Lattice(
-            shape=shape, center=center, distance=distance, direction=direction
+            shape=shape,
+            center=center,
+            distance=distance,
+            direction=direction,
+            collapse_vta=collapse_vta,
         )
     elif settings["PointModel"]["VoxelLattice"]["Active"]:
         _logger.info("from voxel lattice")

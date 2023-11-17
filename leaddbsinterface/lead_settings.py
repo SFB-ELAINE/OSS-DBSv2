@@ -6,7 +6,6 @@ import numpy as np
 import scipy
 
 from ossdbs.electrodes.defaults import default_electrode_parameters
-from ossdbs.utils.settings import Settings
 
 
 class LeadSettings:
@@ -150,6 +149,7 @@ class LeadSettings:
                         "z[mm]": 1,
                     },
                     "PointDistance[mm]": 0.5,
+                    "CollapseVTA": bool(self.remove_electrode()),
                 }
             },
             "StimulationSignal": {"CurrentControlled": current_controlled},
@@ -158,10 +158,9 @@ class LeadSettings:
             "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATHS[hemis_idx]),
             "FailFlag": side,
             "TemplateSpace": self.get_est_in_temp(),
+            "Solver": {},
         }
 
-        partial_settings = Settings(partial_dict)
-        complete_settings = partial_settings.complete_settings()
         # do not use h1amg as coarsetype preconditioner
         # if floating potentials are involved
         # set also to floating if multicontact current-controlled
@@ -169,10 +168,11 @@ class LeadSettings:
             if current_controlled:
                 floating = True
         if floating:
-            complete_settings["Solver"]["PreconditionerKwargs"] = {
+            partial_dict["Solver"]["PreconditionerKwargs"] = {
                 "coarsetype": "local"
             }
-        return complete_settings
+
+        return partial_dict
 
     # def save_to_oss_json(self, json_path, hemis_idx=0):
     #
@@ -281,6 +281,27 @@ class LeadSettings:
 
     def get_cur_ctrl(self):
         return self._get_arr("current_control").T[0]
+
+    def remove_electrode(self):
+        return self._get_num("removeElectrode")
+
+    def get_neuron_model(self):
+        return self._get_str("neuronModel")
+
+    def get_signal_type(self):
+        return self._get_str("signalType")
+
+    def get_pulse_width(self):
+        return self._get_num("pulseWidth")
+
+    def check_biphasic(self):
+        return self._get_num("biphasic")
+
+    def do_adaptive_ref(self):
+        return self._get_num("AdaptiveRef")
+
+    def get_act_thresh_vta(self):
+        return self._get_num("Activation_threshold_VTA")
 
     def get_phi_vec(self):
         return self._get_arr("Phi_vector")

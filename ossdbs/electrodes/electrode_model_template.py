@@ -3,7 +3,9 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import netgen
+import netgen.occ as occ
 import numpy as np
+from ngsolve import BND, Mesh, VTKOutput
 
 _logger = logging.getLogger(__name__)
 
@@ -176,3 +178,21 @@ class ElectrodeModel(ABC):
 
         """
         return self._parameters.lead_diameter / ratio
+
+    def export_electrode(self, output_path, n_electrode) -> None:
+        """Export electrode as VTK file."""
+        _logger.info("Export electrode as VTK file")
+        occgeo = occ.OCCGeometry(self.geometry)
+        mesh_electrode = Mesh(occgeo.GenerateMesh())
+        bnd_dict = {}
+        for idx, contact in enumerate(self.boundaries):
+            bnd_dict[contact] = idx
+        boundary_cf = mesh_electrode.BoundaryCF(bnd_dict, default=-1)
+
+        VTKOutput(
+            ma=mesh_electrode,
+            coefs=[boundary_cf],
+            names=["boundaries"],
+            filename=f"{output_path}/electrode_{n_electrode}",
+            subdivision=0,
+        ).Do(vb=BND)

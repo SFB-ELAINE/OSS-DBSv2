@@ -165,3 +165,6 @@ class VoxelLattice(PointModel):
         output_path: str,
     ) -> None:
         raise NotImplementedError("Lattice results can not be stored in HDF5 format.")
+    
+    def collapse_VTA(self, field_on_points, implantation_coordinate, lead_direction, lead_diam):
+        raise NotImplementedError("Collapse VTA for voxellattice not implemented")
