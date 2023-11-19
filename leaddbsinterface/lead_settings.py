@@ -27,6 +27,9 @@ class LeadSettings:
             self._file = h5py.File(str(mat_file_path), "r")
             self._h5 = True
         except:
+            print("\n Please, save oss-dbs_parameters using 'save(oss-dbs_parameters_path, 'settings', '-v7.3')' ")
+            raise SystemExit
+            # ToDo: Fix non-binary .mat import
             self._file = scipy.io.loadmat(mat_file_path)
             self._h5 = False
 
@@ -153,12 +156,13 @@ class LeadSettings:
                 }
             },
             "StimulationSignal": {"CurrentControlled": current_controlled},
-            "CalcAxonActivation": self.get_calc_axon_act(),
+            "CalcAxonActivation": int(self.get_calc_axon_act()),
             "ActivationThresholdVTA": self.get_act_thresh_vta(),
             "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATHS[hemis_idx]),
             "FailFlag": side,
             "TemplateSpace": self.get_est_in_temp(),
             "Solver": {},
+            "FEMOrder": 2 + int(self.get_calc_axon_act()),  # 2nd order is enough for stim volumes
         }
 
         # do not use h1amg as coarsetype preconditioner
@@ -270,8 +274,8 @@ class LeadSettings:
     # Always recalculated from the other settings
     # IMPORTANT: it is actually not native but scrf!
     def get_rot_z(self, index_side):
-        head_nat = self.get_head_nat()[:, index_side]
-        y = self.get_y_mark_nat()[:, index_side] - head_nat
+        head_nat = self.get_head_nat()[index_side, :]
+        y = self.get_y_mark_nat()[index_side, :] - head_nat
         y_postop = y / np.linalg.norm(y)
         phi = np.arctan2(-y_postop[0], y_postop[1])
         return phi * 180.0 / np.pi
@@ -503,16 +507,11 @@ class LeadSettings:
             # Fix of VC random grounding bug for Lead-DBS stim settings
             pulse_amps[pulse_amps == 0] = float("nan")
 
-
         # make list of dictionaries for the electrode settings
         # for now use one electrode at a time
 
         for index_side in [hemis_idx]:
             pulse_amp = pulse_amps[index_side, :]
-
-            # shift all voltages if bipolar case to have 0V and cathodes (as in the stimulators)
-            if np.nanmax(pulse_amp) > 0.0:
-                pulse_amp[:] = pulse_amp[:] - np.nanmax(pulse_amp)
 
             if self.get_cur_ctrl()[index_side]:
                 # for CC, check if currents sum up to 0.0.
@@ -521,6 +520,9 @@ class LeadSettings:
             else:
                 # for VC, case grounding is defined explicitly
                 case_grounding = bool(self.get_case_grnd()[index_side])
+                # shift all voltages if bipolar case to have 0V and cathodes (as in the stimulators)
+                if np.nanmax(pulse_amp) > 0.0:
+                    pulse_amp[:] = pulse_amp[:] - np.nanmax(pulse_amp)
 
             # cntct_dicts is a list of the contacts that will go in the json
             # for this electrode
