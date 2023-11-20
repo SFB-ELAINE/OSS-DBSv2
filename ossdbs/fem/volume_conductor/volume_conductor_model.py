@@ -7,11 +7,12 @@ from typing import List, Optional
 import ngsolve
 import numpy as np
 import pandas as pd
+from ossdbs.utils.collapse_vta import get_collapsed_VTA
 
 from ossdbs.fem.mesh import Mesh
 from ossdbs.fem.solver import Solver
 from ossdbs.model_geometry import Contacts, ModelGeometry
-from ossdbs.point_analysis import Lattice, Pathway, PointModel, VoxelLattice
+from ossdbs.point_analysis import Lattice, Pathway, PointModel, TimeResult, VoxelLattice
 from ossdbs.stimulation_signals import FrequencyDomainSignal
 from ossdbs.utils.vtk_export import FieldSolution
 
@@ -52,7 +53,11 @@ class VolumeConductor(ABC):
         self._complex = conductivity.is_complex
         self.signal = frequency_domain_signal
 
+        # to store impedances at all frequencies
         self._impedances = None
+        # to store the voltage (current-controlled)
+        # or current (voltage-controlled) stimulation
+        self._free_stimulation_variable = None
         self._mesh = Mesh(self._model_geometry.geometry, self._order)
         if meshing_parameters["LoadMesh"]:
             self._mesh.load_mesh(meshing_parameters["LoadPath"])
@@ -83,7 +88,6 @@ class VolumeConductor(ABC):
         compute_impedance: bool = False,
         export_vtk: bool = False,
         point_model: PointModel = None,
-        template_space: bool = False,
         activation_threshold: Optional[float] = None,
     ) -> dict:
         """Run volume conductor model at all frequencies.
@@ -96,8 +100,6 @@ class VolumeConductor(ABC):
             VTK export for visualization in ParaView
         point_model: PointModel
             PointModel to extract solution at points for VTA / PAM
-        template_space: bool
-            TODO documentation
         activation_threshold: float
             If VTA is estimated by threshold, provide it here.
 
@@ -111,17 +113,39 @@ class VolumeConductor(ABC):
         self._export_frequency = np.median(self.signal.frequencies)
         if point_model is not None:
             timings["FieldExport"] = []
+            (
+                grid_pts,
+                lattice_mask,
+                lattice,
+                inside_csf,
+                inside_encap,
+                axon_index,
+            ) = self.prepare_point_model_grids()
+            export_collapsed_vta = (
+                isinstance(point_model, Lattice) and point_model._collapse_vta
+            )
+            export_nifti = isinstance(point_model, VoxelLattice) or isinstance(
+                point_model, Lattice
+            )
+            tmp_potential_freq_domain = np.zeros(shape=(len(self.signal.frequencies), len(lattice)))
+            tmp_Ex_freq_domain = np.zeros(shape=(len(self.signal.frequencies), len(lattice)))
+            tmp_Ey_freq_domain = np.zeros(shape=(len(self.signal.frequencies), len(lattice)))
+            tmp_Ez_freq_domain = np.zeros(shape=(len(self.signal.frequencies), len(lattice)))
         if export_vtk:
             timings["VTKExport"] = []
         timings["ComputeSolution"] = []
 
+        dtype = float
+        if self.is_complex:
+            dtype = complex
+        self._free_stimulation_variable = np.zeros(
+            shape=(len(self.signal.frequencies)), dtype=dtype
+        )
         if compute_impedance:
-            if self.is_complex:
-                self._impedances = np.ndarray(
-                    shape=(len(self.signal.frequencies)), dtype=complex
-                )
-            else:
-                self._impedances = np.ndarray(shape=(len(self.signal.frequencies)))
+            self._impedances = np.ndarray(
+                shape=(len(self.signal.frequencies)), dtype=dtype
+            )
+
         for idx, frequency in enumerate(self.signal.frequencies):
             _logger.info(f"Computing at frequency: {frequency}")
             if not self.current_controlled:
@@ -174,20 +198,60 @@ class VolumeConductor(ABC):
                 self._potential.vec[:] = (
                     scale_voltage * self._potential.vec.FV().NumPy()
                 )
+            # TODO save voltages / currents at contact here
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 estimated_currents = self.estimate_currents()
                 _logger.debug(
                     f"Estimated currents through contacts: {estimated_currents}"
                 )
+
+            # exports in frequency domain
             if export_vtk and np.isclose(frequency, self._export_frequency):
                 self.vtk_export()
                 time_1 = time.time()
                 timings["VTKExport"].append(time_1 - time_0)
                 time_0 = time_1
+
+            # export point results
             if point_model is not None:
-                self.export_points(
-                    frequency, point_model, activation_threshold, template_space
+                potentials = self.evaluate_potential_at_points(lattice)
+                fields = self.evaluate_field_at_points(lattice)
+                field_mags = np.linalg.norm(fields, axis=1).reshape(
+                    (fields.shape[0], 1)
                 )
+                # copy values for time-domain analysis
+                tmp_potential_freq_domain[idx, :] = potentials[:]
+                tmp_Ex_freq_domain[idx, :] = fields[0, :]
+                tmp_Ey_freq_domain[idx, :] = fields[1, :]
+                tmp_Ez_freq_domain[idx, :] = fields[2, :]
+                if np.isclose(frequency, self._export_frequency):
+                    self.export_potential_to_csv(
+                        frequency,
+                        potentials,
+                        axon_index,
+                        lattice,
+                        inside_csf,
+                        inside_encap,
+                    )
+                    self.export_field_to_csv(
+                        frequency,
+                        fields,
+                        field_mags,
+                        axon_index,
+                        lattice,
+                        inside_csf,
+                        inside_encap,
+                        export_collapsed_vta,
+                    )
+                    if export_nifti:
+                        self.export_nifti_files(
+                            frequency, point_model, activation_threshold
+                        )
+                    # HDF5 exports only for Pathways
+                    if isinstance(point_model, Pathway):
+                        self.export_to_hdf5(
+                            point_model, lattice, potentials, fields, field_mags
+                        )
                 time_1 = time.time()
                 timings["FieldExport"] = time_1 - time_0
                 time_0 = time_1
@@ -204,7 +268,41 @@ class VolumeConductor(ABC):
             )
             df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
 
+        if point_model and len(self.signal.frequencies) > 1:
+            _logger.info("Computing time-domain signal from frequency-domain")
+            time_result = self.reconstruct_time_signals(lattice, tmp_potential_freq_domain, tmp_Ex_freq_domain, tmp_Ey_freq_domain, tmp_Ez_freq_domain, inside_csf, inside_encap)
+            # data pass correct time_result
+            point_model.save(
+                time_result, os.path.join(self.output_path, "oss_time_result.h5")
+            )
+
         return timings
+
+    def reconstruct_time_signals(
+        self, lattice, potential_freq_domain, Ex_freq_domain, Ey_freq_domain, Ez_freq_domain, inside_csf, inside_encap
+    ) -> List([TimeResult, TimeResult]):
+        """Compute time signals from frequency-domain data."""
+        tmp_potential = np.zeros(np.int(self.signal.frequencies[-1] / self.frequency))
+        frequency_indices = np.int(self.signal.frequencies / self.frequency)
+        potential_in_time = np.zeros(shape=potential_freq_domain.shape)
+        timesteps = np.arange(0, n / self.frequency, 1.0 / self.frequency)
+        # go through points in lattice
+        for point_idx in lattice:
+            # write non-zero frequencies
+            # no zeroing needed because all signals are non-zero at same frequencies!
+            # TODO band approximation
+            for idx, idx_freq in enumerate(frequency_indices):
+                tmp_potential[idx_freq] = potential_freq_domain[point_idx, idx]
+            # convert to time domain
+            potential_in_time[point_idx, :] = self.signal.retrieve_time_domain_signal(tmp_potential)
+
+        return TimeResult(time_steps=timesteps,
+                          points=lattice,
+                          potential=potential,
+                          electric_field_vector,
+                          electric_field_magnitude,
+                          inside_csf=inside_csf,
+                          inside_encap=inside_encap)
 
     @property
     def output_path(self) -> str:
@@ -225,7 +323,7 @@ class VolumeConductor(ABC):
 
     @property
     def conductivity_cf(self) -> ConductivityCF:
-        """Retruns the coefficient function of the conductivity."""
+        """Returns the coefficient function of the conductivity."""
         return self._conductivity_cf
 
     @property
@@ -518,28 +616,17 @@ class VolumeConductor(ABC):
             False,
         ).save(os.path.join(self.output_path, "material"))
 
-    def export_points(
-        self,
-        frequency: float,
-        point_model: PointModel,
-        activation_threshold: float,
-        template_space: bool,
-    ) -> None:
-        """Export all relevant properties to CSV, HDF5, or Nifty format.
-
-        Notes
-        -----
-        Only for pathways a HDF5 file is generated and only for the lattice
-        model, a Nifty file is generated
+    def prepare_point_model_grids(self, point_model):
+        """Prepare grid for point evaluation and label points outside grid.
 
         Parameters
         ----------
-        point_model: oss_dbs point_model
-            Contains the points on which to evaluate the solution
+        point_model: PointModel
+            PointModel to be used
 
-        activation_threshold: float
-
-        template_space: bool
+        Returns
+        -------
+        grid_pts: TODO documentation
         """
         grid_pts = point_model.points_in_mesh(self.mesh)
         lattice_mask = np.invert(grid_pts.mask)
@@ -548,25 +635,45 @@ class VolumeConductor(ABC):
         inside_encap = self.get_points_in_encapsulation_layer(lattice)
         if isinstance(point_model, Pathway):
             # if pathway, always mark complete axons
-            axon_mask = point_model._axon_mask
+            if point_model._axon_mask is None:
+                raise RuntimeError("The creation of the axon_mask did not work")
             [inside_csf, inside_encap] = point_model.filter_csf_encap(
                 inside_csf, inside_encap
             )
             # create index for axons
-            index = point_model.create_index(lattice)
+            axon_index = point_model.create_index(lattice)
         else:
-            index = np.reshape(np.arange(len(lattice)), (len(lattice), 1))
+            axon_index = np.reshape(np.arange(len(lattice)), (len(lattice), 1))
+        return grid_pts, lattice_mask, lattice, inside_csf, inside_encap, axon_index
 
-        potentials = self.evaluate_potential_at_points(lattice)
+    def export_potential_to_csv(
+        self,
+        frequency: float,
+        potentials: np.ndarray,
+        axon_index,
+        lattice,
+        inside_csf,
+        inside_encap,
+    ) -> None:
+        """Export potential to CSV.
 
-        fields = self.evaluate_field_at_points(lattice)
-        field_mags = np.linalg.norm(fields, axis=1).reshape((fields.shape[0], 1))
+        Notes
+        -----
+        Only for pathways a HDF5 file is generated and only for the lattice
+        model, a Nifti file is generated
+        TODO Documentation needed!!!
 
-        # CSV exports
+        Parameters
+        ----------
+        point_model: oss_dbs point_model
+            Contains the points on which to evaluate the solution
+
+        activation_threshold: float
+        """
         df_pot = pd.DataFrame(
             np.concatenate(
                 [
-                    index,
+                    axon_index,
                     lattice,
                     potentials.reshape((potentials.shape[0], 1)),
                     inside_csf,
@@ -584,10 +691,24 @@ class VolumeConductor(ABC):
                 "inside_encap",
             ],
         )
+        # save frequency
+        df_pot["frequency"] = frequency
         df_pot.to_csv(os.path.join(self.output_path, "oss_potentials.csv"), index=False)
+
+    def export_field_to_csv(
+        self,
+        frequency,
+        fields,
+        field_mags,
+        axon_index,
+        lattice,
+        inside_csf,
+        inside_encap,
+        collapse_VTA,
+    ):
         df_field = pd.DataFrame(
             np.concatenate(
-                [index, lattice, fields, field_mags, inside_csf, inside_encap],
+                [axon_index, lattice, fields, field_mags, inside_csf, inside_encap],
                 axis=1,
             ),
             columns=[
@@ -603,8 +724,10 @@ class VolumeConductor(ABC):
                 "inside_encap",
             ],
         )
-        if isinstance(point_model, Lattice) and point_model._collapse_vta:
-            # only collapse VTA if slected and point model is lattice
+        # save frequency
+        df_field["frequency"] = frequency
+
+        if collapse_VTA:
             _logger.info("Collapse VTA by virtually removing the electrode")
             field_on_probed_points = np.concatenate(
                 [lattice, fields, field_mags], axis=1
@@ -615,7 +738,7 @@ class VolumeConductor(ABC):
             lead_direction = electrode._direction
             lead_diam = electrode._parameters.lead_diameter
 
-            field_on_probed_points_collapsed = point_model.collapse_VTA(
+            field_on_probed_points_collapsed = get_collapsed_VTA(
                 field_on_probed_points,
                 implantation_coordinate,
                 lead_direction,
@@ -624,7 +747,12 @@ class VolumeConductor(ABC):
 
             df_collapsed_field = pd.DataFrame(
                 np.concatenate(
-                    [index, field_on_probed_points_collapsed, inside_csf, inside_encap],
+                    [
+                        axon_index,
+                        field_on_probed_points_collapsed,
+                        inside_csf,
+                        inside_encap,
+                    ],
                     axis=1,
                 ),
                 columns=[
@@ -640,69 +768,50 @@ class VolumeConductor(ABC):
                     "inside_encap",
                 ],
             )
-            if template_space:
-                df_collapsed_field.to_csv(
-                    os.path.join(self.output_path, "E_field_Template_space.csv"),
-                    index=False,
-                )
-            else:
-                df_collapsed_field.to_csv(
-                    os.path.join(self.output_path, "E_field_MRI_space.csv"),
-                    index=False,
-                )
-
+            df_collapsed_field.to_csv(
+                os.path.join(self.output_path, "E_field.csv"),
+                index=False,
+            )
         else:
-            if template_space:
-                df_field.to_csv(
-                    os.path.join(self.output_path, "E_field_Template_space.csv"),
-                    index=False,
-                )
-            else:
-                df_field.to_csv(
-                    os.path.join(self.output_path, "E_field_MRI_space.csv"),
-                    index=False,
-                )
+            df_field.to_csv(
+                os.path.join(self.output_path, "E_field.csv"),
+                index=False,
+            )
 
-        # HDF5 exports only for Pathways
-        if isinstance(point_model, Pathway):
-            if axon_mask is None:
-                raise RuntimeError("The creation of the axon_mask did not work")
-            else:
-                point_model.save_hdf5(
-                    axon_mask,
-                    lattice,
-                    potentials,
-                    fields,
-                    field_mags,
-                    self.output_path,
-                )
+    def export_to_hdf5(self, point_model, lattice, potentials, fields, field_mags):
+        """Export solution to HDF5 file."""
+        point_model.save_hdf5(lattice, potentials, fields, field_mags, self.output_path)
 
-        # Nifti exports
-        # TODO wrap in function
-        if isinstance(point_model, VoxelLattice) or isinstance(point_model, Lattice):
-            if np.isclose(frequency, self._export_frequency):
-                field_mags_full = np.zeros(lattice_mask.shape[0], float)
-                field_mags_full[lattice_mask[:, 0]] = field_mags[:, 0]
+    def export_nifti_files(
+        self,
+        field_mags: np.ndarray,
+        point_model: PointModel,
+        activation_threshold: float,
+        lattice_mask,
+    ) -> None:
+        """Export field to Nifti format.
 
-                if isinstance(point_model, VoxelLattice):
-                    suffix = ""
-                elif isinstance(point_model, Lattice):
-                    suffix = "_WA"
-                point_model.save_as_nifti(
-                    field_mags_full,
-                    os.path.join(self.output_path, f"E_field_solution{suffix}.nii"),
-                )
-                if activation_threshold is None:
-                    raise ValueError(
-                        "Activation threshold needs to be defined in the inputs."
-                    )
+        Parameters
+        ----------
+        point_model: oss_dbs point_model
+            Contains the points on which to evaluate the solution
 
-                point_model.save_as_nifti(
-                    field_mags_full,
-                    os.path.join(self.output_path, f"VTA_solution{suffix}.nii"),
-                    binarize=True,
-                    activation_threshold=activation_threshold,
-                )
+        activation_threshold: float
+        """
+        field_mags_full = np.zeros(lattice_mask.shape[0], float)
+        field_mags_full[lattice_mask[:, 0]] = field_mags[:, 0]
+
+        point_model.save_as_nifti(
+            field_mags_full,
+            os.path.join(self.output_path, "E_field_solution.nii"),
+        )
+
+        point_model.save_as_nifti(
+            field_mags_full,
+            os.path.join(self.output_path, "VTA_solution.nii"),
+            binarize=True,
+            activation_threshold=activation_threshold,
+        )
 
     def floating_values(self) -> dict:
         """Read out floating potentials."""

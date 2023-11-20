@@ -142,14 +142,14 @@ class Pathway(PointModel):
         idx = 0
         for i in range(total_number_axons):
             if keep_axon[i]:
-                lattice[idx * axon_length : (idx + 1) * axon_length, 0] = x.data[
-                    i * axon_length : (i + 1) * axon_length
+                lattice[idx * axon_length: (idx + 1) * axon_length, 0] = x.data[
+                    i * axon_length: (i + 1) * axon_length
                 ]
-                lattice[idx * axon_length : (idx + 1) * axon_length, 1] = y.data[
-                    i * axon_length : (i + 1) * axon_length
+                lattice[idx * axon_length: (idx + 1) * axon_length, 1] = y.data[
+                    i * axon_length: (i + 1) * axon_length
                 ]
-                lattice[idx * axon_length : (idx + 1) * axon_length, 2] = z.data[
-                    i * axon_length : (i + 1) * axon_length
+                lattice[idx * axon_length: (idx + 1) * axon_length, 2] = z.data[
+                    i * axon_length: (i + 1) * axon_length
                 ]
                 idx = idx + 1
         self._axon_mask = keep_axon
@@ -176,7 +176,7 @@ class Pathway(PointModel):
         for i in range(total_number_axons):
             for j in range(axon_length):
                 if inside_csf[i * axon_length + j]:
-                    axons_csf[i * axon_length : (i + 1) * axon_length] = [
+                    axons_csf[i * axon_length: (i + 1) * axon_length] = [
                         True
                     ] * axon_length
                     j = axon_length - 1
@@ -184,7 +184,7 @@ class Pathway(PointModel):
         for i in range(total_number_axons):
             for j in range(axon_length):
                 if inside_encap[i * axon_length + j]:
-                    axons_encap[i * axon_length : (i + 1) * axon_length] = [
+                    axons_encap[i * axon_length: (i + 1) * axon_length] = [
                         True
                     ] * axon_length
                     j = axon_length - 1
@@ -197,7 +197,6 @@ class Pathway(PointModel):
 
     def save_hdf5(
         self,
-        axon_mask: list,
         lattice: np.ndarray,
         potentials: np.ndarray,
         fields: np.ndarray,
@@ -219,6 +218,10 @@ class Pathway(PointModel):
         field_mags: np.ndarray
 
         output_path: str
+
+        Notes
+        -----
+        TODO split in subfunctions
         """
         population_names = self.get_population_names()
         axon_names = self.get_axon_names()
@@ -229,10 +232,10 @@ class Pathway(PointModel):
         for i in range(len(population_names)):
             group = h5f_pts.create_group(population_names[i])
             for j in range(n_axons[i]):
-                if axon_mask[sum(n_axons[:i]) + j]:
+                if self._axon_mask[sum(n_axons[:i]) + j]:
                     group.create_dataset(
                         axon_names[j],
-                        data=lattice[idx * axon_length : (idx + 1) * axon_length, :],
+                        data=lattice[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     idx = idx + 1
         h5f_pts.close()
@@ -243,14 +246,14 @@ class Pathway(PointModel):
         for i in range(len(population_names)):
             group = h5f_pot.create_group(population_names[i])
             for j in range(n_axons[i]):
-                if axon_mask[sum(n_axons[:i]) + j]:
+                if self._axon_mask[sum(n_axons[:i]) + j]:
                     group.create_dataset(
                         axon_names[j],
-                        data=lattice[idx * axon_length : (idx + 1) * axon_length, :],
+                        data=lattice[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     group.create_dataset(
                         axon_names[j] + "_potentials",
-                        data=potentials[idx * axon_length : (idx + 1) * axon_length, :],
+                        data=potentials[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     idx = idx + 1
         h5f_pot.close()
@@ -261,18 +264,18 @@ class Pathway(PointModel):
         for i in range(len(population_names)):
             group = h5f_field.create_group(population_names[i])
             for j in range(n_axons[i]):
-                if axon_mask[sum(n_axons[:i]) + j]:
+                if self._axon_mask[sum(n_axons[:i]) + j]:
                     group.create_dataset(
                         axon_names[j],
-                        data=lattice[idx * axon_length : (idx + 1) * axon_length, :],
+                        data=lattice[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     group.create_dataset(
                         axon_names[j] + "_field_vecs",
-                        data=fields[idx * axon_length : (idx + 1) * axon_length, :],
+                        data=fields[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     group.create_dataset(
                         axon_names[j] + "_field_mags",
-                        data=field_mags[idx * axon_length : (idx + 1) * axon_length, :],
+                        data=field_mags[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     idx = idx + 1
         h5f_field.close()
@@ -287,7 +290,7 @@ class Pathway(PointModel):
         index = np.zeros(shape=len(lattice), dtype=int)
         axon_length = self.get_axon_length()
         for i in range(int(len(lattice) / axon_length)):
-            index[i * axon_length : (i + 1) * axon_length] = int(i)
+            index[i * axon_length: (i + 1) * axon_length] = int(i)
         return np.reshape(index, (len(index), 1))
 
     def get_axon_length(self) -> int:

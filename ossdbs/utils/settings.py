@@ -100,7 +100,6 @@ class Settings:
         "SaveImpedance": False,
         "ExportVTK": False,
         "ExportElectrode": False,
-        "TemplateSpace": True,
         "ModelSide": 0,
         "CalcAxonActivation": False,
         "ActivationThresholdVTA": None,

@@ -356,7 +356,6 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
         cutoff_frequency = signal_settings["CutoffFrequency"]
 
         if spectrum_mode == "OctaveBand":
-            # TODO add cutoff?!
             frequencies, fourier_coefficients = signal.get_octave_band_spectrum(
                 cutoff_frequency
             )
@@ -402,12 +401,11 @@ def run_volume_conductor_model(settings, volume_conductor):
         export_vtk = False
 
     point_model = generate_neuron_grid(settings)
-    template_space = settings["TemplateSpace"]
+
     vcm_timings = volume_conductor.run_full_analysis(
         compute_impedance,
         export_vtk,
         point_model=point_model,
-        template_space=template_space,
         activation_threshold=settings["ActivationThresholdVTA"],
     )
     return vcm_timings
