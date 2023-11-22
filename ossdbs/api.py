@@ -93,7 +93,9 @@ def generate_electrodes(settings: dict):
         n_electrode = 0
         for electrode in electrodes:
             n_electrode = n_electrode + 1
-            electrode.export_electrode(settings["OutputPath"], n_electrode)
+            electrode.export_electrode(
+                settings["OutputPath"], settings["BrainRegion"], n_electrode
+            )
 
     return electrodes
 

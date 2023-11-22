@@ -179,10 +179,27 @@ class ElectrodeModel(ABC):
         """
         return self._parameters.lead_diameter / ratio
 
-    def export_electrode(self, output_path, n_electrode) -> None:
+    def export_electrode(self, output_path, brain_dict, n_electrode) -> None:
         """Export electrode as VTK file."""
         _logger.info("Export electrode as VTK file")
-        occgeo = occ.OCCGeometry(self.geometry)
+        height = (
+            np.amax(
+                [
+                    brain_dict["Dimension"]["x[mm]"],
+                    brain_dict["Dimension"]["y[mm]"],
+                    brain_dict["Dimension"]["z[mm]"],
+                ]
+            )
+            / 2
+        )
+        cylinder = netgen.occ.Cylinder(
+            p=self._position,
+            d=self._direction,
+            r=self._parameters.lead_diameter,
+            h=height,
+        )
+
+        occgeo = occ.OCCGeometry(cylinder * self.geometry)
         mesh_electrode = Mesh(occgeo.GenerateMesh())
         bnd_dict = {}
         for idx, contact in enumerate(self.boundaries):
