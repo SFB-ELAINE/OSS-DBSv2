@@ -2,6 +2,7 @@ import multiprocessing as mp
 from copy import deepcopy
 from functools import partial
 from multiprocessing import sharedctypes
+from scipy.fft import ifft
 
 import numpy as np
 
@@ -50,3 +51,15 @@ def _gen_signal(coefficient, harmonics, frequency, dt, shift, SigmaApprox, n):
 def adjust_cutoff_frequency(cutoff_frequency, frequency):
     """Function to make cutoff frequency multiple of stimulation frequency."""
     return cutoff_frequency - cutoff_frequency % frequency
+
+
+def retrieve_time_domain_signal_from_fft(
+    fft_signal: np.ndarray, cutoff_frequency: float, base_frequency: float
+) -> tuple[np.ndarray, np.ndarray]:
+    """Compute time-domain signal via fft
+    """
+    # double the cutoff_frequency to actually sample until there
+    cutoff_frequency = adjust_cutoff_frequency(2.0 * cutoff_frequency, base_frequency)
+    dt = 1.0 / cutoff_frequency
+    timesteps = dt * np.arange(int(cutoff_frequency / base_frequency))
+    return timesteps, ifft(fft_signal).real

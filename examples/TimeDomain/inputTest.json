@@ -31,8 +31,8 @@
         {
           "Contact_ID": 1,
           "Active": true,
-          "Current[A]": 0.0,
-          "Voltage[V]": 1.0,
+          "Current[A]": -1.0,
+          "Voltage[V]": 0.0,
           "Floating": false,
           "SurfaceImpedance[Ohmm]": {
             "real": 0.0,
@@ -42,7 +42,7 @@
         {
           "Contact_ID": 2,
           "Active": true,
-          "Current[A]": 0.0,
+          "Current[A]": 1.0,
           "Voltage[V]": 0.0,
           "Floating": false,
           "SurfaceImpedance[Ohmm]": {
@@ -85,15 +85,14 @@
   "FEMOrder": 2,
   "ComputeImpedance": true,
   "StimulationSignal": {
-    "CurrentControlled": false,
+    "CurrentControlled": true,
     "Type": "Rectangle",
     "Frequency[Hz]": 130.0,
-    "PulseWidth[us]": 60.0,
+    "PulseWidth[us]": 600.0,
     "PulseTopWidth[us]": 0.0,
     "CounterPulseWidth[us]": 0.0,
     "InterPulseWidth[us]": 0.0,
-    "SpectrumMode": "OctaveBand",
-    "CutoffFrequency": 1e6
+    "CutoffFrequency": 1e4
   },
   "Solver": {
     "Type": "CG",
@@ -109,11 +108,11 @@
       "FileName": ""
     },
     "Lattice": {
-      "Active": false,
+      "Active": true,
       "Center": {
-        "x[mm]": 10,
-        "y[mm]": 10,
-        "z[mm]": 10
+        "x[mm]": 17.0,
+        "y[mm]": 8.0,
+        "z[mm]": 6.0
       },
       "Shape": {
         "x": 10,
@@ -130,5 +129,6 @@
   },
   "OutputPath": "Results",
   "SaveImpedance": true,
-  "ExportVTK": true
+  "ExportVTK": true,
+  "ActivationThresholdVTA": 0.2
 }

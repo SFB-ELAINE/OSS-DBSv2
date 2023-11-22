@@ -3,9 +3,9 @@ from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
-from scipy.fft import fft, fftfreq, ifft
+from scipy.fft import fft, fftfreq
 
-from .utilities import adjust_cutoff_frequency
+from .utilities import retrieve_time_domain_signal_from_fft, adjust_cutoff_frequency
 
 
 @dataclass
@@ -13,6 +13,8 @@ class FrequencyDomainSignal:
     frequencies: np.ndarray
     amplitudes: np.ndarray
     current_controlled: bool
+    base_frequency: float
+    cutoff_frequency: float
 
 
 class TimeDomainSignal(ABC):
@@ -88,15 +90,9 @@ class TimeDomainSignal(ABC):
 
     def get_octave_band_spectrum(self, cutoff_frequency: float) -> np.ndarray:
         """TODO document."""
-        # TODO better to use FFT?!
-        (
-            frequencies,
-            fourier_coefficients,
-        ) = self.get_frequencies_and_fourier_coefficients(cutoff_frequency)
+        frequencies, fourier_coefficients = self.get_fft_spectrum(cutoff_frequency)
         n_octaves = int(np.log2(len(frequencies) - 1)) + 1
         octave_indices = 2 ** np.arange(0, n_octaves)
-        # TODO check
-        # old version
         octave_frequencies = frequencies[octave_indices]
         octave_amplitudes = fourier_coefficients[octave_indices]
         return octave_frequencies, octave_amplitudes
@@ -111,8 +107,8 @@ class TimeDomainSignal(ABC):
         return frequencies, coefficients
 
     def get_fft_spectrum(self, cutoff_frequency: float) -> np.ndarray:
-        cutoff_frequency = adjust_cutoff_frequency(cutoff_frequency, self.frequency)
-        # time step
+        # we double the cutoff_frequency to actually sample until there
+        cutoff_frequency = adjust_cutoff_frequency(2.0 * cutoff_frequency, self.frequency)
         dt = 1.0 / cutoff_frequency
         # required length for frequency
         timesteps = int(cutoff_frequency / self.frequency)
@@ -121,13 +117,11 @@ class TimeDomainSignal(ABC):
         return fftfreq(len(time_domain_signal), d=dt), fft(time_domain_signal)
 
     def retrieve_time_domain_signal(
-        self, fft_signal, cutoff_frequency: float
-    ) -> np.ndarray:
-        cutoff_frequency = adjust_cutoff_frequency(cutoff_frequency, self.frequency)
-        dt = 1.0 / cutoff_frequency
-        timesteps = dt * np.arange(int(cutoff_frequency / self.frequency))
-
-        return timesteps, ifft(fft_signal).real
+            self, fft_signal: np.ndarray, cutoff_frequency: float
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Compute time-domain signal by FFT
+        """
+        return retrieve_time_domain_signal_from_fft(fft_signal, cutoff_frequency, self.frequency)
 
     @abstractmethod
     def get_time_domain_signal(self, dt: float, timesteps: int) -> np.ndarray:

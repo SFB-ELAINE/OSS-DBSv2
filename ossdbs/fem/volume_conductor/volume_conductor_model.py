@@ -13,7 +13,7 @@ from ossdbs.fem.mesh import Mesh
 from ossdbs.fem.solver import Solver
 from ossdbs.model_geometry import Contacts, ModelGeometry
 from ossdbs.point_analysis import Lattice, Pathway, PointModel, TimeResult, VoxelLattice
-from ossdbs.stimulation_signals import FrequencyDomainSignal
+from ossdbs.stimulation_signals import FrequencyDomainSignal, retrieve_time_domain_signal_from_fft
 from ossdbs.utils.vtk_export import FieldSolution
 
 from .conductivity import ConductivityCF
@@ -120,7 +120,7 @@ class VolumeConductor(ABC):
                 inside_csf,
                 inside_encap,
                 axon_index,
-            ) = self.prepare_point_model_grids()
+            ) = self.prepare_point_model_grids(point_model)
             export_collapsed_vta = (
                 isinstance(point_model, Lattice) and point_model._collapse_vta
             )
@@ -139,7 +139,7 @@ class VolumeConductor(ABC):
         if self.is_complex:
             dtype = complex
         self._free_stimulation_variable = np.zeros(
-            shape=(len(self.signal.frequencies)), dtype=dtype
+            shape=(len(self.signal.frequencies), len(self.contacts.active)), dtype=dtype
         )
         if compute_impedance:
             self._impedances = np.ndarray(
@@ -198,7 +198,15 @@ class VolumeConductor(ABC):
                 self._potential.vec[:] = (
                     scale_voltage * self._potential.vec.FV().NumPy()
                 )
-            # TODO save voltages / currents at contact here
+            # save voltages / currents at contact
+            if self.current_controlled:
+                for contact_idx, contact in enumerate(self.contacts.active):
+                    self._free_stimulation_variable[idx, contact_idx] = contact.voltage
+            else:
+                estimated_currents = self.estimate_currents()
+                for contact_idx, contact in enumerate(self.contacts.active):
+                    self._free_stimulation_variable[idx, contact_idx] = estimated_currents[contact.name]
+
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 estimated_currents = self.estimate_currents()
                 _logger.debug(
@@ -216,14 +224,12 @@ class VolumeConductor(ABC):
             if point_model is not None:
                 potentials = self.evaluate_potential_at_points(lattice)
                 fields = self.evaluate_field_at_points(lattice)
-                field_mags = np.linalg.norm(fields, axis=1).reshape(
-                    (fields.shape[0], 1)
-                )
+                field_mags = self.compute_field_magnitude(fields)
                 # copy values for time-domain analysis
-                tmp_potential_freq_domain[idx, :] = potentials[:]
-                tmp_Ex_freq_domain[idx, :] = fields[0, :]
-                tmp_Ey_freq_domain[idx, :] = fields[1, :]
-                tmp_Ez_freq_domain[idx, :] = fields[2, :]
+                tmp_potential_freq_domain[idx, :] = potentials[:, 0]
+                tmp_Ex_freq_domain[idx, :] = fields[:, 0]
+                tmp_Ey_freq_domain[idx, :] = fields[:, 1]
+                tmp_Ez_freq_domain[idx, :] = fields[:, 2]
                 if np.isclose(frequency, self._export_frequency):
                     self.export_potential_to_csv(
                         frequency,
@@ -245,7 +251,7 @@ class VolumeConductor(ABC):
                     )
                     if export_nifti:
                         self.export_nifti_files(
-                            frequency, point_model, activation_threshold
+                            field_mags, point_model, activation_threshold, lattice_mask
                         )
                     # HDF5 exports only for Pathways
                     if isinstance(point_model, Pathway):
@@ -270,39 +276,75 @@ class VolumeConductor(ABC):
 
         if point_model and len(self.signal.frequencies) > 1:
             _logger.info("Computing time-domain signal from frequency-domain")
-            time_result = self.reconstruct_time_signals(lattice, tmp_potential_freq_domain, tmp_Ex_freq_domain, tmp_Ey_freq_domain, tmp_Ez_freq_domain, inside_csf, inside_encap)
-            # data pass correct time_result
-            point_model.save(
-                time_result, os.path.join(self.output_path, "oss_time_result.h5")
-            )
+            timesteps, potential_in_time = self.reconstruct_time_signals(len(lattice), tmp_potential_freq_domain)
+            timesteps, Ex_in_time = self.reconstruct_time_signals(len(lattice), tmp_Ex_freq_domain)
+            timesteps, Ey_in_time = self.reconstruct_time_signals(len(lattice), tmp_Ey_freq_domain)
+            timesteps, Ez_in_time = self.reconstruct_time_signals(len(lattice), tmp_Ez_freq_domain)
+            field_in_time = np.column_stack((Ex_in_time, Ey_in_time, Ez_in_time))
+            self.create_time_result(point_model, lattice, timesteps, potential_in_time, field_in_time, inside_csf, inside_encap)
+        timesteps, free_stimulation_variable_in_time = self.reconstruct_time_signals(len(self.contacts.active), self._free_stimulation_variable)
+        free_stimulation_variable_at_contact = {}
+        free_stimulation_variable_at_contact["time"] = timesteps
+        for contact_idx, contact in enumerate(self.contacts.active):
+            free_stimulation_variable_at_contact[contact.name] = free_stimulation_variable_in_time[contact_idx]
+        df = pd.DataFrame(free_stimulation_variable_at_contact)
+        df.to_csv(os.path.join(self.output_path, "stimulation_in_time.csv"), index=False)
 
         return timings
 
+    def compute_field_magnitude(self, fields):
+        """Compute magnitude of field vector
+        """
+        if len(fields.shape) != 2 and fields.shape[1] != 3:
+            raise ValueError("Attempt to compute field magnitude from invalid field vector")
+        return np.linalg.norm(fields, axis=1).reshape((fields.shape[0], 1))
+
+    def create_time_result(self, point_model, lattice, timesteps, potential_in_time, field_in_time, inside_csf, inside_encap) -> TimeResult:
+        """Prepare time rsult and save it to file
+        """
+        time_result = TimeResult(time_steps=timesteps,
+                                 points=lattice,
+                                 potential=potential_in_time,
+                                 electric_field_vector=field_in_time,
+                                 electric_field_magnitude=self.compute_field_magnitude(field_in_time),
+                                 inside_csf=inside_csf,
+                                 inside_encap=inside_encap)
+        point_model.save(
+            time_result, os.path.join(self.output_path, "oss_time_result.h5")
+        )
+        _logger.info("Created time result and saved to file")
+
     def reconstruct_time_signals(
-        self, lattice, potential_freq_domain, Ex_freq_domain, Ey_freq_domain, Ez_freq_domain, inside_csf, inside_encap
-    ) -> List([TimeResult, TimeResult]):
+        self, n_lattice_points, freq_domain_signal
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Compute time signals from frequency-domain data."""
-        tmp_potential = np.zeros(np.int(self.signal.frequencies[-1] / self.frequency))
-        frequency_indices = np.int(self.signal.frequencies / self.frequency)
-        potential_in_time = np.zeros(shape=potential_freq_domain.shape)
-        timesteps = np.arange(0, n / self.frequency, 1.0 / self.frequency)
+        # Because we use full FFT we also need negative frequencies
+        n_frequencies = int(self.signal.cutoff_frequency / self.signal.base_frequency)
+        # to account for DC, too
+        tmp_freq_domain = np.zeros(n_frequencies + 1)
+        if (n_frequencies + 1) % 2 == 1:  # if odd
+            tmp_freq_domain = np.append(tmp_freq_domain, tmp_freq_domain[-1:0:-1])
+        else:
+            tmp_freq_domain = np.append(tmp_freq_domain, tmp_freq_domain[-2:0:-1])
+
+        frequency_indices = self.signal.frequencies / self.signal.base_frequency
+        frequency_indices = frequency_indices.astype(np.uint16)  # no zero-based indexing, zero is DC contribution (here set to zero! TODO)
+        result_in_time = np.zeros(shape=(n_lattice_points, 2 * n_frequencies + 1))
+
         # go through points in lattice
-        for point_idx in lattice:
+        for point_idx in range(n_lattice_points):
             # write non-zero frequencies
             # no zeroing needed because all signals are non-zero at same frequencies!
             # TODO band approximation
             for idx, idx_freq in enumerate(frequency_indices):
-                tmp_potential[idx_freq] = potential_freq_domain[point_idx, idx]
+                tmp_freq_domain[idx_freq] = freq_domain_signal[idx, point_idx]
+                # reverse order for negative frequencies
+                # TODO check
+                tmp_freq_domain[len(tmp_freq_domain) - idx_freq - 1] = np.conjugate(freq_domain_signal[idx, point_idx])
             # convert to time domain
-            potential_in_time[point_idx, :] = self.signal.retrieve_time_domain_signal(tmp_potential)
-
-        return TimeResult(time_steps=timesteps,
-                          points=lattice,
-                          potential=potential,
-                          electric_field_vector,
-                          electric_field_magnitude,
-                          inside_csf=inside_csf,
-                          inside_encap=inside_encap)
+            timesteps, tmp = retrieve_time_domain_signal_from_fft(tmp_freq_domain, self.signal.cutoff_frequency, self.signal.base_frequency)
+            result_in_time[point_idx, :] = tmp[:]
+        return timesteps, result_in_time
 
     @property
     def output_path(self) -> str:
