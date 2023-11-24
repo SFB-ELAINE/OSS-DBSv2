@@ -31,7 +31,7 @@
         {
           "Contact_ID": 1,
           "Active": true,
-          "Current[A]": -1.0,
+          "Current[A]": -0.001,
           "Voltage[V]": 0.0,
           "Floating": false,
           "SurfaceImpedance[Ohmm]": {
@@ -42,8 +42,8 @@
         {
           "Contact_ID": 2,
           "Active": true,
-          "Current[A]": 1.0,
-          "Voltage[V]": 0.0,
+          "Current[A]": 0.001,
+          "Voltage[V]": 1.0,
           "Floating": false,
           "SurfaceImpedance[Ohmm]": {
             "real": 0.0,
@@ -85,11 +85,10 @@
   "FEMOrder": 2,
   "ComputeImpedance": true,
   "StimulationSignal": {
-    "CurrentControlled": true,
+    "CurrentControlled": false,
     "Type": "Rectangle",
     "Frequency[Hz]": 130.0,
-    "PulseWidth[us]": 600.0,
-    "PulseTopWidth[us]": 0.0,
+    "PulseWidth[us]": 600,
     "CounterPulseWidth[us]": 0.0,
     "InterPulseWidth[us]": 0.0,
     "CutoffFrequency": 1e4

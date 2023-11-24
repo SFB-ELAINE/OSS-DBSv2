@@ -58,6 +58,7 @@ class VolumeConductor(ABC):
         # to store the voltage (current-controlled)
         # or current (voltage-controlled) stimulation
         self._free_stimulation_variable = None
+        self._stimulation_variable = None
         self._mesh = Mesh(self._model_geometry.geometry, self._order)
         if meshing_parameters["LoadMesh"]:
             self._mesh.load_mesh(meshing_parameters["LoadPath"])
@@ -141,6 +142,10 @@ class VolumeConductor(ABC):
         self._free_stimulation_variable = np.zeros(
             shape=(len(self.signal.frequencies), len(self.contacts.active)), dtype=dtype
         )
+        self._stimulation_variable = np.zeros(
+            shape=(len(self.signal.frequencies), len(self.contacts.active)), dtype=dtype
+        )
+
         if compute_impedance:
             self._impedances = np.ndarray(
                 shape=(len(self.signal.frequencies)), dtype=dtype
@@ -154,6 +159,7 @@ class VolumeConductor(ABC):
                     self.signal.amplitudes[idx]
                 )
                 self.update_contacts(voltages=voltage_values)
+
             else:
                 if len(self.contacts.active) == 2:
                     for contact_idx, contact in enumerate(self.contacts.active):
@@ -165,10 +171,10 @@ class VolumeConductor(ABC):
                             raise ValueError(
                                 "In multicontact current-controlled mode, only ground voltage (0V) can be set on active contacts!"
                             )
-                    current_values = self.get_scaled_contact_currents(
-                        self.signal.amplitudes[idx]
-                    )
-                    self.update_contacts(currents=current_values)
+                current_values = self.get_scaled_contact_currents(
+                    self.signal.amplitudes[idx]
+                )
+                self.update_contacts(currents=current_values)
             time_0 = time.time()
             self.compute_solution(frequency)
             time_1 = time.time()
@@ -198,14 +204,19 @@ class VolumeConductor(ABC):
                 self._potential.vec[:] = (
                     scale_voltage * self._potential.vec.FV().NumPy()
                 )
+                for contact in self.contacts.active:
+                    contact.voltage = scale_voltage * contact.voltage
+
             # save voltages / currents at contact
             if self.current_controlled:
                 for contact_idx, contact in enumerate(self.contacts.active):
                     self._free_stimulation_variable[idx, contact_idx] = contact.voltage
+                    self._stimulation_variable[idx, contact_idx] = contact.current
             else:
                 estimated_currents = self.estimate_currents()
                 for contact_idx, contact in enumerate(self.contacts.active):
                     self._free_stimulation_variable[idx, contact_idx] = estimated_currents[contact.name]
+                    self._stimulation_variable[idx, contact_idx] = contact.voltage
 
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 estimated_currents = self.estimate_currents()
@@ -283,10 +294,12 @@ class VolumeConductor(ABC):
             field_in_time = np.column_stack((Ex_in_time, Ey_in_time, Ez_in_time))
             self.create_time_result(point_model, lattice, timesteps, potential_in_time, field_in_time, inside_csf, inside_encap)
         timesteps, free_stimulation_variable_in_time = self.reconstruct_time_signals(len(self.contacts.active), self._free_stimulation_variable)
+        timesteps, stimulation_variable_in_time = self.reconstruct_time_signals(len(self.contacts.active), self._stimulation_variable)
         free_stimulation_variable_at_contact = {}
         free_stimulation_variable_at_contact["time"] = timesteps
         for contact_idx, contact in enumerate(self.contacts.active):
-            free_stimulation_variable_at_contact[contact.name] = free_stimulation_variable_in_time[contact_idx]
+            free_stimulation_variable_at_contact[contact.name + "_free"] = free_stimulation_variable_in_time[contact_idx]
+            free_stimulation_variable_at_contact[contact.name] = stimulation_variable_in_time[contact_idx]
         df = pd.DataFrame(free_stimulation_variable_at_contact)
         df.to_csv(os.path.join(self.output_path, "stimulation_in_time.csv"), index=False)
 
@@ -480,9 +493,10 @@ class VolumeConductor(ABC):
             self._contacts.currents = currents
             self._contacts.surface_impedances = surface_impedances
             return
-        self._contacts.voltages = np.real(voltages)
-        self._contacts.currents = np.real(currents)
-        self._contacts.surface_impedances = np.real(surface_impedances)
+        else:
+            self._contacts.voltages = {contact: np.real(voltage) for contact, voltage in voltages.items()}
+            self._contacts.currents = {contact: np.real(current) for contact, current in currents.items()}
+            self._contacts.surface_impedances = {contact: np.real(surface_impedance) for contact, surface_impedance in surface_impedances.items()}
 
     @property
     def potential(self) -> ngsolve.GridFunction:

@@ -280,25 +280,26 @@ def generate_signal(settings) -> TimeDomainSignal:
     if signal_type == "Rectangle":
         signal = RectangleSignal(
             signal_settings["Frequency[Hz]"],
-            signal_settings["PulseWidth[us]"],
-            signal_settings["InterPulseWidth[us]"],
-            signal_settings["CounterPulseWidth[us]"],
+            1e-6 * signal_settings["PulseWidth[us]"],
+            1e-6 * signal_settings["InterPulseWidth[us]"],
+            1e-6 * signal_settings["CounterPulseWidth[us]"],
         )
     elif signal_type == "Triangle":
         signal = TriangleSignal(
             signal_settings["Frequency[Hz]"],
-            signal_settings["PulseWidth[us]"],
-            signal_settings["InterPulseWidth[us]"],
-            signal_settings["CounterPulseWidth[us]"],
+            1e-6 * signal_settings["PulseWidth[us]"],
+            1e-6 * signal_settings["InterPulseWidth[us]"],
+            1e-6 * signal_settings["CounterPulseWidth[us]"],
         )
     elif signal_type == "Trapezoid":
         signal = TrapezoidSignal(
             signal_settings["Frequency[Hz]"],
-            signal_settings["PulseWidth[us]"],
-            signal_settings["InterPulseWidth[us]"],
-            signal_settings["CounterPulseWidth[us]"],
-            signal_settings["PulseTopWidth[us]"],
+            1e-6 * signal_settings["PulseWidth[us]"],
+            1e-6 * signal_settings["InterPulseWidth[us]"],
+            1e-6 * signal_settings["CounterPulseWidth[us]"],
+            1e-6 * signal_settings["PulseTopWidth[us]"],
         )
+    signal.plot_time_domain_signal(signal_settings["CutoffFrequency"], settings["OutputPath"])
     return signal
 
 
@@ -369,7 +370,7 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
             (
                 frequencies,
                 fourier_coefficients,
-            ) = signal.get_frequencies_and_fourier_coefficients(cutoff_frequency)
+            ) = signal.get_fft_spectrum(cutoff_frequency)
     frequency_domain_signal = FrequencyDomainSignal(
         frequencies=frequencies,
         amplitudes=fourier_coefficients,

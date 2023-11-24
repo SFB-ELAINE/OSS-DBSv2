@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 from typing import List
+import logging
+_logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -129,6 +131,7 @@ class Contacts:
             dictionary.
 
         """
+        _logger.debug(f"Setting contacts with new current_values: {current_values}")
         for contact in self._all_contacts:
             if contact.name in current_values:
                 contact.current = current_values[contact.name]
@@ -153,6 +156,7 @@ class Contacts:
             Voltage values. Not all contacts have to be present in the
             dictionary.
         """
+        _logger.debug(f"Setting contacts with new voltage_values: {voltage_values}")
         for contact in self._all_contacts:
             if contact.name in voltage_values:
                 contact.voltage = voltage_values[contact.name]

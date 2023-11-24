@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
+import os
+import matplotlib.pyplot as plt
 
 import numpy as np
 from scipy.fft import fft, fftfreq
@@ -126,3 +128,16 @@ class TimeDomainSignal(ABC):
     @abstractmethod
     def get_time_domain_signal(self, dt: float, timesteps: int) -> np.ndarray:
         pass
+
+    def plot_time_domain_signal(self, cutoff_frequency, output_path, show=False):
+        cutoff_frequency = adjust_cutoff_frequency(2.0 * cutoff_frequency, self.frequency)
+        dt = 1.0 / cutoff_frequency
+        # required length for frequency
+        timesteps = int(cutoff_frequency / self.frequency)
+        time_domain_signal = self.get_time_domain_signal(dt, timesteps)
+        plt.plot(dt * np.arange(0, timesteps), time_domain_signal)
+        plt.savefig(os.path.join(output_path, "time_domain_signal.pdf"))
+        if show:
+            plt.show()
+        else:
+            plt.close()
