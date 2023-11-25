@@ -40,6 +40,16 @@ class Contact:
     voltage: float = 0.0
     surface_impedance: complex = 0.0j
 
+    def __str__(self):
+        contact_str = self.name
+        contact_str += f"\nMax h: {self.max_h}"
+        contact_str += f"\nEdge max h: {self.edge_max_h}"
+        contact_str += f"\nActive: {self.active}"
+        contact_str += f"\nFloating: {self.floating}"
+        contact_str += f"\nCurrent: {self.current}"
+        contact_str += f"\nVoltage: {self.voltage}"
+        contact_str += f"\nSurface impedance: {self.surface_impedance}\n"
+        return contact_str
 
 def check_contact(contact: Contact):
     if contact.active and contact.floating:
@@ -194,3 +204,9 @@ class Contacts:
 
     def __iter__(self):
         return iter(self._all_contacts)
+
+    def __str__(self):
+        contacts_str = ""
+        for contact in self._all_contacts:
+            contacts_str += str(contact)
+        return contacts_str
