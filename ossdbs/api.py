@@ -371,6 +371,11 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
                 frequencies,
                 fourier_coefficients,
             ) = signal.get_fft_spectrum(cutoff_frequency)
+        # only use positive frequencies
+        first_negative_freq = np.argwhere(frequencies < 0)[0, 0]
+        frequencies = frequencies[:first_negative_freq]
+        fourier_coefficients = fourier_coefficients[:first_negative_freq]
+
     frequency_domain_signal = FrequencyDomainSignal(
         frequencies=frequencies,
         amplitudes=fourier_coefficients,

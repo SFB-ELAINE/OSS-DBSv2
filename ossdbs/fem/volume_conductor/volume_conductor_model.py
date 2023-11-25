@@ -111,6 +111,11 @@ class VolumeConductor(ABC):
         and the time-domain signal is computed (if relevant).
         """
         timings: dict = {}
+
+        dtype = float
+        if self.is_complex:
+            dtype = complex
+
         self._export_frequency = np.median(self.signal.frequencies)
         if point_model is not None:
             timings["FieldExport"] = []
@@ -128,17 +133,14 @@ class VolumeConductor(ABC):
             export_nifti = isinstance(point_model, VoxelLattice) or isinstance(
                 point_model, Lattice
             )
-            tmp_potential_freq_domain = np.zeros(shape=(len(self.signal.frequencies), len(lattice)))
-            tmp_Ex_freq_domain = np.zeros(shape=(len(self.signal.frequencies), len(lattice)))
-            tmp_Ey_freq_domain = np.zeros(shape=(len(self.signal.frequencies), len(lattice)))
-            tmp_Ez_freq_domain = np.zeros(shape=(len(self.signal.frequencies), len(lattice)))
+            tmp_potential_freq_domain = np.zeros(shape=(len(self.signal.frequencies), len(lattice)), dtype=dtype)
+            tmp_Ex_freq_domain = np.zeros(shape=(len(self.signal.frequencies), len(lattice)), dtype=dtype)
+            tmp_Ey_freq_domain = np.zeros(shape=(len(self.signal.frequencies), len(lattice)), dtype=dtype)
+            tmp_Ez_freq_domain = np.zeros(shape=(len(self.signal.frequencies), len(lattice)), dtype=dtype)
         if export_vtk:
             timings["VTKExport"] = []
         timings["ComputeSolution"] = []
 
-        dtype = float
-        if self.is_complex:
-            dtype = complex
         self._free_stimulation_variable = np.zeros(
             shape=(len(self.signal.frequencies), len(self.contacts.active)), dtype=dtype
         )

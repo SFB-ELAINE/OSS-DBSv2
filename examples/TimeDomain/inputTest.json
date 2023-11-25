@@ -81,11 +81,11 @@
     },
     "SaveMesh": false
   },
-  "EQSMode": false,
+  "EQSMode": true,
   "FEMOrder": 2,
   "ComputeImpedance": true,
   "StimulationSignal": {
-    "CurrentControlled": false,
+    "CurrentControlled": true,
     "Type": "Rectangle",
     "Frequency[Hz]": 130.0,
     "PulseWidth[us]": 600,

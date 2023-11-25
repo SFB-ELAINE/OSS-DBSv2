@@ -136,6 +136,8 @@ class TimeDomainSignal(ABC):
         timesteps = int(cutoff_frequency / self.frequency)
         time_domain_signal = self.get_time_domain_signal(dt, timesteps)
         plt.plot(dt * np.arange(0, timesteps), time_domain_signal)
+        plt.xlabel("Time / s")
+        plt.ylabel("Signal / arb. u.")
         plt.savefig(os.path.join(output_path, "time_domain_signal.pdf"))
         if show:
             plt.show()
