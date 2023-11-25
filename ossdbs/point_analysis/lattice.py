@@ -187,14 +187,16 @@ class Lattice(PointModel):
         field_on_points_collapsed = np.zeros(field_on_points.shape, float)
         field_on_points_collapsed[:, 3:] = field_on_points[:, 3:]
 
-        for point_inx in range(field_on_points.shape[0]):
-            # find the orthonormal vector from the point to the lead axis
-            point_on_lead = implantation_coordinate + np.dot((field_on_points[point_inx, :3] - implantation_coordinate),
-                                                            unit_lead_direction) * unit_lead_direction
+        # find orthonormal vectors from the points to the lead axis
+        relative_coords = np.dot((field_on_points[:, :3] - implantation_coordinate),
+               unit_lead_direction) * unit_lead_direction[:,np.newaxis]
+        points_on_lead = relative_coords.T + implantation_coordinate[:]
 
-            # now shift the point into the direction of the lead axis
-            unit_clpse_direction = (point_on_lead - field_on_points[point_inx, :3]) / np.linalg.norm(
-                point_on_lead - field_on_points[point_inx, :3])
-            field_on_points_collapsed[point_inx, :3] = field_on_points[point_inx, :3] + unit_clpse_direction * (lead_diam / 2.0)
+        # now shift points into the direction of the lead axis
+        norm_term = 1.0/np.linalg.norm(
+            points_on_lead - field_on_points[:, :3], axis=1)
+        unit_clpse_directions = (points_on_lead - field_on_points[:, :3]) * norm_term[:,np.newaxis]
+        field_on_points_collapsed[:, :3] = field_on_points[:, :3] + unit_clpse_directions * (
+                    lead_diam / 2.0)
 
         return field_on_points_collapsed
