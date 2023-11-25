@@ -31,4 +31,5 @@ input_files/impedance.csv
 input_files/Results
 input_files/ResultsCC
 success_oss.txt
-
+*.nii.gz
+*.nii
