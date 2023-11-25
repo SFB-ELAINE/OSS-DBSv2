@@ -16,14 +16,14 @@ class ConstantParameters:
     conductivity: float
 
 
-BloodConstantDefault = (ConstantParameters(permittivity=5.25e3, conductivity=7e-1),)
+BloodConstantDefault = ConstantParameters(permittivity=5.25e3, conductivity=7e-1)
 WhiteMatterConstantDefault = ConstantParameters(
     permittivity=1.25e4, conductivity=6.95e-2
 )
-GrayMatterConstantDefault = (
-    ConstantParameters(permittivity=2.22e4, conductivity=1.15e-1),
+GrayMatterConstantDefault = ConstantParameters(
+    permittivity=2.22e4, conductivity=1.15e-1
 )
-CSFConstantDefault = (ConstantParameters(permittivity=1.09e2, conductivity=2.0),)
+CSFConstantDefault = ConstantParameters(permittivity=1.09e2, conductivity=2.0)
 
 
 default_constant_parameters = {
@@ -61,4 +61,5 @@ class ConstantModel(DielectricModel):
 
     @property
     def static_conductivity(self) -> float:
+        """Returns the static conductivity."""
         return self._parameters.conductivity

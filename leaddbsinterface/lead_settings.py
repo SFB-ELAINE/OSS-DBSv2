@@ -304,6 +304,9 @@ class LeadSettings:
     def do_adaptive_ref(self):
         return self._get_num("AdaptiveRef")
 
+    def get_encapsulation_type(self):
+        return self._get_str("encapsulationType")
+    
     def get_act_thresh_vta(self):
         return self._get_num("Activation_threshold_VTA")
 
@@ -464,11 +467,22 @@ class LeadSettings:
                 "y[mm]": tip_pos[hemis_idx, 1],
                 "z[mm]": tip_pos[hemis_idx, 2],
             },
+            "EncapsulationLayer": {
+                "Thickness[mm]": 0.1,
+                "Material": self.get_encapsulation_type(),
+                "DielectricModel": "ColeCole4",
+                "DielectricParameters": None,
+                "MaxMeshSize": 0.1
+            },
         }
         if elec_dict is None:
             elec_dict = elec_dict_imp
         else:
             elec_dict.update(elec_dict_imp)
+
+        if elec_dict_imp["EncapsulationLayer"]["Material"] == 'None':
+            elec_dict_imp["EncapsulationLayer"]["Material"] = 'Gray matter'
+            elec_dict_imp["EncapsulationLayer"]["Thickness[mm]"] = 0.0
 
         return elec_dict, unit_directions, specs_array_length
 
