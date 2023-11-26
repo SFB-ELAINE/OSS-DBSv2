@@ -220,11 +220,11 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
         contacts = [
             contact.Move(vectors[0]),
             contact_directed.Move(vectors[1]),
-            contact_directed.Rotate(axis, 120).Move(vectors[1]),
             contact_directed.Rotate(axis, 240).Move(vectors[1]),
+            contact_directed.Rotate(axis, 120).Move(vectors[1]),
             contact_directed.Move(vectors[2]),
-            contact_directed.Rotate(axis, 120).Move(vectors[2]),
             contact_directed.Rotate(axis, 240).Move(vectors[2]),
+            contact_directed.Rotate(axis, 120).Move(vectors[2]),
             contact.Move(vectors[3]),
         ]
 

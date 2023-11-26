@@ -93,7 +93,9 @@ def generate_electrodes(settings: dict):
         n_electrode = 0
         for electrode in electrodes:
             n_electrode = n_electrode + 1
-            electrode.export_electrode(settings["OutputPath"], n_electrode)
+            electrode.export_electrode(
+                settings["OutputPath"], settings["BrainRegion"], n_electrode
+            )
 
     return electrodes
 
@@ -299,7 +301,9 @@ def generate_signal(settings) -> TimeDomainSignal:
             1e-6 * signal_settings["CounterPulseWidth[us]"],
             1e-6 * signal_settings["PulseTopWidth[us]"],
         )
-    signal.plot_time_domain_signal(signal_settings["CutoffFrequency"], settings["OutputPath"])
+    signal.plot_time_domain_signal(
+        signal_settings["CutoffFrequency"], settings["OutputPath"]
+    )
     return signal
 
 
@@ -381,7 +385,7 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
         amplitudes=fourier_coefficients,
         current_controlled=current_controlled,
         base_frequency=base_frequency,
-        cutoff_frequency=cutoff_frequency
+        cutoff_frequency=cutoff_frequency,
     )
     return frequency_domain_signal
 

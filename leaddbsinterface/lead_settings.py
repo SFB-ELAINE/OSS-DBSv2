@@ -27,6 +27,9 @@ class LeadSettings:
             self._file = h5py.File(str(mat_file_path), "r")
             self._h5 = True
         except:
+            print("\n Please, save oss-dbs_parameters using 'save(oss-dbs_parameters_path, 'settings', '-v7.3')' ")
+            raise SystemExit
+            # ToDo: Fix non-binary .mat import
             self._file = scipy.io.loadmat(mat_file_path)
             self._h5 = False
 
@@ -90,6 +93,8 @@ class LeadSettings:
         else:
             # otherwise not relevant, but set to 0.0 if non-active contacts present
             grounded_current = 0.0
+
+        grid_center, grid_resolution = self.get_grid_parameters(elec_dict['Name'], hemis_idx, unit_directions, specs_array_length)
             
         # MAKE THE DICTIONARY
         partial_dict = {
@@ -138,27 +143,28 @@ class LeadSettings:
                     "Active": True,
                     "Center": {
                         # center at the middle of the electrode array
-                        "x[mm]": self.get_imp_coord()[hemis_idx, 0] + unit_directions[hemis_idx, 0] * specs_array_length/2,
-                        "y[mm]": self.get_imp_coord()[hemis_idx, 1] + unit_directions[hemis_idx, 1] * specs_array_length/2,
-                        "z[mm]": self.get_imp_coord()[hemis_idx, 2] + unit_directions[hemis_idx, 2] * specs_array_length/2
+                        "x[mm]": grid_center[0],
+                        "y[mm]": grid_center[1],
+                        "z[mm]": grid_center[2]
                     },
-                    "Shape": {"x": 31, "y": 31, "z": 41},
+                    "Shape": {"x": 71, "y": 71, "z": 71},
                     "Direction": {
                         "x[mm]": 0,
                         "y[mm]": 0,
                         "z[mm]": 1,
                     },
-                    "PointDistance[mm]": 0.5,
+                    "PointDistance[mm]": grid_resolution,
                     "CollapseVTA": bool(self.remove_electrode()),
                 }
             },
             "StimulationSignal": {"CurrentControlled": current_controlled},
-            "CalcAxonActivation": self.get_calc_axon_act(),
+            "CalcAxonActivation": int(self.get_calc_axon_act()),
             "ActivationThresholdVTA": self.get_act_thresh_vta(),
             "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATHS[hemis_idx]),
             "FailFlag": side,
             "TemplateSpace": self.get_est_in_temp(),
             "Solver": {},
+            "FEMOrder": 2 + int(self.get_calc_axon_act()),  # 2nd order is enough for stim volumes
         }
 
         # do not use h1amg as coarsetype preconditioner
@@ -266,12 +272,15 @@ class LeadSettings:
 
     def get_sec_coord(self):
         return self._get_arr("Second_coordinate")
+        
+    def get_stim_center(self):
+        return self._get_arr("stim_center")
 
     # Always recalculated from the other settings
     # IMPORTANT: it is actually not native but scrf!
     def get_rot_z(self, index_side):
-        head_nat = self.get_head_nat()[:, index_side]
-        y = self.get_y_mark_nat()[:, index_side] - head_nat
+        head_nat = self.get_head_nat()[index_side, :]
+        y = self.get_y_mark_nat()[index_side, :] - head_nat
         y_postop = y / np.linalg.norm(y)
         phi = np.arctan2(-y_postop[0], y_postop[1])
         return phi * 180.0 / np.pi
@@ -300,6 +309,9 @@ class LeadSettings:
     def do_adaptive_ref(self):
         return self._get_num("AdaptiveRef")
 
+    def get_encapsulation_type(self):
+        return self._get_str("encapsulationType")
+    
     def get_act_thresh_vta(self):
         return self._get_num("Activation_threshold_VTA")
 
@@ -369,8 +381,8 @@ class LeadSettings:
         return stretched_parameters
 
     def get_tip_position(self, oss_elec_name, hemi_idx):
-        """Get tip and implantation trajectory from head
-        (Implantation_coordinate) and tail (Second_coordinate).
+        """Get tip, implantation trajectory from head
+        (Implantation_coordinate) and tail (Second_coordinate), and length of the contact span
 
         Parameters
         ----------
@@ -378,7 +390,7 @@ class LeadSettings:
 
         Returns
         -------
-        numpy.ndarray, numpy.ndarray
+        numpy.ndarray, numpy.ndarray, float
         """
         elec_params = default_electrode_parameters[oss_elec_name]
         imp_coords = np.array(self.get_imp_coord())
@@ -394,6 +406,39 @@ class LeadSettings:
         tip_position = imp_coords - offset * unit_directions
 
         return unit_directions, tip_position, specs_array_length
+
+    def get_grid_parameters(self, electrode_name, hemis_idx, unit_directions,
+                                                               specs_array_length):
+        """Center lattice at the center of estimated stimulation volume and set resolution
+
+        Parameters
+        ----------
+        electrode_name: str, OSS-DBS notation
+        unit_directions: numpy.ndarray, implantation trajectory
+        specs_array_length: float, length of the contact span
+        hemis_idx: int, hemisphere ID (0 - right, 1 - left)
+
+        Returns
+        -------
+        grid_center: numpy.ndarray, center of the lattice model
+        grid_resolution: float, resolution of the lattice model
+        """
+        # get grid center for lattice / voxel lattice model
+        if np.any(np.isnan(self.get_stim_center()[hemis_idx, :])):
+            self.grid_center = self.get_imp_coord()[hemis_idx, :] + unit_directions[hemis_idx,
+                                                                    :] * specs_array_length / 2
+        else:
+            grid_center = self.get_stim_center()[hemis_idx, :]
+
+        # set resolution
+        # coarser resolution for large span electrodes and large amplitudes (>5 mA or 5 V)
+        phi_vector = self.get_phi_vec()[hemis_idx, :]
+        if electrode_name == 'BostonScientificVercise' or electrode_name == 'BostonScientificVerciseCustom' or np.max(np.abs(phi_vector[~np.isnan(phi_vector)])) > 5.0:
+            grid_resolution = 0.4
+        else:
+            grid_resolution = 0.33
+
+        return grid_center, grid_resolution
 
     def import_implantation_settings(self, hemis_idx, elec_dict=None):
         """Convert Lead-DBS implantation settings to OSS-DBS parameters.
@@ -460,11 +505,22 @@ class LeadSettings:
                 "y[mm]": tip_pos[hemis_idx, 1],
                 "z[mm]": tip_pos[hemis_idx, 2],
             },
+            "EncapsulationLayer": {
+                "Thickness[mm]": 0.1,
+                "Material": self.get_encapsulation_type(),
+                "DielectricModel": "ColeCole4",
+                "DielectricParameters": None,
+                "MaxMeshSize": 0.1
+            },
         }
         if elec_dict is None:
             elec_dict = elec_dict_imp
         else:
             elec_dict.update(elec_dict_imp)
+
+        if elec_dict_imp["EncapsulationLayer"]["Material"] == 'None':
+            elec_dict_imp["EncapsulationLayer"]["Material"] = 'Gray matter'
+            elec_dict_imp["EncapsulationLayer"]["Thickness[mm]"] = 0.0
 
         return elec_dict, unit_directions, specs_array_length
 
@@ -503,16 +559,11 @@ class LeadSettings:
             # Fix of VC random grounding bug for Lead-DBS stim settings
             pulse_amps[pulse_amps == 0] = float("nan")
 
-
         # make list of dictionaries for the electrode settings
         # for now use one electrode at a time
 
         for index_side in [hemis_idx]:
             pulse_amp = pulse_amps[index_side, :]
-
-            # shift all voltages if bipolar case to have 0V and cathodes (as in the stimulators)
-            if np.nanmax(pulse_amp) > 0.0:
-                pulse_amp[:] = pulse_amp[:] - np.nanmax(pulse_amp)
 
             if self.get_cur_ctrl()[index_side]:
                 # for CC, check if currents sum up to 0.0.
@@ -521,6 +572,9 @@ class LeadSettings:
             else:
                 # for VC, case grounding is defined explicitly
                 case_grounding = bool(self.get_case_grnd()[index_side])
+                # shift all voltages if bipolar case to have 0V and cathodes (as in the stimulators)
+                if np.nanmax(pulse_amp) > 0.0:
+                    pulse_amp[:] = pulse_amp[:] - np.nanmax(pulse_amp)
 
             # cntct_dicts is a list of the contacts that will go in the json
             # for this electrode
