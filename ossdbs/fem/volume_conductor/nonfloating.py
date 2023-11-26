@@ -33,7 +33,7 @@ class VolumeConductorNonFloating(VolumeConductor):
             frequency_domain_signal,
         )
         boundaries = [contact.name for contact in self.contacts.active]
-        self._space = self.h1_space(boundaries=boundaries)
+        self._space = self.h1_space(boundaries=boundaries, is_complex=self.is_complex)
         self._potential = ngsolve.GridFunction(space=self._space)
         self._floating_values = {}
 

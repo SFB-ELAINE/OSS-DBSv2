@@ -1,6 +1,7 @@
+import logging
 from dataclasses import dataclass
 from typing import List
-import logging
+
 _logger = logging.getLogger(__name__)
 
 
@@ -51,6 +52,7 @@ class Contact:
         contact_str += f"\nSurface impedance: {self.surface_impedance}\n"
         return contact_str
 
+
 def check_contact(contact: Contact):
     if contact.active and contact.floating:
         raise ValueError(
@@ -73,8 +75,11 @@ class Contacts:
         for contact in contacts:
             check_contact(contact)
         self._all_contacts = contacts
+        # Dirichlet boundary conditions
         self._active = [contact for contact in contacts if contact.active]
+        # Floating boundary conditions
         self._floating = [contact for contact in contacts if contact.floating]
+        # Do not stimulate / Neumann boundary condition
         self._unused = [
             contact
             for contact in contacts

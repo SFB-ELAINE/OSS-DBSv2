@@ -73,7 +73,7 @@ class VolumeConductorFloating(VolumeConductor):
                 "At least one boundary with a fixed voltage has to be specified!"
             )
         boundaries_floating = [contact.name for contact in self.contacts.floating]
-        space_field = self.h1_space(boundaries)
+        space_field = self.h1_space(boundaries, self.is_complex)
         plateaus = []
         for boundary in boundaries_floating:
             plateaus.append(self.mesh.ngsolvemesh.Boundaries(boundary))
@@ -114,4 +114,6 @@ class VolumeConductorFloating(VolumeConductor):
                 self.mesh.ngsolvemesh,
             )
             contact.voltage = floating_potential / length
-            _logger.debug(f"Contact {contact.name} updated with floating potential {contact.voltage}")
+            _logger.debug(
+                f"Contact {contact.name} updated with floating potential {contact.voltage}"
+            )
