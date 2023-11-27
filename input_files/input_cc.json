@@ -1,9 +1,9 @@
 {
   "BrainRegion": {
     "Center": {
-      "x[mm]": 17.0,
-      "y[mm]": 8.0,
-      "z[mm]": 6.0
+      "x[mm]": -9.48,
+      "y[mm]": 11.61,
+      "z[mm]": 4.68
     },
     "Dimension": {
       "x[mm]": 40.0,
@@ -23,9 +23,9 @@
         "z[mm]": 1.0
       },
       "TipPosition": {
-        "x[mm]": 17.0,
-        "y[mm]": 8.0,
-        "z[mm]": 6.0
+        "x[mm]": -9.48,
+        "y[mm]": 11.61,
+        "z[mm]": 4.68
       },
       "Contacts": [
         {
@@ -62,7 +62,7 @@
     }
   ],
   "MaterialDistribution": {
-    "MRIPath": "icbm_avg_152_segmented.nii.gz",
+    "MRIPath": "Butenko_segmask.nii.gz",
     "MRIMapping": {
       "Unknown": 0,
       "CSF": 1,
@@ -135,5 +135,6 @@
   },
   "OutputPath": "ResultsCC",
   "SaveImpedance": true,
-  "ExportVTK": true
+  "ExportVTK": true,
+  "ExportElectrode": true
 }
