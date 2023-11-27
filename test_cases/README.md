@@ -1,83 +1,70 @@
-# Test cases
+OSS-DBS v2.0 Test Cases
+=======================
 
-Go to the respective directory and run then (except for input case 2)
+This folder contains various test cases showcasing the functionality of OSS-DBS v2.0. To execute different cases, use the command line as follows:
 
-```
-ossdbs name_of_input_file.json
-```
-
-Output:
-
-* Time signal at fixed points around the electrode
-* Mesh
-* Potential distribution at 130 Hz (`.vtk`)
-* Impedance between active contact and ground
-
-
-## Input case 1: homogeneous material
-
-Boston Scientific Vercise electrode at X: 5, Y: 14, Z: -4.5.
-The medium around is homogeneous.
-One contact at 0.1 V and the other at 0 V.
-EQS mode is active.
-
-## Input case 2: UQ of SNEX 100 electrode parameters
-
-Ten SNEX 100 geometries are simulated.
-The electrode is placed at (X: 22.95, Y: 11.35, Z: 7.95) in the rat MRI `new_segmented_Atlas_GMWMCS`.
-Contact 1 is at 0.2V and contact 2 at 0 V.
-The encapsulation thickness is 0.1 mm and gray matter.
-Simulation is run in FullSpectrum mode using QS at 130Hz and 60 us pulsewidth.
-
-Runs with 
-
-```
-python3 electrode_uq.py input_case2.json
-
+```bash
+ossdbs path_to_folder/input_file.json
 ```
 
-**TODO:**
-Last test geometry currently fails.
+The command line displays a dialog while the software is running. Upon completion, all outputs are stored in a new folder, which is, by default, inside the folder where the input.json is stored.
 
-## Input case 3: monopolar electrode
+The output folder contains different files, depending on the chosen studies. Also, exporting of various files can be determined at the end of the input.json file. The following results can be stored:
 
-The monopolar electrode `MicroProbesCustomRodent` is implanted at (X: 22.95, Y: 11.35, Z: 7.95) in the rat MRI `new_segmented_Atlas_GMWMCS`.
-Case grounding is used. **TODO: This contradicts the above point!** 
-Simulation is run using QS at 130Hz and 60 us pulsewidth. **TODO: current-controlled mode with 200 muA not working!**
-Results are calculated for one artificial neuron placed below the electrode tip.
+### Results:
 
-## Input case 4: dielectric models
+* Material and conductivity distribution as `.vtk` file,
+* Electric potential and field distribution as `.vtk` file,
+* Probed electric potential and field as `.h5` file,
+* Volume of tissue activated as `.nii` file,
+* Used electrodes as `.vtk` file,
+* Create mesh as `.vol.gz` file,
+* Estimated impedance as `.csv` file.
 
-`AbbottStjudeActiveTip6146_6149` electrode is used at (X: 5, Y: 14, Z: -4.5).
-The first contact is at 1 V and the second at 0 V.
-The encapsulation layer is 0.3 mm thick and gray matter.
-Simulation is run using QS at 130Hz and 60 us pulsewidth.
-Instead of the conventional ColeCole4 model, we use constant values at 1 kHz for the permittivity and conductivity.
-**TODO: Why permittivity when QS?**
+Case 1: Brain Material
+----------------------
 
-## Input case 5
+To demonstrate the use of inhomogenous and anisotrophic tissue properties, the first test case contains two input dictionaries. The first one uses a homogeneous MRI image, but no diffusion tensor image (DTI), whereas the the other input file uses MRI scan of a human brain.
+A Boston Scientific Vercise electrode (`BostonScientificVercise`) is used and implanted in the vicinity of the STN. A unit amplitude with 1V on the lowest contact and grounding on the second contact is modeled. The tissue properties are estimated based on the ColeCole4 model at a single frequency of 10kHz. The quasi-static approximation of Maxwell's equation is solved, and the outputs are stored in the results folder.
+
+Case 2: Custom Parameters
+-------------------------
+
+The second test case shows how to use custom parameters for electrode geometries or material models. Here, the directed Boston Scientific Vercise electrode (`BostonScientificVerciseDirected`) is used and placed at the STN with an encapsulation layer of 0.2 mm sourrounding the electrode. The encapsulation layer is assumed to consist of gray matter, but can be change to any provided tissue type. In the `input_custom_electrode.json` the length of the contacts is slightly changed. In the second input dictionary, the material model is changed to a constant value for all tissue types, where the corresponding values for the conductivity and permittivity are defined in the inputs.
+
+Case 3: Case Grounding
+----------------------
+
+In this case, we use a custom-designed monopolar electrode by MicroProbes (`MicroProbesRodentElectrode`), which is used for DBS in rodents. The electrode is implanted in the STN within the same MRI as used before. The stimulation amplitude of the only contact is 1V, and the outer boundary of the brain region is assumed to be the grounding. In the case of a custom brain shape, specified regions can also be used as grounding in the same way.
 
 
-## Input case 6: Floating
+Case 4: Current Controlled Stimulation
+--------------------------------------
 
-**Do not run! Takes much too long and should be wrong.**
+To conduct current-controlled stimulations, a fixed current for the stimulation amplitude can be provided in the settings. In this example, an electrode from Abbott St. Jude (`AbbottStJudeDirected6172`) is used with 0.1mA on the first and -0.1mA on the second contact. Also, current-controlled stimulation on multiple contacts is possible. To do so, we specify the amplitudes as follows: `C1: -3mA, C2: 1mA, C3: 1mA, C4: 1mA`.
 
-Standard human MRI (`icbm_avg_152_segmented.nii.gz`).
-Position of the Boston Scientific Vercise elektroce: (X: 5, Y: 14, Z: -4.5).
-Current-controlled stimulation with 1 mA on the lowest contact and ground at the contact above.
-**TODO: What is the point of this configuration? Change!**
+Case 5: Stimulation Signals
+---------------------------
 
-## Input case 7: Diffusion Tensor Image (DTI)
+The Medtronic SenSight electrode (`MedtronicSenSightB33005`) is used to simulate stimulation with a biphasic rectangular signal with a base frequency of 130 Hz, 60 us pulse width, and a ten times longer charge-balancing counter pulse. After transforming the time signal into the frequency domain and solving the QS, the results are transferred back into the time domain.
 
-Use MRI and DTI data in MNI space from MNI_ICBM_2009b_NLIN_ASYM atlas from Lead-DBS templates.
-Position of the Boston Scientific Vercise elektroce: (X: 5, Y: 14, Z: -4.5).
-Voltage-controlled stimulation with 1V on the lowest contact and ground at the contact above.
+**TODO: Spectrum method and document results in time domain**
 
-**TODO: Implement processing of DTI data.**
+Case 6: Floating Contacts
+-------------------------
 
-## Input case 8: Point analysis for differenet areas
+To demonstrate the use of floating contacts, the PINS Medical electrode (`PINSMedicalL303`) is used. The first contact uses a 1V stimulation amplitude, and the third contact is used as ground. The second contact is modeled as a floating conductor.
 
-Use MRI data in MNI space from MNI_ICBM_2009b_NLIN_ASYM atlas from Lead-DBS templates.
-Position of the Boston Scientific Vercise elektroce: (X: 5, Y: 14, Z: -4.5).
-Voltage-controlled stimulation with 1V on the lowest contact and ground at the contact above.
-We seed points in different patterns (line, array, or brain region) to evaluate the electric potential/field at different points.
+**TODO: Check results, simulation takes too long**
+
+Case 7: Volume of Tissue Activated (VTA)
+----------------------------------------
+
+The contained input dictionary uses a uniform grid around the active contact of the DIXI SEEG electrode (`DixiSEEG10`) to estimate the electric field at those points and threshold it by a specified value. As a result, the estimated VTA is stored in Nifty format. As an additional option, the electrode can virtually be removed from the VTA to collapse it inside the electrode's trajectory.
+
+Case 8: Pathway Activation Modelling (PAM)
+------------------------------------------
+
+Using a DBS electrode from Medtronic (`Medtronic3387`) placed in the STN, the electric field is evaluated along the points of an axon. Therefore, the points are provided in a structured `.h5`  file, and the path to the file is provided in the inputs. The results are stored in the output folder.
+
+**TODO: finalize pathway modelling**
