@@ -352,6 +352,7 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
     signal_settings = settings["StimulationSignal"]
     signal_type = signal_settings["Type"]
     current_controlled = signal_settings["CurrentControlled"]
+    octave_band_approximation = False
     if signal_type == "Multisine":
         frequencies = signal_settings["ListOfFrequencies"]
         fourier_coefficients = np.ones(len(frequencies))
@@ -366,6 +367,7 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
             frequencies, fourier_coefficients = signal.get_octave_band_spectrum(
                 cutoff_frequency
             )
+            octave_band_approximation = True
         elif spectrum_mode == "Truncation":
             frequencies, fourier_coefficients = signal.get_truncated_spectrum(
                 cutoff_frequency
@@ -386,6 +388,7 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
         current_controlled=current_controlled,
         base_frequency=base_frequency,
         cutoff_frequency=cutoff_frequency,
+        octave_band_approximation=octave_band_approximation,
     )
     return frequency_domain_signal
 

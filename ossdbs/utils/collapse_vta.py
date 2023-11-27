@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def collapse_VTA(field_on_points, implantation_coordinate, lead_direction, lead_diam):
+def get_collapsed_VTA(field_on_points, implantation_coordinate, lead_direction, lead_diam):
     """Postprocess probing points to remove the electrode by inward sideways collapse. The point coordinates are pulled
     into the electrode space to 'counteract' tissue misplacement due to the implantation. This breaks the grid regularity, so
     all nifti files will be created externally.

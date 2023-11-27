@@ -217,11 +217,11 @@ class VolumeConductor(ABC):
                 potentials = scale_factor * self.evaluate_potential_at_points(lattice)
                 fields = scale_factor * self.evaluate_field_at_points(lattice)
                 field_mags = scale_factor * self.compute_field_magnitude(fields)
+                self._copy_values_for_time_domain(freq_idx, tmp_potential_freq_domain, potentials[:, 0])
+                self._copy_values_for_time_domain(freq_idx, tmp_Ex_freq_domain, fields[:, 0])
+                self._copy_values_for_time_domain(freq_idx, tmp_Ey_freq_domain, fields[:, 1])
+                self._copy_values_for_time_domain(freq_idx, tmp_Ez_freq_domain, fields[:, 2])
                 # copy values for time-domain analysis
-                tmp_potential_freq_domain[freq_idx, :] = potentials[:, 0]
-                tmp_Ex_freq_domain[freq_idx, :] = fields[:, 0]
-                tmp_Ey_freq_domain[freq_idx, :] = fields[:, 1]
-                tmp_Ez_freq_domain[freq_idx, :] = fields[:, 2]
                 if np.isclose(frequency, self._export_frequency):
                     self.export_potential_to_csv(
                         frequency,
@@ -838,8 +838,8 @@ class VolumeConductor(ABC):
 
         activation_threshold: float
         """
-        field_mags_full = np.zeros(lattice_mask.shape[0], float)
-        field_mags_full[lattice_mask[:, 0]] = field_mags[:, 0]
+        field_mags_full = np.zeros(lattice_mask.shape[0])
+        field_mags_full[lattice_mask[:, 0]] = np.real(field_mags[:, 0])
 
         point_model.save_as_nifti(
             field_mags_full,
@@ -999,3 +999,6 @@ class VolumeConductor(ABC):
                 self._stimulation_variable[freq_idx, contact_idx] = (
                     scale_factor * contact.voltage
                 )
+
+    def _copy_values_for_time_domain(self, freq_idx: int, tmp_array: np.ndarray, values: np.ndarray) -> None:
+        tmp_array[freq_idx, :] = values

@@ -17,6 +17,7 @@ class FrequencyDomainSignal:
     current_controlled: bool
     base_frequency: float
     cutoff_frequency: float
+    octave_band_approximation: bool = False
 
 
 class TimeDomainSignal(ABC):
