@@ -60,7 +60,6 @@ class Settings:
         },
         "EQSMode": False,
         "FEMOrder": 2,
-        "ComputeImpedance": False,
         "StimulationSignal": {
             "Type": "Rectangle",
             "ListOfFrequencies": [130.0],
@@ -97,7 +96,7 @@ class Settings:
             },
         },
         "OutputPath": "Results",
-        "SaveImpedance": False,
+        "ComputeImpedance": False,
         "ExportVTK": False,
         "ExportElectrode": False,
         "TemplateSpace": True,
