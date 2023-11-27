@@ -182,12 +182,15 @@ class VolumeConductor(ABC):
         for freq_idx, frequency in enumerate(self.signal.frequencies):
             _logger.info(f"Computing at frequency: {frequency}")
             time_0 = time.time()
-            # TODO implement check w.r.t. sigma of previous solution
-            # sigma_has_changed = self.check_sigma()
-            self.compute_solution(frequency)
-
-            if compute_impedance:
-                self._impedances[freq_idx] = self.compute_impedance()
+            # check if conductivity has changed
+            sigma_has_changed = self.has_sigma_changed(freq_idx)
+            if sigma_has_changed:
+                self.compute_solution(frequency)
+                if compute_impedance:
+                    self._impedances[freq_idx] = self.compute_impedance()
+            else:
+                _logger.info(f"Skipped computation at {frequency} Hz")
+                self._impedances[freq_idx] = self._impedances[freq_idx - 1]
 
             # scale factor to account for complex-valued FFT coefficients
             scale_factor = self.get_scale_factor(freq_idx)
@@ -217,10 +220,18 @@ class VolumeConductor(ABC):
                 potentials = scale_factor * self.evaluate_potential_at_points(lattice)
                 fields = scale_factor * self.evaluate_field_at_points(lattice)
                 field_mags = scale_factor * self.compute_field_magnitude(fields)
-                self._copy_values_for_time_domain(freq_idx, tmp_potential_freq_domain, potentials[:, 0])
-                self._copy_values_for_time_domain(freq_idx, tmp_Ex_freq_domain, fields[:, 0])
-                self._copy_values_for_time_domain(freq_idx, tmp_Ey_freq_domain, fields[:, 1])
-                self._copy_values_for_time_domain(freq_idx, tmp_Ez_freq_domain, fields[:, 2])
+                self._copy_values_for_time_domain(
+                    freq_idx, tmp_potential_freq_domain, potentials[:, 0]
+                )
+                self._copy_values_for_time_domain(
+                    freq_idx, tmp_Ex_freq_domain, fields[:, 0]
+                )
+                self._copy_values_for_time_domain(
+                    freq_idx, tmp_Ey_freq_domain, fields[:, 1]
+                )
+                self._copy_values_for_time_domain(
+                    freq_idx, tmp_Ez_freq_domain, fields[:, 2]
+                )
                 # copy values for time-domain analysis
                 if np.isclose(frequency, self._export_frequency):
                     self.export_potential_to_csv(
@@ -269,16 +280,18 @@ class VolumeConductor(ABC):
         if point_model and len(self.signal.frequencies) > 1:
             _logger.info("Computing time-domain signal from frequency-domain")
             timesteps, potential_in_time = self.reconstruct_time_signals(
-                len(lattice), tmp_potential_freq_domain
+                len(lattice),
+                tmp_potential_freq_domain,
+                self.signal.octave_band_approximation,
             )
             timesteps, Ex_in_time = self.reconstruct_time_signals(
-                len(lattice), tmp_Ex_freq_domain
+                len(lattice), tmp_Ex_freq_domain, self.signal.octave_band_approximation
             )
             timesteps, Ey_in_time = self.reconstruct_time_signals(
-                len(lattice), tmp_Ey_freq_domain
+                len(lattice), tmp_Ey_freq_domain, self.signal.octave_band_approximation
             )
             timesteps, Ez_in_time = self.reconstruct_time_signals(
-                len(lattice), tmp_Ez_freq_domain
+                len(lattice), tmp_Ez_freq_domain, self.signal.octave_band_approximation
             )
             field_in_time = np.column_stack((Ex_in_time, Ey_in_time, Ez_in_time))
             self.create_time_result(
@@ -293,10 +306,14 @@ class VolumeConductor(ABC):
 
         # time-domain exports
         timesteps, free_stimulation_variable_in_time = self.reconstruct_time_signals(
-            len(self.contacts.active), self._free_stimulation_variable
+            len(self.contacts.active),
+            self._free_stimulation_variable,
+            self.signal.octave_band_approximation,
         )
         timesteps, stimulation_variable_in_time = self.reconstruct_time_signals(
-            len(self.contacts.active), self._stimulation_variable
+            len(self.contacts.active),
+            self._stimulation_variable,
+            self.signal.octave_band_approximation,
         )
         free_stimulation_variable_at_contact = {}
         free_stimulation_variable_at_contact["time"] = timesteps
@@ -319,6 +336,7 @@ class VolumeConductor(ABC):
             raise ValueError(
                 "Attempt to compute field magnitude from invalid field vector"
             )
+        # TODO fix for complex vectors
         return np.linalg.norm(fields, axis=1).reshape((fields.shape[0], 1))
 
     def create_time_result(
@@ -347,9 +365,18 @@ class VolumeConductor(ABC):
         _logger.info("Created time result and saved to file")
 
     def reconstruct_time_signals(
-        self, n_lattice_points, freq_domain_signal
+        self,
+        n_lattice_points: int,
+        freq_domain_signal: np.ndarray,
+        octave_band_approximation: bool,
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Compute time signals from frequency-domain data."""
+        """Compute time signals from frequency-domain data.
+
+        Notes
+        -----
+        If octave band approximation is used, it will also be copied to frequencies at other frequencies in band.
+
+        """
         # Because we use full FFT we also need negative frequencies
         n_frequencies = int(self.signal.cutoff_frequency / self.signal.base_frequency)
         # to account for DC, too
@@ -360,22 +387,40 @@ class VolumeConductor(ABC):
             tmp_freq_domain = np.append(tmp_freq_domain, tmp_freq_domain[-2:0:-1])
 
         frequency_indices = self.signal.frequencies / self.signal.base_frequency
-        frequency_indices = frequency_indices.astype(
-            np.uint16
-        )  # no zero-based indexing, zero is DC contribution (here set to zero! TODO)
-        result_in_time = np.zeros(shape=(n_lattice_points, 2 * n_frequencies + 1))
+        frequency_indices = frequency_indices.astype(np.uint16)
+        result_in_time = np.zeros(shape=(n_lattice_points, len(tmp_freq_domain)))
 
         # go through points in lattice
         for point_idx in range(n_lattice_points):
             # write frequencies
-            # TODO band approximation
             for idx, idx_freq in enumerate(frequency_indices):
                 tmp_freq_domain[idx_freq] = freq_domain_signal[idx, point_idx]
+                if octave_band_approximation:
+                    min_freq = int(
+                        np.round(
+                            idx_freq
+                            * self.signal.base_frequency
+                            / (np.sqrt(2) * self.signal.base_frequency)
+                        )
+                    )
+                    max_freq = int(
+                        np.round(
+                            np.sqrt(2)
+                            * idx_freq
+                            * self.signal.base_frequency
+                            / self.signal.base_frequency
+                        )
+                    )
+                    oct_idx = min_freq
+                    while oct_idx < max_freq:
+                        tmp_freq_domain[oct_idx] = freq_domain_signal[idx, point_idx]
+                        oct_idx += 1
                 # reverse order for negative frequencies
                 if idx > 0:
                     tmp_freq_domain[len(tmp_freq_domain) - idx_freq] = np.conjugate(
                         freq_domain_signal[idx, point_idx]
                     )
+
             # convert to time domain
             timesteps, tmp = retrieve_time_domain_signal_from_fft(
                 tmp_freq_domain,
@@ -1000,5 +1045,46 @@ class VolumeConductor(ABC):
                     scale_factor * contact.voltage
                 )
 
-    def _copy_values_for_time_domain(self, freq_idx: int, tmp_array: np.ndarray, values: np.ndarray) -> None:
+    def _copy_values_for_time_domain(
+        self, freq_idx: int, tmp_array: np.ndarray, values: np.ndarray
+    ) -> None:
+        """Copy values to time-domain vector."""
         tmp_array[freq_idx, :] = values
+
+    def has_sigma_changed(self, freq_idx, threshold=0.01) -> bool:
+        """Check if conductivity has changed."""
+        if self._sigma is None:
+            return True
+        else:
+            max_error = 0.0
+            for _material, model in self._conductivity_cf.dielectric_properties.items():
+                if self.is_complex:
+                    old_value = model.complex_conductivity(
+                        (freq_idx - 1) * self.signal.base_frequency
+                    )
+                    new_value = model.complex_conductivity(
+                        freq_idx * self.signal.base_frequency
+                    )
+                    error_real = np.abs(old_value.real - new_value.real)
+                    # to catch zero-case
+                    if not np.isclose(old_value.real, 0.0):
+                        error_real /= old_value.real
+                    error_imag = np.abs(old_value.imag - new_value.imag)
+                    # to catch zero-case
+                    if not np.isclose(old_value.imag, 0.0):
+                        error_imag /= old_value.imag
+
+                    error = np.maximum(error_real, error_imag)
+                else:
+                    old_value = model.conductivity(
+                        (freq_idx - 1) * self.signal.base_frequency
+                    )
+                    new_value = model.conductivity(
+                        freq_idx * self.signal.base_frequency
+                    )
+                    error = np.abs((old_value - new_value) / old_value)
+                if error > max_error:
+                    max_error = error
+            if max_error > threshold:
+                return True
+            return False
