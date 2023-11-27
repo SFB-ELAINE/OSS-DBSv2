@@ -451,7 +451,7 @@ class VolumeConductor(ABC):
             os.path.join(self.output_path, "potential")
         )
 
-        FieldSolution(self.electric_field, "E-field", ngmesh, self.is_complex).save(
+        FieldSolution(self.electric_field, "E_field", ngmesh, self.is_complex).save(
             os.path.join(self.output_path, "E-field")
         )
 
