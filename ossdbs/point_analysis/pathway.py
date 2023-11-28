@@ -88,11 +88,11 @@ class Pathway(PointModel):
             )
             electric_field_vector_y = data.electric_field_vector[1][start:end]
             sub_group.create_dataset(
-                "Electric field vector x[Vm^(-1)]", data=electric_field_vector_y
+                "Electric field vector y[Vm^(-1)]", data=electric_field_vector_y
             )
             electric_field_vector_z = data.electric_field_vector[2][start:end]
             sub_group.create_dataset(
-                "Electric field vector x[Vm^(-1)]", data=electric_field_vector_z
+                "Electric field vector z[Vm^(-1)]", data=electric_field_vector_z
             )
             start = start + end
         return start
