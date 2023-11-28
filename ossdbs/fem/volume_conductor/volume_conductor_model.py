@@ -190,7 +190,8 @@ class VolumeConductor(ABC):
                     self._impedances[freq_idx] = self.compute_impedance()
             else:
                 _logger.info(f"Skipped computation at {frequency} Hz")
-                self._impedances[freq_idx] = self._impedances[freq_idx - 1]
+                if compute_impedance:
+                    self._impedances[freq_idx] = self._impedances[freq_idx - 1]
 
             # scale factor to account for complex-valued FFT coefficients
             scale_factor = self.get_scale_factor(freq_idx)
