@@ -61,5 +61,6 @@ def retrieve_time_domain_signal_from_fft(
     # double the cutoff_frequency to actually sample until there
     cutoff_frequency = adjust_cutoff_frequency(2.0 * cutoff_frequency, base_frequency)
     dt = 1.0 / cutoff_frequency
-    timesteps = dt * np.arange(int(cutoff_frequency / base_frequency))
-    return timesteps, ifft(fft_signal).real
+    signal = ifft(fft_signal).real
+    timesteps = dt * np.arange(len(signal))
+    return timesteps, signal
