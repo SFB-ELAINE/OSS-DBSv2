@@ -82,6 +82,7 @@
   "StimulationSignal": {
     "CurrentControlled": false,
     "Type": "Rectangle",
+    "SpectrumMode": "OctaveBand",
     "Frequency[Hz]": 130.0,
     "PulseWidth[us]": 600,
     "CounterPulseWidth[us]": 0.0,
@@ -121,7 +122,7 @@
       "PointDistance[mm]": 1
     }
   },
-  "OutputPath": "Results",
+  "OutputPath": "ResultsOctave",
   "SaveImpedance": true,
   "ExportVTK": true,
   "ActivationThresholdVTA": 0.2

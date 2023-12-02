@@ -360,23 +360,13 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
         cutoff_frequency = frequencies[0]
     else:
         spectrum_mode = signal_settings["SpectrumMode"]
+        if spectrum_mode == "OctaveBand":
+            octave_band_approximation = True
+
         signal = generate_signal(settings)
         cutoff_frequency = signal_settings["CutoffFrequency"]
         base_frequency = signal.frequency
-        if spectrum_mode == "OctaveBand":
-            frequencies, fourier_coefficients = signal.get_octave_band_spectrum(
-                cutoff_frequency
-            )
-            octave_band_approximation = True
-        elif spectrum_mode == "Truncation":
-            frequencies, fourier_coefficients = signal.get_truncated_spectrum(
-                cutoff_frequency
-            )
-        else:
-            (
-                frequencies,
-                fourier_coefficients,
-            ) = signal.get_fft_spectrum(cutoff_frequency)
+        frequencies, fourier_coefficients = signal.get_fft_spectrum(cutoff_frequency)
         # only use positive frequencies
         first_negative_freq = np.argwhere(frequencies < 0)[0, 0]
         frequencies = frequencies[:first_negative_freq]

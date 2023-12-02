@@ -2,9 +2,9 @@ import multiprocessing as mp
 from copy import deepcopy
 from functools import partial
 from multiprocessing import sharedctypes
-from scipy.fft import ifft
 
 import numpy as np
+from scipy.fft import ifft
 
 
 def generate_signal(
@@ -56,11 +56,17 @@ def adjust_cutoff_frequency(cutoff_frequency, frequency):
 def retrieve_time_domain_signal_from_fft(
     fft_signal: np.ndarray, cutoff_frequency: float, base_frequency: float
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Compute time-domain signal via fft
-    """
+    """Compute time-domain signal via fft."""
     # double the cutoff_frequency to actually sample until there
     cutoff_frequency = adjust_cutoff_frequency(2.0 * cutoff_frequency, base_frequency)
     dt = 1.0 / cutoff_frequency
     signal = ifft(fft_signal).real
     timesteps = dt * np.arange(len(signal))
     return timesteps, signal
+
+
+def get_octave_band_indices(frequencies: np.ndarray) -> np.ndarray:
+    """Return indices of octave band frequencies."""
+    n_octaves = int(np.log2(len(frequencies) - 1)) + 1
+    octave_indices = 2 ** np.arange(0, n_octaves)
+    return octave_indices

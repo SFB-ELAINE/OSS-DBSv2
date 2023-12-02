@@ -131,7 +131,7 @@ class ModelGeometry:
             elif setting == "Voltage[V]":
                 contact.voltage = value
             elif setting == "SurfaceImpedance[Ohmm]":
-                contact.surface_impedance = value
+                contact.surface_impedance = value["real"] + 1j * value["imag"]
             elif setting == "MaxMeshSize":
                 contact.max_h = value
                 self.set_face_mesh_sizes({contact.name: value})

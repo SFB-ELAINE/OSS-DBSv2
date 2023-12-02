@@ -4,6 +4,7 @@ import time
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
+import matplotlib.pyplot as plt
 import ngsolve
 import numpy as np
 import pandas as pd
@@ -14,6 +15,7 @@ from ossdbs.model_geometry import Contacts, ModelGeometry
 from ossdbs.point_analysis import Lattice, Pathway, PointModel, TimeResult, VoxelLattice
 from ossdbs.stimulation_signals import (
     FrequencyDomainSignal,
+    get_octave_band_indices,
     retrieve_time_domain_signal_from_fft,
 )
 from ossdbs.utils.collapse_vta import get_collapsed_VTA
@@ -134,6 +136,10 @@ class VolumeConductor(ABC):
             )
             compute_impedance = True
 
+        if self.signal.octave_band_approximation:
+            frequency_indices = get_octave_band_indices(self.signal.frequencies)
+        else:
+            frequency_indices = np.arange(len(self.signal.frequencies))
         # TODO define export_frequency at mean conductivity
         self._export_frequency = np.median(self.signal.frequencies)
         self._free_stimulation_variable = np.zeros(
@@ -179,11 +185,12 @@ class VolumeConductor(ABC):
                 shape=(len(self.signal.frequencies), len(lattice)), dtype=complex
             )
 
-        for freq_idx, frequency in enumerate(self.signal.frequencies):
+        for freq_idx in frequency_indices:
+            frequency = self.signal.frequencies[freq_idx]
             _logger.info(f"Computing at frequency: {frequency}")
             time_0 = time.time()
             # check if conductivity has changed
-            sigma_has_changed = self.has_sigma_changed(freq_idx)
+            sigma_has_changed = self._has_sigma_changed(freq_idx)
             if sigma_has_changed:
                 self.compute_solution(frequency)
                 if compute_impedance:
@@ -193,13 +200,12 @@ class VolumeConductor(ABC):
                 if compute_impedance:
                     self._impedances[freq_idx] = self._impedances[freq_idx - 1]
 
-            # scale factor to account for complex-valued FFT coefficients
-            scale_factor = self.get_scale_factor(freq_idx)
-            _logger.debug(f"Scale factor: {scale_factor}")
-            self._store_solution_at_contacts(freq_idx, scale_factor)
-
+            # scale factor: is one for VC and depends on impedance for other case
+            self._scale_factor = self.get_scale_factor(freq_idx)
+            _logger.info(f"Scale factor: {self._scale_factor}")
+            self._store_solution_at_contacts(freq_idx)
             if _logger.getEffectiveLevel() == logging.DEBUG:
-                estimated_currents = self.estimate_currents(scale_factor)
+                estimated_currents = self.estimate_currents(self._scale_factor)
                 _logger.debug(
                     f"Estimated currents through contacts: {estimated_currents}"
                 )
@@ -218,9 +224,11 @@ class VolumeConductor(ABC):
 
             # export point results
             if point_model is not None:
-                potentials = scale_factor * self.evaluate_potential_at_points(lattice)
-                fields = scale_factor * self.evaluate_field_at_points(lattice)
-                field_mags = scale_factor * self.compute_field_magnitude(fields)
+                potentials = self._scale_factor * self.evaluate_potential_at_points(
+                    lattice
+                )
+                fields = self._scale_factor * self.evaluate_field_at_points(lattice)
+                field_mags = self._scale_factor * self.compute_field_magnitude(fields)
                 self._copy_values_for_time_domain(
                     freq_idx, tmp_potential_freq_domain, potentials[:, 0]
                 )
@@ -266,6 +274,21 @@ class VolumeConductor(ABC):
                 timings["FieldExport"] = time_1 - time_0
                 time_0 = time_1
 
+        plt.stem(self.signal.frequencies, self.signal.amplitudes)
+        plt.xscale("log")
+        plt.savefig(os.path.join(self.output_path, "stickamplitudes.pdf"))
+        plt.close()
+
+        plt.stem(self.signal.frequencies, self._stimulation_variable[:, 1])
+        plt.xscale("log")
+        plt.savefig(os.path.join(self.output_path, "stickapplied.pdf"))
+        plt.close()
+
+        plt.xscale("log")
+        plt.stem(self.signal.frequencies, self._free_stimulation_variable[:, 1])
+        plt.savefig(os.path.join(self.output_path, "stickfree.pdf"))
+        plt.close()
+
         # save impedance at all frequencies to file!
         if compute_impedance:
             _logger.info("Saving impedance")
@@ -281,18 +304,16 @@ class VolumeConductor(ABC):
         if point_model and len(self.signal.frequencies) > 1:
             _logger.info("Computing time-domain signal from frequency-domain")
             timesteps, potential_in_time = self.reconstruct_time_signals(
-                len(lattice),
-                tmp_potential_freq_domain,
-                self.signal.octave_band_approximation,
+                len(lattice), tmp_potential_freq_domain
             )
             timesteps, Ex_in_time = self.reconstruct_time_signals(
-                len(lattice), tmp_Ex_freq_domain, self.signal.octave_band_approximation
+                len(lattice), tmp_Ex_freq_domain
             )
             timesteps, Ey_in_time = self.reconstruct_time_signals(
-                len(lattice), tmp_Ey_freq_domain, self.signal.octave_band_approximation
+                len(lattice), tmp_Ey_freq_domain
             )
             timesteps, Ez_in_time = self.reconstruct_time_signals(
-                len(lattice), tmp_Ez_freq_domain, self.signal.octave_band_approximation
+                len(lattice), tmp_Ez_freq_domain
             )
             field_in_time = np.column_stack((Ex_in_time, Ey_in_time, Ez_in_time))
             self.create_time_result(
@@ -307,14 +328,10 @@ class VolumeConductor(ABC):
 
         # time-domain exports
         timesteps, free_stimulation_variable_in_time = self.reconstruct_time_signals(
-            len(self.contacts.active),
-            self._free_stimulation_variable,
-            self.signal.octave_band_approximation,
+            len(self.contacts.active), self._free_stimulation_variable
         )
         timesteps, stimulation_variable_in_time = self.reconstruct_time_signals(
-            len(self.contacts.active),
-            self._stimulation_variable,
-            self.signal.octave_band_approximation,
+            len(self.contacts.active), self._stimulation_variable
         )
         free_stimulation_variable_at_contact = {}
         free_stimulation_variable_at_contact["time"] = timesteps
@@ -369,7 +386,6 @@ class VolumeConductor(ABC):
         self,
         n_lattice_points: int,
         freq_domain_signal: np.ndarray,
-        octave_band_approximation: bool,
     ) -> tuple[np.ndarray, np.ndarray]:
         """Compute time signals from frequency-domain data.
 
@@ -396,26 +412,6 @@ class VolumeConductor(ABC):
             # write frequencies
             for idx, idx_freq in enumerate(frequency_indices):
                 tmp_freq_domain[idx_freq] = freq_domain_signal[idx, point_idx]
-                if octave_band_approximation:
-                    min_freq = int(
-                        np.round(
-                            idx_freq
-                            * self.signal.base_frequency
-                            / (np.sqrt(2) * self.signal.base_frequency)
-                        )
-                    )
-                    max_freq = int(
-                        np.round(
-                            np.sqrt(2)
-                            * idx_freq
-                            * self.signal.base_frequency
-                            / self.signal.base_frequency
-                        )
-                    )
-                    oct_idx = min_freq
-                    while oct_idx < max_freq:
-                        tmp_freq_domain[oct_idx] = freq_domain_signal[idx, point_idx]
-                        oct_idx += 1
                 # reverse order for negative frequencies
                 if idx > 0:
                     tmp_freq_domain[len(tmp_freq_domain) - idx_freq] = np.conjugate(
@@ -985,7 +981,7 @@ class VolumeConductor(ABC):
         In voltage-controlled mode, only the amplitude of the Fourier coefficient is used.
         In current-controlled mode, TODO
         """
-        scale_factor = self.signal.amplitudes[freq_idx]
+        scale_factor = 1.0
         if self.current_controlled:
             _logger.debug("Scale solution for current_controlled mode")
             if self.current_controlled and len(self.contacts.active) == 2:
@@ -1005,7 +1001,7 @@ class VolumeConductor(ABC):
     def prepare_current_controlled_mode(self) -> None:
         """Check contacts and assign voltages if needed."""
         if len(self.contacts.active) == 2:
-            _logger.info("Ovewrite voltage for current-controlled mode")
+            _logger.info("Overwrite voltage for current-controlled mode")
             for contact_idx, contact in enumerate(self.contacts.active):
                 self.contacts[contact.name].voltage = float(contact_idx)
         else:
@@ -1028,14 +1024,17 @@ class VolumeConductor(ABC):
             timings["FieldExport"] = []
         return timings
 
-    def _store_solution_at_contacts(self, freq_idx: int, scale_factor: float) -> None:
+    def _store_solution_at_contacts(self, freq_idx: int) -> None:
         """Save voltages / currents at given frequency for all contacts."""
+        scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
         if self.current_controlled:
             for contact_idx, contact in enumerate(self.contacts.active):
                 self._free_stimulation_variable[freq_idx, contact_idx] = (
                     scale_factor * contact.voltage
                 )
+                # TODO: scale, too?
                 self._stimulation_variable[freq_idx, contact_idx] = contact.current
+
         else:
             estimated_currents = self.estimate_currents(scale_factor)
             for contact_idx, contact in enumerate(self.contacts.active):
@@ -1045,14 +1044,44 @@ class VolumeConductor(ABC):
                 self._stimulation_variable[freq_idx, contact_idx] = (
                     scale_factor * contact.voltage
                 )
+        if self.signal.octave_band_approximation:
+            # to avoid overlaps
+            min_freq = int(np.round(freq_idx / np.sqrt(2))) + 1
+            max_freq = int(np.round(np.sqrt(2) * freq_idx)) - 1
+            print("Idx / Min / max: ", freq_idx, min_freq, max_freq)
+            oct_idx = min_freq
+            while oct_idx < max_freq:
+                if oct_idx == freq_idx:
+                    oct_idx += 1
+                    continue
+                scale_factor = self.signal.amplitudes[oct_idx] * self._scale_factor
+                self._stimulation_variable[oct_idx, :] = (
+                    scale_factor * self._stimulation_variable[freq_idx, :]
+                )
+                self._free_stimulation_variable[oct_idx, :] = (
+                    scale_factor * self._free_stimulation_variable[freq_idx, :]
+                )
+                oct_idx += 1
 
     def _copy_values_for_time_domain(
         self, freq_idx: int, tmp_array: np.ndarray, values: np.ndarray
     ) -> None:
         """Copy values to time-domain vector."""
         tmp_array[freq_idx, :] = values
+        if self.signal.octave_band_approximation:
+            # to avoid overlaps
+            min_freq = int(np.round(freq_idx / np.sqrt(2))) + 1
+            max_freq = int(np.round(np.sqrt(2) * freq_idx)) - 1
+            oct_idx = min_freq
+            while oct_idx < max_freq:
+                if oct_idx == freq_idx:
+                    oct_idx += 1
+                    continue
+                scale_factor = self._scale_factor * self.signal.amplitudes[oct_idx]
+                tmp_array[oct_idx, :] = scale_factor * values
+                oct_idx += 1
 
-    def has_sigma_changed(self, freq_idx, threshold=0.01) -> bool:
+    def _has_sigma_changed(self, freq_idx, threshold=0.01) -> bool:
         """Check if conductivity has changed."""
         if self._sigma is None:
             return True
@@ -1089,3 +1118,10 @@ class VolumeConductor(ABC):
             if max_error > threshold:
                 return True
             return False
+
+    def _add_surface_impedance(self) -> bool:
+        """Decide if surface impedance should be added to active contacts."""
+        add_surface_impedance = False
+        for contact in self.contacts.active:
+            add_surface_impedance = not np.isclose(contact.surface_impedance, 0.0)
+        return add_surface_impedance

@@ -65,11 +65,13 @@ class VolumeConductorNonFloating(VolumeConductor):
         _logger.debug("Prepare weak form")
         u = self._space.TrialFunction()
         v = self._space.TestFunction()
-        # TODO symmetric even if anisotropy?
         _logger.debug("Bilinear form")
+        # TODO symmetric even if anisotropy?
         bilinear_form = ngsolve.BilinearForm(space=self._space, symmetric=True)
         _logger.debug("Bilinear form, formulation")
         bilinear_form += self._sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
+
+        # TODO add surface impedance
         _logger.debug("Linear form")
         linear_form = ngsolve.LinearForm(space=self._space)
         _logger.debug("Solve BVP")

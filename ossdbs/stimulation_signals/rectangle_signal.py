@@ -46,19 +46,25 @@ class RectangleSignal(TimeDomainSignal):
         return coefficient
 
     def get_time_domain_signal(self, dt: float, timesteps: int) -> np.ndarray:
+        """Build time domain signal."""
         signal = np.zeros(timesteps)
         period = 1.0 / self.frequency
-        offset = 0
-        while offset < timesteps * dt:
+        # use offset for visualization
+        offset = int(self._pulse_width / dt)
+        while offset < timesteps:
             pulse_idx = offset + int(self._pulse_width / dt)
-            signal[:pulse_idx] = self.amplitude
-            if self._counter_pulse_width is not None:
+            signal[offset:pulse_idx] = self.amplitude
+            if not np.isclose(self._counter_pulse_width, 0.0):
                 counter_pulse_start_idx = offset + int(
                     self._pulse_width / dt + self._inter_pulse_width / dt
                 )
-                counter_pulse_end_idx = offset + counter_pulse_start_idx + int(self._counter_pulse_width / dt)
+                counter_pulse_end_idx = (
+                    offset
+                    + counter_pulse_start_idx
+                    + int(self._counter_pulse_width / dt)
+                )
                 signal[
                     counter_pulse_start_idx:counter_pulse_end_idx
                 ] = -self.counter_amplitude
-            offset += period
+            offset += int(period / dt)
         return signal
