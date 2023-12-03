@@ -201,12 +201,12 @@ class ModelGeometry:
         for contact in self.contacts:
             if contact.floating:
                 floating_mode = "Floating"
-                if not np.isclose(contact.surface_impedance["real"], 0.0):
+                if not np.isclose(contact.surface_impedance, 0.0):
                     floating_mode = "FloatingImpedance"
                 break
         if floating_mode == "FloatingImpedance":
             for contact in self.contacts:
-                if not np.isclose(contact.surface_impedance["real"], 0.0):
+                if not np.isclose(contact.surface_impedance, 0.0):
                     _logger.warning(
                         "Mode has been set to Floating but there is a nonzero surface impedance on contact {}".format(
                             contact.name
