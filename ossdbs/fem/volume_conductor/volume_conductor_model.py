@@ -2,9 +2,8 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
-import matplotlib.pyplot as plt
 import ngsolve
 import numpy as np
 import pandas as pd
@@ -15,6 +14,8 @@ from ossdbs.model_geometry import Contacts, ModelGeometry
 from ossdbs.point_analysis import Lattice, Pathway, PointModel, TimeResult, VoxelLattice
 from ossdbs.stimulation_signals import (
     FrequencyDomainSignal,
+    get_maximum_octave_band_index,
+    get_minimum_octave_band_index,
     get_octave_band_indices,
     retrieve_time_domain_signal_from_fft,
 )
@@ -138,6 +139,9 @@ class VolumeConductor(ABC):
 
         if self.signal.octave_band_approximation:
             frequency_indices = get_octave_band_indices(self.signal.frequencies)
+            # add DC component
+            if not np.isclose(self.signal.amplitudes[0], 0.0):
+                frequency_indices = np.insert(frequency_indices, 0, 0)
         else:
             frequency_indices = np.arange(len(self.signal.frequencies))
         # TODO define export_frequency at mean conductivity
@@ -202,10 +206,22 @@ class VolumeConductor(ABC):
 
             # scale factor: is one for VC and depends on impedance for other case
             self._scale_factor = self.get_scale_factor(freq_idx)
-            _logger.info(f"Scale factor: {self._scale_factor}")
-            self._store_solution_at_contacts(freq_idx)
+            _logger.debug(f"Scale factor: {self._scale_factor}")
+
+            # prepare storing at multiple frequencies
+            if self.signal.octave_band_approximation:
+                band_indices = self._get_octave_band_indices(
+                    freq_idx, frequency_indices
+                )
+                _logger.debug(
+                    f"Band indices from {band_indices[0]} to {band_indices[-1]}"
+                )
+            else:
+                band_indices = [freq_idx]
+
+            self._store_solution_at_contacts(band_indices)
             if _logger.getEffectiveLevel() == logging.DEBUG:
-                estimated_currents = self.estimate_currents(self._scale_factor)
+                estimated_currents = self.estimate_currents()
                 _logger.debug(
                     f"Estimated currents through contacts: {estimated_currents}"
                 )
@@ -224,22 +240,20 @@ class VolumeConductor(ABC):
 
             # export point results
             if point_model is not None:
-                potentials = self._scale_factor * self.evaluate_potential_at_points(
-                    lattice
-                )
-                fields = self._scale_factor * self.evaluate_field_at_points(lattice)
-                field_mags = self._scale_factor * self.compute_field_magnitude(fields)
+                potentials = self.evaluate_potential_at_points(lattice)
+                fields = self.evaluate_field_at_points(lattice)
+                field_mags = self.compute_field_magnitude(fields)
                 self._copy_values_for_time_domain(
-                    freq_idx, tmp_potential_freq_domain, potentials[:, 0]
+                    band_indices, tmp_potential_freq_domain, potentials[:, 0]
                 )
                 self._copy_values_for_time_domain(
-                    freq_idx, tmp_Ex_freq_domain, fields[:, 0]
+                    band_indices, tmp_Ex_freq_domain, fields[:, 0]
                 )
                 self._copy_values_for_time_domain(
-                    freq_idx, tmp_Ey_freq_domain, fields[:, 1]
+                    band_indices, tmp_Ey_freq_domain, fields[:, 1]
                 )
                 self._copy_values_for_time_domain(
-                    freq_idx, tmp_Ez_freq_domain, fields[:, 2]
+                    band_indices, tmp_Ez_freq_domain, fields[:, 2]
                 )
                 # copy values for time-domain analysis
                 if np.isclose(frequency, self._export_frequency):
@@ -273,21 +287,6 @@ class VolumeConductor(ABC):
                 time_1 = time.time()
                 timings["FieldExport"] = time_1 - time_0
                 time_0 = time_1
-
-        plt.stem(self.signal.frequencies, self.signal.amplitudes)
-        plt.xscale("log")
-        plt.savefig(os.path.join(self.output_path, "stickamplitudes.pdf"))
-        plt.close()
-
-        plt.stem(self.signal.frequencies, self._stimulation_variable[:, 1])
-        plt.xscale("log")
-        plt.savefig(os.path.join(self.output_path, "stickapplied.pdf"))
-        plt.close()
-
-        plt.xscale("log")
-        plt.stem(self.signal.frequencies, self._free_stimulation_variable[:, 1])
-        plt.savefig(os.path.join(self.output_path, "stickfree.pdf"))
-        plt.close()
 
         # save impedance at all frequencies to file!
         if compute_impedance:
@@ -386,7 +385,7 @@ class VolumeConductor(ABC):
         self,
         n_lattice_points: int,
         freq_domain_signal: np.ndarray,
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Compute time signals from frequency-domain data.
 
         Notes
@@ -625,7 +624,7 @@ class VolumeConductor(ABC):
                 "Impedance for more than two active contacts not yet supported"
             )
 
-    def estimate_currents(self, scale_factor: float) -> dict:
+    def estimate_currents(self) -> dict:
         """Estimate currents by integration of normal component.
 
         Notes
@@ -643,7 +642,7 @@ class VolumeConductor(ABC):
             current = ngsolve.Integrate(
                 normal_current_density * ngsolve.ds(contact.name), self.mesh.ngsolvemesh
             )
-            estimated_currents[contact.name] = scale_factor * current
+            estimated_currents[contact.name] = current
         return estimated_currents
 
     def vtk_export(self) -> None:
@@ -1024,62 +1023,76 @@ class VolumeConductor(ABC):
             timings["FieldExport"] = []
         return timings
 
-    def _store_solution_at_contacts(self, freq_idx: int) -> None:
-        """Save voltages / currents at given frequency for all contacts."""
-        scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
+    def _store_solution_at_contacts(self, band_indices: List | np.ndarray) -> None:
+        """Save voltages / currents at given frequency band (can be a single frequency) for all contacts."""
         if self.current_controlled:
             for contact_idx, contact in enumerate(self.contacts.active):
-                self._free_stimulation_variable[freq_idx, contact_idx] = (
-                    scale_factor * contact.voltage
-                )
-                # TODO: scale, too?
-                self._stimulation_variable[freq_idx, contact_idx] = contact.current
-
+                for freq_idx in band_indices:
+                    scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
+                    self._free_stimulation_variable[freq_idx, contact_idx] = (
+                        scale_factor * contact.voltage
+                    )
+                    self._stimulation_variable[freq_idx, contact_idx] = (
+                        scale_factor * contact.current
+                    )
         else:
-            estimated_currents = self.estimate_currents(scale_factor)
+            estimated_currents = self.estimate_currents()
             for contact_idx, contact in enumerate(self.contacts.active):
-                self._free_stimulation_variable[
-                    freq_idx, contact_idx
-                ] = estimated_currents[contact.name]
-                self._stimulation_variable[freq_idx, contact_idx] = (
-                    scale_factor * contact.voltage
-                )
-        if self.signal.octave_band_approximation:
-            # to avoid overlaps
-            min_freq = int(np.round(freq_idx / np.sqrt(2))) + 1
-            max_freq = int(np.round(np.sqrt(2) * freq_idx)) - 1
-            print("Idx / Min / max: ", freq_idx, min_freq, max_freq)
-            oct_idx = min_freq
-            while oct_idx < max_freq:
-                if oct_idx == freq_idx:
-                    oct_idx += 1
-                    continue
-                scale_factor = self.signal.amplitudes[oct_idx] * self._scale_factor
-                self._stimulation_variable[oct_idx, :] = (
-                    scale_factor * self._stimulation_variable[freq_idx, :]
-                )
-                self._free_stimulation_variable[oct_idx, :] = (
-                    scale_factor * self._free_stimulation_variable[freq_idx, :]
-                )
-                oct_idx += 1
+                for freq_idx in band_indices:
+                    scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
+                    self._free_stimulation_variable[freq_idx, contact_idx] = (
+                        scale_factor * estimated_currents[contact.name]
+                    )
+                    self._stimulation_variable[freq_idx, contact_idx] = (
+                        scale_factor * contact.voltage
+                    )
+
+    def _get_octave_band_indices(
+        self, freq_idx: int, frequency_indices: list
+    ) -> List | np.ndarray:
+        """Get indices of frequencies in octave band.
+
+        Notes
+        -----
+        We start evaluating from the bottom. I.e., it is checked if there is
+        an overlap with frequencies from the octave band below (already computed).
+        The minimum frequencies are increased until there is no overlap with the
+        previous band.
+        """
+        min_freq = get_minimum_octave_band_index(freq_idx)
+        max_freq = get_maximum_octave_band_index(freq_idx)
+        list_index = np.argwhere(freq_idx == frequency_indices)
+        if list_index.shape != (1, 1):
+            raise ValueError("Wrong frequencies for band evaluation supplied")
+        list_index = list_index[0][0]
+        if freq_idx > 0:
+            max_of_prev_band = get_maximum_octave_band_index(
+                frequency_indices[list_index - 1]
+            )
+            if min_freq == frequency_indices[list_index - 1]:
+                min_freq = freq_idx
+        else:
+            max_of_prev_band = -1
+        # catch if the octave band frequency is equal to another center frequency
+        if freq_idx < frequency_indices[-1]:
+            if max_freq == frequency_indices[list_index + 1]:
+                max_freq = freq_idx
+        # catch if the octave band frequency is overlapping with the band below
+        while min_freq <= max_of_prev_band:
+            min_freq += 1
+
+        band_indices = np.arange(min_freq, max_freq + 1)
+        if len(band_indices) == 0:
+            band_indices = [freq_idx]
+        return band_indices
 
     def _copy_values_for_time_domain(
-        self, freq_idx: int, tmp_array: np.ndarray, values: np.ndarray
+        self, band_indices: List | np.ndarray, tmp_array: np.ndarray, values: np.ndarray
     ) -> None:
         """Copy values to time-domain vector."""
-        tmp_array[freq_idx, :] = values
-        if self.signal.octave_band_approximation:
-            # to avoid overlaps
-            min_freq = int(np.round(freq_idx / np.sqrt(2))) + 1
-            max_freq = int(np.round(np.sqrt(2) * freq_idx)) - 1
-            oct_idx = min_freq
-            while oct_idx < max_freq:
-                if oct_idx == freq_idx:
-                    oct_idx += 1
-                    continue
-                scale_factor = self._scale_factor * self.signal.amplitudes[oct_idx]
-                tmp_array[oct_idx, :] = scale_factor * values
-                oct_idx += 1
+        for freq_idx in band_indices:
+            scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
+            tmp_array[freq_idx, :] = scale_factor * values
 
     def _has_sigma_changed(self, freq_idx, threshold=0.01) -> bool:
         """Check if conductivity has changed."""

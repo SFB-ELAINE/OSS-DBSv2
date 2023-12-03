@@ -70,3 +70,13 @@ def get_octave_band_indices(frequencies: np.ndarray) -> np.ndarray:
     n_octaves = int(np.log2(len(frequencies) - 1)) + 1
     octave_indices = 2 ** np.arange(0, n_octaves)
     return octave_indices
+
+
+def get_minimum_octave_band_index(freq_idx: int):
+    """Get index of lowest frequency in octave band."""
+    return int(np.round(freq_idx / np.sqrt(2)))
+
+
+def get_maximum_octave_band_index(freq_idx: int):
+    """Get index of highest frequency in octave band."""
+    return int(np.round(freq_idx * np.sqrt(2)))
