@@ -144,8 +144,9 @@ class VolumeConductor(ABC):
                 frequency_indices = np.insert(frequency_indices, 0, 0)
         else:
             frequency_indices = np.arange(len(self.signal.frequencies))
-        # TODO define export_frequency at mean conductivity
-        self._export_frequency = np.median(self.signal.frequencies)
+
+        self._export_frequency = np.median(frequency_indices)
+
         self._free_stimulation_variable = np.zeros(
             shape=(len(self.signal.frequencies), len(self.contacts.active)),
             dtype=complex,
@@ -648,7 +649,6 @@ class VolumeConductor(ABC):
     def vtk_export(self) -> None:
         """Export all relevant properties to VTK."""
         ngmesh = self.mesh.ngsolvemesh
-        # TODO add frequency to name
         FieldSolution(self.potential, "potential", ngmesh, self.is_complex).save(
             os.path.join(self.output_path, "potential")
         )
