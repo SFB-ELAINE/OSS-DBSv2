@@ -35,14 +35,17 @@ frequency_indices = get_octave_band_indices(frequencies)
 if not np.isclose(fourier_coefficients[0], 0.0):
     frequency_indices = np.insert(frequency_indices, 0, 0)
 
+print("Frequency indices: ", frequency_indices)
+print("Frequencies: ", [frequencies[idx] for idx in frequency_indices])
 solution = np.zeros(fourier_coefficients.shape, dtype=complex)
 
 for freq_idx in frequency_indices:
     band_indices = get_indices_in_octave_band(freq_idx, frequency_indices)
-    print(band_indices)
     for oct_idx in band_indices:
         solution[oct_idx] = fourier_coefficients[oct_idx]
+    print(f"Highest frequency in band: {frequencies[max(band_indices)]}")
 
+print("Solution:")
 print(solution)
 
 # Because we use full FFT we also need negative frequencies
