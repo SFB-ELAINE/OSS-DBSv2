@@ -11,8 +11,11 @@ dist/
 _build/
 docs/._*
 Results*/
+.idea/
+.ipynb_checkpoints/
 
 # Ignore file
+*.vol.gz
 *.pyc
 .coverage
 .coveragerc
