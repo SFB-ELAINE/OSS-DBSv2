@@ -111,7 +111,6 @@
   },
   "EQSMode": false,
   "FEMOrder": 2,
-  "ComputeImpedance": false,
   "StimulationSignal": {
     "CurrentControlled": true,
     "Type": "Multisine",
@@ -153,6 +152,6 @@
     }
   },
   "OutputPath": "ResultsCC",
-  "SaveImpedance": false,
+  "ComputeImpedance": true,
   "ExportVTK": true
 }

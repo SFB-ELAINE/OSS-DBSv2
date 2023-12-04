@@ -31,7 +31,6 @@ def load_default_for_lead(settings):
     settings["Mesh"]["MeshingHypothesis"]["Type"] = "Fine"
     settings["FEMOrder"] = 3
     settings["ComputeImpedance"] = False
-    settings["SaveImpedance"] = False
 
     settings["Solver"]["MaximumSteps"] = 500
     settings["Solver"]["Precision"] = 1e-10
