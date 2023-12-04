@@ -22,5 +22,5 @@ ng.ini
 *.swp
 impedance.csv
 *checkpoints.ipynb
-success_oss.txt
-fail_oss.txt
+success_*.txt
+fail_*.txt

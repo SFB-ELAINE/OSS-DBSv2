@@ -65,20 +65,21 @@
   "DielectricModel": {
     "Type": "ColeCole4"
   },
-  "SpectrumMode": "OctaveBand",
   "StimulationSignal": {
+    "CurrentControlled": false,
     "Type": "Rectangle",
+    "SpectrumMode": "OctaveBand",
     "Frequency[Hz]": 130.0,
-    "PulseWidth[us]": 60.0,
-    "PulseTopWidth[us]": 60.0,
-    "CounterPulseWidth[us]": 600.0,
-    "InterPulseWidth[us]": 0.0
+    "PulseWidth[us]": 600,
+    "CounterPulseWidth[us]": 0.0,
+    "InterPulseWidth[us]": 0.0,
+    "CutoffFrequency": 1e6
   },
   "Mesh": {
     "LoadMesh": false,
     "MeshElementOrder": 2,
     "MeshingHypothesis": {
-      "Type": "Fine",
+      "Type": "Default",
       "MaxMeshSize": 1
     },
     "MeshSize": {
