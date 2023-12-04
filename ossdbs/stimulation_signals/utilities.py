@@ -84,7 +84,7 @@ def get_maximum_octave_band_index(freq_idx: int):
 
 
 def get_indices_in_octave_band(
-    freq_idx: int, frequency_indices: list
+    freq_idx: int, frequency_indices: list, cutoff_frequency_index: int
 ) -> List | np.ndarray:
     """Get indices of frequencies in octave band.
 
@@ -114,7 +114,7 @@ def get_indices_in_octave_band(
         if max_freq == frequency_indices[list_index + 1]:
             max_freq = freq_idx
     else:  # if band exceeds cutoff
-        max_freq = frequency_indices[-1]
+        max_freq = cutoff_frequency_index
     # catch if the octave band frequency is overlapping with the band below
     while min_freq <= max_of_prev_band:
         min_freq += 1

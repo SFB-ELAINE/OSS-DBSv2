@@ -40,7 +40,10 @@ print("Frequencies: ", [frequencies[idx] for idx in frequency_indices])
 solution = np.zeros(fourier_coefficients.shape, dtype=complex)
 
 for freq_idx in frequency_indices:
-    band_indices = get_indices_in_octave_band(freq_idx, frequency_indices)
+    band_indices = get_indices_in_octave_band(
+        freq_idx, frequency_indices, len(frequencies) - 1
+    )
+    print(band_indices)
     for oct_idx in band_indices:
         solution[oct_idx] = fourier_coefficients[oct_idx]
     print(f"Highest frequency in band: {frequencies[max(band_indices)]}")
@@ -49,16 +52,17 @@ print("Solution:")
 print(solution)
 
 # Because we use full FFT we also need negative frequencies
-n_frequencies = int(cutoff_frequency / frequency)
+n_frequencies = len(solution)
 # to account for DC, too
-tmp_freq_domain = np.zeros(n_frequencies + 1, dtype=complex)
-if (n_frequencies + 1) % 2 == 1:  # if odd
+tmp_freq_domain = np.zeros(n_frequencies, dtype=complex)
+if n_frequencies % 2 == 1:  # if odd
     tmp_freq_domain = np.append(tmp_freq_domain, tmp_freq_domain[-1:0:-1])
 else:
     tmp_freq_domain = np.append(tmp_freq_domain, tmp_freq_domain[-2:0:-1])
 
 frequency_indices = frequencies / frequency
 frequency_indices = frequency_indices.astype(np.uint16)
+print(frequency_indices)
 result_in_time = np.zeros(len(tmp_freq_domain))
 # write frequencies
 for idx, idx_freq in enumerate(frequency_indices):

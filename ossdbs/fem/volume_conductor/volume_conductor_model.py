@@ -210,10 +210,16 @@ class VolumeConductor(ABC):
 
             # prepare storing at multiple frequencies
             if self.signal.octave_band_approximation:
-                band_indices = get_indices_in_octave_band(freq_idx, frequency_indices)
+                band_indices = get_indices_in_octave_band(
+                    freq_idx, frequency_indices, len(self.signal.frequencies) - 1
+                )
                 _logger.debug(
                     f"Band indices from {band_indices[0]} to {band_indices[-1]}"
                 )
+                _logger.debug(
+                    f"Band frequencies from {self.signal.frequencies[band_indices[0]]} to {self.signal.frequencies[band_indices[-1]]}"
+                )
+
             else:
                 band_indices = [freq_idx]
 
@@ -393,7 +399,7 @@ class VolumeConductor(ABC):
         """
         n_frequencies = freq_domain_signal.shape[0]
         tmp_freq_domain = np.zeros(n_frequencies, dtype=complex)
-        if (n_frequencies + 1) % 2 == 1:  # if odd
+        if n_frequencies % 2 == 1:  # if odd
             tmp_freq_domain = np.append(tmp_freq_domain, tmp_freq_domain[-1:0:-1])
         else:
             tmp_freq_domain = np.append(tmp_freq_domain, tmp_freq_domain[-2:0:-1])
