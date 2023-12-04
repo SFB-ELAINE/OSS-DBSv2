@@ -14,8 +14,7 @@ from ossdbs.model_geometry import Contacts, ModelGeometry
 from ossdbs.point_analysis import Lattice, Pathway, PointModel, TimeResult, VoxelLattice
 from ossdbs.stimulation_signals import (
     FrequencyDomainSignal,
-    get_maximum_octave_band_index,
-    get_minimum_octave_band_index,
+    get_indices_in_octave_band,
     get_octave_band_indices,
     retrieve_time_domain_signal_from_fft,
 )
@@ -211,9 +210,7 @@ class VolumeConductor(ABC):
 
             # prepare storing at multiple frequencies
             if self.signal.octave_band_approximation:
-                band_indices = self._get_octave_band_indices(
-                    freq_idx, frequency_indices
-                )
+                band_indices = get_indices_in_octave_band(freq_idx, frequency_indices)
                 _logger.debug(
                     f"Band indices from {band_indices[0]} to {band_indices[-1]}"
                 )
@@ -394,17 +391,14 @@ class VolumeConductor(ABC):
         If octave band approximation is used, it will also be copied to frequencies at other frequencies in band.
 
         """
-        # Because we use full FFT we also need negative frequencies
-        n_frequencies = int(self.signal.cutoff_frequency / self.signal.base_frequency)
-        # to account for DC, too
-        tmp_freq_domain = np.zeros(n_frequencies + 1, dtype=complex)
+        n_frequencies = freq_domain_signal.shape[0]
+        tmp_freq_domain = np.zeros(n_frequencies, dtype=complex)
         if (n_frequencies + 1) % 2 == 1:  # if odd
             tmp_freq_domain = np.append(tmp_freq_domain, tmp_freq_domain[-1:0:-1])
         else:
             tmp_freq_domain = np.append(tmp_freq_domain, tmp_freq_domain[-2:0:-1])
 
-        frequency_indices = self.signal.frequencies / self.signal.base_frequency
-        frequency_indices = frequency_indices.astype(np.uint16)
+        frequency_indices = np.arange(0, n_frequencies)
         result_in_time = np.zeros(shape=(n_lattice_points, len(tmp_freq_domain)))
 
         # go through points in lattice
@@ -1046,45 +1040,6 @@ class VolumeConductor(ABC):
                     self._stimulation_variable[freq_idx, contact_idx] = (
                         scale_factor * contact.voltage
                     )
-
-    def _get_octave_band_indices(
-        self, freq_idx: int, frequency_indices: list
-    ) -> List | np.ndarray:
-        """Get indices of frequencies in octave band.
-
-        Notes
-        -----
-        We start evaluating from the bottom. I.e., it is checked if there is
-        an overlap with frequencies from the octave band below (already computed).
-        The minimum frequencies are increased until there is no overlap with the
-        previous band.
-        """
-        min_freq = get_minimum_octave_band_index(freq_idx)
-        max_freq = get_maximum_octave_band_index(freq_idx)
-        list_index = np.argwhere(freq_idx == frequency_indices)
-        if list_index.shape != (1, 1):
-            raise ValueError("Wrong frequencies for band evaluation supplied")
-        list_index = list_index[0][0]
-        if freq_idx > 0:
-            max_of_prev_band = get_maximum_octave_band_index(
-                frequency_indices[list_index - 1]
-            )
-            if min_freq == frequency_indices[list_index - 1]:
-                min_freq = freq_idx
-        else:
-            max_of_prev_band = -1
-        # catch if the octave band frequency is equal to another center frequency
-        if freq_idx < frequency_indices[-1]:
-            if max_freq == frequency_indices[list_index + 1]:
-                max_freq = freq_idx
-        # catch if the octave band frequency is overlapping with the band below
-        while min_freq <= max_of_prev_band:
-            min_freq += 1
-
-        band_indices = np.arange(min_freq, max_freq + 1)
-        if len(band_indices) == 0:
-            band_indices = [freq_idx]
-        return band_indices
 
     def _copy_values_for_time_domain(
         self, band_indices: List | np.ndarray, tmp_array: np.ndarray, values: np.ndarray

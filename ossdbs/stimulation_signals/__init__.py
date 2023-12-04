@@ -4,6 +4,7 @@ from .trapezoid_signal import TrapezoidSignal
 from .triangle_signal import TriangleSignal
 from .utilities import (
     generate_signal,
+    get_indices_in_octave_band,
     get_maximum_octave_band_index,
     get_minimum_octave_band_index,
     get_octave_band_indices,
@@ -19,6 +20,7 @@ __all__ = [
     "generate_signal",
     "retrieve_time_domain_signal_from_fft",
     "get_octave_band_indices",
+    "get_indices_in_octave_band",
     "get_minimum_octave_band_index",
     "get_maximum_octave_band_index",
 ]
