@@ -65,37 +65,40 @@ class Pathway(PointModel):
     def _write_file(self, data, file):
         file.create_dataset("TimeSteps[s]", data=data.time_steps)
         start = 0
+        idx = 0
         for population in self._populations:
             group = file.create_group(population.name)
-            start = self._create_datasets(data, start, population, group)
+            start, idx = self._create_datasets(data, start, idx, population, group)
 
-    def _create_datasets(self, data, start, population, group):
+    def _create_datasets(self, data, start, idx, population, group):
         for axon in population.axons:
-            end = start + len(axon.points)
-            sub_group = group.create_group(axon.name)
-            sub_group.create_dataset("Points[mm]", data=axon.points)
-            location = self._location[start:end]
-            sub_group.create_dataset("Location", data=location.astype("S"))
-            potential = data.potential[start:end]
-            sub_group.create_dataset("Potential[V]", data=potential)
-            electric_field_magnitude = data.electric_field_magnitude[start:end]
-            sub_group.create_dataset(
-                "Electric field magnitude[Vm^(-1)]", data=electric_field_magnitude
-            )
-            electric_field_vector_x = data.electric_field_vector[0][start:end]
-            sub_group.create_dataset(
-                "Electric field vector x[Vm^(-1)]", data=electric_field_vector_x
-            )
-            electric_field_vector_y = data.electric_field_vector[1][start:end]
-            sub_group.create_dataset(
-                "Electric field vector y[Vm^(-1)]", data=electric_field_vector_y
-            )
-            electric_field_vector_z = data.electric_field_vector[2][start:end]
-            sub_group.create_dataset(
-                "Electric field vector z[Vm^(-1)]", data=electric_field_vector_z
-            )
-            start = start + end
-        return start
+            if self._axon_mask[idx]:
+                end = start + len(axon.points)
+                sub_group = group.create_group(axon.name)
+                sub_group.create_dataset("Points[mm]", data=axon.points)
+                location = self._location[start:end]
+                sub_group.create_dataset("Location", data=location.astype("S"))
+                potential = data.potential[start:end]
+                sub_group.create_dataset("Potential[V]", data=potential)
+                electric_field_magnitude = data.electric_field_magnitude[start:end]
+                sub_group.create_dataset(
+                    "Electric field magnitude[Vm^(-1)]", data=electric_field_magnitude
+                )
+                electric_field_vector_x = data.electric_field_vector[0][start:end]
+                sub_group.create_dataset(
+                    "Electric field vector x[Vm^(-1)]", data=electric_field_vector_x
+                )
+                electric_field_vector_y = data.electric_field_vector[1][start:end]
+                sub_group.create_dataset(
+                    "Electric field vector y[Vm^(-1)]", data=electric_field_vector_y
+                )
+                electric_field_vector_z = data.electric_field_vector[2][start:end]
+                sub_group.create_dataset(
+                    "Electric field vector z[Vm^(-1)]", data=electric_field_vector_z
+                )
+                start = end
+            idx = idx + 1
+        return start, idx
 
     def set_location_names(self, names: np.ndarray) -> None:
         self._location = names
