@@ -68,16 +68,18 @@ class Pathway(PointModel):
         idx = 0
         for population in self._populations:
             group = file.create_group(population.name)
+            # TODO use [0,-1,-2] instead of bool values for status
+            group.create_dataset("Status", data=self._axon_mask[idx : idx + len(population.axons)])
             start, idx = self._create_datasets(data, start, idx, population, group)
-
+           
     def _create_datasets(self, data, start, idx, population, group):
         for axon in population.axons:
+            sub_group = group.create_group(axon.name)
+            sub_group.create_dataset("Points[mm]", data=axon.points)
+            location = self._location[idx * len(axon.points) : (idx + 1) * len(axon.points)]
+            sub_group.create_dataset("Location", data=location.astype("S"))   
             if self._axon_mask[idx]:
                 end = start + len(axon.points)
-                sub_group = group.create_group(axon.name)
-                sub_group.create_dataset("Points[mm]", data=axon.points)
-                location = self._location[start:end]
-                sub_group.create_dataset("Location", data=location.astype("S"))
                 potential = data.potential[start:end]
                 sub_group.create_dataset("Potential[V]", data=potential)
                 electric_field_magnitude = data.electric_field_magnitude[start:end]
