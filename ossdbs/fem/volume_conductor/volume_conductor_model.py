@@ -144,7 +144,7 @@ class VolumeConductor(ABC):
         else:
             frequency_indices = np.arange(len(self.signal.frequencies))
 
-        self._export_frequency = np.median(frequency_indices)
+        self._export_frequency = self.signal.frequencies[np.median(frequency_indices)]
 
         self._free_stimulation_variable = np.zeros(
             shape=(len(self.signal.frequencies), len(self.contacts.active)),
