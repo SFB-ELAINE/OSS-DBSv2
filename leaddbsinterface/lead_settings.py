@@ -140,7 +140,7 @@ class LeadSettings:
             },
             "PointModel": {
                 "Lattice": {
-                    "Active": True,
+                    "Active": not(bool(self.get_calc_axon_act())), # for now, disable lattice when using PAM
                     "Center": {
                         # center at the middle of the electrode array
                         "x[mm]": grid_center[0],
@@ -155,7 +155,11 @@ class LeadSettings:
                     },
                     "PointDistance[mm]": grid_resolution,
                     "CollapseVTA": bool(self.remove_electrode()),
-                }
+                },
+                "Pathway": {
+                    "Active": bool(self.get_calc_axon_act()),
+                    "FileName": os.path.join(output_path, "Allocated_axons.h5")
+                },
             },
             "StimulationSignal": {"CurrentControlled": current_controlled},
             "CalcAxonActivation": int(self.get_calc_axon_act()),
@@ -164,8 +168,12 @@ class LeadSettings:
             "FailFlag": side,
             "TemplateSpace": self.get_est_in_temp(),
             "Solver": {},
-            "FEMOrder": 2 + int(self.get_calc_axon_act()),  # 2nd order is enough for stim volumes
+            "FEMOrder": 2 #+ int(self.get_calc_axon_act()),  # 2nd order is enough for stim volumes
         }
+
+        # use actual signal parameters for PAM
+        if self.get_calc_axon_act():
+            partial_dict = self.add_stimsignal_params(partial_dict)
 
         # do not use h1amg as coarsetype preconditioner
         # if floating potentials are involved
@@ -362,6 +370,26 @@ class LeadSettings:
 
     def get_inter_mode(self):
         return self._get_num("interactiveMode")
+
+    def add_stimsignal_params(self, partial_dict):
+
+        partial_dict["StimulationSignal"]["Type"] = self.get_signal_type()
+        if partial_dict["StimulationSignal"]["Type"] == 'Train':
+            partial_dict["StimulationSignal"]["Type"] = 'Rectangle'
+        partial_dict["StimulationSignal"]["PulseWidth[us]"] = self.get_pulse_width()
+
+        if self.check_biphasic():
+            partial_dict["StimulationSignal"]["CounterPulseWidth[us]"] = self.get_pulse_width()
+
+        # hardwired for now
+        partial_dict["StimulationSignal"]["Frequency[Hz]"] = 130.0
+        partial_dict["StimulationSignal"]["SpectrumMode"] = 'OctaveBand'
+        partial_dict["StimulationSignal"]["CutoffFrequency"] = 250000.0  # 2 us time step
+        partial_dict["StimulationSignal"]["PulseTopWidth[us]"] = 0.0
+        partial_dict["StimulationSignal"]["InterPulseWidth[us]"] = 0.0
+
+        return partial_dict
+
 
     def stretch_electrode(self, oss_electrode_name, hemi_idx):
         stretch_list = ["tip_length", "contact_length", "contact_spacing"]
