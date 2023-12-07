@@ -36,7 +36,7 @@ class Pathway(PointModel):
             [
                 len(axon.points)
                 for population in self._populations
-                for axon in population.axons
+                for axon in sorted(population.axons, key=lambda x: int(x.name[4:]))
             ]
         )
         self._location = np.full(n_points, "")
@@ -54,7 +54,7 @@ class Pathway(PointModel):
             [
                 axon.points
                 for population in self._populations
-                for axon in population.axons
+                for axon in sorted(population.axons, key=lambda x: int(x.name[4:]))
             ]
         )
 
@@ -74,8 +74,8 @@ class Pathway(PointModel):
            
     def _create_datasets(self, data, start, idx, population, group):
         # sort Axon instances numerically
-        sorted_axons = sorted(population.axons, key=lambda axon_inst: int(axon_inst.name[4:]))
-        for axon in sorted_axons:
+
+        for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
             sub_group = group.create_group(axon.name)
             sub_group.create_dataset("Points[mm]", data=axon.points)
             location = self._location[idx * len(axon.points) : (idx + 1) * len(axon.points)]
