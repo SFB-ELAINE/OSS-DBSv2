@@ -241,7 +241,7 @@ class Pathway(PointModel):
             for j in range(n_axons[i]):
                 if self._axon_mask[sum(n_axons[:i]) + j]:
                     group.create_dataset(
-                        axon_names[j],
+                        axon_names[i][j],
                         data=lattice[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     idx = idx + 1
@@ -255,11 +255,11 @@ class Pathway(PointModel):
             for j in range(n_axons[i]):
                 if self._axon_mask[sum(n_axons[:i]) + j]:
                     group.create_dataset(
-                        axon_names[j],
+                        axon_names[i][j],
                         data=lattice[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     group.create_dataset(
-                        axon_names[j] + "_potentials",
+                        axon_names[i][j] + "_potentials",
                         data=potentials[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     idx = idx + 1
@@ -273,15 +273,15 @@ class Pathway(PointModel):
             for j in range(n_axons[i]):
                 if self._axon_mask[sum(n_axons[:i]) + j]:
                     group.create_dataset(
-                        axon_names[j],
+                        axon_names[i][j],
                         data=lattice[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     group.create_dataset(
-                        axon_names[j] + "_field_vecs",
+                        axon_names[i][j] + "_field_vecs",
                         data=fields[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     group.create_dataset(
-                        axon_names[j] + "_field_mags",
+                        axon_names[i][j] + "_field_mags",
                         data=field_mags[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     idx = idx + 1
@@ -326,13 +326,15 @@ class Pathway(PointModel):
         """
         Returns
         -------
-        axon_names: list[str]
-            Names of all axons defined
+        axon_names: list[list,list,...]
+            Names of axons in each population
         """
         axon_names = []
         for population in range(len(self._populations)):
+            axon_names_in_population = []
             for axon in range(len(self._populations[population].axons)):
-                axon_names.append(self._populations[population].axons[axon].name)
+                axon_names_in_population.append(self._populations[population].axons[axon].name)
+            axon_names.append(axon_names_in_population)
         return axon_names
 
     def get_axon_numbers(self) -> list:
