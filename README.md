@@ -1,7 +1,9 @@
 OSS-DBSv2
 =========
 
-This is a first draft of the OSS-DBS rebuild.
+This is the development version of the OSS-DBS rewrite.
+Use with caution and please wait for the first official release before deploying it.
+Bug reports are highly welcome, though!
 
 
 Installation

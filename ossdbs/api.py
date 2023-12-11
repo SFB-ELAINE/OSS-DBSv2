@@ -282,25 +282,28 @@ def generate_signal(settings) -> TimeDomainSignal:
     if signal_type == "Rectangle":
         signal = RectangleSignal(
             signal_settings["Frequency[Hz]"],
-            signal_settings["PulseWidth[us]"],
-            signal_settings["InterPulseWidth[us]"],
-            signal_settings["CounterPulseWidth[us]"],
+            1e-6 * signal_settings["PulseWidth[us]"],
+            1e-6 * signal_settings["InterPulseWidth[us]"],
+            1e-6 * signal_settings["CounterPulseWidth[us]"],
         )
     elif signal_type == "Triangle":
         signal = TriangleSignal(
             signal_settings["Frequency[Hz]"],
-            signal_settings["PulseWidth[us]"],
-            signal_settings["InterPulseWidth[us]"],
-            signal_settings["CounterPulseWidth[us]"],
+            1e-6 * signal_settings["PulseWidth[us]"],
+            1e-6 * signal_settings["InterPulseWidth[us]"],
+            1e-6 * signal_settings["CounterPulseWidth[us]"],
         )
     elif signal_type == "Trapezoid":
         signal = TrapezoidSignal(
             signal_settings["Frequency[Hz]"],
-            signal_settings["PulseWidth[us]"],
-            signal_settings["InterPulseWidth[us]"],
-            signal_settings["CounterPulseWidth[us]"],
-            signal_settings["PulseTopWidth[us]"],
+            1e-6 * signal_settings["PulseWidth[us]"],
+            1e-6 * signal_settings["InterPulseWidth[us]"],
+            1e-6 * signal_settings["CounterPulseWidth[us]"],
+            1e-6 * signal_settings["PulseTopWidth[us]"],
         )
+    signal.plot_time_domain_signal(
+        signal_settings["CutoffFrequency"], settings["OutputPath"]
+    )
     return signal
 
 
@@ -349,32 +352,44 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
     signal_settings = settings["StimulationSignal"]
     signal_type = signal_settings["Type"]
     current_controlled = signal_settings["CurrentControlled"]
+    octave_band_approximation = False
     if signal_type == "Multisine":
         frequencies = signal_settings["ListOfFrequencies"]
         fourier_coefficients = np.ones(len(frequencies))
+        base_frequency = frequencies[0]
+        cutoff_frequency = frequencies[0]
     else:
         spectrum_mode = signal_settings["SpectrumMode"]
+        if spectrum_mode == "OctaveBand":
+            octave_band_approximation = True
+
         signal = generate_signal(settings)
         cutoff_frequency = signal_settings["CutoffFrequency"]
-
-        if spectrum_mode == "OctaveBand":
-            # TODO add cutoff?!
-            frequencies, fourier_coefficients = signal.get_octave_band_spectrum(
-                cutoff_frequency
+        base_frequency = signal.frequency
+        fft_frequencies, fft_coefficients = signal.get_fft_spectrum(cutoff_frequency)
+        signal_length = len(fft_coefficients)
+        # only use positive frequencies
+        first_negative_freq = np.argwhere(fft_frequencies < 0)[0, 0]
+        frequencies = fft_frequencies[:first_negative_freq]
+        fourier_coefficients = fft_coefficients[:first_negative_freq]
+        # even signal
+        if signal_length % 2 == 0:
+            frequencies = np.append(
+                frequencies, -1.0 * fft_frequencies[first_negative_freq + 1]
             )
-        elif spectrum_mode == "Truncation":
-            frequencies, fourier_coefficients = signal.get_truncated_spectrum(
-                cutoff_frequency
-            )
-        else:
-            (
-                frequencies,
+            fourier_coefficients = np.append(
                 fourier_coefficients,
-            ) = signal.get_frequencies_and_fourier_coefficients(cutoff_frequency)
+                np.conjugate(fft_coefficients[first_negative_freq + 1]),
+            )
+
     frequency_domain_signal = FrequencyDomainSignal(
         frequencies=frequencies,
         amplitudes=fourier_coefficients,
         current_controlled=current_controlled,
+        base_frequency=base_frequency,
+        cutoff_frequency=cutoff_frequency,
+        signal_length=signal_length,
+        octave_band_approximation=octave_band_approximation,
     )
     return frequency_domain_signal
 
@@ -404,12 +419,11 @@ def run_volume_conductor_model(settings, volume_conductor):
         export_vtk = False
 
     point_model = generate_neuron_grid(settings)
-    template_space = settings["TemplateSpace"]
+
     vcm_timings = volume_conductor.run_full_analysis(
         compute_impedance,
         export_vtk,
         point_model=point_model,
-        template_space=template_space,
         activation_threshold=settings["ActivationThresholdVTA"],
     )
     return vcm_timings

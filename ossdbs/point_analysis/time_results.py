@@ -12,3 +12,5 @@ class TimeResult:
     potential: np.ndarray
     electric_field_magnitude: np.ndarray
     electric_field_vector: np.ndarray
+    inside_csf: np.ndarray
+    inside_encap: np.ndarray

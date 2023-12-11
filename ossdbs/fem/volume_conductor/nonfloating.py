@@ -33,7 +33,7 @@ class VolumeConductorNonFloating(VolumeConductor):
             frequency_domain_signal,
         )
         boundaries = [contact.name for contact in self.contacts.active]
-        self._space = self.h1_space(boundaries=boundaries)
+        self._space = self.h1_space(boundaries=boundaries, is_complex=self.is_complex)
         self._potential = ngsolve.GridFunction(space=self._space)
         self._floating_values = {}
 
@@ -65,11 +65,13 @@ class VolumeConductorNonFloating(VolumeConductor):
         _logger.debug("Prepare weak form")
         u = self._space.TrialFunction()
         v = self._space.TestFunction()
-        # TODO symmetric even if anisotropy?
         _logger.debug("Bilinear form")
+        # TODO symmetric even if anisotropy?
         bilinear_form = ngsolve.BilinearForm(space=self._space, symmetric=True)
         _logger.debug("Bilinear form, formulation")
         bilinear_form += self._sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
+
+        # TODO add surface impedance
         _logger.debug("Linear form")
         linear_form = ngsolve.LinearForm(space=self._space)
         _logger.debug("Solve BVP")

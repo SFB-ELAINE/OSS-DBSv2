@@ -36,7 +36,7 @@ class Pathway(PointModel):
             [
                 len(axon.points)
                 for population in self._populations
-                for axon in population.axons
+                for axon in sorted(population.axons, key=lambda x: int(x.name[4:]))
             ]
         )
         self._location = np.full(n_points, "")
@@ -54,7 +54,7 @@ class Pathway(PointModel):
             [
                 axon.points
                 for population in self._populations
-                for axon in population.axons
+                for axon in sorted(population.axons, key=lambda x: int(x.name[4:]))
             ]
         )
 
@@ -65,37 +65,44 @@ class Pathway(PointModel):
     def _write_file(self, data, file):
         file.create_dataset("TimeSteps[s]", data=data.time_steps)
         start = 0
+        idx = 0
         for population in self._populations:
             group = file.create_group(population.name)
-            start = self._create_datasets(data, start, population, group)
+            # TODO use [0,-1,-2] instead of bool values for status
+            group.create_dataset("Status", data=self._axon_mask[idx : idx + len(population.axons)])
+            start, idx = self._create_datasets(data, start, idx, population, group)
+           
+    def _create_datasets(self, data, start, idx, population, group):
+        # sort Axon instances numerically
 
-    def _create_datasets(self, data, start, population, group):
-        for axon in population.axons:
-            end = start + len(axon.points)
+        for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
             sub_group = group.create_group(axon.name)
             sub_group.create_dataset("Points[mm]", data=axon.points)
-            location = self._location[start:end]
-            sub_group.create_dataset("Location", data=location.astype("S"))
-            potential = data.potential[start:end]
-            sub_group.create_dataset("Potential[V]", data=potential)
-            electric_field_magnitude = data.electric_field_magnitude[start:end]
-            sub_group.create_dataset(
-                "Electric field magnitude[Vm^(-1)]", data=electric_field_magnitude
-            )
-            electric_field_vector_x = data.electric_field_vector[0][start:end]
-            sub_group.create_dataset(
-                "Electric field vector x[Vm^(-1)]", data=electric_field_vector_x
-            )
-            electric_field_vector_y = data.electric_field_vector[1][start:end]
-            sub_group.create_dataset(
-                "Electric field vector x[Vm^(-1)]", data=electric_field_vector_y
-            )
-            electric_field_vector_z = data.electric_field_vector[2][start:end]
-            sub_group.create_dataset(
-                "Electric field vector x[Vm^(-1)]", data=electric_field_vector_z
-            )
-            start = start + end
-        return start
+            location = self._location[idx * len(axon.points) : (idx + 1) * len(axon.points)]
+            sub_group.create_dataset("Location", data=location.astype("S"))   
+            if self._axon_mask[idx]:
+                end = start + len(axon.points)
+                potential = data.potential[start:end]
+                sub_group.create_dataset("Potential[V]", data=potential)
+                electric_field_magnitude = data.electric_field_magnitude[start:end]
+                sub_group.create_dataset(
+                    "Electric field magnitude[Vm^(-1)]", data=electric_field_magnitude
+                )
+                electric_field_vector_x = data.electric_field_vector[0][start:end]
+                sub_group.create_dataset(
+                    "Electric field vector x[Vm^(-1)]", data=electric_field_vector_x
+                )
+                electric_field_vector_y = data.electric_field_vector[1][start:end]
+                sub_group.create_dataset(
+                    "Electric field vector y[Vm^(-1)]", data=electric_field_vector_y
+                )
+                electric_field_vector_z = data.electric_field_vector[2][start:end]
+                sub_group.create_dataset(
+                    "Electric field vector z[Vm^(-1)]", data=electric_field_vector_z
+                )
+                start = end
+            idx = idx + 1
+        return start, idx
 
     def set_location_names(self, names: np.ndarray) -> None:
         self._location = names
@@ -142,14 +149,14 @@ class Pathway(PointModel):
         idx = 0
         for i in range(total_number_axons):
             if keep_axon[i]:
-                lattice[idx * axon_length : (idx + 1) * axon_length, 0] = x.data[
-                    i * axon_length : (i + 1) * axon_length
+                lattice[idx * axon_length: (idx + 1) * axon_length, 0] = x.data[
+                    i * axon_length: (i + 1) * axon_length
                 ]
-                lattice[idx * axon_length : (idx + 1) * axon_length, 1] = y.data[
-                    i * axon_length : (i + 1) * axon_length
+                lattice[idx * axon_length: (idx + 1) * axon_length, 1] = y.data[
+                    i * axon_length: (i + 1) * axon_length
                 ]
-                lattice[idx * axon_length : (idx + 1) * axon_length, 2] = z.data[
-                    i * axon_length : (i + 1) * axon_length
+                lattice[idx * axon_length: (idx + 1) * axon_length, 2] = z.data[
+                    i * axon_length: (i + 1) * axon_length
                 ]
                 idx = idx + 1
         self._axon_mask = keep_axon
@@ -176,7 +183,7 @@ class Pathway(PointModel):
         for i in range(total_number_axons):
             for j in range(axon_length):
                 if inside_csf[i * axon_length + j]:
-                    axons_csf[i * axon_length : (i + 1) * axon_length] = [
+                    axons_csf[i * axon_length: (i + 1) * axon_length] = [
                         True
                     ] * axon_length
                     j = axon_length - 1
@@ -184,7 +191,7 @@ class Pathway(PointModel):
         for i in range(total_number_axons):
             for j in range(axon_length):
                 if inside_encap[i * axon_length + j]:
-                    axons_encap[i * axon_length : (i + 1) * axon_length] = [
+                    axons_encap[i * axon_length: (i + 1) * axon_length] = [
                         True
                     ] * axon_length
                     j = axon_length - 1
@@ -197,7 +204,6 @@ class Pathway(PointModel):
 
     def save_hdf5(
         self,
-        axon_mask: list,
         lattice: np.ndarray,
         potentials: np.ndarray,
         fields: np.ndarray,
@@ -219,6 +225,10 @@ class Pathway(PointModel):
         field_mags: np.ndarray
 
         output_path: str
+
+        Notes
+        -----
+        TODO split in subfunctions
         """
         population_names = self.get_population_names()
         axon_names = self.get_axon_names()
@@ -229,10 +239,10 @@ class Pathway(PointModel):
         for i in range(len(population_names)):
             group = h5f_pts.create_group(population_names[i])
             for j in range(n_axons[i]):
-                if axon_mask[sum(n_axons[:i]) + j]:
+                if self._axon_mask[sum(n_axons[:i]) + j]:
                     group.create_dataset(
-                        axon_names[j],
-                        data=lattice[idx * axon_length : (idx + 1) * axon_length, :],
+                        axon_names[i][j],
+                        data=lattice[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     idx = idx + 1
         h5f_pts.close()
@@ -243,14 +253,14 @@ class Pathway(PointModel):
         for i in range(len(population_names)):
             group = h5f_pot.create_group(population_names[i])
             for j in range(n_axons[i]):
-                if axon_mask[sum(n_axons[:i]) + j]:
+                if self._axon_mask[sum(n_axons[:i]) + j]:
                     group.create_dataset(
-                        axon_names[j],
-                        data=lattice[idx * axon_length : (idx + 1) * axon_length, :],
+                        axon_names[i][j],
+                        data=lattice[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     group.create_dataset(
-                        axon_names[j] + "_potentials",
-                        data=potentials[idx * axon_length : (idx + 1) * axon_length, :],
+                        axon_names[i][j] + "_potentials",
+                        data=potentials[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     idx = idx + 1
         h5f_pot.close()
@@ -261,18 +271,18 @@ class Pathway(PointModel):
         for i in range(len(population_names)):
             group = h5f_field.create_group(population_names[i])
             for j in range(n_axons[i]):
-                if axon_mask[sum(n_axons[:i]) + j]:
+                if self._axon_mask[sum(n_axons[:i]) + j]:
                     group.create_dataset(
-                        axon_names[j],
-                        data=lattice[idx * axon_length : (idx + 1) * axon_length, :],
+                        axon_names[i][j],
+                        data=lattice[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     group.create_dataset(
-                        axon_names[j] + "_field_vecs",
-                        data=fields[idx * axon_length : (idx + 1) * axon_length, :],
+                        axon_names[i][j] + "_field_vecs",
+                        data=fields[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     group.create_dataset(
-                        axon_names[j] + "_field_mags",
-                        data=field_mags[idx * axon_length : (idx + 1) * axon_length, :],
+                        axon_names[i][j] + "_field_mags",
+                        data=field_mags[idx * axon_length: (idx + 1) * axon_length, :],
                     )
                     idx = idx + 1
         h5f_field.close()
@@ -287,7 +297,7 @@ class Pathway(PointModel):
         index = np.zeros(shape=len(lattice), dtype=int)
         axon_length = self.get_axon_length()
         for i in range(int(len(lattice) / axon_length)):
-            index[i * axon_length : (i + 1) * axon_length] = int(i)
+            index[i * axon_length: (i + 1) * axon_length] = int(i)
         return np.reshape(index, (len(index), 1))
 
     def get_axon_length(self) -> int:
@@ -316,13 +326,15 @@ class Pathway(PointModel):
         """
         Returns
         -------
-        axon_names: list[str]
-            Names of all axons defined
+        axon_names: list[list,list,...]
+            Names of axons in each population
         """
         axon_names = []
         for population in range(len(self._populations)):
+            axon_names_in_population = []
             for axon in range(len(self._populations[population].axons)):
-                axon_names.append(self._populations[population].axons[axon].name)
+                axon_names_in_population.append(self._populations[population].axons[axon].name)
+            axon_names.append(axon_names_in_population)
         return axon_names
 
     def get_axon_numbers(self) -> list:

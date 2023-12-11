@@ -223,3 +223,8 @@ class ConductivityCF:
     def dti_voxel_distribution(self) -> ngsolve.VoxelCoefficient:
         """Return DTI data as VoxelCoefficient before scaling by conductivity."""
         return self._dti_voxel_cf
+
+    @property
+    def dielectric_properties(self) -> dict:
+        """Return dielectric properties."""
+        return self._dielectric_properties

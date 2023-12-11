@@ -1,5 +1,8 @@
+import logging
 from dataclasses import dataclass
 from typing import List
+
+_logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -38,6 +41,17 @@ class Contact:
     voltage: float = 0.0
     surface_impedance: complex = 0.0j
 
+    def __str__(self):
+        contact_str = self.name
+        contact_str += f"\nMax h: {self.max_h}"
+        contact_str += f"\nEdge max h: {self.edge_max_h}"
+        contact_str += f"\nActive: {self.active}"
+        contact_str += f"\nFloating: {self.floating}"
+        contact_str += f"\nCurrent: {self.current}"
+        contact_str += f"\nVoltage: {self.voltage}"
+        contact_str += f"\nSurface impedance: {self.surface_impedance}\n"
+        return contact_str
+
 
 def check_contact(contact: Contact):
     if contact.active and contact.floating:
@@ -61,8 +75,11 @@ class Contacts:
         for contact in contacts:
             check_contact(contact)
         self._all_contacts = contacts
+        # Dirichlet boundary conditions
         self._active = [contact for contact in contacts if contact.active]
+        # Floating boundary conditions
         self._floating = [contact for contact in contacts if contact.floating]
+        # Do not stimulate / Neumann boundary condition
         self._unused = [
             contact
             for contact in contacts
@@ -129,6 +146,7 @@ class Contacts:
             dictionary.
 
         """
+        _logger.debug(f"Setting contacts with new current_values: {current_values}")
         for contact in self._all_contacts:
             if contact.name in current_values:
                 contact.current = current_values[contact.name]
@@ -153,6 +171,7 @@ class Contacts:
             Voltage values. Not all contacts have to be present in the
             dictionary.
         """
+        _logger.debug(f"Setting contacts with new voltage_values: {voltage_values}")
         for contact in self._all_contacts:
             if contact.name in voltage_values:
                 contact.voltage = voltage_values[contact.name]
@@ -190,3 +209,9 @@ class Contacts:
 
     def __iter__(self):
         return iter(self._all_contacts)
+
+    def __str__(self):
+        contacts_str = ""
+        for contact in self._all_contacts:
+            contacts_str += str(contact)
+        return contacts_str

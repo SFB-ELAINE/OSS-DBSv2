@@ -89,7 +89,6 @@ class PointModel(ABC):
     @abstractmethod
     def save_hdf5(
         self,
-        axon_mask: list,
         lattice: np.ndarray,
         potentials: np.ndarray,
         fields: np.ndarray,
@@ -106,25 +105,5 @@ class PointModel(ABC):
         fields: np.ndarray
         field_mags: np.ndarray
         output_path: str
-        """
-        pass
-
-    @abstractmethod
-    def collapse_VTA(self, field_on_points, implantation_coordinate, lead_direction, lead_diam):
-        """Postprocess probing points to remove the electrode by inward sideways collapse. The point coordinates are pulled
-        into the electrode space to 'counteract' tissue misplacement due to the implantation. This breaks the grid regularity, so
-        all nifti files will be created externally.
-
-        Parameters
-        ----------
-        field_on_points : Nx4 numpy.ndarray of scalar values on the lattice
-        implantation_coordinate: 1-D numpy array, center of the first contact
-        lead_direction: 1-D numpy array, direction of the lead (from head to tail)
-        lead_diam: float, diameter of the electrode that will be compensated by the inward collapse
-
-        Returns
-        -------
-        field_on_points_collided: Nx4 numpy.ndarray of scalar values on adjusted lattice
-
         """
         pass
