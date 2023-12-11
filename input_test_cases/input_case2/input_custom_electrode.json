@@ -1,31 +1,37 @@
 {
   "BrainRegion": {
     "Center": {
-      "x[mm]": -9.48,
-      "y[mm]": 11.61,
-      "z[mm]": 4.68
+      "x[mm]": -9.476,
+      "y[mm]": 11.605,
+      "z[mm]": 4.676
     },
     "Dimension": {
       "x[mm]": 40.0,
       "y[mm]": 40.0,
       "z[mm]": 40.0
     },
-    "Shape": "Sphere"
+    "Shape": "Ellipsoid"
   },
   "Electrodes": [
     {
-      "Name": "BostonScientificVercise",
-      "PathToCustomParameters": "",
-      "Rotation[Degrees]": 0.0,
+      "Name": "BostonScientificVerciseDirectedCustom",
+      "CustomParameters": {
+        "tip_length": 1.5,
+        "contact_length": 1.5,
+        "contact_spacing": 0.5,
+        "lead_diameter": 1.3,
+        "total_length": 450.0
+      },
+      "Rotation[Degrees]": 0,
       "Direction": {
         "x[mm]": 0.0,
         "y[mm]": 0.0,
         "z[mm]": 1.0
       },
       "TipPosition": {
-        "x[mm]": -9.48,
-        "y[mm]": 11.61,
-        "z[mm]": 4.68
+        "x[mm]": -9.476,
+        "y[mm]": 11.605,
+        "z[mm]": 4.676
       },
       "Contacts": [
         {
@@ -33,48 +39,45 @@
           "Active": true,
           "Current[A]": 0.0,
           "Voltage[V]": 1.0,
-          "Floating": false,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
-          "MaxMeshSizeEdge": 0.05
+          "Floating": false
         },
         {
           "Contact_ID": 2,
           "Active": true,
           "Current[A]": 0.0,
           "Voltage[V]": 0.0,
-          "Floating": false,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
-          "MaxMeshSizeEdge": 0.05
+          "Floating": false
         }
       ],
       "EncapsulationLayer": {
-        "Thickness[mm]": 0.0,
-        "Material": "Blood",
+        "Thickness[mm]": 0.2,
+        "Material": "Gray matter",
         "DielectricModel": "ColeCole4",
         "MaxMeshSize": 0.1
       }
     }
   ],
   "MaterialDistribution": {
-    "MRIPath": "Butenko_segmask.nii.gz",
+    "MRIPath": "../../input_files/Butenko_segmask.nii.gz",
     "MRIMapping": {
-      "Unknown": 0,
-      "CSF": 1,
+      "Gray matter": 1,
       "White matter": 2,
-      "Gray matter": 3,
-      "Blood": 4
+      "CSF": 3,
+      "Blood": 4,
+      "Unknown": 0
     },
     "DiffusionTensorActive": false,
     "DTIPath": ""
   },
   "DielectricModel": {
     "Type": "ColeCole4"
+  },
+  "StimulationSignal": {
+    "CurrentControlled": false,
+    "Type": "Multisine",
+    "ListOfFrequencies": [
+      10000.0
+    ]
   },
   "Mesh": {
     "LoadMesh": false,
@@ -89,15 +92,6 @@
       "Volumes": {}
     },
     "SaveMesh": false
-  },
-  "EQSMode": false,
-  "FEMOrder": 2,
-  "StimulationSignal": {
-    "CurrentControlled": false,
-    "Type": "Multisine",
-    "ListOfFrequencies": [
-      10000.0
-    ]
   },
   "Solver": {
     "Type": "CG",
@@ -132,7 +126,9 @@
       "PointDistance[mm]": 1
     }
   },
-  "OutputPath": "Results",
+  "EQSMode": false,
+  "FEMOrder": 2,
+  "OutputPath": "./Results_electrode",
   "ComputeImpedance": true,
   "ExportVTK": true,
   "ExportElectrode": true
