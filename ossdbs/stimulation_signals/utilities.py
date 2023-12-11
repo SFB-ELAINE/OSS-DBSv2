@@ -2,7 +2,7 @@ import multiprocessing as mp
 from copy import deepcopy
 from functools import partial
 from multiprocessing import sharedctypes
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
 from scipy.fft import ifft
@@ -85,7 +85,7 @@ def get_maximum_octave_band_index(freq_idx: int):
 
 def get_indices_in_octave_band(
     freq_idx: int, frequency_indices: list, cutoff_frequency_index: int
-) -> List | np.ndarray:
+) -> Union[List, np.ndarray]:
     """Get indices of frequencies in octave band.
 
     Notes

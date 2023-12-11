@@ -2,7 +2,7 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import ngsolve
 import numpy as np
@@ -1024,7 +1024,9 @@ class VolumeConductor(ABC):
             timings["FieldExport"] = []
         return timings
 
-    def _store_solution_at_contacts(self, band_indices: List | np.ndarray) -> None:
+    def _store_solution_at_contacts(
+        self, band_indices: Union[List, np.ndarray]
+    ) -> None:
         """Save voltages / currents at given frequency band (can be a single frequency) for all contacts."""
         if self.current_controlled:
             for contact_idx, contact in enumerate(self.contacts.active):
@@ -1049,7 +1051,10 @@ class VolumeConductor(ABC):
                     )
 
     def _copy_values_for_time_domain(
-        self, band_indices: List | np.ndarray, tmp_array: np.ndarray, values: np.ndarray
+        self,
+        band_indices: Union[List, np.ndarray],
+        tmp_array: np.ndarray,
+        values: np.ndarray,
     ) -> None:
         """Copy values to time-domain vector."""
         for freq_idx in band_indices:
