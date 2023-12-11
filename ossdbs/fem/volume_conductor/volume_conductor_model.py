@@ -144,7 +144,8 @@ class VolumeConductor(ABC):
         else:
             frequency_indices = np.arange(len(self.signal.frequencies))
 
-        self._export_frequency = self.signal.frequencies[np.median(frequency_indices)]
+        median_index = np.median(frequency_indices)
+        self._export_frequency = self.signal.frequencies[int(median_index)]
 
         self._free_stimulation_variable = np.zeros(
             shape=(len(self.signal.frequencies), len(self.contacts.active)),
@@ -397,21 +398,21 @@ class VolumeConductor(ABC):
         If octave band approximation is used, it will also be copied to frequencies at other frequencies in band.
 
         """
-        n_frequencies = freq_domain_signal.shape[0]
-        tmp_freq_domain = np.zeros(n_frequencies, dtype=complex)
-        if n_frequencies % 2 == 1:  # if odd
-            tmp_freq_domain = np.append(tmp_freq_domain, tmp_freq_domain[-1:0:-1])
-        else:
-            tmp_freq_domain = np.append(tmp_freq_domain, tmp_freq_domain[-2:0:-1])
-
-        frequency_indices = np.arange(0, n_frequencies)
+        tmp_freq_domain = np.zeros(self.signal.signal_length, dtype=complex)
+        frequency_indices = self.signal.frequencies / self.signal.base_frequency
+        frequency_indices = frequency_indices.astype(np.uint16)
         result_in_time = np.zeros(shape=(n_lattice_points, len(tmp_freq_domain)))
 
         # go through points in lattice
         for point_idx in range(n_lattice_points):
             # write frequencies
             for idx, idx_freq in enumerate(frequency_indices):
-                tmp_freq_domain[idx_freq] = freq_domain_signal[idx, point_idx]
+                # write frequencies but skip last frequency for odd signal
+                if idx_freq == len(self.signal.frequencies):
+                    if self.signal.signal_length % 2 == 1:
+                        tmp_freq_domain[idx_freq] = freq_domain_signal[idx, point_idx]
+                else:
+                    tmp_freq_domain[idx_freq] = freq_domain_signal[idx, point_idx]
                 # reverse order for negative frequencies
                 if idx > 0:
                     tmp_freq_domain[len(tmp_freq_domain) - idx_freq] = np.conjugate(

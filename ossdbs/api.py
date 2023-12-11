@@ -366,11 +366,21 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
         signal = generate_signal(settings)
         cutoff_frequency = signal_settings["CutoffFrequency"]
         base_frequency = signal.frequency
-        frequencies, fourier_coefficients = signal.get_fft_spectrum(cutoff_frequency)
+        fft_frequencies, fft_coefficients = signal.get_fft_spectrum(cutoff_frequency)
+        signal_length = len(fft_coefficients)
         # only use positive frequencies
-        first_negative_freq = np.argwhere(frequencies < 0)[0, 0]
-        frequencies = frequencies[:first_negative_freq]
-        fourier_coefficients = fourier_coefficients[:first_negative_freq]
+        first_negative_freq = np.argwhere(fft_frequencies < 0)[0, 0]
+        frequencies = fft_frequencies[:first_negative_freq]
+        fourier_coefficients = fft_coefficients[:first_negative_freq]
+        # even signal
+        if signal_length % 2 == 0:
+            frequencies = np.append(
+                frequencies, -1.0 * fft_frequencies[first_negative_freq + 1]
+            )
+            fourier_coefficients = np.append(
+                fourier_coefficients,
+                np.conjugate(fft_coefficients[first_negative_freq + 1]),
+            )
 
     frequency_domain_signal = FrequencyDomainSignal(
         frequencies=frequencies,
@@ -378,6 +388,7 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
         current_controlled=current_controlled,
         base_frequency=base_frequency,
         cutoff_frequency=cutoff_frequency,
+        signal_length=signal_length,
         octave_band_approximation=octave_band_approximation,
     )
     return frequency_domain_signal
