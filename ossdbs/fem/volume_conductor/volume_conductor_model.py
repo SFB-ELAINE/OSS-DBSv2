@@ -885,7 +885,7 @@ class VolumeConductor(ABC):
         activation_threshold: float
         """
         field_mags_full = np.zeros(lattice_mask.shape[0])
-        field_mags_full[lattice_mask[:, 0]] = np.real(field_mags[:, 0])
+        field_mags_full[lattice_mask[:, 0]] = np.real(field_mags[:, 0]) * 1000.0
 
         point_model.save_as_nifti(
             field_mags_full,
