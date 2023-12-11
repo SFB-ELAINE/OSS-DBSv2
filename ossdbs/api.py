@@ -358,6 +358,7 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
         fourier_coefficients = np.ones(len(frequencies))
         base_frequency = frequencies[0]
         cutoff_frequency = frequencies[0]
+        signal_length = 1
     else:
         spectrum_mode = signal_settings["SpectrumMode"]
         if spectrum_mode == "OctaveBand":

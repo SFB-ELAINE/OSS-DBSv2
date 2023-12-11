@@ -330,7 +330,12 @@ class VolumeConductor(ABC):
                 inside_encap,
             )
 
-        # time-domain exports
+        if len(self.signal.frequencies) > 1:
+            self.export_solution_at_contacts()
+        return timings
+
+    def export_solution_at_contacts(self) -> None:
+        """Time-domain solution export."""
         timesteps, free_stimulation_variable_in_time = self.reconstruct_time_signals(
             len(self.contacts.active), self._free_stimulation_variable
         )
@@ -350,7 +355,6 @@ class VolumeConductor(ABC):
         df.to_csv(
             os.path.join(self.output_path, "stimulation_in_time.csv"), index=False
         )
-        return timings
 
     def compute_field_magnitude(self, fields):
         """Compute magnitude of field vector."""
