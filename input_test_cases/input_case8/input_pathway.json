@@ -67,10 +67,13 @@
   },
   "StimulationSignal": {
     "CurrentControlled": false,
-    "Type": "Multisine",
-    "ListOfFrequencies": [
-      10000.0
-    ]
+    "Type": "Rectangle",
+    "SpectrumMode": "OctaveBand",
+    "Frequency[Hz]": 130.0,
+    "PulseWidth[us]": 60,
+    "CounterPulseWidth[us]": 0.0,
+    "InterPulseWidth[us]": 0.0,
+    "CutoffFrequency": 1e6
   },
   "Mesh": {
     "LoadMesh": false,
