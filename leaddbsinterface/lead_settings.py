@@ -498,6 +498,8 @@ class LeadSettings:
             "Medtronic 3387": "Medtronic3387",
             "Medtronic 3389": "Medtronic3389",
             "Medtronic 3391": "Medtronic3391",
+            "SceneRay SR1210": "Medtronic3387",
+            "SceneRay SR1200": "Medtronic3389",
             "Medtronic B33005": "MedtronicSenSightB33005",
             "Medtronic B33015": "MedtronicSenSightB33015",
             "PINS Medical L301": "PINSMedicalL301",
