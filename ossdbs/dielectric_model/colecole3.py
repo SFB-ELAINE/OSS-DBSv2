@@ -45,13 +45,12 @@ default_cole_cole3_parameters = {
 
 
 class ColeCole3Model(ColeCole4Model):
-    """Cole Cole model for the dielectric spectrum of tissues.
-
-    Better solution for available tissues?
+    """Cole-Cole model with three dispersions.
 
     Notes
     -----
-    The model values are chosen as in [Zimmermann2021]_
+    The model values are chosen as described
+    in [Zimmermann2021]_.
 
     References
     ----------
