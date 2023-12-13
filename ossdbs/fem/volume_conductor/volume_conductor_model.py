@@ -31,10 +31,18 @@ class VolumeConductor(ABC):
 
     Parameters
     ----------
-    mesh : Mesh
+    geometry : ModelGeometry
+        Model geometry, brain with implanted electrodes
     conductivity : ConductivityCF
-    model_geometry : ModelGeometry
+        Material information
     solver : Solver
+        Solver (linear algebra part)
+    order: int
+        Order of solver and mesh (curved elements)
+    meshing_parameters: dict
+        Dictionary with setting for meshing
+    frequency_domain_signal: FrequencyDomainSignal
+        Representation of signal in frequency domain
     """
 
     def __init__(
@@ -94,7 +102,13 @@ class VolumeConductor(ABC):
 
     @abstractmethod
     def compute_solution(self, frequency: float) -> None:
-        """Compute solution at frequency. To be defined in dedicated sub-classes."""
+        """Compute solution at frequency.
+
+        Parameters
+        ----------
+        frequency: float
+            Frequency at which solution is computed
+        """
         pass
 
     def run_full_analysis(
@@ -120,6 +134,7 @@ class VolumeConductor(ABC):
         Notes
         -----
         TODO full documentation
+        TODO pass list of PointModel to have more than one evaluated (PAM + VTA)
         The volume conductor model is run at all frequencies
         and the time-domain signal is computed (if relevant).
         """
@@ -248,6 +263,8 @@ class VolumeConductor(ABC):
                 potentials = self.evaluate_potential_at_points(lattice)
                 fields = self.evaluate_field_at_points(lattice)
                 field_mags = self.compute_field_magnitude(fields)
+
+                # copy values for time-domain analysis
                 self._copy_values_for_time_domain(
                     band_indices, tmp_potential_freq_domain, potentials[:, 0]
                 )
@@ -260,7 +277,12 @@ class VolumeConductor(ABC):
                 self._copy_values_for_time_domain(
                     band_indices, tmp_Ez_freq_domain, fields[:, 2]
                 )
-                # copy values for time-domain analysis
+
+                time_1 = time.time()
+                timings["CopyValues"].append(time_1 - time_0)
+                time_0 = time_1
+
+                # export results: VTA
                 if np.isclose(frequency, self._export_frequency):
                     self.export_potential_to_csv(
                         frequency,
@@ -329,6 +351,9 @@ class VolumeConductor(ABC):
                 inside_csf,
                 inside_encap,
             )
+            time_1 = time.time()
+            timings["ReconstructTimeSignals"] = time_1 - time_0
+            time_0 = time_1
 
         if len(self.signal.frequencies) > 1:
             self.export_solution_at_contacts()
@@ -1025,7 +1050,7 @@ class VolumeConductor(ABC):
         if export_vtk:
             timings["VTKExport"] = []
         if point_model is not None:
-            timings["FieldExport"] = []
+            timings["CopyValues"] = []
         return timings
 
     def _store_solution_at_contacts(
