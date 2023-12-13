@@ -41,24 +41,11 @@
           "Voltage[V]": 0.0,
           "Floating": false
         }
-      ],
-      "EncapsulationLayer": {
-        "Thickness[mm]": 0.0,
-        "Material": "Blood",
-        "DielectricModel": "ColeCole4",
-        "MaxMeshSize": 0.1
-      }
+      ]
     }
   ],
   "MaterialDistribution": {
     "MRIPath": "../../input_files/homogeneous.nii.gz",
-    "MRIMapping": {
-      "Gray matter": 1,
-      "White matter": 2,
-      "CSF": 3,
-      "Blood": 4,
-      "Unknown": 0
-    },
     "DiffusionTensorActive": false,
     "DTIPath": ""
   },

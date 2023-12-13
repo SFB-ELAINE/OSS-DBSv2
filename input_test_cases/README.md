@@ -61,4 +61,4 @@ The contained input dictionary uses a uniform grid around the active contact of 
 Case 8: Pathway Activation Modelling (PAM)
 ------------------------------------------
 
-Using a DBS electrode from Medtronic (`Medtronic3387`) placed in the STN, the electric field is evaluated along the points of an axon. Therefore, the points are provided in a structured `.h5`  file, and the path to the file is provided in the inputs. The results are stored in `.h5` format in the output folder.
+Using a DBS electrode from Medtronic (`Medtronic3387`) placed in the STN, the electric field is evaluated along the points of an axon. Therefore, the coordinates are given in a structured `.h5`  file, and the path to the file is provided in the inputs. The `.h5` file needs to be structured in groups (e.g., pathways), where each group can contain multiple datasets (e.g., axons). Each axon includes an array of 3D coordinates and needs to follow the naming convention (axon0, axon1, axon2, etc.). The results are stored in the output folder in the same structure in `.h5` format.
