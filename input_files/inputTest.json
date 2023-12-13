@@ -38,7 +38,7 @@
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.05
+          "MaxMeshSizeEdge": 0.5
         },
         {
           "Contact_ID": 2,
@@ -50,14 +50,14 @@
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.05
+          "MaxMeshSizeEdge": 0.5
         }
       ],
       "EncapsulationLayer": {
         "Thickness[mm]": 0.0,
         "Material": "Blood",
         "DielectricModel": "ColeCole4",
-        "MaxMeshSize": 0.1
+        "MaxMeshSize": 0.5
       }
     }
   ],
@@ -81,7 +81,7 @@
     "MeshElementOrder": 2,
     "MeshingHypothesis": {
       "Type": "Fine",
-      "MaxMeshSize": 1
+      "MaxMeshSize": 100
     },
     "MeshSize": {
       "Edges": {},
