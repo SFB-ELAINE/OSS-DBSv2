@@ -11,7 +11,7 @@ WhiteMatterColeCole3Default = ColeColeParameters(
 )
 
 GrayMatterColeCole3Default = ColeColeParameters(
-    alpha=np.array([0.1, 0.15, 0.22, 0.0]),
+    alpha=np.array([0.1, 0.15, 0.22]),
     eps_delta=np.array([45.0, 400.0, 2.0e5]),
     eps_inf=4.0,
     sigma=0.239,
