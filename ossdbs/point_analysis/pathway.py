@@ -1,10 +1,9 @@
-import logging
-import os
 from dataclasses import dataclass
 from typing import List
-
-import h5py
 import numpy as np
+import logging
+import h5py
+import os
 
 from .lattice import PointModel
 from .time_results import TimeResult
@@ -15,11 +14,32 @@ _logger = logging.getLogger(__name__)
 class Pathway(PointModel):
     @dataclass
     class Axon:
+        """
+        Attributes
+        ----------
+        name: str
+            Naming of axons needs to be axon0, axon1, axon2, ... to be 
+            processed in the correct order.
+
+        points: np.ndarray
+            Contains 3D coordinates of each point within one axon.
+        
+        """
         name: str
         points: np.ndarray
 
     @dataclass
     class Population:
+        """
+        Attributes
+        ----------
+        name: str
+            Name of neuronal population, e.g. a pathway.
+
+        axons: List["Pathway.Axon"]
+            List that contains all axons within one population.
+        
+        """
         name: str
         axons: List["Pathway.Axon"]
 
@@ -43,13 +63,36 @@ class Pathway(PointModel):
         self._coordinates = self._initialize_coordinates()
         self._axon_mask = None
 
-    def _create_axons(self, file, group) -> list:
+
+
+    def _create_axons(self, file: h5py.File, group: str) -> list:
+        """Create axons based on the input from the .h5 file.
+        
+        Parameters
+        ----------
+        file: h5py.File
+            Loaded .h5 file, which contains structural information.
+
+        group: str
+            Name of the group, which contains the axons.
+        
+        Retruns
+        -------
+        axons: list
+            Retruns list of all axons within one group.
+        """
         return [
             self.Axon(sub_group, np.array(file[group][sub_group]))
             for sub_group in file[group].keys()
         ]
 
     def _initialize_coordinates(self) -> np.ndarray:
+        for population in self._populations:
+            print("population", population.name)
+            for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
+                if axon.name == "axon0":
+                    print(np.array(axon.points).shape)
+                # print(axon.name)
         return np.concatenate(
             [
                 axon.points
@@ -58,7 +101,7 @@ class Pathway(PointModel):
             ]
         )
 
-    def save(self, data: TimeResult, file_name: str):
+    def save(self, data: TimeResult, file_name: str) -> None:   # creates "oss_time_result.h5"
         with h5py.File(file_name, "w") as file:
             self._write_file(data, file)
 
@@ -107,6 +150,7 @@ class Pathway(PointModel):
     def set_location_names(self, names: np.ndarray) -> None:
         self._location = names
 
+    # filter_geo_for_poulation as new function
     def filter_for_geometry(self, grid_pts: np.ma.MaskedArray) -> np.ndarray:
         """Return a lattice that NGSolve can process. If a single point from
         an axon is outside of the geometry, the whole axon will be removed.
@@ -115,51 +159,68 @@ class Pathway(PointModel):
         ----------
         grid_pts: np.ma.MaskedArray
         """
-        axon_length = self._populations[0].axons[0].points.shape[0]
-
-        if len(grid_pts) % axon_length != 0:
-            raise RuntimeError(
-                "The creation of the grid for the point analysis did not work"
-            )
-
-        total_number_axons = int(len(grid_pts) / axon_length)
+        # estimate which axons should be preserved
+        lattice_mask = np.invert(grid_pts.mask)[:,0]
         x, y, z = grid_pts.T
+        print("Lattice mask", lattice_mask)
+        keep_axon = []
+        size = 0
+        last_population_index = 0
+        for population in self._populations:
+            axon_length = population.axons[0].points.shape[0]
+            number_of_axons = len(population.axons)
+            inside = [True] * number_of_axons
 
-        lattice_mask = np.invert(grid_pts.mask)
+            print("Axon length:", axon_length)
+            print("Number of axons", number_of_axons)
+            index = []
+            # shift based on population index whereever lattice is used
+            for i in range(number_of_axons):
+                for j in range(axon_length):
+                    index.append(i * axon_length + j)
+                    if not lattice_mask[last_population_index + i * axon_length + j]:
+                        inside[i] = False
+                        j = axon_length - 1
+            
+            n_filtered_axons = 0
+            for keep in inside:
+                if keep:
+                    n_filtered_axons = n_filtered_axons + 1
 
-        keep_axon = [True] * total_number_axons
-        for i in range(0, total_number_axons):
-            for j in range(axon_length):
-                if not lattice_mask[i * axon_length + j][0]:
-                    keep_axon[i] = False
-                    j = axon_length - 1
+            keep_axon = keep_axon + inside
+            size = size + n_filtered_axons * axon_length
 
-        n_filtered_axons = 0
-        for keep in keep_axon:
-            if keep:
-                n_filtered_axons = n_filtered_axons + 1
-
-        _logger.info(f"Total amount of loaded axons: {total_number_axons}")
-        _logger.info(
-            f"Axons outside the computationl domain: {total_number_axons - n_filtered_axons}"
-        )
-
-        lattice = np.zeros(shape=(n_filtered_axons * axon_length, 3))
+            _logger.info(f"Total amount of loaded axons: {number_of_axons}")
+            _logger.info(
+                f"Axons outside the computationl domain: {number_of_axons - n_filtered_axons}"
+            )
+            last_population_index = max(index)
+            print("Max index", )
+        self._axon_mask = keep_axon
+        
+        # create new lattice with filtered points
+        lattice = np.zeros(shape=(size, 3))
 
         idx = 0
-        for i in range(total_number_axons):
-            if keep_axon[i]:
-                lattice[idx * axon_length: (idx + 1) * axon_length, 0] = x.data[
-                    i * axon_length: (i + 1) * axon_length
-                ]
-                lattice[idx * axon_length: (idx + 1) * axon_length, 1] = y.data[
-                    i * axon_length: (i + 1) * axon_length
-                ]
-                lattice[idx * axon_length: (idx + 1) * axon_length, 2] = z.data[
-                    i * axon_length: (i + 1) * axon_length
-                ]
-                idx = idx + 1
-        self._axon_mask = keep_axon
+        i = 0
+        for population in self._populations:
+            axon_length = population.axons[0].points.shape[0]
+            for axon_number in range(len(population.axons)):
+                if self._axon_mask[i]:
+                    lattice[idx * axon_length: (idx + 1) * axon_length, 0] = x.data[
+                        i * axon_length: (i + 1) * axon_length
+                    ]
+                    lattice[idx * axon_length: (idx + 1) * axon_length, 1] = y.data[
+                        i * axon_length: (i + 1) * axon_length
+                    ]
+                    lattice[idx * axon_length: (idx + 1) * axon_length, 2] = z.data[
+                        i * axon_length: (i + 1) * axon_length
+                    ]
+                    idx = idx + 1
+                i = i + 1
+
+        print("keep axons", keep_axon)
+        print("Lattice filter for geo (in pw)", lattice)
         return lattice
 
     def filter_csf_encap(
@@ -201,7 +262,7 @@ class Pathway(PointModel):
         return np.reshape(axons_csf, (len(axons_csf), 1)), np.reshape(
             axons_encap, (len(axons_encap), 1)
         )
-
+    # stores oss_pts.h5, oss_potential.h5, oss_field.h5
     def save_hdf5(
         self,
         lattice: np.ndarray,

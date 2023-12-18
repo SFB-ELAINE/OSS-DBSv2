@@ -407,6 +407,11 @@ class VolumeConductor(ABC):
         frequency_indices = frequency_indices.astype(np.uint16)
         result_in_time = np.zeros(shape=(n_lattice_points, len(tmp_freq_domain)))
 
+        if n_lattice_points == 0:
+            raise ValueError(
+                "No lattice points to process."
+            )
+        
         # go through points in lattice
         for point_idx in range(n_lattice_points):
             # write frequencies
