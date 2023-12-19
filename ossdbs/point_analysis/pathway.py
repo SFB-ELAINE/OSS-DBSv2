@@ -27,6 +27,7 @@ class Pathway(PointModel):
         """
         name: str
         points: np.ndarray
+        status: int
 
     @dataclass
     class Population:
@@ -82,7 +83,7 @@ class Pathway(PointModel):
             Retruns list of all axons within one group.
         """
         return [
-            self.Axon(sub_group, np.array(file[group][sub_group]))
+            self.Axon(sub_group, np.array(file[group][sub_group]), 0)
             for sub_group in file[group].keys()
         ]
 
@@ -112,7 +113,7 @@ class Pathway(PointModel):
         for population in self._populations:
             group = file.create_group(population.name)
             # TODO use [0,-1,-2] instead of bool values for status
-            group.create_dataset("Status", data=self._axon_mask[idx : idx + len(population.axons)])
+            #group.create_dataset("Status", data=self._axon_mask[idx : idx + len(population.axons)])
             start, idx = self._create_datasets(data, start, idx, population, group)
            
     def _create_datasets(self, data, start, idx, population, group):
@@ -123,7 +124,7 @@ class Pathway(PointModel):
             sub_group.create_dataset("Points[mm]", data=axon.points)
             location = self._location[idx * len(axon.points) : (idx + 1) * len(axon.points)]
             sub_group.create_dataset("Location", data=location.astype("S"))   
-            if self._axon_mask[idx]:
+            if axon.status != 1:
                 end = start + len(axon.points)
                 potential = data.potential[start:end]
                 sub_group.create_dataset("Potential[V]", data=potential)
@@ -149,6 +150,45 @@ class Pathway(PointModel):
 
     def set_location_names(self, names: np.ndarray) -> None:
         self._location = names
+
+
+    def filter_for_geometry_new(self, grid_pts: np.ma.MaskedArray) -> np.ndarray:
+        x, y, z = grid_pts.T
+        lattice_mask = np.invert(grid_pts.mask)[:,0]
+        temp = 0
+        n_points = 0
+
+        for population in self._populations:
+            for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
+                axon_length = axon.points.shape[0]
+                for idx in range(axon_length):
+                    if lattice_mask[temp + idx] == False:
+                        axon.status = -1
+                if lattice_mask[temp + idx] == True:
+                        n_points = n_points + axon_length
+                temp = temp + axon_length
+
+        lattice = np.zeros(shape=(n_points, 3))
+
+        temp_lattice = 0
+        temp_grid = 0
+        for population in self._populations:
+            counter = 0
+            n_axons = len(population.axons)
+            for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
+                axon_length = axon.points.shape[0]
+                if axon.status == 0:
+                    counter = counter + 1 
+                    lattice[temp_lattice : temp_lattice + axon_length, 0] = x.data[temp_grid : temp_grid + axon_length]
+                    lattice[temp_lattice : temp_lattice + axon_length, 1] = y.data[temp_grid : temp_grid + axon_length]
+                    lattice[temp_lattice : temp_lattice + axon_length, 2] = z.data[temp_grid : temp_grid + axon_length]
+                    temp_lattice = temp_lattice + axon_length
+                    
+                temp_grid = temp_grid + axon_length
+            _logger.info(f"Total axons in {population.name}: {n_axons}")
+            _logger.info(f"Outside the domain: {n_axons - counter}")
+
+        return lattice
 
     # filter_geo_for_poulation as new function
     def filter_for_geometry(self, grid_pts: np.ma.MaskedArray) -> np.ndarray:
@@ -197,7 +237,6 @@ class Pathway(PointModel):
             last_population_index = max(index)
             print("Max index", )
         self._axon_mask = keep_axon
-        
         # create new lattice with filtered points
         lattice = np.zeros(shape=(size, 3))
 

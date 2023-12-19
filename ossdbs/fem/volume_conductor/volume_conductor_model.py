@@ -721,13 +721,11 @@ class VolumeConductor(ABC):
         """
         grid_pts = point_model.points_in_mesh(self.mesh)
         lattice_mask = np.invert(grid_pts.mask)
-        lattice = point_model.filter_for_geometry(grid_pts)
+        lattice = point_model.filter_for_geometry_new(grid_pts)
         inside_csf = self.get_points_in_csf(lattice)
         inside_encap = self.get_points_in_encapsulation_layer(lattice)
         if isinstance(point_model, Pathway):
             # if pathway, always mark complete axons
-            if point_model._axon_mask is None:
-                raise RuntimeError("The creation of the axon_mask did not work")
             [inside_csf, inside_encap] = point_model.filter_csf_encap(
                 inside_csf, inside_encap
             )
