@@ -538,7 +538,7 @@ class LeadSettings:
             "EncapsulationLayer": {
                 "Thickness[mm]": 0.1,
                 "Material": self.get_encapsulation_type(),
-                "DielectricModel": "ColeCole4",
+                "DielectricModel": "ColeCole3",
                 "DielectricParameters": None,
                 "MaxMeshSize": 0.1
             },
