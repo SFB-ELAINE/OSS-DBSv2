@@ -505,6 +505,10 @@ class LeadSettings:
             "PINS Medical L301": "PINSMedicalL301",
             "PINS Medical L302": "PINSMedicalL302",
             "PINS Medical L303": "PINSMedicalL303",
+            "NeuroPace DL-344-3.5": "NeuroPaceDL344_3_5",
+            "NeuroPace DL-344-10": "NeuroPaceDL344_10",
+            "DIXI D08-10AM": "DixiSEEG10",
+            "DIXI D08-15AM": "DixiSEEG15"
         }
 
         for lead in electrode_names.keys():
