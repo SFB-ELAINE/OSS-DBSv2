@@ -27,7 +27,7 @@ class Pathway(PointModel):
         """
         name: str
         points: np.ndarray
-        status: int
+        status: int     # 0 - normal, -1 - outside domain, -2 - csf/encap 
 
     @dataclass
     class Population:
@@ -88,12 +88,6 @@ class Pathway(PointModel):
         ]
 
     def _initialize_coordinates(self) -> np.ndarray:
-        for population in self._populations:
-            print("population", population.name)
-            for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
-                if axon.name == "axon0":
-                    print(np.array(axon.points).shape)
-                # print(axon.name)
         return np.concatenate(
             [
                 axon.points
@@ -112,18 +106,18 @@ class Pathway(PointModel):
         idx = 0
         for population in self._populations:
             group = file.create_group(population.name)
-            # TODO use [0,-1,-2] instead of bool values for status
-            #group.create_dataset("Status", data=self._axon_mask[idx : idx + len(population.axons)])
-            start, idx = self._create_datasets(data, start, idx, population, group)
+            start, idx, status_list = self._create_datasets(data, start, idx, population, group)
+            group.create_dataset("Status", data=status_list)
            
     def _create_datasets(self, data, start, idx, population, group):
         # sort Axon instances numerically
-
+        status_list = []
         for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
             sub_group = group.create_group(axon.name)
             sub_group.create_dataset("Points[mm]", data=axon.points)
             location = self._location[idx * len(axon.points) : (idx + 1) * len(axon.points)]
-            sub_group.create_dataset("Location", data=location.astype("S"))   
+            sub_group.create_dataset("Location", data=location.astype("S"))  
+            status_list.append(axon.status) 
             if axon.status != 1:
                 end = start + len(axon.points)
                 potential = data.potential[start:end]
@@ -146,52 +140,49 @@ class Pathway(PointModel):
                 )
                 start = end
             idx = idx + 1
-        return start, idx
+        return start, idx, status_list
 
     def set_location_names(self, names: np.ndarray) -> None:
         self._location = names
 
 
-    def filter_for_geometry_new(self, grid_pts: np.ma.MaskedArray) -> np.ndarray:
+    def filter_for_geometry(self, grid_pts: np.ma.MaskedArray) -> np.ndarray:
         x, y, z = grid_pts.T
         lattice_mask = np.invert(grid_pts.mask)[:,0]
-        temp = 0
+        idx_axon = 0
         n_points = 0
 
         for population in self._populations:
             for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
                 axon_length = axon.points.shape[0]
                 for idx in range(axon_length):
-                    if lattice_mask[temp + idx] == False:
+                    if lattice_mask[idx_axon + idx] == False:
                         axon.status = -1
-                if lattice_mask[temp + idx] == True:
-                        n_points = n_points + axon_length
-                temp = temp + axon_length
+                if lattice_mask[idx_axon + idx] == True:
+                        n_points += axon_length
+                idx_axon += axon_length
 
         lattice = np.zeros(shape=(n_points, 3))
-
-        temp_lattice = 0
-        temp_grid = 0
+        idx_lattice = 0
+        idx_grid = 0
         for population in self._populations:
             counter = 0
             n_axons = len(population.axons)
             for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
                 axon_length = axon.points.shape[0]
                 if axon.status == 0:
-                    counter = counter + 1 
-                    lattice[temp_lattice : temp_lattice + axon_length, 0] = x.data[temp_grid : temp_grid + axon_length]
-                    lattice[temp_lattice : temp_lattice + axon_length, 1] = y.data[temp_grid : temp_grid + axon_length]
-                    lattice[temp_lattice : temp_lattice + axon_length, 2] = z.data[temp_grid : temp_grid + axon_length]
-                    temp_lattice = temp_lattice + axon_length
-                    
-                temp_grid = temp_grid + axon_length
+                    counter += 1 
+                    lattice[idx_lattice : idx_lattice + axon_length, 0] = x.data[idx_grid : idx_grid + axon_length]
+                    lattice[idx_lattice : idx_lattice + axon_length, 1] = y.data[idx_grid : idx_grid + axon_length]
+                    lattice[idx_lattice : idx_lattice + axon_length, 2] = z.data[idx_grid : idx_grid + axon_length]
+                    idx_lattice += axon_length                
+                idx_grid += axon_length
             _logger.info(f"Total axons in {population.name}: {n_axons}")
             _logger.info(f"Outside the domain: {n_axons - counter}")
-
         return lattice
 
-    # filter_geo_for_poulation as new function
-    def filter_for_geometry(self, grid_pts: np.ma.MaskedArray) -> np.ndarray:
+    # TODO clean old function
+    def filter_for_geometry_old(self, grid_pts: np.ma.MaskedArray) -> np.ndarray:
         """Return a lattice that NGSolve can process. If a single point from
         an axon is outside of the geometry, the whole axon will be removed.
 
@@ -261,8 +252,32 @@ class Pathway(PointModel):
         print("keep axons", keep_axon)
         print("Lattice filter for geo (in pw)", lattice)
         return lattice
-
+    
     def filter_csf_encap(
+        self, inside_csf: np.ndarray, inside_encap: np.ndarray) -> None:
+        """Change axon status in case a single point of the axon lays within the
+        CSF or encapsulation layer.
+
+        Parameters
+        ----------
+        inside_csf: np.ndarray
+
+        inside_encap: np.ndarray
+        """
+        idx_axon = 0
+        for population in self._populations:
+            for axon in  sorted(population.axons, key=lambda x: int(x.name[4:])):
+                if axon.status != -1:
+                    axon_length = axon.points.shape[0]
+                    for idx in range(axon_length):
+                        if inside_csf[idx_axon + idx]:
+                            axon.status = -2    # set status -2 for inside csf
+                        if inside_encap[idx_axon + idx]:
+                            axon.status = -2    # set status -2 for inside encap
+                    idx_axon = idx_axon + axon_length
+
+    # TODO clean old functions
+    def filter_csf_encap_old(
         self, inside_csf: np.ndarray, inside_encap: np.ndarray
     ) -> np.ndarray:
         """Marks whole axon in case a signle point of the axon is within the
@@ -301,7 +316,9 @@ class Pathway(PointModel):
         return np.reshape(axons_csf, (len(axons_csf), 1)), np.reshape(
             axons_encap, (len(axons_encap), 1)
         )
+    
     # stores oss_pts.h5, oss_potential.h5, oss_field.h5
+    # TODO delete completly?
     def save_hdf5(
         self,
         lattice: np.ndarray,
