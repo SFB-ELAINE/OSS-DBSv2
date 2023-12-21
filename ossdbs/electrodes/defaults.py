@@ -12,9 +12,9 @@ from .boston_scientific_vercise import (
 )
 from .dixi_microtechniques import (
     DixiSEEG10Model,
-    DixiSEEG15Model,
     DixiSEEG10Parameters,
-    DixiSEEG15Parameters
+    DixiSEEG15Model,
+    DixiSEEG15Parameters,
 )
 from .medtronic import (
     MedtronicModel,
@@ -30,6 +30,10 @@ from .micro_probes import (
 from .microelectrode import (
     MicroElectrodeModel,
     MicroElectrodeParameters,
+)
+from .neuro_pace import (
+    NeuroPaceModel,
+    NeuroPaceParameters,
 )
 from .pins_medical import (
     PINSMedicalModel,
@@ -137,6 +141,20 @@ default_electrode_parameters = {
         lead_radius=0.1175,
         total_length=100.0,
         wire_radius=0.1125,
+    ),
+    "NeuroPaceDL344_3_5": NeuroPaceParameters(
+        tip_length=1.1,
+        contact_length=2.0,
+        contact_spacing=1.5,
+        lead_diameter=1.27,
+        total_length=450.0,
+    ),
+    "NeuroPaceDL344_10": NeuroPaceParameters(
+        tip_length=1.1,
+        contact_length=2.0,
+        contact_spacing=8.0,
+        lead_diameter=1.27,
+        total_length=450.0,
     ),
     "PINSMedicalL301": PINSMedicalParameters(
         tip_length=1.5,
@@ -274,6 +292,20 @@ def MicroProbesRodentElectrode(
 ):
     parameters = default_electrode_parameters["MicroProbesRodentElectrode"]
     return MicroProbesRodentElectrodeModel(parameters, rotation, direction, position)
+
+
+def NeuroPaceDL344_3_5(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    parameters = default_electrode_parameters["NeuroPaceDL344_3_5"]
+    return NeuroPaceModel(parameters, rotation, direction, position)
+
+
+def NeuroPaceDL344_10(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    parameters = default_electrode_parameters["NeuroPaceDL344_10"]
+    return NeuroPaceModel(parameters, rotation, direction, position)
 
 
 def PINSMedicalL301(

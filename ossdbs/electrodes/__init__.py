@@ -27,6 +27,8 @@ from .defaults import (
     MicroElectrode,
     MicroProbesRodentElectrode,
     MicroProbesSNEX100,
+    NeuroPaceDL344_3_5,
+    NeuroPaceDL344_10,
     PINSMedicalL301,
     PINSMedicalL302,
     PINSMedicalL303,
@@ -34,23 +36,24 @@ from .defaults import (
 )
 from .dixi_microtechniques import (
     DixiSEEG10Model,
-    DixiSEEG15Model,
     DixiSEEG10Parameters,
+    DixiSEEG15Model,
     DixiSEEG15Parameters,
-    )
+)
 from .electrode_model_template import ElectrodeModel
 from .medtronic import (
     MedtronicModel,
     MedtronicParameters,
     MedtronicSenSightModel,
 )
-from .microelectrode import MicroElectrodeModel, MicroElectrodeParameters
 from .micro_probes import (
     MicroProbesRodentElectrodeModel,
     MicroProbesRodentElectrodeParameters,
     MicroProbesSNEX100Model,
     MicroProbesSNEX100Parameters,
 )
+from .microelectrode import MicroElectrodeModel, MicroElectrodeParameters
+from .neuro_pace import NeuroPaceModel, NeuroPaceParameters
 from .pins_medical import PINSMedicalModel, PINSMedicalParameters
 
 ELECTRODES = {
@@ -70,6 +73,8 @@ ELECTRODES = {
     "MicroElectrode": MicroElectrode,
     "MicroProbesRodentElectrode": MicroProbesRodentElectrode,
     "MicroProbesSNEX100": MicroProbesSNEX100,
+    "NeuroPaceDL344_3_5": NeuroPaceDL344_3_5,
+    "NeuroPaceDL344_10": NeuroPaceDL344_10,
     "PINSMedicalL301": PINSMedicalL301,
     "PINSMedicalL302": PINSMedicalL302,
     "PINSMedicalL303": PINSMedicalL303,
@@ -92,6 +97,7 @@ ELECTRODE_MODELS = {
     "MicroElectrodeCustom": MicroElectrodeModel,
     "MicroProbesRodentElectrodeCustom": MicroProbesRodentElectrodeModel,
     "MicroProbesSNEX100Custom": MicroProbesSNEX100Model,
+    "NeuroPaceCustom": NeuroPaceModel,
     "PINSMedicalL301Custom": PINSMedicalModel,
     "PINSMedicalL302Custom": PINSMedicalModel,
     "PINSMedicalL303Custom": PINSMedicalModel,
@@ -110,6 +116,7 @@ ELECTRODE_PARAMETERS = {
     "MicroElectrodeModel": MicroElectrodeParameters,
     "MicroProbesRodentElectrodeModel": MicroProbesRodentElectrodeParameters,
     "MicroProbesSNEX100Model": MicroProbesSNEX100Parameters,
+    "NeuroPaceModel": NeuroPaceParameters,
     "PINSMedicalModel": PINSMedicalParameters,
 }
 
@@ -151,6 +158,8 @@ __all__ = (
     "MicroProbesSNEX100",
     "MicroProbesSNEX100Model",
     "MicroProbesSNEX100Parameters",
+    "NeuroPaceDL344_3_5",
+    "NeuroPaceDL344_10",
     "PINSMedicalL301",
     "PINSMedicalL302",
     "PINSMedicalL303",
