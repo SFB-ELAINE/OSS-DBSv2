@@ -17,11 +17,13 @@ class ColeColeParameters:
     tau: np.ndarray  # 4 entries
 
     def __post_init__(self):
+        """Cast input to NumPy array."""
         self.alpha = np.array(self.alpha)
         self.eps_delta = np.array(self.eps_delta)
         self.tau = np.array(self.tau)
 
     def assert_order(self, order: int) -> bool:
+        """Assert correct length of input."""
         return (
             (len(self.alpha) == order)
             and (len(self.tau) == order)
@@ -72,6 +74,8 @@ default_cole_cole4_parameters = {
 
 
 class ColeCole4Model(DielectricModel):
+    """Dielectric model with 4 Cole-Cole dispersions."""
+
     def __init__(self, parameters: ColeColeParameters):
         self._parameters = parameters
         if not self._parameters.assert_order(4):
@@ -106,4 +110,5 @@ class ColeCole4Model(DielectricModel):
 
     @property
     def static_conductivity(self) -> float:
+        """Return conductivity at DC / 0 Hz."""
         return self._parameters.sigma

@@ -108,18 +108,21 @@ class ModelGeometry:
         return self._contacts
 
     def get_contact_index(self, contact_name: str) -> int:
+        """Get index of contact by name."""
         for idx, contact in enumerate(self._contacts):
             if contact.name == contact_name:
                 return idx
         return -1
 
     def get_encapsulation_layer_index(self, encapsulation_layer_name: str) -> int:
+        """Get index of encapsulation layer by name."""
         for idx, encapsulation_layer in enumerate(self._encapsulation_layers):
             if encapsulation_layer.name == encapsulation_layer_name:
                 return idx
         return -1
 
     def update_contact(self, idx: int, settings: dict) -> None:
+        """Overwrite contact properties."""
         contact = self._contacts[idx]
         for setting, value in settings.items():
             if setting == "Active":
@@ -150,6 +153,7 @@ class ModelGeometry:
         return
 
     def update_encapsulation_layer(self, idx: int, settings: dict) -> None:
+        """Overwrite encapsulation layer properties."""
         encapsulation_layer = self._encapsulation_layers[idx]
         for setting, value in settings.items():
             if setting == "Material":
@@ -174,9 +178,6 @@ class ModelGeometry:
     def encapsulation_layers(self) -> List:
         """Return collection of active contacts and contacts of property
         floating.
-
-        Returns
-        -------
         """
         return self._encapsulation_layers
 
@@ -197,6 +198,7 @@ class ModelGeometry:
         electrode.set_contact_names(new_boundary_names)
 
     def get_floating_mode(self):
+        """Check if floating and if yes, which mode."""
         floating_mode = None
         for contact in self.contacts:
             if contact.floating:
@@ -208,9 +210,8 @@ class ModelGeometry:
             for contact in self.contacts:
                 if not np.isclose(contact.surface_impedance, 0.0):
                     _logger.warning(
-                        "Mode has been set to Floating but there is a nonzero surface impedance on contact {}".format(
-                            contact.name
-                        )
+                        f"""Mode has been set to Floating but there
+                        is a nonzero surface impedance on contact {contact.name}"""
                     )
 
         return floating_mode

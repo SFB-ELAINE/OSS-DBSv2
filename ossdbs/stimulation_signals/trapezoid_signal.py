@@ -31,10 +31,9 @@ class TrapezoidSignal(TimeDomainSignal):
         self._top_width = top_width
         super().__init__(frequency, pulse_width, inter_pulse_width, counter_pulse_width)
 
-    def get_frequencies_and_fourier_coefficients(
-        self, cutoff_frequency: float
-    ) -> np.ndarray:
-        pass
-
     def get_fourier_coefficients(frequencies: float) -> np.ndarray:
-        pass
+        """Obtain Fourier coefficients of signal."""
+        raise NotImplementedError(
+            """Fourier coefficients for
+                                     trapezoidal signal not yet implemented."""
+        )

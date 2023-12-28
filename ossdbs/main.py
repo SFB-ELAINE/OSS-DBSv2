@@ -27,6 +27,7 @@ _logger = logging.getLogger(__name__)
 
 
 def main() -> None:
+    """Main function to run OSS-DBS in CLI mode."""
     parser = argparse.ArgumentParser(
         prog="OSS-DBS",
         description="Welcome to OSS-DBS v2.",

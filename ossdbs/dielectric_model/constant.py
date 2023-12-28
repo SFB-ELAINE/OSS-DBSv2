@@ -36,6 +36,8 @@ default_constant_parameters = {
 
 
 class ConstantModel(DielectricModel):
+    """Model for frequency-independent properties."""
+
     def __init__(self, parameters: ConstantParameters):
         self._parameters = parameters
 

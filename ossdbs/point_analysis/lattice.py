@@ -32,7 +32,6 @@ class Lattice(PointModel):
         center: tuple,
         distance: float,
         direction: tuple,
-        collapse_vta: bool,
     ) -> None:
         self._distance = abs(distance)
         self._shape = shape
@@ -41,7 +40,6 @@ class Lattice(PointModel):
         self._direction = tuple(direction / norm) if norm else (0, 0, 1)
         self._location = np.full(shape[0] * shape[1] * shape[2], "")
         self._coordinates = self._initialize_coordinates()
-        self._collapse_vta = collapse_vta
 
     def _initialize_coordinates(self) -> np.ndarray:
         """Generates coordinates of points.

@@ -42,6 +42,7 @@ class Contact:
     surface_impedance: complex = 0.0j
 
     def __str__(self):
+        """Write properties to string."""
         contact_str = self.name
         contact_str += f"\nMax h: {self.max_h}"
         contact_str += f"\nEdge max h: {self.edge_max_h}"
@@ -54,11 +55,12 @@ class Contact:
 
 
 def check_contact(contact: Contact):
+    """Check if contact has a clear role."""
     if contact.active and contact.floating:
         raise ValueError(
-            "The contact {} has multiple roles. Please make sure that contacts are either active, floating or none of the two.".format(
-                contact.name
-            )
+            f"""The contact {contact.name} has multiple roles.
+            Please make sure that contacts are either active,
+            floating or none of the two."""
         )
 
 
@@ -87,6 +89,7 @@ class Contacts:
         ]
 
     def append(self, contact: Contact) -> None:
+        """Add another contact."""
         self._all_contacts.append(contact)
         if contact.active:
             self._active.append(contact)
@@ -203,14 +206,17 @@ class Contacts:
                 contact.impedance = impedance_values[contact.name]
 
     def __getitem__(self, name):
+        """Get contact by name."""
         for contact in self._all_contacts:
             if name == contact.name:
                 return contact
 
     def __iter__(self):
+        """Iterate over contacts."""
         return iter(self._all_contacts)
 
     def __str__(self):
+        """Write info of all contacts to string."""
         contacts_str = ""
         for contact in self._all_contacts:
             contacts_str += str(contact)

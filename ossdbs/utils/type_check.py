@@ -1,4 +1,6 @@
 class TypeChecker:
+    """Check types of input dictionary."""
+
     TYPES = {
         "DielectricModel": {
             "Type": str,
@@ -106,6 +108,7 @@ class TypeChecker:
 
     @classmethod
     def check(cls, settings: dict) -> None:
+        """Check types in settings dictionary."""
         cls.__check(cls.TYPES, settings)
         cls.__check_electrodes(settings)
 

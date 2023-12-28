@@ -1,21 +1,36 @@
 import numpy as np
 
 
-def get_collapsed_VTA(field_on_points, implantation_coordinate, lead_direction, lead_diam):
-    """Postprocess probing points to remove the electrode by inward sideways collapse. The point coordinates are pulled
-    into the electrode space to 'counteract' tissue misplacement due to the implantation. This breaks the grid regularity, so
-    all nifti files will be created externally.
+def get_collapsed_VTA(
+    field_on_points: np.ndarray,
+    implantation_coordinate: np.ndarray,
+    lead_direction: np.ndarray,
+    lead_diam: float,
+):
+    """Postprocess probing points to remove the electrode by inward sideways collapse.
+
+    Notes
+    -----
+    The point coordinates are pulled into the electrode space to 'counteract'
+    tissue misplacement due to the implantation.
+    This breaks the grid regularity, so all nifti files
+    will be created externally.
 
     Parameters
     ----------
-    field_on_points : Nx7 numpy.ndarray of scalar values on the lattice
-    implantation_coordinate: 1-D numpy array, center of the first contact
-    lead_direction: 1-D numpy array, direction of the lead (from head to tail)
-    lead_diam: float, diameter of the electrode that will be compensated by the inward collapse
+    field_on_points: numpy.ndarray
+        Scalar values on the lattice, Nx7
+    implantation_coordinate: numpy array
+        Center of the first contact
+    lead_direction: numpy array
+        Direction of the lead (from head to tail)
+    lead_diam: float
+        Diameter of the electrode that will be compensated by the inward collapse
 
     Returns
     -------
-    field_on_points_collided: Nx7 numpy.ndarray of scalar values on adjusted lattice
+    field_on_points_collided: numpy.ndarray
+        Array of scalar values on adjusted lattice, Nx7
 
     """
     # get unit vector for direction

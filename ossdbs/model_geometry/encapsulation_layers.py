@@ -19,11 +19,11 @@ class EncapsulationLayer:
 
     @property
     def dielectric_properties(self):
+        """Get dielectric properties of encapsulation layer."""
         if self.dielectric_model is None:
             raise ValueError(
-                "You have not specified a dielectric model for the encapsulation layer {}".format(
-                    self.name
-                )
+                f"""You have not specified a dielectric model
+                for the encapsulation layer {self.name}"""
             )
         if self.dielectric_parameters is None:
             parameters = default_dielectric_parameters[self.dielectric_model][

@@ -54,15 +54,23 @@ def adjust_cutoff_frequency(cutoff_frequency, frequency):
     return cutoff_frequency - cutoff_frequency % frequency
 
 
+def get_timesteps(
+    cutoff_frequency: float, base_frequency: float, n_frequencies: int
+) -> np.ndarray:
+    """Return list with timesteps."""
+    cutoff_frequency = adjust_cutoff_frequency(2.0 * cutoff_frequency, base_frequency)
+    dt = 1.0 / cutoff_frequency
+    timesteps = dt * np.arange(n_frequencies)
+    return timesteps
+
+
 def retrieve_time_domain_signal_from_fft(
     fft_signal: np.ndarray, cutoff_frequency: float, base_frequency: float
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Compute time-domain signal via fft."""
     # double the cutoff_frequency to actually sample until there
-    cutoff_frequency = adjust_cutoff_frequency(2.0 * cutoff_frequency, base_frequency)
-    dt = 1.0 / cutoff_frequency
     signal = ifft(fft_signal).real
-    timesteps = dt * np.arange(len(signal))
+    timesteps = get_timesteps(cutoff_frequency, base_frequency, len(signal))
     return timesteps, signal
 
 

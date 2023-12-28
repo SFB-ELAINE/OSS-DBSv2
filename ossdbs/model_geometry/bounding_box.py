@@ -35,7 +35,8 @@ class BoundingBox:
 
         Parameters
         ----------
-        other : BoundingBox
+        other: BoundingBox
+           Second bounding box
 
         Returns
         -------
@@ -77,4 +78,5 @@ class BoundingBox:
         return [(x, y, z) for x in x_values for y in y_values for z in z_values]
 
     def __eq__(self, other: "BoundingBox") -> bool:
+        """Copy other bounding box."""
         return self.start == other.start and self.end == other.end

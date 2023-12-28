@@ -41,19 +41,26 @@ class BrainGeometry:
         self,
         shape: str,
         bounding_box: BoundingBox = None,
-        trafo_matrix: np.ndarray = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
-        translation: np.ndarray = np.array([0, 0, 0]),
+        trafo_matrix: np.ndarray = None,
+        translation: np.ndarray = None,
     ) -> None:
         self._bbox = bounding_box
         self._geometry = None
         self._shape = shape
-        self._trafo_matrix = trafo_matrix
-        self._translation = translation
+        if trafo_matrix is None:
+            self._trafo_matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        else:
+            self._trafo_matrix = trafo_matrix
+        if translation is None:
+            self._translation = np.array([0, 0, 0])
+        else:
+            self._translation = translation
         self._affine_trafo = netgen.occ.gp_GTrsf(
             mat=self._trafo_matrix.ravel(), vec=self._translation
         )
 
     def get_surface_names(self):
+        """Get names of surfaces in geometry."""
         surface_list = []
         for face in self.geometry.faces:
             if face.name not in surface_list:
@@ -85,13 +92,13 @@ class BrainGeometry:
             return self._create_ellipsoid()
         elif self._shape == "Custom":
             raise RuntimeError(
-                "Please load the custom geometry from a CAD file using the `import_geometry` or add it via the `set_geometry` method."
+                """Please load the custom geometry from a CAD file using the
+                `import_geometry` or add it via the `set_geometry` method."""
             )
         else:
             raise NotImplementedError(
-                "The shape `{}` is not implemented. Please choose among these shapes: Box, Sphere, Ellipsoid and Custom.".format(
-                    self._shape
-                )
+                f"""The shape {self._shape} is not implemented.
+                Please choose among these shapes: Box, Sphere, Ellipsoid and Custom."""
             )
 
     def _create_ellipsoid(self) -> netgen.occ.Solid:

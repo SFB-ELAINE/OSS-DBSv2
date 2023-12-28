@@ -26,7 +26,7 @@ classifiers = [
     "Operating System :: OS Independent"
 ]
 dependencies = ["h5py==3.8.0",
-                "ngsolve==6.2.2305.post17.dev0",
+                "ngsolve==6.2.2307",
                 "nibabel==4.0.2",
                 "pandas==1.5.3",
                 "scipy==1.10.1",
