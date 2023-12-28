@@ -118,6 +118,7 @@ class VolumeConductor(ABC):
         export_vtk: bool = False,
         point_model: PointModel = None,
         activation_threshold: Optional[float] = None,
+        collapse_vta: bool = False,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -131,6 +132,8 @@ class VolumeConductor(ABC):
             PointModel to extract solution at points for VTA / PAM
         activation_threshold: float
             If VTA is estimated by threshold, provide it here.
+        collapse_vta: bool
+            Whether to collapse VTA
 
         Notes
         -----
@@ -188,9 +191,7 @@ class VolumeConductor(ABC):
                 inside_encap,
                 axon_index,
             ) = self.prepare_point_model_grids(point_model)
-            export_collapsed_vta = (
-                isinstance(point_model, Lattice) and point_model._collapse_vta
-            )
+            export_collapsed_vta = isinstance(point_model, Lattice) and collapse_vta
             export_nifti = isinstance(point_model, VoxelLattice) or isinstance(
                 point_model, Lattice
             )
@@ -354,6 +355,11 @@ class VolumeConductor(ABC):
                 inside_csf,
                 inside_encap,
             )
+            _logger.debug(f"Shapes of timesteps: {timesteps.shape}")
+            _logger.debug(f"Shapes of potential_in_time: {potential_in_time.shape}")
+            _logger.debug(f"Shapes of Ex_in_time: {Ex_in_time.shape}")
+            _logger.debug(f"Shapes of Ey_in_time: {Ey_in_time.shape}")
+            _logger.debug(f"Shapes of Ez_in_time: {Ez_in_time.shape}")
             time_1 = time.time()
             timings["ReconstructTimeSignals"] = time_1 - time_0
             time_0 = time_1
@@ -377,9 +383,6 @@ class VolumeConductor(ABC):
         )
         free_stimulation_variable_at_contact = {}
         free_stimulation_variable_at_contact["time"] = timesteps
-        print(timesteps.shape)
-        print(free_stimulation_variable_in_time.shape)
-        print(stimulation_variable_in_time.shape)
         for contact_idx, contact in enumerate(self.contacts.active):
             free_stimulation_variable_at_contact[
                 contact.name + "_free"
@@ -399,7 +402,9 @@ class VolumeConductor(ABC):
                 "Attempt to compute field magnitude from invalid field vector"
             )
         # TODO fix for complex vectors
-        return np.linalg.norm(fields, axis=1).reshape((fields.shape[0], 1))
+        field_mags = np.linalg.norm(fields, axis=1).reshape((fields.shape[0], 1))
+        _logger.debug(f"Shapes of field_mags: {field_mags.shape}")
+        return field_mags
 
     def create_time_result(
         self,
