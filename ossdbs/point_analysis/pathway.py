@@ -1,9 +1,11 @@
+import logging
+import os
 from dataclasses import dataclass
 from typing import List
-import numpy as np
-import logging
+
 import h5py
-import os
+import numpy as np
+import pandas as pd
 
 from .lattice import PointModel
 from .time_results import TimeResult
@@ -18,16 +20,17 @@ class Pathway(PointModel):
         Attributes
         ----------
         name: str
-            Naming of axons needs to be axon0, axon1, axon2, ... to be 
+            Naming of axons needs to be axon0, axon1, axon2, ... to be
             processed in the correct order.
 
         points: np.ndarray
             Contains 3D coordinates of each point within one axon.
-        
+
         """
+
         name: str
         points: np.ndarray
-        status: int     # 0 - normal, -1 - outside domain, -2 - csf/encap 
+        status: int  # 0 - normal, -1 - outside domain, -2 - csf/encap
 
     @dataclass
     class Population:
@@ -39,8 +42,9 @@ class Pathway(PointModel):
 
         axons: List["Pathway.Axon"]
             List that contains all axons within one population.
-        
+
         """
+
         name: str
         axons: List["Pathway.Axon"]
 
@@ -64,11 +68,9 @@ class Pathway(PointModel):
         self._coordinates = self._initialize_coordinates()
         self._axon_mask = None
 
-
-
     def _create_axons(self, file: h5py.File, group: str) -> list:
         """Create axons based on the input from the .h5 file.
-        
+
         Parameters
         ----------
         file: h5py.File
@@ -76,7 +78,7 @@ class Pathway(PointModel):
 
         group: str
             Name of the group, which contains the axons.
-        
+
         Retruns
         -------
         axons: list
@@ -96,29 +98,42 @@ class Pathway(PointModel):
             ]
         )
 
-    def save(self, data: TimeResult, file_name: str) -> None:   # creates "oss_time_result.h5"
+    def save(
+        self, data: TimeResult, file_name: str
+    ) -> None:  # creates "oss_time_result.h5"
         with h5py.File(file_name, "w") as file:
             self._write_file(data, file)
 
     def _write_file(self, data, file):
+        test_csv = {}
+        test_csv["axon_name"] = []
+        test_csv["status"] = []
+
         file.create_dataset("TimeSteps[s]", data=data.time_steps)
         start = 0
         idx = 0
         for population in self._populations:
             group = file.create_group(population.name)
-            start, idx, status_list = self._create_datasets(data, start, idx, population, group)
+            start, idx, status_list, test_csv = self._create_datasets(
+                data, start, idx, population, group, test_csv
+            )
             group.create_dataset("Status", data=status_list)
-           
-    def _create_datasets(self, data, start, idx, population, group):
+
+        df = pd.DataFrame(test_csv)
+        df.to_csv("test_results.csv", index=False)
+
+    def _create_datasets(self, data, start, idx, population, group, test_csv):
         # sort Axon instances numerically
         status_list = []
         for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
             sub_group = group.create_group(axon.name)
             sub_group.create_dataset("Points[mm]", data=axon.points)
-            location = self._location[idx * len(axon.points) : (idx + 1) * len(axon.points)]
-            sub_group.create_dataset("Location", data=location.astype("S"))  
-            status_list.append(axon.status) 
-            if axon.status != 1:
+            location = self._location[
+                idx * len(axon.points) : (idx + 1) * len(axon.points)
+            ]
+            sub_group.create_dataset("Location", data=location.astype("S"))
+            status_list.append(axon.status)
+            if axon.status != -1:
                 end = start + len(axon.points)
                 potential = data.potential[start:end]
                 sub_group.create_dataset("Potential[V]", data=potential)
@@ -138,17 +153,19 @@ class Pathway(PointModel):
                 sub_group.create_dataset(
                     "Electric field vector z[Vm^(-1)]", data=electric_field_vector_z
                 )
+                test_csv["axon_name"].append(axon.name)
+                test_csv["status"].append(axon.status)
                 start = end
             idx = idx + 1
-        return start, idx, status_list
+
+        return start, idx, status_list, test_csv
 
     def set_location_names(self, names: np.ndarray) -> None:
         self._location = names
 
-
     def filter_for_geometry(self, grid_pts: np.ma.MaskedArray) -> np.ndarray:
         x, y, z = grid_pts.T
-        lattice_mask = np.invert(grid_pts.mask)[:,0]
+        lattice_mask = np.invert(grid_pts.mask)[:, 0]
         idx_axon = 0
         n_points = 0
 
@@ -156,10 +173,10 @@ class Pathway(PointModel):
             for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
                 axon_length = axon.points.shape[0]
                 for idx in range(axon_length):
-                    if lattice_mask[idx_axon + idx] == False:
+                    if lattice_mask[idx_axon + idx] is False:
                         axon.status = -1
-                if lattice_mask[idx_axon + idx] == True:
-                        n_points += axon_length
+                if lattice_mask[idx_axon + idx] is True:
+                    n_points += axon_length
                 idx_axon += axon_length
 
         lattice = np.zeros(shape=(n_points, 3))
@@ -171,11 +188,17 @@ class Pathway(PointModel):
             for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
                 axon_length = axon.points.shape[0]
                 if axon.status == 0:
-                    counter += 1 
-                    lattice[idx_lattice : idx_lattice + axon_length, 0] = x.data[idx_grid : idx_grid + axon_length]
-                    lattice[idx_lattice : idx_lattice + axon_length, 1] = y.data[idx_grid : idx_grid + axon_length]
-                    lattice[idx_lattice : idx_lattice + axon_length, 2] = z.data[idx_grid : idx_grid + axon_length]
-                    idx_lattice += axon_length                
+                    counter += 1
+                    lattice[idx_lattice : idx_lattice + axon_length, 0] = x.data[
+                        idx_grid : idx_grid + axon_length
+                    ]
+                    lattice[idx_lattice : idx_lattice + axon_length, 1] = y.data[
+                        idx_grid : idx_grid + axon_length
+                    ]
+                    lattice[idx_lattice : idx_lattice + axon_length, 2] = z.data[
+                        idx_grid : idx_grid + axon_length
+                    ]
+                    idx_lattice += axon_length
                 idx_grid += axon_length
             _logger.info(f"Total axons in {population.name}: {n_axons}")
             _logger.info(f"Outside the domain: {n_axons - counter}")
@@ -191,7 +214,7 @@ class Pathway(PointModel):
         grid_pts: np.ma.MaskedArray
         """
         # estimate which axons should be preserved
-        lattice_mask = np.invert(grid_pts.mask)[:,0]
+        lattice_mask = np.invert(grid_pts.mask)[:, 0]
         x, y, z = grid_pts.T
         print("Lattice mask", lattice_mask)
         keep_axon = []
@@ -212,7 +235,7 @@ class Pathway(PointModel):
                     if not lattice_mask[last_population_index + i * axon_length + j]:
                         inside[i] = False
                         j = axon_length - 1
-            
+
             n_filtered_axons = 0
             for keep in inside:
                 if keep:
@@ -226,7 +249,9 @@ class Pathway(PointModel):
                 f"Axons outside the computationl domain: {number_of_axons - n_filtered_axons}"
             )
             last_population_index = max(index)
-            print("Max index", )
+            print(
+                "Max index",
+            )
         self._axon_mask = keep_axon
         # create new lattice with filtered points
         lattice = np.zeros(shape=(size, 3))
@@ -235,16 +260,16 @@ class Pathway(PointModel):
         i = 0
         for population in self._populations:
             axon_length = population.axons[0].points.shape[0]
-            for axon_number in range(len(population.axons)):
+            for _axon_number in range(len(population.axons)):
                 if self._axon_mask[i]:
-                    lattice[idx * axon_length: (idx + 1) * axon_length, 0] = x.data[
-                        i * axon_length: (i + 1) * axon_length
+                    lattice[idx * axon_length : (idx + 1) * axon_length, 0] = x.data[
+                        i * axon_length : (i + 1) * axon_length
                     ]
-                    lattice[idx * axon_length: (idx + 1) * axon_length, 1] = y.data[
-                        i * axon_length: (i + 1) * axon_length
+                    lattice[idx * axon_length : (idx + 1) * axon_length, 1] = y.data[
+                        i * axon_length : (i + 1) * axon_length
                     ]
-                    lattice[idx * axon_length: (idx + 1) * axon_length, 2] = z.data[
-                        i * axon_length: (i + 1) * axon_length
+                    lattice[idx * axon_length : (idx + 1) * axon_length, 2] = z.data[
+                        i * axon_length : (i + 1) * axon_length
                     ]
                     idx = idx + 1
                 i = i + 1
@@ -252,9 +277,10 @@ class Pathway(PointModel):
         print("keep axons", keep_axon)
         print("Lattice filter for geo (in pw)", lattice)
         return lattice
-    
+
     def filter_csf_encap(
-        self, inside_csf: np.ndarray, inside_encap: np.ndarray) -> None:
+        self, inside_csf: np.ndarray, inside_encap: np.ndarray
+    ) -> None:
         """Change axon status in case a single point of the axon lays within the
         CSF or encapsulation layer.
 
@@ -266,14 +292,14 @@ class Pathway(PointModel):
         """
         idx_axon = 0
         for population in self._populations:
-            for axon in  sorted(population.axons, key=lambda x: int(x.name[4:])):
+            for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
                 if axon.status != -1:
                     axon_length = axon.points.shape[0]
                     for idx in range(axon_length):
                         if inside_csf[idx_axon + idx]:
-                            axon.status = -2    # set status -2 for inside csf
+                            axon.status = -2  # set status -2 for inside csf
                         if inside_encap[idx_axon + idx]:
-                            axon.status = -2    # set status -2 for inside encap
+                            axon.status = -2  # set status -2 for inside encap
                     idx_axon = idx_axon + axon_length
 
     # TODO clean old functions
@@ -298,7 +324,7 @@ class Pathway(PointModel):
         for i in range(total_number_axons):
             for j in range(axon_length):
                 if inside_csf[i * axon_length + j]:
-                    axons_csf[i * axon_length: (i + 1) * axon_length] = [
+                    axons_csf[i * axon_length : (i + 1) * axon_length] = [
                         True
                     ] * axon_length
                     j = axon_length - 1
@@ -306,7 +332,7 @@ class Pathway(PointModel):
         for i in range(total_number_axons):
             for j in range(axon_length):
                 if inside_encap[i * axon_length + j]:
-                    axons_encap[i * axon_length: (i + 1) * axon_length] = [
+                    axons_encap[i * axon_length : (i + 1) * axon_length] = [
                         True
                     ] * axon_length
                     j = axon_length - 1
@@ -316,7 +342,7 @@ class Pathway(PointModel):
         return np.reshape(axons_csf, (len(axons_csf), 1)), np.reshape(
             axons_encap, (len(axons_encap), 1)
         )
-    
+
     # stores oss_pts.h5, oss_potential.h5, oss_field.h5
     # TODO delete completly?
     def save_hdf5(
@@ -359,7 +385,7 @@ class Pathway(PointModel):
                 if self._axon_mask[sum(n_axons[:i]) + j]:
                     group.create_dataset(
                         axon_names[i][j],
-                        data=lattice[idx * axon_length: (idx + 1) * axon_length, :],
+                        data=lattice[idx * axon_length : (idx + 1) * axon_length, :],
                     )
                     idx = idx + 1
         h5f_pts.close()
@@ -373,11 +399,11 @@ class Pathway(PointModel):
                 if self._axon_mask[sum(n_axons[:i]) + j]:
                     group.create_dataset(
                         axon_names[i][j],
-                        data=lattice[idx * axon_length: (idx + 1) * axon_length, :],
+                        data=lattice[idx * axon_length : (idx + 1) * axon_length, :],
                     )
                     group.create_dataset(
                         axon_names[i][j] + "_potentials",
-                        data=potentials[idx * axon_length: (idx + 1) * axon_length, :],
+                        data=potentials[idx * axon_length : (idx + 1) * axon_length, :],
                     )
                     idx = idx + 1
         h5f_pot.close()
@@ -391,15 +417,15 @@ class Pathway(PointModel):
                 if self._axon_mask[sum(n_axons[:i]) + j]:
                     group.create_dataset(
                         axon_names[i][j],
-                        data=lattice[idx * axon_length: (idx + 1) * axon_length, :],
+                        data=lattice[idx * axon_length : (idx + 1) * axon_length, :],
                     )
                     group.create_dataset(
                         axon_names[i][j] + "_field_vecs",
-                        data=fields[idx * axon_length: (idx + 1) * axon_length, :],
+                        data=fields[idx * axon_length : (idx + 1) * axon_length, :],
                     )
                     group.create_dataset(
                         axon_names[i][j] + "_field_mags",
-                        data=field_mags[idx * axon_length: (idx + 1) * axon_length, :],
+                        data=field_mags[idx * axon_length : (idx + 1) * axon_length, :],
                     )
                     idx = idx + 1
         h5f_field.close()
@@ -414,7 +440,7 @@ class Pathway(PointModel):
         index = np.zeros(shape=len(lattice), dtype=int)
         axon_length = self.get_axon_length()
         for i in range(int(len(lattice) / axon_length)):
-            index[i * axon_length: (i + 1) * axon_length] = int(i)
+            index[i * axon_length : (i + 1) * axon_length] = int(i)
         return np.reshape(index, (len(index), 1))
 
     def get_axon_length(self) -> int:
@@ -450,7 +476,9 @@ class Pathway(PointModel):
         for population in range(len(self._populations)):
             axon_names_in_population = []
             for axon in range(len(self._populations[population].axons)):
-                axon_names_in_population.append(self._populations[population].axons[axon].name)
+                axon_names_in_population.append(
+                    self._populations[population].axons[axon].name
+                )
             axon_names.append(axon_names_in_population)
         return axon_names
 
@@ -470,5 +498,7 @@ class Pathway(PointModel):
     ):
         raise NotImplementedError("Pathway results can not be stored in Nifti format.")
 
-    def collapse_VTA(self, field_on_points, implantation_coordinate, lead_direction, lead_diam):
+    def collapse_VTA(
+        self, field_on_points, implantation_coordinate, lead_direction, lead_diam
+    ):
         raise NotImplementedError("Collapse VTA for pathways not implemented")
