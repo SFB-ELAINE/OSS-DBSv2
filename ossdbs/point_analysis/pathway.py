@@ -173,13 +173,17 @@ class Pathway(PointModel):
             for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
                 axon_length = axon.points.shape[0]
                 for idx in range(axon_length):
-                    if lattice_mask[idx_axon + idx] is False:
+                    if not lattice_mask[idx_axon + idx]:
                         axon.status = -1
-                if lattice_mask[idx_axon + idx] is True:
+                if axon.status != -1:
                     n_points += axon_length
                 idx_axon += axon_length
 
-        lattice = np.zeros(shape=(n_points, 3))
+        if n_points == 0:
+            raise ValueError(
+                "No points inside the computational domain."
+            )
+        lattice = np.zeros((n_points, 3))
         idx_lattice = 0
         idx_grid = 0
         for population in self._populations:
