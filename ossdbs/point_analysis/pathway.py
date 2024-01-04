@@ -98,13 +98,13 @@ class Pathway(PointModel):
             ]
         )
 
-    def save(
-        self, data: TimeResult, file_name: str
-    ) -> None:  # creates "oss_time_result.h5"
+    def save(self, data: TimeResult, file_name: str) -> None:
+        """Stores results as oss_time_result.h5 in output folder."""
         with h5py.File(file_name, "w") as file:
             self._write_file(data, file)
 
     def _write_file(self, data, file):
+        """Create groups for each population in .h5 file."""
         test_csv = {}
         test_csv["axon_name"] = []
         test_csv["status"] = []
@@ -123,7 +123,9 @@ class Pathway(PointModel):
         df.to_csv("test_results.csv", index=False)
 
     def _create_datasets(self, data, start, idx, population, group, test_csv):
-        # sort Axon instances numerically
+        """Create datasets for each axon within the corresponding population.
+        Axons are sorted numerically.
+        """
         status_list = []
         for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
             sub_group = group.create_group(axon.name)
@@ -164,6 +166,21 @@ class Pathway(PointModel):
         self._location = names
 
     def filter_for_geometry(self, grid_pts: np.ma.MaskedArray) -> np.ndarray:
+        """Checks if a point of an axon is outside the geometry.
+        If thats the case, the whole axon will be marked,
+        and the points are removed for further processing.
+
+        Parameters
+        ----------
+        grid_pts: np.ma.MaskedArray
+            The array contains 1 if the corresponding point is inside
+            the geometry, 0 otherwise.
+
+        Returns
+        -------
+        filtered_points: np.ndarray
+            Returns filtered_points which are inside the geometry.
+        """
         x, y, z = grid_pts.T
         lattice_mask = np.invert(grid_pts.mask)[:, 0]
         idx_axon = 0
@@ -180,11 +197,9 @@ class Pathway(PointModel):
                 idx_axon += axon_length
 
         if n_points == 0:
-            raise ValueError(
-                "No points inside the computational domain."
-            )
-        lattice = np.zeros((n_points, 3))
-        idx_lattice = 0
+            raise ValueError("No points inside the computational domain.")
+        filtered_points = np.zeros((n_points, 3))
+        idx_points = 0
         idx_grid = 0
         for population in self._populations:
             counter = 0
@@ -193,106 +208,36 @@ class Pathway(PointModel):
                 axon_length = axon.points.shape[0]
                 if axon.status == 0:
                     counter += 1
-                    lattice[idx_lattice : idx_lattice + axon_length, 0] = x.data[
+                    filtered_points[idx_points : idx_points + axon_length, 0] = x.data[
                         idx_grid : idx_grid + axon_length
                     ]
-                    lattice[idx_lattice : idx_lattice + axon_length, 1] = y.data[
+                    filtered_points[idx_points : idx_points + axon_length, 1] = y.data[
                         idx_grid : idx_grid + axon_length
                     ]
-                    lattice[idx_lattice : idx_lattice + axon_length, 2] = z.data[
+                    filtered_points[idx_points : idx_points + axon_length, 2] = z.data[
                         idx_grid : idx_grid + axon_length
                     ]
-                    idx_lattice += axon_length
+                    idx_points += axon_length
                 idx_grid += axon_length
             _logger.info(f"Total axons in {population.name}: {n_axons}")
             _logger.info(f"Outside the domain: {n_axons - counter}")
-        return lattice
-
-    # TODO clean old function
-    def filter_for_geometry_old(self, grid_pts: np.ma.MaskedArray) -> np.ndarray:
-        """Return a lattice that NGSolve can process. If a single point from
-        an axon is outside of the geometry, the whole axon will be removed.
-
-        Parameters
-        ----------
-        grid_pts: np.ma.MaskedArray
-        """
-        # estimate which axons should be preserved
-        lattice_mask = np.invert(grid_pts.mask)[:, 0]
-        x, y, z = grid_pts.T
-        print("Lattice mask", lattice_mask)
-        keep_axon = []
-        size = 0
-        last_population_index = 0
-        for population in self._populations:
-            axon_length = population.axons[0].points.shape[0]
-            number_of_axons = len(population.axons)
-            inside = [True] * number_of_axons
-
-            print("Axon length:", axon_length)
-            print("Number of axons", number_of_axons)
-            index = []
-            # shift based on population index whereever lattice is used
-            for i in range(number_of_axons):
-                for j in range(axon_length):
-                    index.append(i * axon_length + j)
-                    if not lattice_mask[last_population_index + i * axon_length + j]:
-                        inside[i] = False
-                        j = axon_length - 1
-
-            n_filtered_axons = 0
-            for keep in inside:
-                if keep:
-                    n_filtered_axons = n_filtered_axons + 1
-
-            keep_axon = keep_axon + inside
-            size = size + n_filtered_axons * axon_length
-
-            _logger.info(f"Total amount of loaded axons: {number_of_axons}")
-            _logger.info(
-                f"Axons outside the computationl domain: {number_of_axons - n_filtered_axons}"
-            )
-            last_population_index = max(index)
-            print(
-                "Max index",
-            )
-        self._axon_mask = keep_axon
-        # create new lattice with filtered points
-        lattice = np.zeros(shape=(size, 3))
-
-        idx = 0
-        i = 0
-        for population in self._populations:
-            axon_length = population.axons[0].points.shape[0]
-            for _axon_number in range(len(population.axons)):
-                if self._axon_mask[i]:
-                    lattice[idx * axon_length : (idx + 1) * axon_length, 0] = x.data[
-                        i * axon_length : (i + 1) * axon_length
-                    ]
-                    lattice[idx * axon_length : (idx + 1) * axon_length, 1] = y.data[
-                        i * axon_length : (i + 1) * axon_length
-                    ]
-                    lattice[idx * axon_length : (idx + 1) * axon_length, 2] = z.data[
-                        i * axon_length : (i + 1) * axon_length
-                    ]
-                    idx = idx + 1
-                i = i + 1
-
-        print("keep axons", keep_axon)
-        print("Lattice filter for geo (in pw)", lattice)
-        return lattice
+        return filtered_points
 
     def filter_csf_encap(
         self, inside_csf: np.ndarray, inside_encap: np.ndarray
     ) -> None:
-        """Change axon status in case a single point of the axon lays within the
-        CSF or encapsulation layer.
+        """Change axon status if a single point of the axon is
+        within the CSF or encapsulation layer.
 
         Parameters
         ----------
         inside_csf: np.ndarray
+            The array contains 1 if the corresponding point is
+            inside the CSF, 0 otherwise.
 
         inside_encap: np.ndarray
+            The array contains 1 if the corresponding point is
+            inside the encapsulation layer, 0 otherwise.
         """
         idx_axon = 0
         for population in self._populations:
@@ -306,49 +251,8 @@ class Pathway(PointModel):
                             axon.status = -2  # set status -2 for inside encap
                     idx_axon = idx_axon + axon_length
 
-    # TODO clean old functions
-    def filter_csf_encap_old(
-        self, inside_csf: np.ndarray, inside_encap: np.ndarray
-    ) -> np.ndarray:
-        """Marks whole axon in case a signle point of the axon is within the
-        CSF or encapsulation layer.
-
-        Parameters
-        ----------
-        inside_csf: np.ndarray
-
-        inside_encap: np.ndarray
-        """
-        axon_length = self._populations[0].axons[0].points.shape[0]
-        total_number_axons = int(len(inside_csf) / axon_length)
-
-        axons_csf = [False] * len(inside_csf)
-        axons_encap = [False] * len(inside_csf)
-
-        for i in range(total_number_axons):
-            for j in range(axon_length):
-                if inside_csf[i * axon_length + j]:
-                    axons_csf[i * axon_length : (i + 1) * axon_length] = [
-                        True
-                    ] * axon_length
-                    j = axon_length - 1
-
-        for i in range(total_number_axons):
-            for j in range(axon_length):
-                if inside_encap[i * axon_length + j]:
-                    axons_encap[i * axon_length : (i + 1) * axon_length] = [
-                        True
-                    ] * axon_length
-                    j = axon_length - 1
-        axons_csf = np.asarray(axons_csf)
-        axons_encap = np.asarray(axons_encap)
-
-        return np.reshape(axons_csf, (len(axons_csf), 1)), np.reshape(
-            axons_encap, (len(axons_encap), 1)
-        )
-
     # stores oss_pts.h5, oss_potential.h5, oss_field.h5
-    # TODO delete completly?
+    # TODO only used if no time signal provided - use csv instead of h5 format?
     def save_hdf5(
         self,
         lattice: np.ndarray,
@@ -357,7 +261,8 @@ class Pathway(PointModel):
         field_mags: np.ndarray,
         output_path: str,
     ) -> None:
-        """Stores results for pathway analysis in hdf5 format.
+        """Stores results for pathway analysis at single frequencies in hdf5
+        format (only used if multisine is selected).
 
         Parameters
         ----------
