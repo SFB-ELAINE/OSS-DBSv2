@@ -5,7 +5,6 @@ from typing import List
 
 import h5py
 import numpy as np
-import pandas as pd
 
 from .lattice import PointModel
 from .time_results import TimeResult
@@ -105,24 +104,17 @@ class Pathway(PointModel):
 
     def _write_file(self, data, file):
         """Create groups for each population in .h5 file."""
-        test_csv = {}
-        test_csv["axon_name"] = []
-        test_csv["status"] = []
-
         file.create_dataset("TimeSteps[s]", data=data.time_steps)
         start = 0
         idx = 0
         for population in self._populations:
             group = file.create_group(population.name)
-            start, idx, status_list, test_csv = self._create_datasets(
-                data, start, idx, population, group, test_csv
+            start, idx, status_list = self._create_datasets(
+                data, start, idx, population, group
             )
             group.create_dataset("Status", data=status_list)
 
-        df = pd.DataFrame(test_csv)
-        df.to_csv("test_results.csv", index=False)
-
-    def _create_datasets(self, data, start, idx, population, group, test_csv):
+    def _create_datasets(self, data, start, idx, population, group):
         """Create datasets for each axon within the corresponding population.
         Axons are sorted numerically.
         """
@@ -155,12 +147,10 @@ class Pathway(PointModel):
                 sub_group.create_dataset(
                     "Electric field vector z[Vm^(-1)]", data=electric_field_vector_z
                 )
-                test_csv["axon_name"].append(axon.name)
-                test_csv["status"].append(axon.status)
                 start = end
             idx = idx + 1
 
-        return start, idx, status_list, test_csv
+        return start, idx, status_list
 
     def set_location_names(self, names: np.ndarray) -> None:
         self._location = names
