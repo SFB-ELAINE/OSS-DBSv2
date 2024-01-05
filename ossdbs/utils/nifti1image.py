@@ -93,7 +93,8 @@ class Nifti1Image:
         try:
             return nibabel.load(file_path)
         except FileNotFoundError as exc:
-            raise UserWarning(f"File {file_path} not found.") from exc
+            print(exc.errno)
+            raise
 
     @property
     def _scaling(self) -> float:
