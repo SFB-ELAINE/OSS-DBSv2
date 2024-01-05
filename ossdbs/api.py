@@ -32,6 +32,14 @@ _logger = logging.getLogger(__name__)
 
 
 def create_bounding_box(box_parameters: dict) -> BoundingBox:
+    """Create a bounding box around a domain in space.
+
+    Notes
+    -----
+    `box_parameters` need to contain the center (three coordinates,
+    all following the style `x[mm]` (and similar for y and z-component))
+    and the outer dimensions.
+    """
     input_s = box_parameters["Dimension"]
     input_c = box_parameters["Center"]
     shape = (input_s["x[mm]"], input_s["y[mm]"], input_s["z[mm]"])
@@ -42,11 +50,7 @@ def create_bounding_box(box_parameters: dict) -> BoundingBox:
 
 
 def generate_electrodes(settings: dict):
-    """Generate OCC electrode models.
-
-    Notes
-    -----
-    """
+    """Generate an OCC electrode model from the settings dict."""
     _logger.info("Generate electrode geometries")
     electrodes = []
     for electrode_parameters in settings["Electrodes"]:
@@ -122,13 +126,7 @@ def prepare_dielectric_properties(settings: dict) -> dict:
 
 
 def generate_brain_model(settings):
-    """Generate OCC brain model.
-
-    Notes
-    -----
-    TODO type checking
-
-    """
+    """Generate OCC brain model."""
     brain_region_parameters = settings["BrainRegion"]
     brain_shape = brain_region_parameters["Shape"]
     brain_region = create_bounding_box(brain_region_parameters)
@@ -137,6 +135,7 @@ def generate_brain_model(settings):
 
 
 def generate_model_geometry(settings):
+    """Generate a full geometry comprising brain and electrodes."""
     brain = generate_brain_model(settings)
     electrodes = generate_electrodes(settings)
     model_geometry = ModelGeometry(brain, electrodes)
@@ -144,6 +143,7 @@ def generate_model_geometry(settings):
 
 
 def set_contact_and_encapsulation_layer_properties(settings, model_geometry):
+    """Update boundary and material values on contacts and encapsulation layers."""
     _logger.info("Set values on contacts and encapsulation layers")
     electrode_settings = settings["Electrodes"]
     offset = 0
@@ -178,11 +178,12 @@ def set_contact_and_encapsulation_layer_properties(settings, model_geometry):
 
 
 def set_custom_mesh_sizes(settings, model_geometry):
+    """Update the mesh sizes."""
     model_geometry.set_mesh_sizes(settings["Mesh"]["MeshSize"])
 
 
 def generate_mesh(settings):
-    """
+    """Generate a mesh from settings.
 
     Notes
     -----
@@ -212,6 +213,7 @@ def generate_mesh(settings):
 
 
 def prepare_solver(settings):
+    """Set up solver and preconditioner."""
     _logger.info("Preparing solver")
     parameters = settings["Solver"]
     solver_type = parameters["Type"]
@@ -230,6 +232,7 @@ def prepare_solver(settings):
 
 
 def generate_neuron_grid(settings: dict) -> PointModel:
+    """Generate a grid to evaluate volume conductor model."""
     if settings["PointModel"]["Pathway"]["Active"]:
         file_name = settings["PointModel"]["Pathway"]["FileName"]
         _logger.info(f"Import neuron geometries stored in {file_name}")
@@ -242,15 +245,10 @@ def generate_neuron_grid(settings: dict) -> PointModel:
         dir_par = settings["PointModel"]["Lattice"]["Direction"]
         direction = dir_par["x[mm]"], dir_par["y[mm]"], dir_par["z[mm]"]
         distance = settings["PointModel"]["Lattice"]["PointDistance[mm]"]
-        collapse_vta = settings["PointModel"]["Lattice"]["CollapseVTA"]
 
         _logger.info("from lattice")
         return Lattice(
-            shape=shape,
-            center=center,
-            distance=distance,
-            direction=direction,
-            collapse_vta=collapse_vta,
+            shape=shape, center=center, distance=distance, direction=direction
         )
     elif settings["PointModel"]["VoxelLattice"]["Active"]:
         _logger.info("from voxel lattice")
@@ -265,18 +263,13 @@ def generate_neuron_grid(settings: dict) -> PointModel:
     return None
 
 
-def filter_grid_points(electrodes, mesh, points, material_distribution):
-    # TODO locations of points in relation to tissue. needs to be reworked
-    raise NotImplementedError(
-        "Grid points cannot yet be analysed w.r.t. the brain tissues"
-    )
-
-
 def generate_meshsize_file_from_neuron_grid():
-    pass
+    """Use point grid to specify mesh sizes."""
+    raise NotImplementedError("Not yet supported")
 
 
 def generate_signal(settings) -> TimeDomainSignal:
+    """Generate a time-domain signal (waveform)."""
     signal_settings = settings["StimulationSignal"]
     signal_type = signal_settings["Type"]
     if signal_type == "Rectangle":
@@ -310,6 +303,7 @@ def generate_signal(settings) -> TimeDomainSignal:
 def prepare_volume_conductor_model(
     settings, model_geometry, conductivity, solver
 ) -> VolumeConductor:
+    """Prepare the volume conductor model."""
     _logger.info("Generate volume conductor model")
     order = settings["FEMOrder"]
 
@@ -349,6 +343,7 @@ def prepare_volume_conductor_model(
 
 
 def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
+    """Prepare the frequency-domain representation of stimulation signal."""
     signal_settings = settings["StimulationSignal"]
     signal_type = signal_settings["Type"]
     current_controlled = signal_settings["CurrentControlled"]
@@ -426,11 +421,13 @@ def run_volume_conductor_model(settings, volume_conductor):
         export_vtk,
         point_model=point_model,
         activation_threshold=settings["ActivationThresholdVTA"],
+        collapse_vta=settings["PointModel"]["Lattice"]["CollapseVTA"],
     )
     return vcm_timings
 
 
 def load_images(settings):
+    """Load MRI and DTI images."""
     _logger.info("Load MRI image")
     mri_path = settings["MaterialDistribution"]["MRIPath"]
     _logger.debug(f"Input path: {mri_path}")

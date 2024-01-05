@@ -86,7 +86,7 @@
     "PulseWidth[us]": 600,
     "CounterPulseWidth[us]": 0.0,
     "InterPulseWidth[us]": 0.0,
-    "CutoffFrequency": 1e5
+    "CutoffFrequency": 1e4
   },
   "Solver": {
     "Type": "CG",

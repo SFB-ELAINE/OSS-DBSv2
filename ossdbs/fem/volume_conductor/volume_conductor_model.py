@@ -7,6 +7,7 @@ from typing import List, Optional, Tuple, Union
 import ngsolve
 import numpy as np
 import pandas as pd
+import scipy.fft as fft
 
 from ossdbs.fem.mesh import Mesh
 from ossdbs.fem.solver import Solver
@@ -16,7 +17,7 @@ from ossdbs.stimulation_signals import (
     FrequencyDomainSignal,
     get_indices_in_octave_band,
     get_octave_band_indices,
-    retrieve_time_domain_signal_from_fft,
+    get_timesteps,
 )
 from ossdbs.utils.collapse_vta import get_collapsed_VTA
 from ossdbs.utils.vtk_export import FieldSolution
@@ -31,10 +32,18 @@ class VolumeConductor(ABC):
 
     Parameters
     ----------
-    mesh : Mesh
+    geometry : ModelGeometry
+        Model geometry, brain with implanted electrodes
     conductivity : ConductivityCF
-    model_geometry : ModelGeometry
+        Material information
     solver : Solver
+        Solver (linear algebra part)
+    order: int
+        Order of solver and mesh (curved elements)
+    meshing_parameters: dict
+        Dictionary with setting for meshing
+    frequency_domain_signal: FrequencyDomainSignal
+        Representation of signal in frequency domain
     """
 
     def __init__(
@@ -94,7 +103,13 @@ class VolumeConductor(ABC):
 
     @abstractmethod
     def compute_solution(self, frequency: float) -> None:
-        """Compute solution at frequency. To be defined in dedicated sub-classes."""
+        """Compute solution at frequency.
+
+        Parameters
+        ----------
+        frequency: float
+            Frequency at which solution is computed
+        """
         pass
 
     def run_full_analysis(
@@ -103,6 +118,7 @@ class VolumeConductor(ABC):
         export_vtk: bool = False,
         point_model: PointModel = None,
         activation_threshold: Optional[float] = None,
+        collapse_vta: bool = False,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -116,10 +132,13 @@ class VolumeConductor(ABC):
             PointModel to extract solution at points for VTA / PAM
         activation_threshold: float
             If VTA is estimated by threshold, provide it here.
+        collapse_vta: bool
+            Whether to collapse VTA
 
         Notes
         -----
         TODO full documentation
+        TODO pass list of PointModel to have more than one evaluated (PAM + VTA)
         The volume conductor model is run at all frequencies
         and the time-domain signal is computed (if relevant).
         """
@@ -132,7 +151,8 @@ class VolumeConductor(ABC):
         # always compute impedance for CC with 2 contacts
         if self.current_controlled and len(self.contacts.active) == 2:
             _logger.info(
-                "Set compute_impedance to True because impedance calculation is required"
+                """Set compute_impedance to True.
+                   Impedance calculation is required for 2 contacts."""
             )
             compute_impedance = True
 
@@ -171,9 +191,7 @@ class VolumeConductor(ABC):
                 inside_encap,
                 axon_index,
             ) = self.prepare_point_model_grids(point_model)
-            export_collapsed_vta = (
-                isinstance(point_model, Lattice) and point_model._collapse_vta
-            )
+            export_collapsed_vta = isinstance(point_model, Lattice) and collapse_vta
             export_nifti = isinstance(point_model, VoxelLattice) or isinstance(
                 point_model, Lattice
             )
@@ -215,10 +233,12 @@ class VolumeConductor(ABC):
                     freq_idx, frequency_indices, len(self.signal.frequencies) - 1
                 )
                 _logger.debug(
-                    f"Band indices from {band_indices[0]} to {band_indices[-1]}"
+                    f"""Band indices from {band_indices[0]}
+                        to {band_indices[-1]}"""
                 )
                 _logger.debug(
-                    f"Band frequencies from {self.signal.frequencies[band_indices[0]]} to {self.signal.frequencies[band_indices[-1]]}"
+                    f"""Band frequencies from {self.signal.frequencies[band_indices[0]]}
+                        to {self.signal.frequencies[band_indices[-1]]}"""
                 )
 
             else:
@@ -248,6 +268,8 @@ class VolumeConductor(ABC):
                 potentials = self.evaluate_potential_at_points(lattice)
                 fields = self.evaluate_field_at_points(lattice)
                 field_mags = self.compute_field_magnitude(fields)
+
+                # copy values for time-domain analysis
                 self._copy_values_for_time_domain(
                     band_indices, tmp_potential_freq_domain, potentials[:, 0]
                 )
@@ -260,7 +282,12 @@ class VolumeConductor(ABC):
                 self._copy_values_for_time_domain(
                     band_indices, tmp_Ez_freq_domain, fields[:, 2]
                 )
-                # copy values for time-domain analysis
+
+                time_1 = time.time()
+                timings["CopyValues"].append(time_1 - time_0)
+                time_0 = time_1
+
+                # export results: VTA
                 if np.isclose(frequency, self._export_frequency):
                     self.export_potential_to_csv(
                         frequency,
@@ -306,19 +333,18 @@ class VolumeConductor(ABC):
             df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
 
         if point_model and len(self.signal.frequencies) > 1:
-            _logger.info("Computing time-domain signal from frequency-domain")
-            timesteps, potential_in_time = self.reconstruct_time_signals(
+            _logger.info("Reconstructing time-domain signal.")
+            timesteps = get_timesteps(
+                self.signal.cutoff_frequency,
+                self.signal.base_frequency,
+                self.signal.signal_length,
+            )
+            potential_in_time = self.reconstruct_time_signals(
                 len(lattice), tmp_potential_freq_domain
             )
-            timesteps, Ex_in_time = self.reconstruct_time_signals(
-                len(lattice), tmp_Ex_freq_domain
-            )
-            timesteps, Ey_in_time = self.reconstruct_time_signals(
-                len(lattice), tmp_Ey_freq_domain
-            )
-            timesteps, Ez_in_time = self.reconstruct_time_signals(
-                len(lattice), tmp_Ez_freq_domain
-            )
+            Ex_in_time = self.reconstruct_time_signals(len(lattice), tmp_Ex_freq_domain)
+            Ey_in_time = self.reconstruct_time_signals(len(lattice), tmp_Ey_freq_domain)
+            Ez_in_time = self.reconstruct_time_signals(len(lattice), tmp_Ez_freq_domain)
             field_in_time = np.column_stack((Ex_in_time, Ey_in_time, Ez_in_time))
             self.create_time_result(
                 point_model,
@@ -329,6 +355,14 @@ class VolumeConductor(ABC):
                 inside_csf,
                 inside_encap,
             )
+            _logger.debug(f"Shapes of timesteps: {timesteps.shape}")
+            _logger.debug(f"Shapes of potential_in_time: {potential_in_time.shape}")
+            _logger.debug(f"Shapes of Ex_in_time: {Ex_in_time.shape}")
+            _logger.debug(f"Shapes of Ey_in_time: {Ey_in_time.shape}")
+            _logger.debug(f"Shapes of Ez_in_time: {Ez_in_time.shape}")
+            time_1 = time.time()
+            timings["ReconstructTimeSignals"] = time_1 - time_0
+            time_0 = time_1
 
         if len(self.signal.frequencies) > 1:
             self.export_solution_at_contacts()
@@ -336,10 +370,15 @@ class VolumeConductor(ABC):
 
     def export_solution_at_contacts(self) -> None:
         """Time-domain solution export."""
-        timesteps, free_stimulation_variable_in_time = self.reconstruct_time_signals(
+        timesteps = get_timesteps(
+            self.signal.cutoff_frequency,
+            self.signal.base_frequency,
+            self.signal.signal_length,
+        )
+        free_stimulation_variable_in_time = self.reconstruct_time_signals(
             len(self.contacts.active), self._free_stimulation_variable
         )
-        timesteps, stimulation_variable_in_time = self.reconstruct_time_signals(
+        stimulation_variable_in_time = self.reconstruct_time_signals(
             len(self.contacts.active), self._stimulation_variable
         )
         free_stimulation_variable_at_contact = {}
@@ -347,10 +386,10 @@ class VolumeConductor(ABC):
         for contact_idx, contact in enumerate(self.contacts.active):
             free_stimulation_variable_at_contact[
                 contact.name + "_free"
-            ] = free_stimulation_variable_in_time[contact_idx]
+            ] = free_stimulation_variable_in_time[:, contact_idx]
             free_stimulation_variable_at_contact[
                 contact.name
-            ] = stimulation_variable_in_time[contact_idx]
+            ] = stimulation_variable_in_time[:, contact_idx]
         df = pd.DataFrame(free_stimulation_variable_at_contact)
         df.to_csv(
             os.path.join(self.output_path, "stimulation_in_time.csv"), index=False
@@ -363,7 +402,9 @@ class VolumeConductor(ABC):
                 "Attempt to compute field magnitude from invalid field vector"
             )
         # TODO fix for complex vectors
-        return np.linalg.norm(fields, axis=1).reshape((fields.shape[0], 1))
+        field_mags = np.linalg.norm(fields, axis=1).reshape((fields.shape[0], 1))
+        _logger.debug(f"Shapes of field_mags: {field_mags.shape}")
+        return field_mags
 
     def create_time_result(
         self,
@@ -399,43 +440,30 @@ class VolumeConductor(ABC):
 
         Notes
         -----
-        If octave band approximation is used, it will also be copied to frequencies at other frequencies in band.
+        If octave band approximation is used,
+        it will also be copied to frequencies at other frequencies in band.
 
         """
-        tmp_freq_domain = np.zeros(self.signal.signal_length, dtype=complex)
         frequency_indices = self.signal.frequencies / self.signal.base_frequency
         frequency_indices = frequency_indices.astype(np.uint16)
-        result_in_time = np.zeros(shape=(n_lattice_points, len(tmp_freq_domain)))
 
         if n_lattice_points == 0:
-            raise ValueError(
-                "No lattice points to process."
-            )
-        
-        # go through points in lattice
-        for point_idx in range(n_lattice_points):
-            # write frequencies
-            for idx, idx_freq in enumerate(frequency_indices):
-                # write frequencies but skip last frequency for odd signal
-                if idx_freq == len(self.signal.frequencies):
-                    if self.signal.signal_length % 2 == 1:
-                        tmp_freq_domain[idx_freq] = freq_domain_signal[idx, point_idx]
-                else:
-                    tmp_freq_domain[idx_freq] = freq_domain_signal[idx, point_idx]
-                # reverse order for negative frequencies
-                if idx > 0:
-                    tmp_freq_domain[len(tmp_freq_domain) - idx_freq] = np.conjugate(
-                        freq_domain_signal[idx, point_idx]
-                    )
+            raise ValueError("No lattice points to process.")
 
-            # convert to time domain
-            timesteps, tmp = retrieve_time_domain_signal_from_fft(
-                tmp_freq_domain,
-                self.signal.cutoff_frequency,
-                self.signal.base_frequency,
-            )
-            result_in_time[point_idx, :] = tmp[:]
-        return timesteps, result_in_time
+        # For even signals, highest frequency is not in positive frequencies
+        positive_freqs_part = freq_domain_signal
+        if self.signal.signal_length % 2 == 0:
+            positive_freqs_part = freq_domain_signal[:-1]
+
+        # Append the reverted signal without the DC frequency
+        tmp_freq_domain = np.append(
+            positive_freqs_part,
+            np.conjugate(np.flip(freq_domain_signal[1:], axis=0)),
+            axis=0,
+        )
+        # run ifft with maximum possible amount of workers
+        result_in_time = fft.ifft(tmp_freq_domain, axis=0, workers=-1)
+        return result_in_time.real
 
     @property
     def output_path(self) -> str:
@@ -461,6 +489,7 @@ class VolumeConductor(ABC):
 
     @property
     def signal(self) -> FrequencyDomainSignal:
+        """Returns the frequency-domain representation of stimulation signal."""
         return self._signal
 
     @signal.setter
@@ -476,9 +505,11 @@ class VolumeConductor(ABC):
                 sum_currents += contact.current
                 voltages_active[idx] = contact.voltage
             for contact in self.contacts.floating:
-                if not np.all(np.isclose(voltages_active, 0.0)):
+                all_active_contacts_grounded = np.all(np.isclose(voltages_active, 0.0))
+                if not all_active_contacts_grounded:
                     raise ValueError(
-                        "In multipolar current-controlled mode, all active contacts have to be grounded!"
+                        """In multipolar current-controlled mode,
+                           all active contacts have to be grounded!"""
                     )
                 sum_currents += contact.current
             if not np.isclose(sum_currents, 0):
@@ -486,10 +517,12 @@ class VolumeConductor(ABC):
 
     @property
     def current_controlled(self) -> bool:
+        """Return if stimulation is current-controlled."""
         return self.signal.current_controlled
 
     @property
     def impedances(self) -> np.ndarray:
+        """Return list of impedances."""
         return self._impedances
 
     @property
@@ -515,7 +548,7 @@ class VolumeConductor(ABC):
 
     @property
     def model_geometry(self) -> ModelGeometry:
-        """The underlying model geometry, used for mesh generation and contains all boundary names."""
+        """The underlying model geometry used for mesh generation."""
         return self._model_geometry
 
     @property
@@ -548,16 +581,13 @@ class VolumeConductor(ABC):
 
         Parameters
         ----------
-        lattice : Nx3 numpy.ndarray of lattice points
-
-        Returns
-        -------
-        Nx1 numpy.ndarray
+        lattice : np.ndarray
+            Nx3 numpy.ndarray of lattice points
 
         Notes
         -----
-        Make sure that points outside of the computational domain
-        are filtered!
+        Requires that points outside of the computational domain
+        have been filtered!
         """
         mesh = self.mesh.ngsolvemesh
         x, y, z = lattice.T
@@ -569,13 +599,13 @@ class VolumeConductor(ABC):
 
         Parameters
         ----------
-        lattice : Nx3 numpy.ndarray of lattice points
+        lattice : np.ndarray
+            Nx3 numpy.ndarray of lattice points
 
-        Returns
-        -------
-        Nx3 numpy.ndarray
-
-        TODO: filter points outside of the computational domain
+        Notes
+        -----
+        Requires that points outside of the computational domain
+        have been filtered!
         """
         mesh = self.mesh.ngsolvemesh
         x, y, z = lattice.T
@@ -737,10 +767,10 @@ class VolumeConductor(ABC):
         self,
         frequency: float,
         potentials: np.ndarray,
-        axon_index,
-        lattice,
-        inside_csf,
-        inside_encap,
+        axon_index: np.ndarray,
+        lattice: np.ndarray,
+        inside_csf: np.ndarray,
+        inside_encap: np.ndarray,
     ) -> None:
         """Export potential to CSV.
 
@@ -752,10 +782,18 @@ class VolumeConductor(ABC):
 
         Parameters
         ----------
-        point_model: oss_dbs point_model
-            Contains the points on which to evaluate the solution
-
-        activation_threshold: float
+        frequency: float
+            Frequency of exported solution
+        potentials: np.ndarray
+            List of potentials
+        axon_index: np.ndarray
+            TODO
+        lattice: np.ndarray:
+            TODO
+        inside_csf: np.ndarray:
+            TODO
+        inside_encap: np.ndarray:
+            TODO
         """
         df_pot = pd.DataFrame(
             np.concatenate(
@@ -784,15 +822,36 @@ class VolumeConductor(ABC):
 
     def export_field_to_csv(
         self,
-        frequency,
-        fields,
-        field_mags,
-        axon_index,
-        lattice,
-        inside_csf,
-        inside_encap,
-        collapse_VTA,
+        frequency: float,
+        fields: np.ndarray,
+        field_mags: np.ndarray,
+        axon_index: np.ndarray,
+        lattice: np.ndarray,
+        inside_csf: np.ndarray,
+        inside_encap: np.ndarray,
+        collapse_VTA: bool,
     ):
+        """Write field values to CSV.
+
+        Parameters
+        ----------
+        frequency: float
+            Frequency of exported solution
+        fields: np.ndarray
+            List of field vectors
+        field_mags: np.ndarray
+            List of field magnitudes
+        axon_index: np.ndarray
+            TODO
+        lattice: np.ndarray:
+            TODO
+        inside_csf: np.ndarray:
+            TODO
+        inside_encap: np.ndarray:
+            TODO
+        collapse_VTA: bool
+            Whether to collapse VTA
+        """
         df_field = pd.DataFrame(
             np.concatenate(
                 [axon_index, lattice, fields, field_mags, inside_csf, inside_encap],
@@ -874,14 +933,20 @@ class VolumeConductor(ABC):
         field_mags: np.ndarray,
         point_model: PointModel,
         activation_threshold: float,
-        lattice_mask,
+        lattice_mask: np.ndarray,
     ) -> None:
         """Export field to Nifti format.
 
         Parameters
         ----------
+        field_mags: np.ndarray
+            Field magnitudes to export
         point_model: oss_dbs point_model
             Contains the points on which to evaluate the solution
+        activation_threshold: float
+            Threshold to define VTA
+        lattice_mask: np.ndarray
+            Mask points outside domain
 
         activation_threshold: float
         """
@@ -925,13 +990,15 @@ class VolumeConductor(ABC):
             mesh=self.mesh, order=max(1, self._order - 1), complex=self._complex
         )
 
-    def h1_space(self, boundaries: List[str], is_complex) -> ngsolve.H1:
+    def h1_space(self, boundaries: List[str], is_complex: bool) -> ngsolve.H1:
         """Return a h1 space on the mesh.
 
         Parameters
         ----------
         boundaries : list of str
             List of boundary names.
+        is_complex: bool
+            Whether to use complex arithmetic
 
         Returns
         -------
@@ -983,7 +1050,8 @@ class VolumeConductor(ABC):
 
         Notes
         -----
-        In voltage-controlled mode, only the amplitude of the Fourier coefficient is used.
+        In voltage-controlled mode,
+        only the amplitude of the Fourier coefficient is used.
         In current-controlled mode, TODO
         """
         scale_factor = 1.0
@@ -1012,27 +1080,31 @@ class VolumeConductor(ABC):
         else:
             if len(self.contacts.active) != 1:
                 raise ValueError(
-                    "In multicontact current-controlled mode, currently only one active contact with fixed voltage can be used. Its voltage has to be 0V (ground)."
+                    """In multicontact current-controlled mode,
+                       currently only one active contact with fixed voltage can be used.
+                       Its voltage has to be 0V (ground)."""
                 )
             for contact in self.contacts.active:
                 if not np.isclose(contact.voltage, 0):
                     raise ValueError(
-                        "In multicontact current-controlled mode, only ground voltage (0V) can be set on active contacts!"
+                        """In multicontact current-controlled mode,
+                           only ground voltage (0V) can be set on active contacts!"""
                     )
 
     def setup_timings_dict(self, export_vtk: bool, point_model: bool) -> dict:
+        """Setup dictionary to save execution times estimate."""
         timings = {}
         timings["ComputeSolution"] = []
         if export_vtk:
             timings["VTKExport"] = []
         if point_model is not None:
-            timings["FieldExport"] = []
+            timings["CopyValues"] = []
         return timings
 
     def _store_solution_at_contacts(
         self, band_indices: Union[List, np.ndarray]
     ) -> None:
-        """Save voltages / currents at given frequency band (can be a single frequency) for all contacts."""
+        """Save voltages / currents at given frequency band for all contacts."""
         if self.current_controlled:
             for contact_idx, contact in enumerate(self.contacts.active):
                 for freq_idx in band_indices:

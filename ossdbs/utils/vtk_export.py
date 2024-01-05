@@ -5,12 +5,15 @@ import ngsolve
 
 @dataclass
 class FieldSolution:
+    """Data structure for NGSolve solutions."""
+
     solution: ngsolve.CoefficientFunction
     label: str
     mesh: ngsolve.comp.Mesh
     is_complex: bool
 
     def save(self, filename: str) -> None:
+        """Save solution to VTK file."""
         names = [f"{self.label}_real"]
         if self.is_complex:
             names.append(f"{self.label}_imag")
