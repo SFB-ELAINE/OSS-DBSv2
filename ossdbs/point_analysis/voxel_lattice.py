@@ -166,7 +166,7 @@ class VoxelLattice(PointModel):
         return self._affine
 
     def filter_csf_encap(self, inside_csf: np.ndarray, inside_encap: np.ndarray):
-        raise NotImplementedError("Filtering for lattice not implemented yet.")
+        raise NotImplementedError("Filtering for lattice not implemented.")
 
     def save_hdf5(
         self,

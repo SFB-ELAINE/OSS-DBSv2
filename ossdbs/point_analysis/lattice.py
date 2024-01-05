@@ -156,8 +156,7 @@ class Lattice(PointModel):
         )
 
     def filter_csf_encap(self, inside_csf: np.ndarray, inside_encap: np.ndarray):
-        # TODO implement
-        raise NotImplementedError("Filtering for lattice not implemented yet.")
+        raise NotImplementedError("Filtering for lattice not implemented.")
 
     def save_hdf5(
         self,

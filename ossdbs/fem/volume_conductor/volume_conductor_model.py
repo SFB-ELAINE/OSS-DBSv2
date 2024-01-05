@@ -407,6 +407,11 @@ class VolumeConductor(ABC):
         frequency_indices = frequency_indices.astype(np.uint16)
         result_in_time = np.zeros(shape=(n_lattice_points, len(tmp_freq_domain)))
 
+        if n_lattice_points == 0:
+            raise ValueError(
+                "No lattice points to process."
+            )
+        
         # go through points in lattice
         for point_idx in range(n_lattice_points):
             # write frequencies
@@ -721,11 +726,7 @@ class VolumeConductor(ABC):
         inside_encap = self.get_points_in_encapsulation_layer(lattice)
         if isinstance(point_model, Pathway):
             # if pathway, always mark complete axons
-            if point_model._axon_mask is None:
-                raise RuntimeError("The creation of the axon_mask did not work")
-            [inside_csf, inside_encap] = point_model.filter_csf_encap(
-                inside_csf, inside_encap
-            )
+            point_model.filter_csf_encap(inside_csf, inside_encap)
             # create index for axons
             axon_index = point_model.create_index(lattice)
         else:
