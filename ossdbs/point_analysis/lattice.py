@@ -1,11 +1,9 @@
 from typing import Tuple
 
-import h5py
 import nibabel as nib
 import numpy as np
 
 from .point_model import PointModel
-from .time_results import TimeResult
 
 
 class Lattice(PointModel):
@@ -86,11 +84,6 @@ class Lattice(PointModel):
 
         return -np.arctan(y_d / x_d), -np.arctan(z_d / y_d)
 
-    def save(self, data: TimeResult, file_name: str) -> None:
-        """Save time-domain result to HDF5 file."""
-        with h5py.File(file_name, "w") as file:
-            self._write_file(data, file)
-
     def save_as_nifti(
         self, scalar_field, filename, binarize=False, activation_threshold=None
     ):
@@ -132,40 +125,3 @@ class Lattice(PointModel):
 
         img = nib.Nifti1Image(nifti_output, affine)
         nib.save(img, filename)
-
-    def set_location_names(self, names: np.ndarray) -> None:
-        self._location = names
-
-    def _write_file(self, data, file):
-        file.create_dataset("TimeSteps[s]", data=data.time_steps)
-        file.create_dataset("Points[mm]", data=data.points)
-        file.create_dataset("InsideCSF", data=data.inside_csf)
-        file.create_dataset("InsideEncap", data=data.inside_encap)
-        file.create_dataset("Location", data=self._location.astype("S"))
-        file.create_dataset("Potential[V]", data=data.potential)
-        file.create_dataset(
-            "Electric field magnitude[Vm^(-1)]", data=data.electric_field_magnitude
-        )
-        file.create_dataset(
-            "Electric field vector x[Vm^(-1)]", data=data.electric_field_vector[0]
-        )
-        file.create_dataset(
-            "Electric field vector y[Vm^(-1)]", data=data.electric_field_vector[1]
-        )
-        file.create_dataset(
-            "Electric field vector z[Vm^(-1)]", data=data.electric_field_vector[2]
-        )
-
-    def filter_csf_encap(self, inside_csf: np.ndarray, inside_encap: np.ndarray):
-        raise NotImplementedError("Filtering for lattice not implemented.")
-
-    def save_hdf5(
-        self,
-        axon_mask: list,
-        lattice: np.ndarray,
-        potentials: np.ndarray,
-        fields: np.ndarray,
-        field_mags: np.ndarray,
-        output_path: str,
-    ) -> None:
-        raise NotImplementedError("Lattice results can not be stored in HDF5 format.")

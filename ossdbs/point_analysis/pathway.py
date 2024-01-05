@@ -13,6 +13,8 @@ _logger = logging.getLogger(__name__)
 
 
 class Pathway(PointModel):
+    """Pathways comprise populations of axons."""
+
     @dataclass
     class Axon:
         """
@@ -97,13 +99,22 @@ class Pathway(PointModel):
             ]
         )
 
-    def save(self, data: TimeResult, file_name: str) -> None:
-        """Stores results as oss_time_result.h5 in output folder."""
-        with h5py.File(file_name, "w") as file:
-            self._write_file(data, file)
+    def _write_file(self, data: TimeResult, file: h5py.File):
+        """Create datasets in HDF5 file.
 
-    def _write_file(self, data, file):
-        """Create groups for each population in .h5 file."""
+        Parameters
+        ----------
+        data: TimeResult
+            Time-domain result to be exported.
+        file: h5py.File
+            HDF5 file that shall contain data.
+
+        Notes
+        -----
+        Creates groups for each population in .h5 file.
+        TODO Rename to 'create_data_export'or alike.
+
+        """
         file.create_dataset("TimeSteps[s]", data=data.time_steps)
         start = 0
         idx = 0
@@ -151,9 +162,6 @@ class Pathway(PointModel):
             idx = idx + 1
 
         return start, idx, status_list
-
-    def set_location_names(self, names: np.ndarray) -> None:
-        self._location = names
 
     def filter_for_geometry(self, grid_pts: np.ma.MaskedArray) -> np.ndarray:
         """Checks if a point of an axon is outside the geometry.
@@ -241,8 +249,6 @@ class Pathway(PointModel):
                             axon.status = -2  # set status -2 for inside encap
                     idx_axon = idx_axon + axon_length
 
-    # stores oss_pts.h5, oss_potential.h5, oss_field.h5
-    # TODO only used if no time signal provided - use csv instead of h5 format?
     def save_hdf5(
         self,
         lattice: np.ndarray,
@@ -251,26 +257,29 @@ class Pathway(PointModel):
         field_mags: np.ndarray,
         output_path: str,
     ) -> None:
-        """Stores results for pathway analysis at single frequencies in hdf5
-        format (only used if multisine is selected).
+        """Stores results for pathway analysis in hdf5 format.
 
         Parameters
         ----------
         axon_mask: list
-
+            Mask of axons that are in brain (i.e., not in CSF etc.)
         lattice: np.ndarray
-
+            Point grid
         potentials: np.ndarray
-
+            Values of potential on grid
         fields: np.ndarray
-
+            Values of field on grid
         field_mags: np.ndarray
-
+            Values of field magnitude on grid
         output_path: str
+            Path to store files.
 
         Notes
         -----
+        Stores oss_pts.h5, oss_potential.h5, oss_field.h5
+        Should be used with single frequencies.
         TODO split in subfunctions
+        TODO only used if no time signal provided - use csv instead of h5 format?
         """
         population_names = self.get_population_names()
         axon_names = self.get_axon_names()
@@ -382,7 +391,8 @@ class Pathway(PointModel):
         return axon_names
 
     def get_axon_numbers(self) -> list:
-        """
+        """Get list of number of axons per population.
+
         Returns
         -------
         axon_number: list[int]
@@ -395,9 +405,17 @@ class Pathway(PointModel):
     def save_as_nifti(
         self, scalar_field, filename, binarize=False, activation_threshold=None
     ):
-        raise NotImplementedError("Pathway results can not be stored in Nifti format.")
+        """Save scalar field in abstract orthogonal space in nifti format.
 
-    def collapse_VTA(
-        self, field_on_points, implantation_coordinate, lead_direction, lead_diam
-    ):
-        raise NotImplementedError("Collapse VTA for pathways not implemented")
+        Parameters
+        ----------
+        scalar_field : numpy.ndarray
+            Nx1 array of scalar values on the lattice
+        filename: str
+            Name for the nifti file that should contain full path
+        binarize: bool
+            Choose to threshold the scalar field and save the binarized result
+        activation_threshold: float
+            Activation threshold for VTA estimate
+        """
+        raise NotImplementedError("Pathway results can not be stored in Nifti format.")
