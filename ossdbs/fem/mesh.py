@@ -27,11 +27,13 @@ class Mesh:
         self._mesh = None
 
     def generate_mesh(self, meshing_parameters: dict) -> None:
+        """Generate NGSolve mesh."""
         netgen_mp = self._meshing_parameters(meshing_parameters)
         self._mesh = ngsolve.Mesh(self.geometry.GenerateMesh(mp=netgen_mp))
         self._mesh.Curve(order=self.order)
 
     def load_mesh(self, filename: str) -> None:
+        """Load NGSolve mesh from file."""
         if not os.path.isfile(filename):
             raise ValueError("Provide a correct filename to load the mesh")
         self._mesh = ngsolve.Mesh(filename=filename)
@@ -39,6 +41,7 @@ class Mesh:
         self._mesh.Curve(order=self.order)
 
     def _meshing_parameters(self, mesh_parameters: dict):
+        """Prepare NGSolve meshing parameters."""
         mesh_type = mesh_parameters["Type"]
 
         if mesh_type == "Custom":
@@ -49,7 +52,8 @@ class Mesh:
                 return netgen.meshing.MeshingParameters(**custom_parameters)
             else:
                 raise ValueError(
-                    "You need to specific CustomParameters if you want to generate a custom mesh."
+                    """You need to specify CustomParameters
+                    if you want to generate a custom mesh."""
                 )
 
         return {
@@ -63,6 +67,7 @@ class Mesh:
 
     @property
     def order(self) -> int:
+        """Order of curved mesh."""
         return self._order
 
     @order.setter
@@ -71,14 +76,17 @@ class Mesh:
 
     @property
     def geometry(self) -> netgen.occ.OCCGeometry:
+        """Underlying CAD geometry of mesh."""
         return self._geometry
 
     @property
     def boundaries(self) -> List:
+        """Get list of boundary names."""
         return self.ngsolvemesh.GetBoundaries()
 
     @property
     def materials(self) -> List:
+        """Get list of material names."""
         return self.ngsolvemesh.GetMaterials()
 
     def boundary_coefficients(
@@ -131,11 +139,24 @@ class Mesh:
         return np.array([mip[5] == -1 for mip in mips])
 
     def refine(self, at_surface: bool = False) -> None:
-        """Refine the mesh."""
+        """Refine the mesh.
+
+        Parameters
+        ----------
+        at_surface: bool
+            Whether to mark surface elements.
+        """
         self._mesh.Refine(mark_surface_elements=at_surface)
         self._mesh.Curve(order=self._order)
 
     def curve(self, order: int) -> None:
+        """Curve mesh and overwrite mesh order.
+
+        Parameters
+        ----------
+        order: int
+            Order of curved mesh
+        """
         self._order = order
         self._mesh.Curve(order=order)
 
@@ -180,7 +201,7 @@ class Mesh:
 
         Parameters
         ----------
-        boundaries : List[str]
+        materials : List[str]
             Collection of material names.
 
         """
@@ -209,6 +230,7 @@ class Mesh:
         Parameters
         ----------
         gridfunction : ngsolve.GridFunction
+            Solution to estimate error from
         """
         flux = ngsolve.grad(gridfunction)
         space = self.mesh.flux_space()
