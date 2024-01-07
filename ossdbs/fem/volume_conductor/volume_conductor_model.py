@@ -339,12 +339,17 @@ class VolumeConductor(ABC):
                 self.signal.base_frequency,
                 self.signal.signal_length,
             )
+            # TODO check if re-ordering is possible
             potential_in_time = self.reconstruct_time_signals(
                 len(lattice), tmp_potential_freq_domain
             )
+            potential_in_time = np.swapaxes(potential_in_time, 0, 1)
             Ex_in_time = self.reconstruct_time_signals(len(lattice), tmp_Ex_freq_domain)
+            Ex_in_time = np.swapaxes(Ex_in_time, 0, 1)
             Ey_in_time = self.reconstruct_time_signals(len(lattice), tmp_Ey_freq_domain)
+            Ey_in_time = np.swapaxes(Ey_in_time, 0, 1)
             Ez_in_time = self.reconstruct_time_signals(len(lattice), tmp_Ez_freq_domain)
+            Ez_in_time = np.swapaxes(Ez_in_time, 0, 1)
             field_in_time = np.column_stack((Ex_in_time, Ey_in_time, Ez_in_time))
             self.create_time_result(
                 point_model,
@@ -360,6 +365,7 @@ class VolumeConductor(ABC):
             _logger.debug(f"Shapes of Ex_in_time: {Ex_in_time.shape}")
             _logger.debug(f"Shapes of Ey_in_time: {Ey_in_time.shape}")
             _logger.debug(f"Shapes of Ez_in_time: {Ez_in_time.shape}")
+            _logger.debug(f"Shapes of field_in_time: {field_in_time.shape}")
             time_1 = time.time()
             timings["ReconstructTimeSignals"] = time_1 - time_0
             time_0 = time_1
