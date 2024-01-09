@@ -40,6 +40,10 @@ class ConductivityCF:
     ) -> None:
         if encapsulation_layers is None:
             encapsulation_layers = []
+        self._dielectric_properties = dielectric_properties
+        self._encapsulation_layers = encapsulation_layers
+        self._is_complex = complex_data
+
         _logger.debug("Crop MRI image")
         brain_bounding_box_voxel = mri_image.get_voxel_bounding_box(brain_bounding_box)
         (
@@ -55,19 +59,20 @@ class ConductivityCF:
             brain_bounding_box_voxel = dti_image.get_voxel_bounding_box(
                 brain_bounding_box
             )
-            self._dti_data, self._dti_voxel_bounding_box = dti_image._crop_image(
+            dti_data, self._dti_voxel_bounding_box = dti_image._crop_image(
                 brain_bounding_box_voxel
             )
+            # cast to complex datatype
+            if self._is_complex:
+                dti_data = dti_data.astype(self._get_datatype())
             self._dti_voxel_cf = self.create_dti_voxel_cf(
-                self._dti_data, self._dti_voxel_bounding_box, dti_image
+                dti_data, self._dti_voxel_bounding_box, dti_image
             )
 
-        self._dielectric_properties = dielectric_properties
-        self._encapsulation_layers = encapsulation_layers
-        self._is_complex = complex_data
         self._data = np.zeros(
             self._material_distribution.shape, dtype=self._get_datatype()
         )
+
         self._materials = materials
         self._masks = [None] * len(self.materials)
         self._trafo_cf = mri_image.trafo_cf
