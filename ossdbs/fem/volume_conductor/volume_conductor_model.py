@@ -212,20 +212,6 @@ class VolumeConductor(ABC):
             frequency = self.signal.frequencies[freq_idx]
             _logger.info(f"Computing at frequency: {frequency}")
             time_0 = time.time()
-            # check if conductivity has changed
-            sigma_has_changed = self._has_sigma_changed(freq_idx)
-            if sigma_has_changed:
-                self.compute_solution(frequency)
-                if compute_impedance:
-                    self._impedances[freq_idx] = self.compute_impedance()
-            else:
-                _logger.info(f"Skipped computation at {frequency} Hz")
-                if compute_impedance:
-                    self._impedances[freq_idx] = self._impedances[freq_idx - 1]
-
-            # scale factor: is one for VC and depends on impedance for other case
-            self._scale_factor = self.get_scale_factor(freq_idx)
-            _logger.debug(f"Scale factor: {self._scale_factor}")
 
             # prepare storing at multiple frequencies
             if self.signal.octave_band_approximation:
@@ -243,6 +229,24 @@ class VolumeConductor(ABC):
 
             else:
                 band_indices = [freq_idx]
+
+            # check if conductivity has changed
+            sigma_has_changed = self._has_sigma_changed(freq_idx)
+            if sigma_has_changed:
+                self.compute_solution(frequency)
+                if compute_impedance:
+                    impedance = self.compute_impedance()
+            else:
+                _logger.info(f"Skipped computation at {frequency} Hz")
+                if compute_impedance:
+                    impedance = self._impedances[freq_idx - 1]
+
+            # write impedance at frequencies with solution
+            self._impedances[band_indices] = impedance
+
+            # scale factor: is one for VC and depends on impedance for other case
+            self._scale_factor = self.get_scale_factor(freq_idx)
+            _logger.debug(f"Scale factor: {self._scale_factor}")
 
             self._store_solution_at_contacts(band_indices)
             if _logger.getEffectiveLevel() == logging.DEBUG:
