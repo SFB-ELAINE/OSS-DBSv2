@@ -19,6 +19,7 @@ class RectangleSignal(TimeDomainSignal):
     """
 
     def get_fourier_coefficients(self, frequency_list: np.ndarray) -> np.ndarray:
+        """Get coefficients of Fourier series."""
         coefficients = self._harmonics_at_freqs(
             frequency_list,
             self.amplitude,
@@ -38,6 +39,7 @@ class RectangleSignal(TimeDomainSignal):
         return coefficients
 
     def _harmonics_at_freqs(self, frequencies, amp, frequency, tp, shift=None):
+        """Get Fourier harmonics."""
         coefficient = amp * tp * frequency * np.sinc(frequencies * tp)
         coefficient = coefficient.astype("complex128")
         if shift is not None:

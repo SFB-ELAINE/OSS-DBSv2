@@ -1,10 +1,10 @@
-import h5py
+from typing import Optional
+
 import nibabel
 import nibabel as nib
 import numpy as np
 
 from .point_model import PointModel
-from .time_results import TimeResult
 
 
 class VoxelLattice(PointModel):
@@ -13,15 +13,19 @@ class VoxelLattice(PointModel):
     Attributes
     ----------
     imp_coord : np.ndarray
-        (3,) np.ndarray specifying the implantation coordinate in mm space (this will be the center of the grid)
+        implantation coordinates in mm space, this will be the center of the grid
 
     affine : np.ndarray
-        (4,4) np.ndarray specifying the affine of the MRI image
+        affine transformation of the MRI image
 
     shape : np.ndarray
-        (3,) np.ndarray specifying the number of points in each direction (x, y, z)
-        Each dimension must be odd. Otherwise, the point corresponding to the voxel containing the implantation
-        coordinate will not be at the center of the grid.
+        the number of points in each direction (x, y, z)
+
+    Notes
+    -----
+    The dimension of the shape must be odd.
+    Otherwise, the point corresponding to the voxel containing the implantation
+    coordinate will not be at the center of the grid.
 
     """
 
@@ -39,7 +43,7 @@ class VoxelLattice(PointModel):
 
         # Check on dimension condition on shape input
         if np.sum(shape[shape / 2 == 0]) > 0:
-            raise Exception("Each dimension of the shape argument must be odd number")
+            raise Exception("Each dimension of the shape must be an odd number")
 
         self._coordinates = self._initialize_coordinates()
 
@@ -57,12 +61,14 @@ class VoxelLattice(PointModel):
         imp_vox_idx = inv_aff @ np.append(self.imp_coord, 1)
 
         # DOUBLE CHECK AFFINE MAPS COORDINATE TO VOXEL CENTER
-        # "[...] a coordinate such as (i,j,k) == np.round((i,j,k)) expresses the center of a voxel"
+        # a coordinate such as (i,j,k) == np.round((i,j,k)) is the center of a voxel
         # https://spinalcordtoolbox.com/overview/concepts/spaces-and-coordinates.html
-        # Therefore the implantation coordinate will lie within the voxel indexed by imp_vox_idx
+        # Therefore the implantation coordinate will lie within
+        # the voxel indexed by imp_vox_idx
         imp_vox_idx = np.round(imp_vox_idx)
 
-        # This is the coordinate of the center of the voxel that contains the implantation coordinate
+        # This is the coordinate of the center of the voxel
+        # that contains the implantation coordinate
         imp_vox_center_coord = self.affine @ imp_vox_idx.T
 
         # GRID CONSTRUCTION AROUND GRID CENTER ###
@@ -87,10 +93,29 @@ class VoxelLattice(PointModel):
         return _coordinates
 
     def save_as_nifti(
-        self, scalar_field, filename, binarize=False, activation_threshold=None
+        self,
+        scalar_field: np.ndarray,
+        filename: str,
+        binarize: bool = False,
+        activation_threshold: Optional[float] = None,
     ):
-        # TODO add support for upsampled lattice
+        """Save scalar field in abstract orthogonal space in nifti format.
 
+        Parameters
+        ----------
+        scalar_field : numpy.ndarray
+            Nx1 array of scalar values on the lattice
+        filename: str
+            Name for the nifti file that should contain full path
+        binarize: bool
+            Choose to threshold the scalar field and save the binarized result
+        activation_threshold: float
+            Activation threshold for VTA estimate
+
+        Notes
+        -----
+        TODO add support for upsampled lattice
+        """
         if binarize and activation_threshold is None:
             raise ValueError("Need to provide activation_threshold to binarize")
         # get affine of the segmented MRI image to use as a template
@@ -125,61 +150,17 @@ class VoxelLattice(PointModel):
         # iteration ordering is z,y,x
         return np.meshgrid(base_x, base_y, base_z, indexing="ij")
 
-    # Time result still needs to be implemented
-    def save(self, data: TimeResult, file_name: str) -> None:
-        with h5py.File(file_name, "w") as file:
-            self._write_file(data, file)
-
-    def set_location_names(self, names: np.ndarray) -> None:
-        self._location = names
-
-    def _write_file(self, data, file):
-        file.create_dataset("TimeSteps[s]", data=data.time_steps)
-        file.create_dataset("Points[mm]", data=data.points)
-        file.create_dataset("InsideCSF", data=data.inside_csf)
-        file.create_dataset("InsideEncap", data=data.inside_encap)
-        file.create_dataset("Location", data=self._location.astype("S"))
-        file.create_dataset("Potential[V]", data=data.potential)
-        file.create_dataset(
-            "Electric field magnitude[Vm^(-1)]", data=data.electric_field_magnitude
-        )
-        file.create_dataset(
-            "Electric field vector x[Vm^(-1)]", data=data.electric_field_vector[0]
-        )
-        file.create_dataset(
-            "Electric field vector y[Vm^(-1)]", data=data.electric_field_vector[1]
-        )
-        file.create_dataset(
-            "Electric field vector z[Vm^(-1)]", data=data.electric_field_vector[2]
-        )
-
     @property
     def shape(self):
+        """Shape of MRI data."""
         return self._shape
 
     @property
     def imp_coord(self):
+        """Implantation coordinates."""
         return self._imp_coord
 
     @property
     def affine(self):
+        """Affine transformation."""
         return self._affine
-
-    def filter_csf_encap(self, inside_csf: np.ndarray, inside_encap: np.ndarray):
-        raise NotImplementedError("Filtering for lattice not implemented.")
-
-    def save_hdf5(
-        self,
-        axon_mask: list,
-        lattice: np.ndarray,
-        potentials: np.ndarray,
-        fields: np.ndarray,
-        field_mags: np.ndarray,
-        output_path: str,
-    ) -> None:
-        raise NotImplementedError("Lattice results can not be stored in HDF5 format.")
-
-    def collapse_VTA(
-        self, field_on_points, implantation_coordinate, lead_direction, lead_diam
-    ):
-        raise NotImplementedError("Collapse VTA for voxellattice not implemented")

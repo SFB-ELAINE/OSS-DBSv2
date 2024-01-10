@@ -66,5 +66,5 @@ class ColeCole3Model(ColeCole4Model):
         self._parameters = parameters
         if not self._parameters.assert_order(3):
             raise ValueError(
-                "ColeCole4Model requires information about four dispersions"
+                "ColeCole3Model requires information about three dispersions"
             )

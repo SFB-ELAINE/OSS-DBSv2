@@ -1,11 +1,9 @@
 from typing import Tuple
 
-import h5py
 import nibabel as nib
 import numpy as np
 
 from .point_model import PointModel
-from .time_results import TimeResult
 
 
 class Lattice(PointModel):
@@ -32,7 +30,6 @@ class Lattice(PointModel):
         center: tuple,
         distance: float,
         direction: tuple,
-        collapse_vta: bool,
     ) -> None:
         self._distance = abs(distance)
         self._shape = shape
@@ -41,7 +38,6 @@ class Lattice(PointModel):
         self._direction = tuple(direction / norm) if norm else (0, 0, 1)
         self._location = np.full(shape[0] * shape[1] * shape[2], "")
         self._coordinates = self._initialize_coordinates()
-        self._collapse_vta = collapse_vta
 
     def _initialize_coordinates(self) -> np.ndarray:
         """Generates coordinates of points.
@@ -88,23 +84,21 @@ class Lattice(PointModel):
 
         return -np.arctan(y_d / x_d), -np.arctan(z_d / y_d)
 
-    def save(self, data: TimeResult, file_name: str) -> None:
-        with h5py.File(file_name, "w") as file:
-            self._write_file(data, file)
-
     def save_as_nifti(
         self, scalar_field, filename, binarize=False, activation_threshold=None
     ):
-        """Save scalar field (e.g. electric potential or E-field magnitude) in abstract orthogonal space using nifti
-         format.
+        """Save scalar field in abstract orthogonal space in nifti format.
 
         Parameters
         ----------
-        settings: dict of parameters
-        scalar_field : Nx1 numpy.ndarray of scalar values on the lattice
-        filename: str, name for the nifti file that should contain full path
-        binarize: bool, thresholds the scalar field and saves the binarized result
-
+        scalar_field : numpy.ndarray
+            Nx1 array of scalar values on the lattice
+        filename: str
+            Name for the nifti file that should contain full path
+        binarize: bool
+            Choose to threshold the scalar field and save the binarized result
+        activation_threshold: float
+            Activation threshold for VTA estimate
         """
         # Assuming data is in the same format as it was generated,
         # you can just reshape it
@@ -131,40 +125,3 @@ class Lattice(PointModel):
 
         img = nib.Nifti1Image(nifti_output, affine)
         nib.save(img, filename)
-
-    def set_location_names(self, names: np.ndarray) -> None:
-        self._location = names
-
-    def _write_file(self, data, file):
-        file.create_dataset("TimeSteps[s]", data=data.time_steps)
-        file.create_dataset("Points[mm]", data=data.points)
-        file.create_dataset("InsideCSF", data=data.inside_csf)
-        file.create_dataset("InsideEncap", data=data.inside_encap)
-        file.create_dataset("Location", data=self._location.astype("S"))
-        file.create_dataset("Potential[V]", data=data.potential)
-        file.create_dataset(
-            "Electric field magnitude[Vm^(-1)]", data=data.electric_field_magnitude
-        )
-        file.create_dataset(
-            "Electric field vector x[Vm^(-1)]", data=data.electric_field_vector[0]
-        )
-        file.create_dataset(
-            "Electric field vector y[Vm^(-1)]", data=data.electric_field_vector[1]
-        )
-        file.create_dataset(
-            "Electric field vector z[Vm^(-1)]", data=data.electric_field_vector[2]
-        )
-
-    def filter_csf_encap(self, inside_csf: np.ndarray, inside_encap: np.ndarray):
-        raise NotImplementedError("Filtering for lattice not implemented.")
-
-    def save_hdf5(
-        self,
-        axon_mask: list,
-        lattice: np.ndarray,
-        potentials: np.ndarray,
-        fields: np.ndarray,
-        field_mags: np.ndarray,
-        output_path: str,
-    ) -> None:
-        raise NotImplementedError("Lattice results can not be stored in HDF5 format.")

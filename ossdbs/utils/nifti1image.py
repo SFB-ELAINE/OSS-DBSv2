@@ -27,6 +27,7 @@ class Nifti1Image:
 
     @property
     def affine(self):
+        """Get affine transformation as 4x4 matrix."""
         return self._scaling * self._image.affine
 
     @property
@@ -63,6 +64,7 @@ class Nifti1Image:
 
     @property
     def trafo_matrix(self) -> np.ndarray:
+        """Get trafo matrix, i.e. a 3x3 matrix."""
         return np.array([self.affine[0, :3], self.affine[1, :3], self.affine[2, :3]])
 
     @property
@@ -87,13 +89,16 @@ class Nifti1Image:
 
     @staticmethod
     def _load_image(file_path: str) -> nibabel.nifti1.Nifti1Image:
+        """Load image from file."""
         try:
             return nibabel.load(file_path)
-        except FileNotFoundError:
-            raise OSError("File Not Found.")
+        except FileNotFoundError as exc:
+            print(exc.errno)
+            raise
 
     @property
     def _scaling(self) -> float:
+        """Get scaling depending on used length unit."""
         xyz_unit = self._image.header.get_xyzt_units()[0]
         return {"unknown": 1.0, "meter": 1.0e3, "mm": 1.0, "micron": 1.0e-3}[xyz_unit]
 
@@ -102,12 +107,12 @@ class Nifti1Image:
 
         Parameters
         ----------
-            voxel_bounding_box:
-                    Defined in voxel space!
+        voxel_bounding_box: BoundingBox
+            Defined in voxel space
 
-        Returns
-        -------
-        TODO
+        Notes
+        -----
+        The image is cropped in the voxel space!
         """
         start_index = np.floor(np.array(voxel_bounding_box.start))
         x_s, y_s, z_s = start_index.astype(int)
@@ -118,6 +123,15 @@ class Nifti1Image:
         return self.data[x_s:x_e, y_s:y_e, z_s:z_e], bbox
 
     def get_voxel_bounding_box(self, bounding_box: BoundingBox):
+        """Get bounding box around voxels in real space.
+
+        Notes
+        -----
+        The dimensions of the box is different from
+        the number of voxels scaled by the voxel size.
+        The box can be skewed in reality (described by
+        the affine transformation).
+        """
         inv_trafo = npl.inv(self.trafo_matrix)
         inv_affine_trafo = netgen.occ.gp_GTrsf(
             mat=inv_trafo.ravel(), vec=-inv_trafo.dot(self.translation)
@@ -142,6 +156,7 @@ class Nifti1Image:
 
     @property
     def trafo_cf(self):
+        """Get the transformation matrix as NGSolve function."""
         if self._trafo_cf is None:
             # ravel because ngsolve needs a vector in a tuple
             inv_trafo_matrix = tuple(npl.inv(self.trafo_matrix).ravel())
@@ -163,6 +178,8 @@ class Nifti1Image:
 
 
 class MagneticResonanceImage(Nifti1Image):
+    """MRI image."""
+
     def __init__(self, file_path: str) -> None:
         super().__init__(file_path)
         if not self.data.ndim == 3:
@@ -170,6 +187,8 @@ class MagneticResonanceImage(Nifti1Image):
 
 
 class DiffusionTensorImage(Nifti1Image):
+    """DTI image."""
+
     def __init__(self, file_path: str) -> None:
         super().__init__(file_path)
         if not self._image.get_fdata().ndim == 4:

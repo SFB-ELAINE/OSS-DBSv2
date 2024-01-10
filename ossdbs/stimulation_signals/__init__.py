@@ -1,3 +1,5 @@
+"""Stimulation signal utility."""
+
 from .rectangle_signal import RectangleSignal
 from .signal import FrequencyDomainSignal, TimeDomainSignal
 from .trapezoid_signal import TrapezoidSignal
@@ -8,6 +10,7 @@ from .utilities import (
     get_maximum_octave_band_index,
     get_minimum_octave_band_index,
     get_octave_band_indices,
+    get_timesteps,
     retrieve_time_domain_signal_from_fft,
 )
 
@@ -23,4 +26,5 @@ __all__ = [
     "get_indices_in_octave_band",
     "get_minimum_octave_band_index",
     "get_maximum_octave_band_index",
+    "get_timesteps",
 ]
