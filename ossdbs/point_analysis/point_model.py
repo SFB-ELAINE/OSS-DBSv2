@@ -91,18 +91,6 @@ class PointModel(ABC):
         """
         pass
 
-    def save_hdf5(
-        self,
-        axon_mask: list,
-        lattice: np.ndarray,
-        potentials: np.ndarray,
-        fields: np.ndarray,
-        field_mags: np.ndarray,
-        output_path: str,
-    ) -> None:
-        """Export result to HDF5 format."""
-        raise NotImplementedError("Results can not be stored in HDF5 format.")
-
     def _write_file(self, data: TimeResult, file: h5py.File):
         """Create datasets in HDF5 file.
 
