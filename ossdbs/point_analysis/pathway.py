@@ -1,5 +1,4 @@
 import logging
-import os
 from dataclasses import dataclass
 from typing import List
 
@@ -67,7 +66,6 @@ class Pathway(PointModel):
         )
         self._location = np.full(n_points, "")
         self._coordinates = self._initialize_coordinates()
-        self._axon_mask = None
 
     def _create_axons(self, file: h5py.File, group: str) -> list:
         """Create axons based on the input from the .h5 file.
@@ -248,95 +246,8 @@ class Pathway(PointModel):
                         if inside_encap[idx_axon + idx]:
                             axon.status = -2  # set status -2 for inside encap
                     idx_axon = idx_axon + axon_length
-
-    def save_hdf5(
-        self,
-        lattice: np.ndarray,
-        potentials: np.ndarray,
-        fields: np.ndarray,
-        field_mags: np.ndarray,
-        output_path: str,
-    ) -> None:
-        """Stores results for pathway analysis in hdf5 format.
-
-        Parameters
-        ----------
-        axon_mask: list
-            Mask of axons that are in brain (i.e., not in CSF etc.)
-        lattice: np.ndarray
-            Point grid
-        potentials: np.ndarray
-            Values of potential on grid
-        fields: np.ndarray
-            Values of field on grid
-        field_mags: np.ndarray
-            Values of field magnitude on grid
-        output_path: str
-            Path to store files.
-
-        Notes
-        -----
-        Stores oss_pts.h5, oss_potential.h5, oss_field.h5
-        Should be used with single frequencies.
-        TODO split in subfunctions
-        TODO only used if no time signal provided - use csv instead of h5 format?
-        """
-        population_names = self.get_population_names()
-        axon_names = self.get_axon_names()
-        n_axons = self.get_axon_numbers()
-        axon_length = self.get_axon_length()
-        h5f_pts = h5py.File(os.path.join(output_path, "oss_pts.h5"), "w")
-        idx = 0
-        for i in range(len(population_names)):
-            group = h5f_pts.create_group(population_names[i])
-            for j in range(n_axons[i]):
-                if self._axon_mask[sum(n_axons[:i]) + j]:
-                    group.create_dataset(
-                        axon_names[i][j],
-                        data=lattice[idx * axon_length : (idx + 1) * axon_length, :],
-                    )
-                    idx = idx + 1
-        h5f_pts.close()
-
-        # Save potential evaluation
-        h5f_pot = h5py.File(os.path.join(output_path, "oss_potentials.h5"), "w")
-        idx = 0
-        for i in range(len(population_names)):
-            group = h5f_pot.create_group(population_names[i])
-            for j in range(n_axons[i]):
-                if self._axon_mask[sum(n_axons[:i]) + j]:
-                    group.create_dataset(
-                        axon_names[i][j],
-                        data=lattice[idx * axon_length : (idx + 1) * axon_length, :],
-                    )
-                    group.create_dataset(
-                        axon_names[i][j] + "_potentials",
-                        data=potentials[idx * axon_length : (idx + 1) * axon_length, :],
-                    )
-                    idx = idx + 1
-        h5f_pot.close()
-
-        # Save electric field evaluation
-        h5f_field = h5py.File(os.path.join(output_path, "oss_field.h5"), "w")
-        idx = 0
-        for i in range(len(population_names)):
-            group = h5f_field.create_group(population_names[i])
-            for j in range(n_axons[i]):
-                if self._axon_mask[sum(n_axons[:i]) + j]:
-                    group.create_dataset(
-                        axon_names[i][j],
-                        data=lattice[idx * axon_length : (idx + 1) * axon_length, :],
-                    )
-                    group.create_dataset(
-                        axon_names[i][j] + "_field_vecs",
-                        data=fields[idx * axon_length : (idx + 1) * axon_length, :],
-                    )
-                    group.create_dataset(
-                        axon_names[i][j] + "_field_mags",
-                        data=field_mags[idx * axon_length : (idx + 1) * axon_length, :],
-                    )
-                    idx = idx + 1
-        h5f_field.close()
+        _logger.info("Marked axons inside CSF and encapsulation layer")
+        return
 
     def create_index(self, lattice: np.ndarray) -> np.ndarray:
         """Create index for each point to the matching axon.

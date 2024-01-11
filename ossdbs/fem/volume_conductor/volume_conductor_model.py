@@ -314,11 +314,6 @@ class VolumeConductor(ABC):
                         self.export_nifti_files(
                             field_mags, point_model, activation_threshold, lattice_mask
                         )
-                    # HDF5 exports only for Pathways
-                    if isinstance(point_model, Pathway):
-                        self.export_to_hdf5(
-                            point_model, lattice, potentials, fields, field_mags
-                        )
                 time_1 = time.time()
                 timings["FieldExport"] = time_1 - time_0
                 time_0 = time_1
@@ -788,6 +783,7 @@ class VolumeConductor(ABC):
         Only for pathways a HDF5 file is generated and only for the lattice
         model, a Nifti file is generated
         TODO Documentation needed!!!
+        TODO For now indexing for pathways assumes same length for all axons.
 
         Parameters
         ----------
@@ -932,10 +928,6 @@ class VolumeConductor(ABC):
                 os.path.join(self.output_path, "E_field.csv"),
                 index=False,
             )
-
-    def export_to_hdf5(self, point_model, lattice, potentials, fields, field_mags):
-        """Export solution to HDF5 file."""
-        point_model.save_hdf5(lattice, potentials, fields, field_mags, self.output_path)
 
     def export_nifti_files(
         self,
