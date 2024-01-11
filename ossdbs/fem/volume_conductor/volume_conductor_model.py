@@ -236,13 +236,12 @@ class VolumeConductor(ABC):
                 self.compute_solution(frequency)
                 if compute_impedance:
                     impedance = self.compute_impedance()
+                    self._impedances[band_indices] = impedance
             else:
                 _logger.info(f"Skipped computation at {frequency} Hz")
                 if compute_impedance:
                     impedance = self._impedances[freq_idx - 1]
-
-            # write impedance at frequencies with solution
-            self._impedances[band_indices] = impedance
+                    self._impedances[band_indices] = impedance
 
             # scale factor: is one for VC and depends on impedance for other case
             self._scale_factor = self.get_scale_factor(freq_idx)
