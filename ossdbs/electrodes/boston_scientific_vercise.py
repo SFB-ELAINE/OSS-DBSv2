@@ -1,15 +1,18 @@
 # Boston Scientific (Marlborough, Massachusetts, USA) vercise
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 
 import netgen
 import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
+from .utilities import get_highest_edge, get_lowest_edge
 
 
 @dataclass
 class BostonScientificVerciseDirectedParameters:
+    """Electrode geometry parameters."""
+
     # dimensions [mm]
     tip_length: float
     contact_length: float
@@ -22,12 +25,12 @@ class BostonScientificVerciseDirectedParameters:
         return 0.5 * self.tip_length
 
     def get_distance_l1_l4(self) -> float:
-        """Returns distance between first level contact and fourth level contacts"""
+        """Returns distance between first level contact and fourth level contacts."""
         return 3 * (self.contact_length + self.contact_spacing)
 
 
 class BostonScientificVerciseDirectedModel(ElectrodeModel):
-    """Boston Scientific (Marlborough, Massachusetts, USA) vercise directional lead electrode.
+    """Boston Scientific vercise directional lead electrode.
 
     Attributes
     ----------
@@ -45,12 +48,6 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
     """
 
     _n_contacts = 8
-
-    def parameter_check(self):
-        # Check to ensure that all parameters are at least 0
-        for param in asdict(self._parameters).values():
-            if param < 0:
-                raise ValueError("Parameter values cannot be less than zero")
 
     def _construct_encapsulation_geometry(
         self, thickness: float
@@ -96,7 +93,8 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         radius = self._parameters.lead_diameter * 0.5
         direction = self._direction
         center = tuple(np.array(direction) * radius)
-        # define half space at tip_center to use to construct a hemsiphere as part of the contact tip
+        # define half space at tip_center
+        # to construct a hemisphere as part of the contact tip
         half_space = netgen.occ.HalfSpace(p=center, n=direction)
         contact_tip = occ.Sphere(c=center, r=radius) * half_space
         h_pt2 = self._parameters.tip_length - radius
@@ -105,7 +103,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
 
         vectors = []
         distance = self._parameters.tip_length + self._parameters.contact_spacing
-        for index in range(0, 3):
+        for _ in range(0, 3):
             vectors.append(tuple(np.array(self._direction) * distance))
             distance += (
                 self._parameters.contact_length + self._parameters.contact_spacing
@@ -131,21 +129,13 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         for index, contact in enumerate(contacts, 1):
             name = self._boundaries[f"Contact_{index}"]
             contact.bc(name)
-            # Only label contact edge with maximum z value for contact_1
             # Label max z value and min z value for contact_8
             if name == "Contact_8":
-                min_edge_z_val = float("inf")
-                for edge in contact.edges:
-                    if edge.center.z < min_edge_z_val:
-                        min_edge_z_val = edge.center.z
-                        min_edge = edge
+                min_edge = get_lowest_edge(contact)
                 min_edge.name = name
+            # Only label contact edge with maximum z value for contact_1
             if name == "Contact_1" or name == "Contact_8":
-                max_edge_z_val = float("-inf")
-                for edge in contact.edges:
-                    if edge.center.z > max_edge_z_val:
-                        max_edge_z_val = edge.center.z
-                        max_edge = edge
+                max_edge = get_highest_edge(contact)
                 max_edge.name = name
             else:
                 # Label all the named contacts appropriately
@@ -168,6 +158,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
         # Centering contact to label edges
         contact = contact.Rotate(axis, angle)
+        # TODO refactor / wrap in function
         # Find  max z, min z, max x, and max y values and label min x and min y edge
         max_z_val = max_y_val = max_x_val = float("-inf")
         min_z_val = float("inf")
@@ -197,7 +188,8 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
             ):
                 edge.name = "min z"
 
-        # TODO: check that the starting axis of the contacts are correct according to the documentation
+        # TODO check that the starting axis of the contacts
+        # are correct according to the documentation
         contact = contact.Rotate(axis, angle)
 
         return contact
@@ -219,6 +211,8 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
 
 @dataclass
 class BostonScientificVerciseParameters:
+    """Electrode geometry parameters."""
+
     # dimensions [mm]
     tip_length: float
     contact_length: float
@@ -231,12 +225,12 @@ class BostonScientificVerciseParameters:
         return self.tip_length + 0.5 * self.contact_length
 
     def get_distance_l1_l4(self) -> float:
-        """Returns distance between first level contact and fourth level contacts"""
+        """Returns distance between first level contact and fourth level contacts."""
         return 7 * (self.contact_length + self.contact_spacing)
 
 
 class BostonScientificVerciseModel(ElectrodeModel):
-    """Boston Scientific (Marlborough, Massachusetts, USA) vercise standard lead electrode.
+    """Boston Scientific vercise standard lead electrode.
 
     Attributes
     ----------
@@ -251,12 +245,6 @@ class BostonScientificVerciseModel(ElectrodeModel):
     """
 
     _n_contacts = 8
-
-    def parameter_check(self):
-        # Check to ensure that all parameters are at least 0
-        for param in asdict(self._parameters).values():
-            if param < 0:
-                raise ValueError("Parameter values cannot be less than zero")
 
     def _construct_encapsulation_geometry(
         self, thickness: float
@@ -307,16 +295,10 @@ class BostonScientificVerciseModel(ElectrodeModel):
         for count in range(self._n_contacts):
             name = self._boundaries[f"Contact_{count + 1}"]
             contact.bc(name)
-            min_edge_z_val = float("inf")
-            max_edge_z_val = float("-inf")
-            for edge in contact.edges:
-                if edge.center.z < min_edge_z_val:
-                    min_edge_z_val = edge.center.z
-                    min_edge = edge
-                if edge.center.z > max_edge_z_val:
-                    max_edge_z_val = edge.center.z
-                    max_edge = edge
-            # Only name edge with the min and max z values (represents the edge between the non-contact and contact surface)
+            min_edge = get_lowest_edge(contact)
+            max_edge = get_highest_edge(contact)
+            # Only name edge with the min and max z values
+            # (represents the edge between the non-contact and contact surface)
             min_edge.name = name
             max_edge.name = name
             vector = tuple(np.array(self._direction) * distance)

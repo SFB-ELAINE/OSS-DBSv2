@@ -67,7 +67,7 @@ class ElectrodeModel(ABC):
 
     @property
     def boundaries(self) -> dict:
-        "Returns names of boundaries."
+        """Returns names of boundaries."""
         return self._boundaries
 
     @property
@@ -82,6 +82,7 @@ class ElectrodeModel(ABC):
 
     @property
     def encapsulation_thickness(self) -> float:
+        """Thickness of encapsulation layer."""
         return self._encapsulation_thickness
 
     @encapsulation_thickness.setter
@@ -112,10 +113,6 @@ class ElectrodeModel(ABC):
         return self._encapsulation_geometry
 
     @abstractmethod
-    def parameter_check(self):
-        pass
-
-    @abstractmethod
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         pass
 
@@ -130,7 +127,7 @@ class ElectrodeModel(ABC):
 
         Parameters
         ----------
-        contact_names : dict
+        boundaries : dict
             {'Body': 'body_name',
              'Contact_1': 'contact_name',
              'Contact_2': ...}
@@ -156,6 +153,7 @@ class ElectrodeModel(ABC):
 
     @property
     def index(self) -> int:
+        """Index of electrode, relevant if multiple electrodes used."""
         return self._index
 
     @index.setter

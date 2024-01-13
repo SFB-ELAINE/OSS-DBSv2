@@ -5,10 +5,13 @@ import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
+from .utilities import get_highest_edge, get_lowest_edge
 
 
 @dataclass
 class MicroProbesRodentElectrodeParameters:
+    """Electrode geometry parameters."""
+
     # dimensions [mm]
     # exposed: The length of the exposed wire between tip and lead (if any)
     exposed_wire: float
@@ -46,24 +49,32 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
 
     @property
     def wire_exists(self):
+        """Check if parts of wire are exposed."""
         return self._parameters.exposed_wire != 0
 
     def parameter_check(self):
+        """Check geometry parameters."""
         # Check to ensure that all parameters are at least 0
         for param in asdict(self._parameters).values():
             if param < 0:
                 raise ValueError("Parameter values cannot be less than zero")
+        # check that electrode is long enough
         if (
             self._parameters.total_length
             < self._parameters.contact_radius + self._parameters.exposed_wire
         ):
             raise ValueError(
-                "Total length cannot be less than the length of exposed wire and contact radius"
+                """Total length cannot be less
+                   than the length of exposed wire and contact radius."""
             )
-        if self._parameters.exposed_wire > 0 and self._parameters.wire_radius == 0:
-            raise ValueError(
-                "If exposed wire length is greater than zero, must specify wire radius to be greater than zero"
-            )
+        # check that wire is thick enough
+        if self._parameters.exposed_wire > 0:
+            if np.isclose(self._parameters.wire_radius, 0):
+                raise ValueError(
+                    """If exposed wire length is greater than zero,
+                    must specify wire radius to be greater than zero."""
+                )
+        # wire cannot be wider than contact
         if self._parameters.wire_radius > self._parameters.contact_radius:
             raise ValueError("Wire radius cannot be bigger than contact radius")
 
@@ -164,7 +175,8 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
             fillet_wireE2.name = "fillet_wireE2"
 
             # Only run MakeFillet if sharp edges are present
-            # Command is very sensitive to input parameters, may have to implement a check here
+            # Command is very sensitive to input parameters,
+            # may have to implement a check here
             if encap_wire_radius != encap_tip_radius:
                 encapsulation = encapsulation.MakeFillet(
                     [fillet_wireE1], encap_wire_radius / 24
@@ -183,7 +195,8 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         else:
             encapsulation = encap_tip + encap_lead
             # if (encap_tip_radius != encap_lead_radius):
-            #    encapsulation = encapsulation.MakeFillet([fillet_leadE], encap_lead_radius / 50)
+            #    encapsulation = encapsulation.MakeFillet([fillet_leadE],
+                                                          encap_lead_radius / 50)
             # TODO: Issues with the following command
             # encapsulation = encapsulation.MakeFillet([fillet_tipE], 0.00001)
         """
@@ -219,7 +232,8 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         contact_radius = self._parameters.contact_radius
         tip_center = tuple(np.array(self._direction) * self._parameters.contact_radius)
         tip = occ.Sphere(c=tip_center, r=contact_radius)
-        # If exposed wire exists, we include the wire and tip as part of the contact object
+        # If exposed wire exists,
+        # we include the wire and tip as part of the contact object
         if self.wire_exists:
             lead_start_pt = tuple(
                 np.array(self._direction)
@@ -242,13 +256,10 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         contact.bc(self._boundaries["Contact_1"])
 
         # Find edge with the max z value
-        max_edge_z_val = float("-inf")
-        for edge in contact.edges:
-            if edge.center.z > max_edge_z_val:
-                max_edge_z_val = edge.center.z
-                max_edge_z = edge
+        max_edge_z = get_highest_edge(contact)
 
-        # Only name edge with the maximum z value (represents the edge between the non-contact and contact surface)
+        # Only name edge with the maximum z value
+        # (represents the edge between the non-contact and contact surface)
         max_edge_z.name = self._boundaries["Contact_1"]
 
         return contact
@@ -256,6 +267,8 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
 
 @dataclass
 class MicroProbesSNEX100Parameters:
+    """Electrode geometry parameters."""
+
     # dimensions [mm]
     core_electrode_length: float
     core_electrode_diameter: float
@@ -294,6 +307,11 @@ class MicroProbesSNEX100Model(ElectrodeModel):
     """
 
     def parameter_check(self):
+        """Check geometry parameters."""
+        # Check to ensure that all parameters are at least 0
+        for param in asdict(self._parameters).values():
+            if param < 0:
+                raise ValueError("Parameter values cannot be less than zero")
         if (
             self._parameters.total_length
             < self._parameters.core_electrode_length
@@ -301,7 +319,8 @@ class MicroProbesSNEX100Model(ElectrodeModel):
             + self._parameters.outer_electrode_length
         ):
             raise ValueError(
-                "Total length cannot be less than the length of the total length of the core electrode, tubing, and outer electrode "
+                """Total length cannot be less than the sum of
+                   the lengths of the core electrode, tubing, and outer electrode."""
             )
         if (
             self._parameters.core_tubing_diameter
@@ -324,10 +343,6 @@ class MicroProbesSNEX100Model(ElectrodeModel):
             raise ValueError(
                 "Outer tubing diameter cannot be less than outer electrode diameter"
             )
-        # Check to ensure that all parameters are at least 0
-        for param in asdict(self._parameters).values():
-            if param < 0:
-                raise ValueError("Parameter values cannot be less than zero")
 
     _n_contacts = 2
 
@@ -355,11 +370,9 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         part_1 = occ.Cylinder(p=point_1, d=direction, r=radius_1, h=height_1)
 
         # Find max Z value for for edge between core electrode and core tubing
-        max_edge_z_val = float("-inf")
-        for edge in (part_1 + part_0).edges:
-            if edge.center.z > max_edge_z_val:
-                max_edge_z_val = edge.center.z
-                max_CoreE = edge
+        # TODO check if this is a good idea to find this edge
+        # TODO maybe define new object instead of passing added shapes
+        max_CoreE = get_highest_edge(part_1 + part_0)
         max_CoreE.name = "fillet"
 
         # Constructing core tubing
@@ -369,16 +382,10 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         height_2 = self._parameters.core_tubing_length
         part_2 = occ.Cylinder(p=point_2, d=direction, r=radius_2, h=height_2)
 
-        # Find min Z value for outer electrode rim and  max Z value for edge between outer tubing and outer electrode
-        min_edge_z_val = float("inf")
-        max_edge_z_val = float("-inf")
-        for edge in part_2.edges:
-            if edge.center.z < min_edge_z_val:
-                min_edge_z_val = edge.center.z
-                min_CoreTubeE = edge
-            if edge.center.z > max_edge_z_val:
-                max_edge_z_val = edge.center.z
-                max_CoreTubeE = edge
+        # Find min Z value for outer electrode rim
+        # and max Z value for edge between outer tubing and outer electrode
+        min_CoreTubeE = get_lowest_edge(part_2)
+        max_CoreTubeE = get_highest_edge(part_2)
         min_CoreTubeE.name = "fillet_edge"
         max_CoreTubeE.name = "fillet_edge"
 
@@ -389,15 +396,9 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         height_3 = self._parameters.outer_electrode_length
         part_3 = occ.Cylinder(p=point_3, d=direction, r=radius_3, h=height_3)
 
-        min_edge_z_val = float("inf")
-        max_edge_z_val = float("-inf")
-        for edge in part_3.edges:
-            if edge.center.z < min_edge_z_val:
-                min_edge_z_val = edge.center.z
-                min_OuterE = edge
-            if edge.center.z > max_edge_z_val:
-                max_edge_z_val = edge.center.z
-                max_OuterE = edge
+        min_OuterE = get_lowest_edge(part_3)
+        max_OuterE = get_highest_edge(part_3)
+
         min_OuterE.name = "fillet_edge"
         max_OuterE.name = "fillet_edge"
 
@@ -409,15 +410,12 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         part_4 = occ.Cylinder(p=point_4, d=direction, r=radius_4, h=height_4)
 
         # Find min Z value for for edge between outer tubing rim
-        min_edge_z_val = float("inf")
-        for edge in part_4.edges:
-            if edge.center.z < min_edge_z_val:
-                min_edge_z_val = edge.center.z
-                min_OuterTubeE = edge
+        min_OuterTubeE = get_lowest_edge(part_4)
         min_OuterTubeE.name = "fillet_edge"
+
         encapsulation = part_0 + part_1 + part_2 + part_3 + part_4
         # Run MakeFillet on edges - command is very sensitive to input parameters
-        # TODO: check radius values
+        # TODO check radius values
         # outer tubing
         encapsulation = encapsulation.MakeFillet([min_OuterTubeE], radius_4 / 12)
         # outer electrode
@@ -440,7 +438,8 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         return electrode.Move(v=self._position)
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        # Defining the core tubing using the start point of the cylinder as the tip center
+        # Defining the core tubing
+        # using the start point of the cylinder as the tip center
         direction = self._direction
         distance_1 = self._parameters.core_electrode_length
         point_1 = tuple(np.array(self._direction) * distance_1)
@@ -448,11 +447,7 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         height_1 = self._parameters.core_tubing_length
         body_pt1 = occ.Cylinder(p=point_1, d=direction, r=radius_1, h=height_1)
         # Defining the edge between the core tubing and the outer electrode (contact_2)
-        max_edge_z_val = float("-inf")
-        for edge in body_pt1.edges:
-            if edge.center.z > max_edge_z_val:
-                max_edge_z_val = edge.center.z
-                max_edge_z = edge
+        max_edge_z = get_highest_edge(body_pt1)
         max_edge_z.name = self._boundaries["Contact_2"]
 
         # Defining the outer tubing
@@ -473,7 +468,8 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         direction = self._direction
         radius_1 = self._parameters.core_electrode_diameter * 0.5
         center = tuple(np.array(self._direction) * radius_1)
-        # define half space at tip_center to use to construct a hemsiphere as part of the contact tip
+        # define half space at tip_center
+        # to construct a hemsiphere as part of the contact tip
         half_space = netgen.occ.HalfSpace(p=center, n=direction)
         contact_tip = occ.Sphere(c=center, r=radius_1) * half_space
         height = self._parameters.core_electrode_length - radius_1
@@ -491,22 +487,15 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         contact_1.bc(self._boundaries["Contact_1"])
         contact_2.bc(self._boundaries["Contact_2"])
         # Find edge with max z value for contact_1
-        max_edge_z_val = float("-inf")
-        for edge in contact_1.edges:
-            if edge.center.z > max_edge_z_val:
-                max_edge_z_val = edge.center.z
-                max_edge_z = edge
-        # Only name edge with the maximum z value for contact_1(represents the edge between the non-contact and contact surface)
+        max_edge_z = get_highest_edge(contact_1)
+        # Only name edge with the maximum z value for contact_1
+        # (represents the edge between the non-contact and contact surface)
         max_edge_z.name = self._boundaries["Contact_1"]
 
         # Find edge with max z value for contact_2
-        max_edge_z_val = float("-inf")
-        for edge in contact_2.edges:
-            if edge.center.z > max_edge_z_val:
-                max_edge_z_val = edge.center.z
-                max_edge_z = edge
-
+        max_edge_z = get_highest_edge(contact_2)
         max_edge_z.name = self._boundaries["Contact_2"]
+
         return netgen.occ.Glue([contact_1, contact_2])
 
     def get_max_mesh_size_contacts(self, ratio: float) -> float:

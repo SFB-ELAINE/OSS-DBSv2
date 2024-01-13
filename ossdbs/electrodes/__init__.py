@@ -1,3 +1,4 @@
+"""Electrode models for DBS."""
 from .abbott_stjude import (
     AbbottStJudeActiveTipModel,
     AbbottStJudeActiveTipParameters,

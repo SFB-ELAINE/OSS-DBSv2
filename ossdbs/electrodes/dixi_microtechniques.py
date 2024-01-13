@@ -1,15 +1,18 @@
 # Dixi Microtechniques SEEG
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 
 import netgen
 import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
+from .utilities import get_highest_edge, get_lowest_edge
 
 
 @dataclass
 class DixiSEEG10Parameters:
+    """Electrode geometry parameters."""
+
     # dimensions [mm]
     tip_length: float
     contact_length: float
@@ -46,12 +49,6 @@ class DixiSEEG10Model(ElectrodeModel):
 
     _n_contacts = 10
 
-    def parameter_check(self):
-        # Check to ensure that all parameters are at least 0
-        for param in asdict(self._parameters).values():
-            if param < 0:
-                raise ValueError("Parameter values cannot be less than zero")
-
     def _construct_encapsulation_geometry(
         self, thickness: float
     ) -> netgen.libngpy._NgOCC.TopoDS_Shape:
@@ -97,7 +94,8 @@ class DixiSEEG10Model(ElectrodeModel):
         direction = self._direction
 
         center = tuple(np.array(direction) * radius)
-        # define half space at tip_center to use to construct a hemsiphere as part of the contact tip
+        # define half space at tip_center
+        # to construct a hemisphere as part of the contact tip
         half_space = netgen.occ.HalfSpace(p=center, n=direction)
         contact_tip = occ.Sphere(c=center, r=radius) * half_space
         h_pt2 = self._parameters.contact_length - radius
@@ -111,17 +109,11 @@ class DixiSEEG10Model(ElectrodeModel):
         for count in range(self._n_contacts):
             name = self._boundaries[f"Contact_{count + 1}"]
             contact.bc(name)
-            min_edge_z_val = float("inf")
-            max_edge_z_val = float("-inf")
-            for edge in contact.edges:
-                if edge.center.z < min_edge_z_val:
-                    min_edge_z_val = edge.center.z
-                    min_edge = edge
-                if edge.center.z > max_edge_z_val:
-                    max_edge_z_val = edge.center.z
-                    max_edge = edge
-                    # Only name edge with the max z value for contact_1
-                max_edge.name = name
+
+            max_edge = get_highest_edge(contact)
+            # Only name edge with the max z value for contact_1
+            max_edge.name = name
+
             # first contact is different from others
             if count == 0:
                 distance = (
@@ -130,6 +122,7 @@ class DixiSEEG10Model(ElectrodeModel):
                 contacts.append(contact)
                 contact = contact_cyl
             else:
+                min_edge = get_lowest_edge(contact)
                 min_edge.name = name
                 vector = tuple(np.array(self._direction) * distance)
                 contacts.append(contact.Move(vector))
@@ -142,6 +135,8 @@ class DixiSEEG10Model(ElectrodeModel):
 
 @dataclass
 class DixiSEEG15Parameters:
+    """Electrode geometry parameters."""
+
     # dimensions [mm]
     tip_length: float
     contact_length: float
@@ -178,12 +173,6 @@ class DixiSEEG15Model(ElectrodeModel):
 
     _n_contacts = 15
 
-    def parameter_check(self):
-        # Check to ensure that all parameters are at least 0
-        for param in asdict(self._parameters).values():
-            if param < 0:
-                raise ValueError("Parameter values cannot be less than zero")
-
     def _construct_encapsulation_geometry(
         self, thickness: float
     ) -> netgen.libngpy._NgOCC.TopoDS_Shape:
@@ -229,7 +218,8 @@ class DixiSEEG15Model(ElectrodeModel):
         direction = self._direction
 
         center = tuple(np.array(direction) * radius)
-        # define half space at tip_center to use to construct a hemsiphere as part of the contact tip
+        # define half space at tip_center
+        # to construct a hemsiphere as part of the contact tip
         half_space = netgen.occ.HalfSpace(p=center, n=direction)
         contact_tip = occ.Sphere(c=center, r=radius) * half_space
         h_pt2 = self._parameters.contact_length - radius
@@ -243,17 +233,9 @@ class DixiSEEG15Model(ElectrodeModel):
         for count in range(self._n_contacts):
             name = self._boundaries[f"Contact_{count + 1}"]
             contact.bc(name)
-            min_edge_z_val = float("inf")
-            max_edge_z_val = float("-inf")
-            for edge in contact.edges:
-                if edge.center.z < min_edge_z_val:
-                    min_edge_z_val = edge.center.z
-                    min_edge = edge
-                if edge.center.z > max_edge_z_val:
-                    max_edge_z_val = edge.center.z
-                    max_edge = edge
-                    # Only name edge with the max z value for contact_1
-                max_edge.name = name
+            max_edge = get_highest_edge(contact)
+            max_edge.name = name
+
             # first contact is different from others
             if count == 0:
                 distance = (
@@ -262,6 +244,7 @@ class DixiSEEG15Model(ElectrodeModel):
                 contacts.append(contact)
                 contact = contact_cyl
             else:
+                min_edge = get_lowest_edge(contact)
                 min_edge.name = name
                 vector = tuple(np.array(self._direction) * distance)
                 contacts.append(contact.Move(vector))
