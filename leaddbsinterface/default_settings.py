@@ -3,11 +3,13 @@ def load_default_for_lead(settings):
 
     Parameters
     ----------
-    settings: dict, OSS-DBS settings imported from Lead-DBS
+    settings: dict
+        OSS-DBS settings imported from Lead-DBS
 
     Returns
     -------
     settings: dict
+        OSS-DBS compatible settings
 
     """
     settings["BrainRegion"]["Dimension"]["x[mm]"] = 60
@@ -37,16 +39,15 @@ def load_default_for_lead(settings):
 
     return settings
 
-def initialize_default_settings():
 
-    """Initialize with necessary sub-dictionaries
+def initialize_default_settings():
+    """Initialize with necessary sub-dictionaries.
 
     Returns
     -------
     settings_template: dict
 
     """
-
     settings_template = {
         "ModelSide": 0,  # hardwired
         "BrainRegion": {
@@ -59,33 +60,29 @@ def initialize_default_settings():
                 "Shape": {},
             }
         },
-
-        "Electrodes": [
-            {"EncapsulationLayer":{}}
-        ],
-        "Mesh": {
-            "MeshingHypothesis": {}
-        },
-        "Solver": {}
+        "Electrodes": [{"EncapsulationLayer": {}}],
+        "Mesh": {"MeshingHypothesis": {}},
+        "Solver": {},
     }
 
     return settings_template
 
+
 def update_default_dict(default_settings: dict, custom_settings: dict) -> None:
-    """ Update default settings with custom input
+    """Update default settings with custom input.
 
     Parameters
     ----------
-    default_settings: dict, predefined settings for some parameters
-    custom_settings: dict, provided settings, e.g. from Lead-DBS
+    default_settings: dict
+        predefined settings for some parameters
+    custom_settings: dict
+        provided settings, e.g. from Lead-DBS
 
     Returns
     -------
     updated_settings: dict
 
     """
-
-    #for key in [key for key in default_settings.keys() if key in custom_settings.keys()]:
     for key in custom_settings.keys():
         is_dict = False
 
