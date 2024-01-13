@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 import netgen
 import netgen.occ as occ
@@ -59,6 +59,13 @@ class ElectrodeModel(ABC):
         self._index = 0
 
         pass
+
+    def parameter_check(self):
+        """Check electrode parameters."""
+        # Check to ensure that all parameters are at least 0
+        for param in asdict(self._parameters).values():
+            if param < 0:
+                raise ValueError("Parameter values cannot be less than zero")
 
     @property
     def n_contacts(self) -> int:
