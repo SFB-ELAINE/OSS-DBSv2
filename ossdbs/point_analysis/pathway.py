@@ -30,7 +30,7 @@ class Pathway(PointModel):
 
         name: str
         points: np.ndarray
-        status: int  # 0 - normal, -1 - outside domain, -2 - csf/encap
+        status: int  # 0 - normal, -1 - outside domain/encap, -2 - csf
 
     @dataclass
     class Population:
@@ -244,7 +244,7 @@ class Pathway(PointModel):
                         if inside_csf[idx_axon + idx]:
                             axon.status = -2  # set status -2 for inside csf
                         if inside_encap[idx_axon + idx]:
-                            axon.status = -2  # set status -2 for inside encap
+                            axon.status = -1  # set status -1 for inside encap
                     idx_axon = idx_axon + axon_length
         _logger.info("Marked axons inside CSF and encapsulation layer")
         return
