@@ -41,6 +41,9 @@ class VoxelLattice(PointModel):
         self._shape = shape
         self._header = header
 
+        # TODO is that correct?
+        self._location = None
+
         # Check on dimension condition on shape input
         if np.sum(shape[shape / 2 == 0]) > 0:
             raise Exception("Each dimension of the shape must be an odd number")

@@ -31,13 +31,21 @@ class Lattice(PointModel):
         distance: float,
         direction: tuple,
     ) -> None:
-        self._distance = abs(distance)
+        if distance < 0:
+            raise ValueError("The spacing between points must be positive.")
+        self._distance = distance
+        if len(shape) != 3:
+            raise ValueError("Pass a 3-valued tuple as the lattice shape.")
         self._shape = shape
         self._center = center
         norm = np.linalg.norm(direction)
+        # TODO why can norm be not be there?
         self._direction = tuple(direction / norm) if norm else (0, 0, 1)
         self._location = np.full(shape[0] * shape[1] * shape[2], "")
         self._coordinates = self._initialize_coordinates()
+
+        # default setting
+        self._collapse_vta = False
 
     def _initialize_coordinates(self) -> np.ndarray:
         """Generates coordinates of points.
@@ -83,6 +91,16 @@ class Lattice(PointModel):
             return 0.0, -np.arctan(z_d / y_d)
 
         return -np.arctan(y_d / x_d), -np.arctan(z_d / y_d)
+
+    @property
+    def collapse_vta(self):
+        return self._collapse_vta
+
+    @collapse_vta.setter
+    def collapse_vta(self, value: bool):
+        if not isinstance(value, bool):
+            raise ValueError("Provide a boolean value VTA collapse")
+        self._collapse_vta = value
 
     def save_as_nifti(
         self, scalar_field, filename, binarize=False, activation_threshold=None

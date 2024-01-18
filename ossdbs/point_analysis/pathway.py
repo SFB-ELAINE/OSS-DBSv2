@@ -5,6 +5,8 @@ from typing import List
 import h5py
 import numpy as np
 
+from ossdbs.fem import Mesh
+
 from .lattice import PointModel
 from .time_results import TimeResult
 
@@ -330,3 +332,30 @@ class Pathway(PointModel):
             Activation threshold for VTA estimate
         """
         raise NotImplementedError("Pathway results can not be stored in Nifti format.")
+
+    def prepare_VCM_specific_evaluation(self, mesh: Mesh, conductivity_cf):
+        """Prepare data structure according to mesh.
+
+        Parameters
+        ----------
+        mesh: Mesh
+            Mesh object on which VCM is defined
+
+        Notes
+        -----
+        Mask all points outside domain, filter CSF and
+        encapsulation layer etc.
+
+        Prepares data storage for all frequencies at all points.
+        TODO type hints
+        """
+        grid_pts = self.points_in_mesh(mesh)
+        self._lattice_mask = np.invert(grid_pts.mask)
+        self._lattice = self.filter_for_geometry(grid_pts)
+        self._inside_csf = self.get_points_in_csf(mesh, conductivity_cf)
+        self._inside_encap = self.get_points_in_encapsulation_layer(mesh)
+
+        # mark complete axons
+        self.filter_csf_encap(self.inside_csf, self.inside_encap)
+        # create index for axons
+        self._axon_index = self.create_index(self.lattice)
