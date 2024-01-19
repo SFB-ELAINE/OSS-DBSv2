@@ -324,13 +324,18 @@ class PointModel(ABC):
         frequency_index: int
             Index at which frequency is stored
         """
+        Ex = self.tmp_Ex_freq_domain[frequency_index]
+        Ey = self.tmp_Ey_freq_domain[frequency_index]
+        Ez = self.tmp_Ez_freq_domain[frequency_index]
+        fields = np.column_stack((Ex, Ey, Ez))
+        field_mags = compute_field_magnitude(fields)
         df_field = pd.DataFrame(
             np.concatenate(
                 [
                     self.axon_index,
                     self.lattice,
-                    self.fields,
-                    self.field_mags,
+                    fields,
+                    field_mags,
                     self.inside_csf,
                     self.inside_encap,
                 ],
