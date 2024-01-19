@@ -244,7 +244,7 @@ class VolumeConductor(ABC):
                     timings["VTKExport"].append(time_1 - time_0)
                     time_0 = time_1
                 # continue with frequency-domain exports
-                self._frequency_domain_exports(point_models)
+                self._frequency_domain_exports(point_models, freq_idx)
                 time_1 = time.time()
                 timings["FieldExport"] = time_1 - time_0
                 time_0 = time_1
@@ -802,11 +802,8 @@ class VolumeConductor(ABC):
             add_surface_impedance = not np.isclose(contact.surface_impedance, 0.0)
         return add_surface_impedance
 
-    def _frequency_domain_exports(self, point_models: List):
+    def _frequency_domain_exports(self, point_models: List, export_frequency_index: int):
         """Export solution at desired frequency."""
-        export_frequency_index = int(
-            self._export_frequency / self.signal.base_frequency
-        )
         for point_model in point_models:
             point_model.export_potential_to_csv(
                 self._export_frequency, export_frequency_index
