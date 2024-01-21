@@ -289,7 +289,7 @@ class PointModel(ABC):
                 [
                     self.axon_index,
                     self.lattice,
-                    potentials.reshape((potentials.shape[0], 1)),
+                    potentials.reshape((potentials.shape[0], 1)).real,
                     self.inside_csf,
                     self.inside_encap,
                 ],
@@ -341,7 +341,7 @@ class PointModel(ABC):
                 [
                     self.axon_index,
                     self.lattice,
-                    fields,
+                    fields.real,
                     field_mags,
                     self.inside_csf,
                     self.inside_encap,
@@ -368,7 +368,7 @@ class PointModel(ABC):
         if self.collapse_VTA:
             _logger.info("Collapse VTA by virtually removing the electrode")
             field_on_probed_points = np.concatenate(
-                [self.lattice, fields, field_mags], axis=1, dtype=float
+                [self.lattice, fields.real, field_mags], axis=1, dtype=float
             )
 
             if electrode is None:
@@ -390,7 +390,7 @@ class PointModel(ABC):
                 np.concatenate(
                     [
                         self.axon_index,
-                        field_on_probed_points_collapsed,
+                        field_on_probed_points_collapsed.real,
                         self.inside_csf,
                         self.inside_encap,
                     ],
