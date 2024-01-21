@@ -816,7 +816,10 @@ class VolumeConductor(ABC):
         activation_threshold: float,
     ):
         """Export solution at desired frequency."""
+        export_frequency = self.signal.frequencies[export_frequency_index]
+        _logger.info(f"Exporting results at {export_frequency} Hz.")
         for point_model in point_models:
+            _logger.info(f"Exporting for point model type {type(point_model)}.")
             point_model.export_potential_at_frequency(
                 self._export_frequency, export_frequency_index
             )

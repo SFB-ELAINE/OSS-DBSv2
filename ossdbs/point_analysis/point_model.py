@@ -411,14 +411,10 @@ class PointModel(ABC):
                 ],
             )
             df_collapsed_field.to_csv(
-                os.path.join(self.output_path, "E_field.csv"),
-                index=False,
+                os.path.join(self.output_path, "E_field.csv"), index=False
             )
         else:
-            df_field.to_csv(
-                os.path.join(self.output_path, "E_field.csv"),
-                index=False,
-            )
+            df_field.to_csv(os.path.join(self.output_path, "E_field.csv"), index=False)
 
         # nifti exports
         field_mags_full = np.zeros(self.lattice_mask.shape[0])
