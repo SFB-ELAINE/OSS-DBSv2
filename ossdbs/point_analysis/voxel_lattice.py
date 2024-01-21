@@ -51,6 +51,9 @@ class VoxelLattice(PointModel):
 
         self._coordinates = self._initialize_coordinates()
 
+        # never compute time-domain signal
+        self.time_domain_conversion = False
+
     def _initialize_coordinates(self) -> np.ndarray:
         """Generates grids of points in the MRI voxels.
 

@@ -46,8 +46,8 @@ class Lattice(PointModel):
         self._location = np.full(shape[0] * shape[1] * shape[2], "")
         self._coordinates = self._initialize_coordinates()
 
-        # default setting
-        self._collapse_vta = False
+        # never compute time-domain signal
+        self.time_domain_conversion = False
 
     def _initialize_coordinates(self) -> np.ndarray:
         """Generates coordinates of points.

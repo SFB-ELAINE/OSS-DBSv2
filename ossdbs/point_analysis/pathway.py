@@ -56,7 +56,10 @@ class Pathway(PointModel):
 
     def __init__(self, path) -> None:
         self._path = path
+        # never collapse VTA
         self.collapse_VTA = False
+        # always compute time-domain signal
+        self.time_domain_conversion = True
 
         with h5py.File(self._path, "r") as file:
             populations = [

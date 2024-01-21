@@ -269,6 +269,9 @@ class VolumeConductor(ABC):
         # export time domain solution
         if len(self.signal.frequencies) > 1:
             for point_model_idx, point_model in enumerate(point_models):
+                # skip point models that are not considered in time domain
+                if not point_model.time_domain_conversion:
+                    continue
                 _logger.info("Reconstructing time-domain signal.")
                 timesteps = get_timesteps(
                     self.signal.cutoff_frequency,

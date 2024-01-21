@@ -77,6 +77,7 @@ class TypeChecker:
                 "CollapseVTA": bool,
                 "PointDistance[mm]": (int, float),
                 "Shape": {"x": int, "y": int, "z": int},
+                "TimeDomain": bool,
             },
         },
     }

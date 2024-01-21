@@ -37,6 +37,15 @@ class PointModel(ABC):
         """Point coordinates."""
         return self._coordinates
 
+    @property
+    def time_domain_conversion(self) -> bool:
+        """If time-domain signal shall be computed."""
+        return self._time_domain_conversion
+
+    @time_domain_conversion.setter
+    def time_domain_conversion(self, value: bool):
+        self._time_domain_conversion = value
+
     @abstractmethod
     def _initialize_coordinates(self) -> np.ndarray:
         """Create grid / list of points."""
