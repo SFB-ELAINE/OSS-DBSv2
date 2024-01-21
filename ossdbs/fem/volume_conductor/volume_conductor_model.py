@@ -164,6 +164,7 @@ class VolumeConductor(ABC):
 
         median_index = np.median(frequency_indices)
         self._export_frequency = self.signal.frequencies[int(median_index)]
+        _logger.info(f"Set export frequency to {self._export_frequency}")
 
         self._free_stimulation_variable = np.zeros(
             shape=(len(self.signal.frequencies), len(self.contacts.active)),
