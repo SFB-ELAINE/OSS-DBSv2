@@ -285,6 +285,7 @@ class PointModel(ABC):
                     self.inside_encap,
                 ],
                 axis=1,
+                dtype=float,
             ),
             columns=[
                 "index",
@@ -337,6 +338,7 @@ class PointModel(ABC):
                     self.inside_encap,
                 ],
                 axis=1,
+                dtype=float,
             ),
             columns=[
                 "index",
@@ -357,7 +359,7 @@ class PointModel(ABC):
         if self.collapse_VTA:
             _logger.info("Collapse VTA by virtually removing the electrode")
             field_on_probed_points = np.concatenate(
-                [self.lattice, fields, field_mags], axis=1
+                [self.lattice, fields, field_mags], axis=1, dtype=float
             )
 
             if electrode is None:
@@ -384,6 +386,7 @@ class PointModel(ABC):
                         self.inside_encap,
                     ],
                     axis=1,
+                    dtype=float,
                 ),
                 columns=[
                     "index",
