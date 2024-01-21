@@ -126,8 +126,8 @@ class VolumeConductor(ABC):
             If True, the impedance will be computed at each frequency.
         export_vtk: bool
             VTK export for visualization in ParaView
-        point_model: PointModel
-            PointModel to extract solution at points for VTA / PAM
+        point_models: List[PointModel]
+            List of PointModel to extract solution for VTA / PAM
         activation_threshold: float
             If VTA is estimated by threshold, provide it here.
 
@@ -137,6 +137,9 @@ class VolumeConductor(ABC):
         The volume conductor model is run at all frequencies
         and the time-domain signal is computed (if relevant).
         """
+        if point_models is None:
+            # use empty list
+            point_models = []
         timings = self.setup_timings_dict(export_vtk, point_models)
 
         dtype = float
@@ -244,7 +247,9 @@ class VolumeConductor(ABC):
                     timings["VTKExport"].append(time_1 - time_0)
                     time_0 = time_1
                 # continue with frequency-domain exports
-                self._frequency_domain_exports(point_models, freq_idx)
+                self._frequency_domain_exports(
+                    point_models, freq_idx, activation_threshold
+                )
                 time_1 = time.time()
                 timings["FieldExport"] = time_1 - time_0
                 time_0 = time_1
@@ -263,7 +268,7 @@ class VolumeConductor(ABC):
 
         # export time domain solution
         if len(self.signal.frequencies) > 1:
-            for _point_model_idx, point_model in enumerate(point_models):
+            for point_model_idx, point_model in enumerate(point_models):
                 _logger.info("Reconstructing time-domain signal.")
                 timesteps = get_timesteps(
                     self.signal.cutoff_frequency,
@@ -282,7 +287,7 @@ class VolumeConductor(ABC):
                 )
 
                 time_1 = time.time()
-                timings["ReconstructTimeSignals_PointModel_{point_model_idx}"] = (
+                timings[f"ReconstructTimeSignals_PointModel_{point_model_idx}"] = (
                     time_1 - time_0
                 )
                 time_0 = time_1
@@ -711,13 +716,12 @@ class VolumeConductor(ABC):
         """Setup dictionary to save execution times estimate."""
         timings = {}
         timings["ComputeSolution"] = []
+        # look at entire copying process only
+        timings["CopyValues"] = []
         if export_vtk:
             timings["VTKExport"] = []
-        if point_models is not None:
-            # look at entire copying process only
-            timings["CopyValues"] = []
-            for i in range(len(point_models)):
-                timings[f"ReconstructTimeSignals_PointModel_{i}"] = []
+        for point_model_idx, _ in enumerate(point_models):
+            timings[f"ReconstructTimeSignals_PointModel_{point_model_idx}"] = 0.0
         return timings
 
     def _store_solution_at_contacts(
@@ -802,23 +806,23 @@ class VolumeConductor(ABC):
             add_surface_impedance = not np.isclose(contact.surface_impedance, 0.0)
         return add_surface_impedance
 
-    def _frequency_domain_exports(self, point_models: List, export_frequency_index: int):
+    def _frequency_domain_exports(
+        self,
+        point_models: List,
+        export_frequency_index: int,
+        activation_threshold: float,
+    ):
         """Export solution at desired frequency."""
         for point_model in point_models:
-            point_model.export_potential_to_csv(
+            point_model.export_potential_at_frequency(
                 self._export_frequency, export_frequency_index
             )
-            point_model.export_field_to_csv(
-                self._export_frequency, export_frequency_index
+            point_model.export_field_at_frequency(
+                self._export_frequency,
+                export_frequency_index,
+                electrode=self.model_geometry.electrodes[0],
+                activation_threshold=activation_threshold,
             )
-
-            # TODO only if possible, write wrapper on point model side
-            """
-            if export_nifti:
-                self.export_nifti_files(
-                    field_mags, point_model, activation_threshold, lattice_mask
-            )
-            """
 
     def _process_frequency_domain_solution(
         self, band_indices: Union[List, np.ndarray], point_models: PointModel

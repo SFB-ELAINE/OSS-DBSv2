@@ -40,6 +40,7 @@ class VoxelLattice(PointModel):
         self._affine = affine
         self._shape = shape
         self._header = header
+        self.collapse_VTA = False
 
         # TODO is that correct?
         self._location = None

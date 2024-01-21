@@ -30,6 +30,7 @@ class Lattice(PointModel):
         center: tuple,
         distance: float,
         direction: tuple,
+        collapse_vta: bool = False,
     ) -> None:
         if distance < 0:
             raise ValueError("The spacing between points must be positive.")
@@ -37,6 +38,7 @@ class Lattice(PointModel):
         if len(shape) != 3:
             raise ValueError("Pass a 3-valued tuple as the lattice shape.")
         self._shape = shape
+        self.collapse_VTA = collapse_vta
         self._center = center
         norm = np.linalg.norm(direction)
         # TODO why can norm be not be there?
@@ -91,16 +93,6 @@ class Lattice(PointModel):
             return 0.0, -np.arctan(z_d / y_d)
 
         return -np.arctan(y_d / x_d), -np.arctan(z_d / y_d)
-
-    @property
-    def collapse_vta(self):
-        return self._collapse_vta
-
-    @collapse_vta.setter
-    def collapse_vta(self, value: bool):
-        if not isinstance(value, bool):
-            raise ValueError("Provide a boolean value VTA collapse")
-        self._collapse_vta = value
 
     def save_as_nifti(
         self, scalar_field, filename, binarize=False, activation_threshold=None

@@ -1,11 +1,15 @@
 import logging
+import os
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 import h5py
 import numpy as np
+import pandas as pd
 
 from ossdbs.fem import Mesh
+from ossdbs.utils.collapse_vta import get_collapsed_VTA
+from ossdbs.utils.field_computation import compute_field_magnitude
 
 from .lattice import PointModel
 from .time_results import TimeResult
@@ -52,6 +56,8 @@ class Pathway(PointModel):
 
     def __init__(self, path) -> None:
         self._path = path
+        self.collapse_VTA = False
+
         with h5py.File(self._path, "r") as file:
             populations = [
                 self.Population(group, self._create_axons(file, group))
@@ -340,6 +346,8 @@ class Pathway(PointModel):
         ----------
         mesh: Mesh
             Mesh object on which VCM is defined
+        conductivity_cf: ConductivityCF
+            Conductivity function that holds material info
 
         Notes
         -----
@@ -359,3 +367,115 @@ class Pathway(PointModel):
         self.filter_csf_encap(self.inside_csf, self.inside_encap)
         # create index for axons
         self._axon_index = self.create_index(self.lattice)
+
+    def export_field_at_frequency(
+        self,
+        frequency: float,
+        frequency_index: int,
+        electrode=None,
+        activation_threshold: Optional[float] = None,
+    ):
+        """Write field values to CSV.
+
+        Parameters
+        ----------
+        frequency: float
+            Frequency of exported solution
+        frequency_index: int
+            Index at which frequency is stored
+        activation_threshold: float
+            Threshold to define VTA
+        electrode: ElectrodeModel
+            electrode model that holds geometry information
+
+
+        Notes
+        -----
+        No Nifti file is exported for a Pathway model.
+        """
+        Ex = self.tmp_Ex_freq_domain[frequency_index]
+        Ey = self.tmp_Ey_freq_domain[frequency_index]
+        Ez = self.tmp_Ez_freq_domain[frequency_index]
+        fields = np.column_stack((Ex, Ey, Ez))
+        field_mags = compute_field_magnitude(fields)
+        df_field = pd.DataFrame(
+            np.concatenate(
+                [
+                    self.axon_index,
+                    self.lattice,
+                    fields,
+                    field_mags,
+                    self.inside_csf,
+                    self.inside_encap,
+                ],
+                axis=1,
+            ),
+            columns=[
+                "index",
+                "x-pt",
+                "y-pt",
+                "z-pt",
+                "x-field",
+                "y-field",
+                "z-field",
+                "magnitude",
+                "inside_csf",
+                "inside_encap",
+            ],
+        )
+        # save frequency
+        df_field["frequency"] = frequency
+
+        if self.collapse_VTA:
+            _logger.info("Collapse VTA by virtually removing the electrode")
+            field_on_probed_points = np.concatenate(
+                [self.lattice, fields, field_mags], axis=1
+            )
+
+            if electrode is None:
+                raise ValueError(
+                    "Electrode for exporting the collapsed VTA is missing."
+                )
+            implantation_coordinate = electrode._position
+            lead_direction = electrode._direction
+            lead_diam = electrode._parameters.lead_diameter
+
+            field_on_probed_points_collapsed = get_collapsed_VTA(
+                field_on_probed_points,
+                implantation_coordinate,
+                lead_direction,
+                lead_diam,
+            )
+
+            df_collapsed_field = pd.DataFrame(
+                np.concatenate(
+                    [
+                        self.axon_index,
+                        field_on_probed_points_collapsed,
+                        self.inside_csf,
+                        self.inside_encap,
+                    ],
+                    axis=1,
+                ),
+                columns=[
+                    "index",
+                    "x-pt",
+                    "y-pt",
+                    "z-pt",
+                    "x-field",
+                    "y-field",
+                    "z-field",
+                    "magnitude",
+                    "inside_csf",
+                    "inside_encap",
+                ],
+            )
+            df_collapsed_field.to_csv(
+                os.path.join(self.output_path, "E_field.csv"),
+                index=False,
+            )
+        else:
+            df_field.to_csv(
+                os.path.join(self.output_path, "E_field.csv"),
+                index=False,
+            )

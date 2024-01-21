@@ -21,6 +21,18 @@ class PointModel(ABC):
     """Class to support evaluation of VCM at points."""
 
     @property
+    def collapse_VTA(self) -> bool:
+        """Remove electrode from VTA."""
+        return self._collapse_VTA
+
+    @collapse_VTA.setter
+    def collapse_VTA(self, value: bool):
+        """Remove electrode from VTA."""
+        if not isinstance(value, bool):
+            raise ValueError("Provide a boolean value for VTA collapse")
+        self._collapse_VTA = value
+
+    @property
     def coordinates(self) -> np.ndarray:
         """Point coordinates."""
         return self._coordinates
@@ -164,6 +176,8 @@ class PointModel(ABC):
         ----------
         mesh: Mesh
             Mesh object on which VCM is defined
+        conductivity_cf: ConductivityCF
+            Conductivity function that hold material info
 
         Notes
         -----
@@ -225,6 +239,8 @@ class PointModel(ABC):
         ----------
         mesh: Mesh
             Mesh object on which VCM is defined
+        conductivity_cf: ConductivityCF
+            Conductivity function that hold material info
 
         Notes
         -----
@@ -239,46 +255,16 @@ class PointModel(ABC):
 
     @property
     def output_path(self):
+        """Path where to save results."""
         return self._output_path
 
     @output_path.setter
     def output_path(self, value):
         self._output_path = value
 
-    def export_nifti_files(
-        self,
-        field_mags: np.ndarray,
-        activation_threshold: float,
+    def export_potential_at_frequency(
+        self, frequency: float, frequency_index: float
     ) -> None:
-        """Export field to Nifti format.
-
-        Parameters
-        ----------
-        field_mags: np.ndarray
-            Field magnitudes to export
-        point_model: oss_dbs point_model
-            Contains the points on which to evaluate the solution
-        activation_threshold: float
-            Threshold to define VTA
-        lattice_mask: np.ndarray
-            Mask points outside domain
-
-        activation_threshold: float
-        """
-        field_mags_full = np.zeros(self.lattice_mask.shape[0])
-        field_mags_full[self.lattice_mask[:, 0]] = np.real(field_mags[:, 0]) * 1000.0
-
-        self.save_as_nifti(
-            field_mags_full, os.path.join(self.output_path, "E_field_solution.nii")
-        )
-        self.save_as_nifti(
-            field_mags_full,
-            os.path.join(self.output_path, "VTA_solution.nii"),
-            binarize=True,
-            activation_threshold=activation_threshold,
-        )
-
-    def export_potential_to_csv(self, frequency: float, frequency_index: float) -> None:
         """Export potential at frequency to CSV.
 
         Parameters
@@ -314,8 +300,14 @@ class PointModel(ABC):
         df_pot["frequency"] = frequency
         df_pot.to_csv(os.path.join(self.output_path, "oss_potentials.csv"), index=False)
 
-    def export_field_to_csv(self, frequency: float, frequency_index: int):
-        """Write field values to CSV.
+    def export_field_at_frequency(
+        self,
+        frequency: float,
+        frequency_index: int,
+        electrode=None,
+        activation_threshold: Optional[float] = None,
+    ):
+        """Write field values to CSV and Nifti (if defined).
 
         Parameters
         ----------
@@ -323,6 +315,11 @@ class PointModel(ABC):
             Frequency of exported solution
         frequency_index: int
             Index at which frequency is stored
+        activation_threshold: float
+            Threshold to define VTA
+        electrode:
+            Electrode object with geometry details
+
         """
         Ex = self.tmp_Ex_freq_domain[frequency_index]
         Ey = self.tmp_Ey_freq_domain[frequency_index]
@@ -360,10 +357,13 @@ class PointModel(ABC):
         if self.collapse_VTA:
             _logger.info("Collapse VTA by virtually removing the electrode")
             field_on_probed_points = np.concatenate(
-                [self.lattice, self.fields, self.field_mags], axis=1
+                [self.lattice, fields, field_mags], axis=1
             )
 
-            electrode = self.model_geometry.electrodes[0]
+            if electrode is None:
+                raise ValueError(
+                    "Electrode for exporting the collapsed VTA is missing."
+                )
             implantation_coordinate = electrode._position
             lead_direction = electrode._direction
             lead_diam = electrode._parameters.lead_diameter
@@ -407,6 +407,20 @@ class PointModel(ABC):
                 os.path.join(self.output_path, "E_field.csv"),
                 index=False,
             )
+
+        # nifti exports
+        field_mags_full = np.zeros(self.lattice_mask.shape[0])
+        field_mags_full[self.lattice_mask[:, 0]] = np.real(field_mags[:, 0]) * 1000.0
+
+        self.save_as_nifti(
+            field_mags_full, os.path.join(self.output_path, "E_field_solution.nii")
+        )
+        self.save_as_nifti(
+            field_mags_full,
+            os.path.join(self.output_path, "VTA_solution.nii"),
+            binarize=True,
+            activation_threshold=activation_threshold,
+        )
 
     def create_time_result(
         self,
