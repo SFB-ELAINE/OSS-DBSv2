@@ -162,8 +162,8 @@ class VolumeConductor(ABC):
         else:
             frequency_indices = np.arange(len(self.signal.frequencies))
 
-        median_index = np.median(frequency_indices)
-        self._export_frequency = self.signal.frequencies[int(median_index)]
+        middle_frequency_index = int(len(frequency_indices) / 2)
+        self._export_frequency = self.signal.frequencies[middle_frequency_index]
         _logger.info(f"Set export frequency to {self._export_frequency}")
 
         self._free_stimulation_variable = np.zeros(
