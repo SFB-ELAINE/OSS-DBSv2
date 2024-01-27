@@ -35,7 +35,7 @@ class Settings:
     ENCAPSULATION_SETTING = {
         "Thickness[mm]": 0.0,
         "Material": "Gray matter",
-        "DielectricModel": "ColeCole3",
+        "DielectricModel": "ColeCole4",
         "DielectricParameters": None,
         "MaxMeshSize": 1e6,
     }
@@ -49,7 +49,7 @@ class Settings:
             "DiffusionTensorActive": False,
             "DTIPath": "",
         },
-        "DielectricModel": {"Type": "ColeCole3", "CustomParameters": None},
+        "DielectricModel": {"Type": "ColeCole4", "CustomParameters": None},
         "Mesh": {
             "LoadMesh": False,
             "LoadPath": "",
