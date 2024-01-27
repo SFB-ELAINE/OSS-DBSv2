@@ -18,7 +18,8 @@ settings = {"Electrodes":
                 {"Thickness[mm]": 0.1,
                  }
               },
-             ]
+             ],
+             "ExportElectrode": False
             }
 
 electrodes = ossdbs.generate_electrodes(settings)
@@ -27,7 +28,7 @@ vercise = electrodes[0]
 encap = vercise.encapsulation_geometry(vercise_settings["EncapsulationLayer"]["Thickness[mm]"])
 occgeo = occ.OCCGeometry(occ.Glue([vercise.geometry, encap]))
 with TaskManager():
-    mesh = Mesh(occgeo.GenerateMesh())
+    mesh = Mesh(occgeo.GenerateMesh()).Curve(2)
 Draw(mesh)
 print(mesh.GetBoundaries())
 print(mesh.GetMaterials())
