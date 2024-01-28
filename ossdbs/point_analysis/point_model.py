@@ -7,12 +7,15 @@ import h5py
 import ngsolve
 import numpy as np
 import pandas as pd
+from scipy.fft import ifft
 
 from ossdbs.fem import Mesh
 from ossdbs.point_analysis.time_results import TimeResult
-from ossdbs.stimulation_signals import reconstruct_time_signals
 from ossdbs.utils.collapse_vta import get_collapsed_VTA
-from ossdbs.utils.field_computation import compute_field_magnitude
+from ossdbs.utils.field_computation import (
+    compute_field_magnitude,
+    compute_field_magnitude_from_components,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -144,13 +147,13 @@ class PointModel(ABC):
             "Electric field magnitude[Vm^(-1)]", data=data.electric_field_magnitude
         )
         file.create_dataset(
-            "Electric field vector x[Vm^(-1)]", data=data.electric_field_vector[0]
+            "Electric field vector x[Vm^(-1)]", data=data.electric_field_vector_x
         )
         file.create_dataset(
-            "Electric field vector y[Vm^(-1)]", data=data.electric_field_vector[1]
+            "Electric field vector y[Vm^(-1)]", data=data.electric_field_vector_y
         )
         file.create_dataset(
-            "Electric field vector z[Vm^(-1)]", data=data.electric_field_vector[2]
+            "Electric field vector z[Vm^(-1)]", data=data.electric_field_vector_z
         )
 
     @property
@@ -205,7 +208,7 @@ class PointModel(ABC):
         self._inside_csf = self.get_points_in_csf(mesh, conductivity_cf)
         self._inside_encap = self.get_points_in_encapsulation_layer(mesh)
 
-    def prepare_frequency_domain_data_structure(self, n_frequencies: int):
+    def prepare_frequency_domain_data_structure(self, signal_length: int) -> None:
         """Allocate arrays that hold frequency domain data.
 
         Parameters
@@ -214,17 +217,56 @@ class PointModel(ABC):
             Number of frequencies of VCM
         """
         self.tmp_potential_freq_domain = np.zeros(
-            shape=(n_frequencies, len(self.lattice)), dtype=complex
+            shape=(len(self.lattice), signal_length), dtype=complex
         )
         self.tmp_Ex_freq_domain = np.zeros(
-            shape=(n_frequencies, len(self.lattice)), dtype=complex
+            shape=(len(self.lattice), signal_length), dtype=complex
         )
         self.tmp_Ey_freq_domain = np.zeros(
-            shape=(n_frequencies, len(self.lattice)), dtype=complex
+            shape=(len(self.lattice), signal_length), dtype=complex
         )
         self.tmp_Ez_freq_domain = np.zeros(
-            shape=(n_frequencies, len(self.lattice)), dtype=complex
+            shape=(len(self.lattice), signal_length), dtype=complex
         )
+
+    def copy_frequency_domain_solution_from_vcm(
+        self, freq_idx: int, potentials: np.ndarray, fields: np.ndarray
+    ) -> None:
+        """Copy solution from volume conductor model."""
+        signal_length = self.tmp_potential_freq_domain.shape[1]
+
+        if signal_length % 2 == 0:
+            # For even signals, highest frequency is not in positive frequencies
+            if freq_idx > signal_length / 2 - 1:
+                # copy potentials and fields
+                self.tmp_potential_freq_domain[:, freq_idx] = np.conjugate(
+                    potentials[:, 0]
+                )
+                self.tmp_Ex_freq_domain[:, freq_idx] = np.conjugate(fields[:, 0])
+                self.tmp_Ey_freq_domain[:, freq_idx] = np.conjugate(fields[:, 1])
+                self.tmp_Ez_freq_domain[:, freq_idx] = np.conjugate(fields[:, 2])
+                return
+
+        # copy potentials and fields
+        self.tmp_potential_freq_domain[:, freq_idx] = potentials[:, 0]
+        self.tmp_Ex_freq_domain[:, freq_idx] = fields[:, 0]
+        self.tmp_Ey_freq_domain[:, freq_idx] = fields[:, 1]
+        self.tmp_Ez_freq_domain[:, freq_idx] = fields[:, 2]
+
+        # if DC, there is no negative frequency
+        if freq_idx == 0:
+            return
+
+        # get the negative frequency index
+        negative_freq_idx = signal_length - freq_idx
+
+        # Append the reverted signal without the DC frequency
+        self.tmp_potential_freq_domain[:, negative_freq_idx] = np.conjugate(
+            potentials[:, 0]
+        )
+        self.tmp_Ex_freq_domain[:, negative_freq_idx] = np.conjugate(fields[:, 0])
+        self.tmp_Ey_freq_domain[:, negative_freq_idx] = np.conjugate(fields[:, 1])
+        self.tmp_Ez_freq_domain[:, negative_freq_idx] = np.conjugate(fields[:, 2])
 
     def get_points_in_encapsulation_layer(self, mesh: Mesh) -> np.ndarray:
         """Return mask for points in encapsulation layer.
@@ -331,17 +373,18 @@ class PointModel(ABC):
             Electrode object with geometry details
 
         """
-        Ex = self.tmp_Ex_freq_domain[frequency_index]
-        Ey = self.tmp_Ey_freq_domain[frequency_index]
-        Ez = self.tmp_Ez_freq_domain[frequency_index]
-        fields = np.column_stack((Ex, Ey, Ez))
-        field_mags = compute_field_magnitude(fields)
+        Ex = self.tmp_Ex_freq_domain[:, frequency_index]
+        Ey = self.tmp_Ey_freq_domain[:, frequency_index]
+        Ez = self.tmp_Ez_freq_domain[:, frequency_index]
+        field_mags = compute_field_magnitude(Ex, Ey, Ez)
         df_field = pd.DataFrame(
             np.concatenate(
                 [
                     self.axon_index,
                     self.lattice,
-                    fields.real,
+                    Ex.real,
+                    Ey.real,
+                    Ez.real,
                     field_mags,
                     self.inside_csf,
                     self.inside_encap,
@@ -368,7 +411,9 @@ class PointModel(ABC):
         if self.collapse_VTA:
             _logger.info("Collapse VTA by virtually removing the electrode")
             field_on_probed_points = np.concatenate(
-                [self.lattice, fields.real, field_mags], axis=1, dtype=float
+                [self.lattice, Ex.real, Ey.real, Ez.real, field_mags],
+                axis=1,
+                dtype=float,
             )
 
             if electrode is None:
@@ -434,7 +479,9 @@ class PointModel(ABC):
         self,
         timesteps: np.ndarray,
         potential_in_time,
-        field_in_time,
+        Ex_in_time,
+        Ey_in_time,
+        Ez_in_time,
     ) -> TimeResult:
         """Prepare time result and save it to file.
 
@@ -442,12 +489,21 @@ class PointModel(ABC):
         -----
         TODO rethink structure for out-of-core processing.
         """
+        print("Create time results")
+        print(potential_in_time.shape)
+        print(Ex_in_time.shape)
+        print(Ey_in_time.shape)
+        print(Ez_in_time.shape)
         time_result = TimeResult(
             time_steps=timesteps,
             points=self.lattice,
             potential=potential_in_time,
-            electric_field_vector=field_in_time,
-            electric_field_magnitude=compute_field_magnitude(field_in_time),
+            electric_field_vector_x=Ex_in_time,
+            electric_field_vector_y=Ey_in_time,
+            electric_field_vector_z=Ez_in_time,
+            electric_field_magnitude=compute_field_magnitude_from_components(
+                Ex_in_time, Ey_in_time, Ez_in_time
+            ),
             inside_csf=self.inside_csf,
             inside_encap=self.inside_encap,
         )
@@ -457,16 +513,11 @@ class PointModel(ABC):
     def compute_solutions_in_time_domain(
         self, signal_length: int
     ) -> Tuple[np.ndarray, np.ndarray]:
-        """Compute time-domain  solution for all proerties."""
-        potential_in_time = reconstruct_time_signals(
-            self.tmp_potential_freq_domain, signal_length
-        )
-        potential_in_time = np.swapaxes(potential_in_time, 0, 1)
-        Ex_in_time = reconstruct_time_signals(self.tmp_Ex_freq_domain, signal_length)
-        Ex_in_time = np.swapaxes(Ex_in_time, 0, 1)
-        Ey_in_time = reconstruct_time_signals(self.tmp_Ey_freq_domain, signal_length)
-        Ey_in_time = np.swapaxes(Ey_in_time, 0, 1)
-        Ez_in_time = reconstruct_time_signals(self.tmp_Ez_freq_domain, signal_length)
-        Ez_in_time = np.swapaxes(Ez_in_time, 0, 1)
-        field_in_time = np.column_stack((Ex_in_time, Ey_in_time, Ez_in_time))
-        return potential_in_time, field_in_time
+        """Compute time-domain  solution for all properties."""
+        potential_in_time = ifft(
+            self.tmp_potential_freq_domain, axis=1, workers=-1
+        ).real
+        Ex_in_time = ifft(self.tmp_Ex_freq_domain, axis=1, workers=-1).real
+        Ey_in_time = ifft(self.tmp_Ey_freq_domain, axis=1, workers=-1).real
+        Ez_in_time = ifft(self.tmp_Ez_freq_domain, axis=1, workers=-1).real
+        return potential_in_time, Ex_in_time, Ey_in_time, Ez_in_time

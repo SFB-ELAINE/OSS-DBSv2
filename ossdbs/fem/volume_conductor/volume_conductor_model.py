@@ -184,7 +184,7 @@ class VolumeConductor(ABC):
             point_model.output_path = self.output_path
             point_model.prepare_VCM_specific_evaluation(self.mesh, self.conductivity_cf)
             point_model.prepare_frequency_domain_data_structure(
-                len(self.signal.frequencies)
+                self.signal.signal_length
             )
 
         for freq_idx in frequency_indices:
@@ -282,12 +282,14 @@ class VolumeConductor(ABC):
 
                 (
                     potential_in_time,
-                    field_in_time,
+                    Ex_in_time,
+                    Ey_in_time,
+                    Ez_in_time,
                 ) = point_model.compute_solutions_in_time_domain(
                     self.signal.signal_length
                 )
                 point_model.create_time_result(
-                    timesteps, potential_in_time, field_in_time
+                    timesteps, potential_in_time, Ex_in_time, Ey_in_time, Ez_in_time
                 )
 
                 time_1 = time.time()
@@ -757,13 +759,16 @@ class VolumeConductor(ABC):
     def _copy_frequency_domain_solution(
         self,
         band_indices: Union[List, np.ndarray],
-        tmp_array: np.ndarray,
-        values: np.ndarray,
+        point_model: PointModel,
+        potentials: np.ndarray,
+        fields: np.ndarray,
     ) -> None:
         """Copy values to time-domain vector."""
         for freq_idx in band_indices:
             scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
-            tmp_array[freq_idx, :] = scale_factor * values
+            point_model.copy_frequency_domain_solution_from_vcm(
+                freq_idx, scale_factor * potentials, scale_factor * fields
+            )
 
     def _has_sigma_changed(self, freq_idx, threshold=0.01) -> bool:
         """Check if conductivity has changed."""
@@ -841,14 +846,5 @@ class VolumeConductor(ABC):
 
             # copy values for time-domain analysis
             self._copy_frequency_domain_solution(
-                band_indices, point_model.tmp_potential_freq_domain, potentials[:, 0]
-            )
-            self._copy_frequency_domain_solution(
-                band_indices, point_model.tmp_Ex_freq_domain, fields[:, 0]
-            )
-            self._copy_frequency_domain_solution(
-                band_indices, point_model.tmp_Ey_freq_domain, fields[:, 1]
-            )
-            self._copy_frequency_domain_solution(
-                band_indices, point_model.tmp_Ez_freq_domain, fields[:, 2]
+                band_indices, point_model, potentials, fields
             )
