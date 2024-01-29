@@ -58,8 +58,6 @@ class ElectrodeModel(ABC):
         self._encapsulation_thickness = 0.0
         self._index = 0
 
-        pass
-
     @property
     def n_contacts(self) -> int:
         """Returns number of contacts."""
@@ -67,7 +65,7 @@ class ElectrodeModel(ABC):
 
     @property
     def boundaries(self) -> dict:
-        "Returns names of boundaries."
+        """Returns names of boundaries."""
         return self._boundaries
 
     @property
@@ -82,6 +80,7 @@ class ElectrodeModel(ABC):
 
     @property
     def encapsulation_thickness(self) -> float:
+        """Thickness of encapsulation layer."""
         return self._encapsulation_thickness
 
     @encapsulation_thickness.setter
@@ -113,6 +112,7 @@ class ElectrodeModel(ABC):
 
     @abstractmethod
     def parameter_check(self):
+        """Check parameters."""
         pass
 
     @abstractmethod
@@ -130,7 +130,7 @@ class ElectrodeModel(ABC):
 
         Parameters
         ----------
-        contact_names : dict
+        boundaries: dict
             {'Body': 'body_name',
              'Contact_1': 'contact_name',
              'Contact_2': ...}
@@ -156,6 +156,7 @@ class ElectrodeModel(ABC):
 
     @property
     def index(self) -> int:
+        """Electrode index."""
         return self._index
 
     @index.setter

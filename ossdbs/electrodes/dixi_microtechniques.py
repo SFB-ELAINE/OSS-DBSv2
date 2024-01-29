@@ -10,6 +10,8 @@ from .electrode_model_template import ElectrodeModel
 
 @dataclass
 class DixiSEEGParameters:
+    """Parameters for Dixi electrodes."""
+
     # dimensions [mm]
     tip_length: float
     contact_length: float
@@ -45,15 +47,31 @@ class DixiSEEGModel(ElectrodeModel):
         Position vector (x,y,z) of electrode tip.
     """
 
-    _n_contacts = 18  # TODO set to actual value from each dataclass
-    # def __init__(self, parameters: DixiSEEGParameters, rotation: float, direction: tuple, position: tuple):
-    #    self._n_contacts = parameters.n_contacts
+    _n_contacts = None  # set to actual value for each electrode
+
+    def __init__(
+        self,
+        parameters: DixiSEEGParameters,
+        rotation: float = 0,
+        direction: tuple = (0, 0, 1),
+        position: tuple = (0, 0, 0),
+    ) -> None:
+        # set number of contacts
+        self._n_contacts = parameters.n_contacts
+        # set all other parameters
+        super().__init__(parameters, rotation, direction, position)
 
     def parameter_check(self):
-        # Check to ensure that all parameters are at least 0
+        """Check parameters."""
+        # to ensure that all parameters are at least 0
         for param in asdict(self._parameters).values():
             if param < 0:
                 raise ValueError("Parameter values cannot be less than zero")
+        # check that number of contacts has been set correctly
+        if not isinstance(self.n_contacts, int):
+            raise ValueError(
+                "The number of contacts has to be supplied as an integer value."
+            )
 
     def _construct_encapsulation_geometry(
         self, thickness: float
@@ -100,7 +118,8 @@ class DixiSEEGModel(ElectrodeModel):
         direction = self._direction
 
         center = tuple(np.array(direction) * radius)
-        # define half space at tip_center to use to construct a hemsiphere as part of the contact tip
+        # define half space at tip_center
+        # to construct a hemisphere as part of the contact tip
         half_space = netgen.occ.HalfSpace(p=center, n=direction)
         contact_tip = occ.Sphere(c=center, r=radius) * half_space
         h_pt2 = self._parameters.contact_length - radius
