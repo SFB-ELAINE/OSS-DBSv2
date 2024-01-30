@@ -483,7 +483,7 @@ class LeadSettings:
         """
         # Convert the electrode name to OSS-DBS format
         electrode_name = self.get_elec_type()
-        # Cateisa not available is OSS-DBS, SNEX not available in Lead
+        # Cartesia X not available is OSS-DBS, SNEX not available in Lead
         electrode_names = {
             "Abbott Directed 6172 (short)": "AbbottStJudeDirected6172",
             "St. Jude Directed 6180": "AbbottStJudeDirected6172",
@@ -507,8 +507,12 @@ class LeadSettings:
             "PINS Medical L303": "PINSMedicalL303",
             "NeuroPace DL-344-3.5": "NeuroPaceDL344_3_5",
             "NeuroPace DL-344-10": "NeuroPaceDL344_10",
+            "DIXI D08-05AM": "DixiSEEG5",
+            "DIXI D08-08AM": "DixiSEEG8",
             "DIXI D08-10AM": "DixiSEEG10",
-            "DIXI D08-15AM": "DixiSEEG15"
+            "DIXI D08-12AM": "DixiSEEG12",
+            "DIXI D08-15AM": "DixiSEEG15",
+            "DIXI D08-18AM": "DixiSEEG18"
         }
 
         for lead in electrode_names.keys():
