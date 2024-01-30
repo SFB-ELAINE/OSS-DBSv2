@@ -30,6 +30,7 @@ class Lattice(PointModel):
         center: tuple,
         distance: float,
         direction: tuple,
+        index: int,
         collapse_vta: bool = False,
     ) -> None:
         if distance < 0:
@@ -45,6 +46,10 @@ class Lattice(PointModel):
         self._direction = tuple(direction / norm) if norm else (0, 0, 1)
         self._location = np.full(shape[0] * shape[1] * shape[2], "")
         self._coordinates = self._initialize_coordinates()
+
+        # identifiers
+        self.index = index
+        self._name = "Lattice"
 
         # never compute time-domain signal
         self.time_domain_conversion = False

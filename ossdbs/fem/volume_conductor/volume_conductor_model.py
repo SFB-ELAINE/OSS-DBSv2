@@ -117,6 +117,7 @@ class VolumeConductor(ABC):
         export_vtk: bool = False,
         point_models: Optional[List[PointModel]] = None,
         activation_threshold: Optional[float] = None,
+        out_of_core: bool = False,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -130,6 +131,8 @@ class VolumeConductor(ABC):
             List of PointModel to extract solution for VTA / PAM
         activation_threshold: float
             If VTA is estimated by threshold, provide it here.
+        out_of_core: bool
+            Indicate whether point model shall be done out-of-core
 
         Notes
         -----
@@ -184,7 +187,7 @@ class VolumeConductor(ABC):
             point_model.output_path = self.output_path
             point_model.prepare_VCM_specific_evaluation(self.mesh, self.conductivity_cf)
             point_model.prepare_frequency_domain_data_structure(
-                self.signal.signal_length
+                self.signal.signal_length, out_of_core
             )
 
         for freq_idx in frequency_indices:
@@ -297,6 +300,10 @@ class VolumeConductor(ABC):
                     time_1 - time_0
                 )
                 time_0 = time_1
+
+        # close output-file
+        for point_model in point_models:
+            point_model.close_output_file()
 
         if len(self.signal.frequencies) > 1:
             self.export_solution_at_contacts()

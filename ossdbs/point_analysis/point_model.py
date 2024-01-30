@@ -3,6 +3,7 @@ import os
 from abc import ABC, abstractmethod
 from typing import Optional, Tuple
 
+import dask.array as da
 import h5py
 import ngsolve
 import numpy as np
@@ -22,6 +23,20 @@ _logger = logging.getLogger(__name__)
 
 class PointModel(ABC):
     """Class to support evaluation of VCM at points."""
+
+    @property
+    def name(self) -> str:
+        """Name to distinguish model type."""
+        return self._name
+
+    @property
+    def index(self) -> str:
+        """Index to numerate multiple point models."""
+        return self._index
+
+    @index.setter
+    def index(self, value: int) -> None:
+        self._index = value
 
     @property
     def collapse_VTA(self) -> bool:
@@ -143,18 +158,24 @@ class PointModel(ABC):
         file.create_dataset("InsideCSF", data=data.inside_csf)
         file.create_dataset("InsideEncap", data=data.inside_encap)
         file.create_dataset("Potential[V]", data=data.potential)
-        file.create_dataset(
-            "Electric field magnitude[Vm^(-1)]", data=data.electric_field_magnitude
-        )
-        file.create_dataset(
-            "Electric field vector x[Vm^(-1)]", data=data.electric_field_vector_x
-        )
-        file.create_dataset(
-            "Electric field vector y[Vm^(-1)]", data=data.electric_field_vector_y
-        )
-        file.create_dataset(
-            "Electric field vector z[Vm^(-1)]", data=data.electric_field_vector_z
-        )
+        if data.electric_field_magnitude is not None:
+            file.create_dataset(
+                "Electric field magnitude[Vm^(-1)]", data=data.electric_field_magnitude
+            )
+        if [
+            data.electric_field_vector_x,
+            data.electric_field_vector_y,
+            data.electric_field_vector_z,
+        ].count(None) == 0:
+            file.create_dataset(
+                "Electric field vector x[Vm^(-1)]", data=data.electric_field_vector_x
+            )
+            file.create_dataset(
+                "Electric field vector y[Vm^(-1)]", data=data.electric_field_vector_y
+            )
+            file.create_dataset(
+                "Electric field vector z[Vm^(-1)]", data=data.electric_field_vector_z
+            )
 
     @property
     def lattice(self):
@@ -208,26 +229,65 @@ class PointModel(ABC):
         self._inside_csf = self.get_points_in_csf(mesh, conductivity_cf)
         self._inside_encap = self.get_points_in_encapsulation_layer(mesh)
 
-    def prepare_frequency_domain_data_structure(self, signal_length: int) -> None:
+    def prepare_frequency_domain_data_structure(
+        self, signal_length: int, out_of_core: bool = False
+    ) -> None:
         """Allocate arrays that hold frequency domain data.
 
         Parameters
         ----------
-        n_frequencies: int
-            Number of frequencies of VCM
+        signal_length: int
+            Number of frequencies of FFT / input time vector
+        out_of_core: bool
+            If arrays should be stored on the hard drive
         """
-        self.tmp_potential_freq_domain = np.zeros(
-            shape=(len(self.lattice), signal_length), dtype=complex
-        )
-        self.tmp_Ex_freq_domain = np.zeros(
-            shape=(len(self.lattice), signal_length), dtype=complex
-        )
-        self.tmp_Ey_freq_domain = np.zeros(
-            shape=(len(self.lattice), signal_length), dtype=complex
-        )
-        self.tmp_Ez_freq_domain = np.zeros(
-            shape=(len(self.lattice), signal_length), dtype=complex
-        )
+        if out_of_core:
+            # use unique file name
+            self.tmp_hdf5_file = h5py.File(
+                os.path.join(
+                    self.output_path,
+                    f"oss_freq_domain_tmp_{self.name}_{self.index}.hdf5",
+                ),
+                "w",
+            )
+            self.tmp_potential_freq_domain = self.tmp_hdf5_file.create_dataset(
+                "Potential [V]",
+                shape=(len(self.lattice), signal_length),
+                dtype=complex,
+                chunks=(len(self.lattice), 1),
+            )
+            self.tmp_Ex_freq_domain = self.tmp_hdf5_file.create_dataset(
+                "Electric field vector x[Vm^(-1)]",
+                shape=(len(self.lattice), signal_length),
+                dtype=complex,
+                chunks=(len(self.lattice), 1),
+            )
+            self.tmp_Ey_freq_domain = self.tmp_hdf5_file.create_dataset(
+                "Electric field vector y[Vm^(-1)]",
+                shape=(len(self.lattice), signal_length),
+                dtype=complex,
+                chunks=(len(self.lattice), 1),
+            )
+            self.tmp_Ez_freq_domain = self.tmp_hdf5_file.create_dataset(
+                "Electric field vector z[Vm^(-1)]",
+                shape=(len(self.lattice), signal_length),
+                dtype=complex,
+                chunks=(len(self.lattice), 1),
+            )
+        else:
+            self.tmp_hdf5_file = None
+            self.tmp_potential_freq_domain = np.zeros(
+                shape=(len(self.lattice), signal_length), dtype=complex
+            )
+            self.tmp_Ex_freq_domain = np.zeros(
+                shape=(len(self.lattice), signal_length), dtype=complex
+            )
+            self.tmp_Ey_freq_domain = np.zeros(
+                shape=(len(self.lattice), signal_length), dtype=complex
+            )
+            self.tmp_Ez_freq_domain = np.zeros(
+                shape=(len(self.lattice), signal_length), dtype=complex
+            )
 
     def copy_frequency_domain_solution_from_vcm(
         self, freq_idx: int, potentials: np.ndarray, fields: np.ndarray
@@ -267,6 +327,11 @@ class PointModel(ABC):
         self.tmp_Ex_freq_domain[:, negative_freq_idx] = np.conjugate(fields[:, 0])
         self.tmp_Ey_freq_domain[:, negative_freq_idx] = np.conjugate(fields[:, 1])
         self.tmp_Ez_freq_domain[:, negative_freq_idx] = np.conjugate(fields[:, 2])
+
+    def close_output_file(self):
+        """Close out-of-core file."""
+        if self.tmp_hdf5_file is not None:
+            self.tmp_hdf5_file.close()
 
     def get_points_in_encapsulation_layer(self, mesh: Mesh) -> np.ndarray:
         """Return mask for points in encapsulation layer.
@@ -350,7 +415,12 @@ class PointModel(ABC):
         )
         # save frequency
         df_pot["frequency"] = frequency
-        df_pot.to_csv(os.path.join(self.output_path, "oss_potentials.csv"), index=False)
+        df_pot.to_csv(
+            os.path.join(
+                self.output_path, f"oss_potentials_{self.name}_{self.index}.csv"
+            ),
+            index=False,
+        )
 
     def export_field_at_frequency(
         self,
@@ -456,21 +526,30 @@ class PointModel(ABC):
                 ],
             )
             df_collapsed_field.to_csv(
-                os.path.join(self.output_path, "E_field.csv"), index=False
+                os.path.join(self.output_path, f"E_field_{self.name}_{self.index}.csv"),
+                index=False,
             )
         else:
-            df_field.to_csv(os.path.join(self.output_path, "E_field.csv"), index=False)
+            df_field.to_csv(
+                os.path.join(self.output_path, f"E_field_{self.name}_{self.index}.csv"),
+                index=False,
+            )
 
         # nifti exports
         field_mags_full = np.zeros(self.lattice_mask.shape[0])
         field_mags_full[self.lattice_mask[:, 0]] = np.real(field_mags[:, 0]) * 1000.0
 
         self.save_as_nifti(
-            field_mags_full, os.path.join(self.output_path, "E_field_solution.nii")
+            field_mags_full,
+            os.path.join(
+                self.output_path, f"E_field_solution_{self.name}_{self.index}.nii"
+            ),
         )
         self.save_as_nifti(
             field_mags_full,
-            os.path.join(self.output_path, "VTA_solution.nii"),
+            os.path.join(
+                self.output_path, f"VTA_solution_{self.name}_{self.index}.nii"
+            ),
             binarize=True,
             activation_threshold=activation_threshold,
         )
@@ -478,10 +557,10 @@ class PointModel(ABC):
     def create_time_result(
         self,
         timesteps: np.ndarray,
-        potential_in_time,
-        Ex_in_time,
-        Ey_in_time,
-        Ez_in_time,
+        potential_in_time: np.ndarray,
+        Ex_in_time: np.ndarray = None,
+        Ey_in_time: np.ndarray = None,
+        Ez_in_time: np.ndarray = None,
     ) -> TimeResult:
         """Prepare time result and save it to file.
 
@@ -490,10 +569,12 @@ class PointModel(ABC):
         TODO rethink structure for out-of-core processing.
         """
         print("Create time results")
-        print(potential_in_time.shape)
-        print(Ex_in_time.shape)
-        print(Ey_in_time.shape)
-        print(Ez_in_time.shape)
+        field_magnitude = None
+        # if all field entries are defined
+        if [Ex_in_time, Ey_in_time, Ez_in_time].count(None) == 0:
+            field_magnitude = compute_field_magnitude_from_components(
+                Ex_in_time, Ey_in_time, Ez_in_time
+            )
         time_result = TimeResult(
             time_steps=timesteps,
             points=self.lattice,
@@ -501,23 +582,61 @@ class PointModel(ABC):
             electric_field_vector_x=Ex_in_time,
             electric_field_vector_y=Ey_in_time,
             electric_field_vector_z=Ez_in_time,
-            electric_field_magnitude=compute_field_magnitude_from_components(
-                Ex_in_time, Ey_in_time, Ez_in_time
-            ),
+            electric_field_magnitude=field_magnitude,
             inside_csf=self.inside_csf,
             inside_encap=self.inside_encap,
         )
-        self.save(time_result, os.path.join(self.output_path, "oss_time_result.h5"))
+        self.save(
+            time_result,
+            os.path.join(
+                self.output_path, f"oss_time_result_{self.name}_{self.index}.h5"
+            ),
+        )
         _logger.info("Created time result and saved to file")
 
     def compute_solutions_in_time_domain(
-        self, signal_length: int
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        self, signal_length: int, convert_field: bool = False
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Compute time-domain  solution for all properties."""
-        potential_in_time = ifft(
-            self.tmp_potential_freq_domain, axis=1, workers=-1
-        ).real
-        Ex_in_time = ifft(self.tmp_Ex_freq_domain, axis=1, workers=-1).real
-        Ey_in_time = ifft(self.tmp_Ey_freq_domain, axis=1, workers=-1).real
-        Ez_in_time = ifft(self.tmp_Ez_freq_domain, axis=1, workers=-1).real
+        out_of_core = self.tmp_hdf5_file is not None
+
+        Ex_in_time = None
+        Ey_in_time = None
+        Ez_in_time = None
+
+        if out_of_core:
+            # create dask array
+            n_frequencies = self.tmp_potential_freq_domain.shape[1]
+            n_points = self.tmp_potential_freq_domain.shape[0]
+            array_size = self.tmp_potential_freq_domain.size
+            # about 0.8 GB
+            max_array_size = 5e7
+            point_chunks = 1
+            if array_size > max_array_size:
+                max_points = int(max_array_size / n_frequencies)
+                point_chunks = int(n_points / max_points)
+            if point_chunks > 4:
+                chunks = (point_chunks, n_frequencies)
+                tmp_potential_freq_domain = da.from_array(
+                    self.tmp_potential_freq_domain, chunks=chunks
+                )
+                potential_in_time = da.fft.ifft(tmp_potential_freq_domain, axis=1).real
+                if convert_field:
+                    _logger.warning(
+                        "Out-of-core computation of field not yet implemented."
+                    )
+                return potential_in_time, Ex_in_time, Ey_in_time, Ez_in_time
+
+            _logger.warning("Small array detected, will compute in core.")
+
+        if out_of_core:
+            tmp_potential_freq_domain = self.tmp_potential_freq_domain[:]
+        else:
+            tmp_potential_freq_domain = self.tmp_potential_freq_domain
+
+        potential_in_time = ifft(tmp_potential_freq_domain, axis=1, workers=-1).real
+        if convert_field:
+            Ex_in_time = ifft(self.tmp_Ex_freq_domain, axis=1, workers=-1).real
+            Ey_in_time = ifft(self.tmp_Ey_freq_domain, axis=1, workers=-1).real
+            Ez_in_time = ifft(self.tmp_Ez_freq_domain, axis=1, workers=-1).real
         return potential_in_time, Ex_in_time, Ey_in_time, Ez_in_time

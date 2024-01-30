@@ -7,6 +7,7 @@ class TypeChecker:
         },
         "Electrodes": list,
         "FailFlag": str,
+        "OutOfCore": bool,
         "ActivationThresholdVTA": (type(None), float),
         "Contacts": {"MaxMeshSize": float, "MaxMeshSizeEdge": float},
         "EncapsulationLayer": {

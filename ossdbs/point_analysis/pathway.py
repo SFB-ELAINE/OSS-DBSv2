@@ -56,8 +56,13 @@ class Pathway(PointModel):
         name: str
         axons: List["Pathway.Axon"]
 
-    def __init__(self, path) -> None:
-        self._path = path
+    def __init__(self, input_path: str, index: int) -> None:
+        # identifiers
+        self._name = "Pathway"
+        self.index = index
+
+        # path from where to read model
+        self._path = input_path
         # never collapse VTA
         self.collapse_VTA = False
         # always compute time-domain signal
@@ -154,24 +159,31 @@ class Pathway(PointModel):
                 # export potential
                 potential = data.potential[start:end]
                 sub_group.create_dataset("Potential[V]", data=potential)
-                # export field magnitude
-                electric_field_magnitude = data.electric_field_magnitude[start:end]
-                sub_group.create_dataset(
-                    "Electric field magnitude[Vm^(-1)]", data=electric_field_magnitude
-                )
-                # export field vector component-wise
-                electric_field_vector_x = data.electric_field_vector_x[start:end]
-                sub_group.create_dataset(
-                    "Electric field vector x[Vm^(-1)]", data=electric_field_vector_x
-                )
-                electric_field_vector_y = data.electric_field_vector_y[start:end]
-                sub_group.create_dataset(
-                    "Electric field vector y[Vm^(-1)]", data=electric_field_vector_y
-                )
-                electric_field_vector_z = data.electric_field_vector_z[start:end]
-                sub_group.create_dataset(
-                    "Electric field vector z[Vm^(-1)]", data=electric_field_vector_z
-                )
+                if data.electric_field_magnitude is not None:
+                    # export field magnitude
+                    electric_field_magnitude = data.electric_field_magnitude[start:end]
+                    sub_group.create_dataset(
+                        "Electric field magnitude[Vm^(-1)]",
+                        data=electric_field_magnitude,
+                    )
+                if [
+                    data.electric_field_vector_x,
+                    data.electric_field_vector_y,
+                    data.electric_field_vector_z,
+                ].count(None) == 0:
+                    # export field vector component-wise
+                    electric_field_vector_x = data.electric_field_vector_x[start:end]
+                    sub_group.create_dataset(
+                        "Electric field vector x[Vm^(-1)]", data=electric_field_vector_x
+                    )
+                    electric_field_vector_y = data.electric_field_vector_y[start:end]
+                    sub_group.create_dataset(
+                        "Electric field vector y[Vm^(-1)]", data=electric_field_vector_y
+                    )
+                    electric_field_vector_z = data.electric_field_vector_z[start:end]
+                    sub_group.create_dataset(
+                        "Electric field vector z[Vm^(-1)]", data=electric_field_vector_z
+                    )
                 start = end
             idx = idx + 1
 
@@ -480,11 +492,11 @@ class Pathway(PointModel):
                 ],
             )
             df_collapsed_field.to_csv(
-                os.path.join(self.output_path, "E_field.csv"),
+                os.path.join(self.output_path, f"E_field_{self.name}_{self.index}.csv"),
                 index=False,
             )
         else:
             df_field.to_csv(
-                os.path.join(self.output_path, "E_field.csv"),
+                os.path.join(self.output_path, f"E_field_{self.name}_{self.index}.csv"),
                 index=False,
             )

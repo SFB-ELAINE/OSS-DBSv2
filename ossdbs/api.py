@@ -234,10 +234,12 @@ def prepare_solver(settings):
 def generate_point_models(settings: dict):
     """Generate a list of point models."""
     point_models = []
+    index = 0
     if settings["PointModel"]["Pathway"]["Active"]:
         file_name = settings["PointModel"]["Pathway"]["FileName"]
         _logger.info(f"Import neuron geometries stored in {file_name}")
-        point_models.append(Pathway(file_name))
+        point_models.append(Pathway(file_name, index))
+        index += 1
     if settings["PointModel"]["Lattice"]["Active"]:
         shape_par = settings["PointModel"]["Lattice"]["Shape"]
         shape = shape_par["x"], shape_par["y"], shape_par["z"]
@@ -248,11 +250,19 @@ def generate_point_models(settings: dict):
         distance = settings["PointModel"]["Lattice"]["PointDistance[mm]"]
 
         point_models.append(
-            Lattice(shape=shape, center=center, distance=distance, direction=direction)
+            Lattice(
+                shape=shape,
+                center=center,
+                distance=distance,
+                direction=direction,
+                index=index,
+            )
         )
 
         collapse_vta = settings["PointModel"]["Lattice"]["CollapseVTA"]
         point_models[-1].collapse_vta = collapse_vta
+
+        index += 1
 
     if settings["PointModel"]["VoxelLattice"]["Active"]:
         _logger.info("from voxel lattice")
@@ -263,7 +273,8 @@ def generate_point_models(settings: dict):
         header = mri_image.header
         shape_par = settings["PointModel"]["VoxelLattice"]["Shape"]
         shape = np.array([shape_par["x"], shape_par["y"], shape_par["z"]])
-        point_models.append(VoxelLattice(center, affine, shape, header))
+        point_models.append(VoxelLattice(center, affine, shape, header, index))
+        index += 1
     return point_models
 
 
@@ -406,6 +417,8 @@ def run_volume_conductor_model(settings, volume_conductor):
     _logger.info("Run volume conductor model")
     volume_conductor.output_path = settings["OutputPath"]
     _logger.info(f"Output path set to: {volume_conductor.output_path}")
+
+    out_of_core = settings["OutOfCore"]
     compute_impedance = False
     if "ComputeImpedance" in settings:
         if settings["ComputeImpedance"]:
@@ -425,6 +438,7 @@ def run_volume_conductor_model(settings, volume_conductor):
         export_vtk,
         point_models=point_models,
         activation_threshold=settings["ActivationThresholdVTA"],
+        out_of_core=out_of_core,
     )
     return vcm_timings
 

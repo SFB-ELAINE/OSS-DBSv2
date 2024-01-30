@@ -105,6 +105,7 @@ class Settings:
         "CalcAxonActivation": False,
         "ActivationThresholdVTA": None,
         "FailFlag": "oss",
+        "OutOfCore": False,
     }
 
     def __init__(self, partial_settings: dict) -> None:
