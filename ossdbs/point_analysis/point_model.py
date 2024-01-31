@@ -3,7 +3,6 @@ import os
 from abc import ABC, abstractmethod
 from typing import Optional, Tuple
 
-import dask.array as da
 import h5py
 import ngsolve
 import numpy as np
@@ -604,6 +603,8 @@ class PointModel(ABC):
         Ey_in_time = None
         Ez_in_time = None
 
+        """
+        # TODO fix this part
         if out_of_core:
             # create dask array
             n_frequencies = self.tmp_potential_freq_domain.shape[1]
@@ -628,6 +629,7 @@ class PointModel(ABC):
                 return potential_in_time, Ex_in_time, Ey_in_time, Ez_in_time
 
             _logger.warning("Small array detected, will compute in core.")
+        """
 
         if out_of_core:
             tmp_potential_freq_domain = self.tmp_potential_freq_domain[:]
