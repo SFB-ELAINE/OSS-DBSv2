@@ -168,7 +168,7 @@ class LeadSettings:
             "FailFlag": side,
             "TemplateSpace": self.get_est_in_temp(),
             "Solver": {},
-            "FEMOrder": 2 #+ int(self.get_calc_axon_act()),  # 2nd order is enough for stim volumes
+            "FEMOrder": 2 + int(self.get_calc_axon_act()),  # 2nd order is enough for stim volumes
         }
 
         # use actual signal parameters for PAM
