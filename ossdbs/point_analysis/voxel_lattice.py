@@ -35,7 +35,6 @@ class VoxelLattice(PointModel):
         affine: np.ndarray,
         shape: np.ndarray,
         header: nibabel.Nifti1Header,
-        index: int,
     ) -> None:
         self._imp_coord = imp_coord
         self._affine = affine
@@ -53,7 +52,6 @@ class VoxelLattice(PointModel):
         self._coordinates = self._initialize_coordinates()
 
         # identifiers
-        self.index = index
         self._name = "VoxelLattice"
 
         # never compute time-domain signal

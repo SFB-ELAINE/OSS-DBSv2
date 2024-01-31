@@ -29,15 +29,6 @@ class PointModel(ABC):
         return self._name
 
     @property
-    def index(self) -> str:
-        """Index to numerate multiple point models."""
-        return self._index
-
-    @index.setter
-    def index(self, value: int) -> None:
-        self._index = value
-
-    @property
     def collapse_VTA(self) -> bool:
         """Remove electrode from VTA."""
         return self._collapse_VTA
@@ -245,7 +236,7 @@ class PointModel(ABC):
             self.tmp_hdf5_file = h5py.File(
                 os.path.join(
                     self.output_path,
-                    f"oss_freq_domain_tmp_{self.name}_{self.index}.hdf5",
+                    f"oss_freq_domain_tmp_{self.name}.hdf5",
                 ),
                 "w",
             )
@@ -415,9 +406,7 @@ class PointModel(ABC):
         # save frequency
         df_pot["frequency"] = frequency
         df_pot.to_csv(
-            os.path.join(
-                self.output_path, f"oss_potentials_{self.name}_{self.index}.csv"
-            ),
+            os.path.join(self.output_path, f"oss_potentials_{self.name}.csv"),
             index=False,
         )
 
@@ -525,12 +514,12 @@ class PointModel(ABC):
                 ],
             )
             df_collapsed_field.to_csv(
-                os.path.join(self.output_path, f"E_field_{self.name}_{self.index}.csv"),
+                os.path.join(self.output_path, f"E_field_{self.name}.csv"),
                 index=False,
             )
         else:
             df_field.to_csv(
-                os.path.join(self.output_path, f"E_field_{self.name}_{self.index}.csv"),
+                os.path.join(self.output_path, f"E_field_{self.name}.csv"),
                 index=False,
             )
 
@@ -540,15 +529,11 @@ class PointModel(ABC):
 
         self.save_as_nifti(
             field_mags_full,
-            os.path.join(
-                self.output_path, f"E_field_solution_{self.name}_{self.index}.nii"
-            ),
+            os.path.join(self.output_path, f"E_field_solution_{self.name}.nii"),
         )
         self.save_as_nifti(
             field_mags_full,
-            os.path.join(
-                self.output_path, f"VTA_solution_{self.name}_{self.index}.nii"
-            ),
+            os.path.join(self.output_path, f"VTA_solution_{self.name}.nii"),
             binarize=True,
             activation_threshold=activation_threshold,
         )
@@ -587,9 +572,7 @@ class PointModel(ABC):
         )
         self.save(
             time_result,
-            os.path.join(
-                self.output_path, f"oss_time_result_{self.name}_{self.index}.h5"
-            ),
+            os.path.join(self.output_path, f"oss_time_result_{self.name}.h5"),
         )
         _logger.info("Created time result and saved to file")
 

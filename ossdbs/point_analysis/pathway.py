@@ -56,10 +56,9 @@ class Pathway(PointModel):
         name: str
         axons: List["Pathway.Axon"]
 
-    def __init__(self, input_path: str, index: int) -> None:
+    def __init__(self, input_path: str) -> None:
         # identifiers
-        self._name = "Pathway"
-        self.index = index
+        self._name = "PAM"
 
         # path from where to read model
         self._path = input_path
@@ -492,11 +491,11 @@ class Pathway(PointModel):
                 ],
             )
             df_collapsed_field.to_csv(
-                os.path.join(self.output_path, f"E_field_{self.name}_{self.index}.csv"),
+                os.path.join(self.output_path, f"E_field_{self.name}.csv"),
                 index=False,
             )
         else:
             df_field.to_csv(
-                os.path.join(self.output_path, f"E_field_{self.name}_{self.index}.csv"),
+                os.path.join(self.output_path, f"E_field_{self.name}.csv"),
                 index=False,
             )
