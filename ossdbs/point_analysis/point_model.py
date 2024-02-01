@@ -12,10 +12,7 @@ from scipy.fft import ifft
 from ossdbs.fem import Mesh
 from ossdbs.point_analysis.time_results import TimeResult
 from ossdbs.utils.collapse_vta import get_collapsed_VTA
-from ossdbs.utils.field_computation import (
-    compute_field_magnitude,
-    compute_field_magnitude_from_components,
-)
+from ossdbs.utils.field_computation import compute_field_magnitude_from_components
 
 _logger = logging.getLogger(__name__)
 
@@ -380,7 +377,7 @@ class PointModel(ABC):
         frequency_index: int
             Index at which frequency is stored
         """
-        potentials = self.tmp_potential_freq_domain[frequency_index]
+        potentials = self.tmp_potential_freq_domain[:, frequency_index]
         df_pot = pd.DataFrame(
             np.concatenate(
                 [
@@ -434,16 +431,17 @@ class PointModel(ABC):
         Ex = self.tmp_Ex_freq_domain[:, frequency_index]
         Ey = self.tmp_Ey_freq_domain[:, frequency_index]
         Ez = self.tmp_Ez_freq_domain[:, frequency_index]
-        field_mags = compute_field_magnitude(Ex, Ey, Ez)
+        field_mags = compute_field_magnitude_from_components(Ex, Ey, Ez)
+        # TODO find nicer solution
         df_field = pd.DataFrame(
             np.concatenate(
                 [
                     self.axon_index,
                     self.lattice,
-                    Ex.real,
-                    Ey.real,
-                    Ez.real,
-                    field_mags,
+                    Ex.reshape((Ex.shape[0], 1)).real,
+                    Ey.reshape((Ey.shape[0], 1)).real,
+                    Ez.reshape((Ez.shape[0], 1)).real,
+                    field_mags.reshape(field_mags.shape[0], 1),
                     self.inside_csf,
                     self.inside_encap,
                 ],
@@ -468,8 +466,15 @@ class PointModel(ABC):
 
         if self.collapse_VTA:
             _logger.info("Collapse VTA by virtually removing the electrode")
+            # TODO nicer solution
             field_on_probed_points = np.concatenate(
-                [self.lattice, Ex.real, Ey.real, Ez.real, field_mags],
+                [
+                    self.lattice,
+                    Ex.reshape((Ex.shape[0], 1)).real,
+                    Ey.reshape((Ey.shape[0], 1)).real,
+                    Ez.reshape((Ez.shape[0], 1)).real,
+                    field_mags.reshape((field_mags.shape[0], 1)),
+                ],
                 axis=1,
                 dtype=float,
             )
@@ -525,7 +530,7 @@ class PointModel(ABC):
 
         # nifti exports
         field_mags_full = np.zeros(self.lattice_mask.shape[0])
-        field_mags_full[self.lattice_mask[:, 0]] = np.real(field_mags[:, 0]) * 1000.0
+        field_mags_full[self.lattice_mask[:, 0]] = field_mags * 1000.0
 
         self.save_as_nifti(
             field_mags_full,
@@ -552,7 +557,7 @@ class PointModel(ABC):
         -----
         TODO rethink structure for out-of-core processing.
         """
-        print("Create time results")
+        _logger.info("Create time results")
         field_magnitude = None
         # if all field entries are defined
         if [Ex_in_time, Ey_in_time, Ez_in_time].count(None) == 0:
