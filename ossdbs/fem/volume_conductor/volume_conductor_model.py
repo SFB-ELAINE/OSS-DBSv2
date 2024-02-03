@@ -773,6 +773,10 @@ class VolumeConductor(ABC):
         """Copy values to time-domain vector."""
         for freq_idx in band_indices:
             scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
+            # cast scale_factor to complex
+            # needed for export of h5py files in out-of-core mode
+            if not isinstance(scale_factor, complex):
+                scale_factor = complex(scale_factor)
             point_model.copy_frequency_domain_solution_from_vcm(
                 freq_idx, scale_factor * potentials, scale_factor * fields
             )
