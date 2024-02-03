@@ -187,6 +187,7 @@ class LeadSettings:
             "TemplateSpace": self.get_est_in_temp(),
             "Solver": {},
             "FEMOrder": 2 + int(self.get_calc_axon_act()),  # 2nd order is enough for stim volumes
+            "OutOfCore": bool(self.get_out_of_core())
         }
 
         # use actual signal parameters for PAM
@@ -388,6 +389,10 @@ class LeadSettings:
     def get_calc_axon_act(self):
         """Calculate axon activation."""
         return self._get_num("calcAxonActivation")
+        
+    def get_out_of_core(self):
+        """Check if intermediate solution is unloaded."""
+        return self._get_num("outOfCore")
 
     def get_connectome(self):
         """TODO description."""
