@@ -16,5 +16,6 @@ This is an overview about the electrode models used for simulation.
    MicroElectrode
    Micro_Probes_Custom_Rodent
    Micro_Probes_Snex100
+   Neuro_Pace
    Pins_Medical
    add_electrode

@@ -11,10 +11,8 @@ from .boston_scientific_vercise import (
     BostonScientificVerciseParameters,
 )
 from .dixi_microtechniques import (
-    DixiSEEG10Model,
-    DixiSEEG10Parameters,
-    DixiSEEG15Model,
-    DixiSEEG15Parameters,
+    DixiSEEGModel,
+    DixiSEEGParameters,
 )
 from .medtronic import (
     MedtronicModel,
@@ -177,19 +175,53 @@ default_electrode_parameters = {
         lead_diameter=1.3,
         total_length=400.0,
     ),
-    "DixiSEEG10": DixiSEEG10Parameters(
+    "DixiSEEG5": DixiSEEGParameters(
         tip_length=0.8,
         contact_length=2.0,
         contact_spacing=1.5,
         lead_diameter=0.8,
         total_length=400.0,
+        n_contacts=5,
     ),
-    "DixiSEEG15": DixiSEEG15Parameters(
+    "DixiSEEG8": DixiSEEGParameters(
         tip_length=0.8,
         contact_length=2.0,
         contact_spacing=1.5,
         lead_diameter=0.8,
         total_length=400.0,
+        n_contacts=8,
+    ),
+    "DixiSEEG10": DixiSEEGParameters(
+        tip_length=0.8,
+        contact_length=2.0,
+        contact_spacing=1.5,
+        lead_diameter=0.8,
+        total_length=400.0,
+        n_contacts=10,
+    ),
+    "DixiSEEG12": DixiSEEGParameters(
+        tip_length=0.8,
+        contact_length=2.0,
+        contact_spacing=1.5,
+        lead_diameter=0.8,
+        total_length=400.0,
+        n_contacts=12,
+    ),
+    "DixiSEEG15": DixiSEEGParameters(
+        tip_length=0.8,
+        contact_length=2.0,
+        contact_spacing=1.5,
+        lead_diameter=0.8,
+        total_length=400.0,
+        n_contacts=15,
+    ),
+    "DixiSEEG18": DixiSEEGParameters(
+        tip_length=0.8,
+        contact_length=2.0,
+        contact_spacing=1.5,
+        lead_diameter=0.8,
+        total_length=400.0,
+        n_contacts=18,
     ),
 }
 
@@ -348,12 +380,33 @@ def PINSMedicalL303(
     return PINSMedicalModel(parameters, rotation, direction, position)
 
 
+def DixiSEEG5(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    parameters = default_electrode_parameters["DixiSEEG5"]
+    return DixiSEEGModel(parameters, rotation, direction, position)
+
+
+def DixiSEEG8(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    parameters = default_electrode_parameters["DixiSEEG8"]
+    return DixiSEEGModel(parameters, rotation, direction, position)
+
+
 def DixiSEEG10(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
     """DixiSEEG10 electrode."""
     parameters = default_electrode_parameters["DixiSEEG10"]
-    return DixiSEEG10Model(parameters, rotation, direction, position)
+    return DixiSEEGModel(parameters, rotation, direction, position)
+
+
+def DixiSEEG12(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    parameters = default_electrode_parameters["DixiSEEG12"]
+    return DixiSEEGModel(parameters, rotation, direction, position)
 
 
 def DixiSEEG15(
@@ -361,4 +414,11 @@ def DixiSEEG15(
 ):
     """DixiSEEG15 electrode."""
     parameters = default_electrode_parameters["DixiSEEG15"]
-    return DixiSEEG15Model(parameters, rotation, direction, position)
+    return DixiSEEGModel(parameters, rotation, direction, position)
+
+
+def DixiSEEG18(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    parameters = default_electrode_parameters["DixiSEEG18"]
+    return DixiSEEGModel(parameters, rotation, direction, position)

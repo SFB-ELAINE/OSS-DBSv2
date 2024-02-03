@@ -58,8 +58,6 @@ class ElectrodeModel(ABC):
         self._encapsulation_thickness = 0.0
         self._index = 0
 
-        pass
-
     def parameter_check(self):
         """Check electrode parameters."""
         # Check to ensure that all parameters are at least 0
