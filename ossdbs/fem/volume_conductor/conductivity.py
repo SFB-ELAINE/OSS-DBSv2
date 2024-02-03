@@ -83,14 +83,17 @@ class ConductivityCF:
 
     @property
     def is_complex(self) -> bool:
+        """Return if complex arithmetic is used."""
         return self._is_complex
 
     @property
     def is_tensor(self) -> bool:
+        """Return if conductivity is a tensor."""
         return self._dti_voxel_cf is not None
 
     @property
     def materials(self) -> dict:
+        """Return dictionary of material names."""
         return self._materials
 
     def _get_datatype(self):
@@ -104,6 +107,20 @@ class ConductivityCF:
         mesh: Mesh,
         frequency: float,
     ) -> ngsolve.CF:
+        """Evaluate conductivity on mesh for a given frequency.
+
+        Parameters
+        ----------
+        mesh: ossdbs.Mesh
+            Mesh on which the computation is done
+        frequency: float
+            Stimulation frequency
+
+        Notes
+        -----
+        Evaluates the conductivity and defines it per brain region.
+
+        """
         omega = 2 * np.pi * frequency
         material_dict = {"Brain": self._distribution(omega)}
         for encapsulation_layer in self._encapsulation_layers:
@@ -147,6 +164,7 @@ class ConductivityCF:
         Parameters
         ----------
         omega : float
+            Angular frequency
 
         Returns
         -------
@@ -155,7 +173,8 @@ class ConductivityCF:
         """
         for material in self.materials:
             material_idx = self.materials[material]
-            # Sets conductivity values based on what indices in self._data are material_idx
+            # Sets conductivity values based on
+            # what indices in self._data are material_idx
             if self.is_complex:
                 self._data[self._masks[material_idx]] = self._dielectric_properties[
                     material

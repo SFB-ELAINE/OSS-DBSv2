@@ -1,9 +1,17 @@
 import logging
+import os
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 import h5py
 import numpy as np
+import pandas as pd
+
+from ossdbs.fem import Mesh
+from ossdbs.utils.collapse_vta import get_collapsed_VTA
+from ossdbs.utils.field_computation import (
+    compute_field_magnitude_from_components,
+)
 
 from .lattice import PointModel
 from .time_results import TimeResult
@@ -48,8 +56,17 @@ class Pathway(PointModel):
         name: str
         axons: List["Pathway.Axon"]
 
-    def __init__(self, path) -> None:
-        self._path = path
+    def __init__(self, input_path: str) -> None:
+        # identifiers
+        self._name = "PAM"
+
+        # path from where to read model
+        self._path = input_path
+        # never collapse VTA
+        self.collapse_VTA = False
+        # always compute time-domain signal
+        self.time_domain_conversion = True
+
         with h5py.File(self._path, "r") as file:
             populations = [
                 self.Population(group, self._create_axons(file, group))
@@ -138,24 +155,34 @@ class Pathway(PointModel):
             status_list.append(axon.status)
             if axon.status != -1:
                 end = start + len(axon.points)
+                # export potential
                 potential = data.potential[start:end]
                 sub_group.create_dataset("Potential[V]", data=potential)
-                electric_field_magnitude = data.electric_field_magnitude[start:end]
-                sub_group.create_dataset(
-                    "Electric field magnitude[Vm^(-1)]", data=electric_field_magnitude
-                )
-                electric_field_vector_x = data.electric_field_vector[0][start:end]
-                sub_group.create_dataset(
-                    "Electric field vector x[Vm^(-1)]", data=electric_field_vector_x
-                )
-                electric_field_vector_y = data.electric_field_vector[1][start:end]
-                sub_group.create_dataset(
-                    "Electric field vector y[Vm^(-1)]", data=electric_field_vector_y
-                )
-                electric_field_vector_z = data.electric_field_vector[2][start:end]
-                sub_group.create_dataset(
-                    "Electric field vector z[Vm^(-1)]", data=electric_field_vector_z
-                )
+                if data.electric_field_magnitude is not None:
+                    # export field magnitude
+                    electric_field_magnitude = data.electric_field_magnitude[start:end]
+                    sub_group.create_dataset(
+                        "Electric field magnitude[Vm^(-1)]",
+                        data=electric_field_magnitude,
+                    )
+                if [
+                    data.electric_field_vector_x,
+                    data.electric_field_vector_y,
+                    data.electric_field_vector_z,
+                ].count(None) == 0:
+                    # export field vector component-wise
+                    electric_field_vector_x = data.electric_field_vector_x[start:end]
+                    sub_group.create_dataset(
+                        "Electric field vector x[Vm^(-1)]", data=electric_field_vector_x
+                    )
+                    electric_field_vector_y = data.electric_field_vector_y[start:end]
+                    sub_group.create_dataset(
+                        "Electric field vector y[Vm^(-1)]", data=electric_field_vector_y
+                    )
+                    electric_field_vector_z = data.electric_field_vector_z[start:end]
+                    sub_group.create_dataset(
+                        "Electric field vector z[Vm^(-1)]", data=electric_field_vector_z
+                    )
                 start = end
             idx = idx + 1
 
@@ -330,3 +357,145 @@ class Pathway(PointModel):
             Activation threshold for VTA estimate
         """
         raise NotImplementedError("Pathway results can not be stored in Nifti format.")
+
+    def prepare_VCM_specific_evaluation(self, mesh: Mesh, conductivity_cf):
+        """Prepare data structure according to mesh.
+
+        Parameters
+        ----------
+        mesh: Mesh
+            Mesh object on which VCM is defined
+        conductivity_cf: ConductivityCF
+            Conductivity function that holds material info
+
+        Notes
+        -----
+        Mask all points outside domain, filter CSF and
+        encapsulation layer etc.
+
+        Prepares data storage for all frequencies at all points.
+        TODO type hints
+        """
+        grid_pts = self.points_in_mesh(mesh)
+        self._lattice_mask = np.invert(grid_pts.mask)
+        self._lattice = self.filter_for_geometry(grid_pts)
+        self._inside_csf = self.get_points_in_csf(mesh, conductivity_cf)
+        self._inside_encap = self.get_points_in_encapsulation_layer(mesh)
+
+        # mark complete axons
+        self.filter_csf_encap(self.inside_csf, self.inside_encap)
+        # create index for axons
+        self._axon_index = self.create_index(self.lattice)
+
+    def export_field_at_frequency(
+        self,
+        frequency: float,
+        frequency_index: int,
+        electrode=None,
+        activation_threshold: Optional[float] = None,
+    ):
+        """Write field values to CSV.
+
+        Parameters
+        ----------
+        frequency: float
+            Frequency of exported solution
+        frequency_index: int
+            Index at which frequency is stored
+        activation_threshold: float
+            Threshold to define VTA
+        electrode: ElectrodeModel
+            electrode model that holds geometry information
+
+
+        Notes
+        -----
+        No Nifti file is exported for a Pathway model.
+        """
+        Ex = self.tmp_Ex_freq_domain[frequency_index]
+        Ey = self.tmp_Ey_freq_domain[frequency_index]
+        Ez = self.tmp_Ez_freq_domain[frequency_index]
+        field_mags = compute_field_magnitude_from_components(Ex, Ey, Ez)
+        df_field = pd.DataFrame(
+            np.concatenate(
+                [
+                    self.axon_index,
+                    self.lattice,
+                    Ex,
+                    Ey,
+                    Ez,
+                    field_mags,
+                    self.inside_csf,
+                    self.inside_encap,
+                ],
+                axis=1,
+            ),
+            columns=[
+                "index",
+                "x-pt",
+                "y-pt",
+                "z-pt",
+                "x-field",
+                "y-field",
+                "z-field",
+                "magnitude",
+                "inside_csf",
+                "inside_encap",
+            ],
+        )
+        # save frequency
+        df_field["frequency"] = frequency
+
+        if self.collapse_VTA:
+            _logger.info("Collapse VTA by virtually removing the electrode")
+            field_on_probed_points = np.concatenate(
+                [self.lattice, Ex, Ey, Ez, field_mags], axis=1
+            )
+
+            if electrode is None:
+                raise ValueError(
+                    "Electrode for exporting the collapsed VTA is missing."
+                )
+            implantation_coordinate = electrode._position
+            lead_direction = electrode._direction
+            lead_diam = electrode._parameters.lead_diameter
+
+            field_on_probed_points_collapsed = get_collapsed_VTA(
+                field_on_probed_points,
+                implantation_coordinate,
+                lead_direction,
+                lead_diam,
+            )
+
+            df_collapsed_field = pd.DataFrame(
+                np.concatenate(
+                    [
+                        self.axon_index,
+                        field_on_probed_points_collapsed,
+                        self.inside_csf,
+                        self.inside_encap,
+                    ],
+                    axis=1,
+                ),
+                columns=[
+                    "index",
+                    "x-pt",
+                    "y-pt",
+                    "z-pt",
+                    "x-field",
+                    "y-field",
+                    "z-field",
+                    "magnitude",
+                    "inside_csf",
+                    "inside_encap",
+                ],
+            )
+            df_collapsed_field.to_csv(
+                os.path.join(self.output_path, f"E_field_{self.name}.csv"),
+                index=False,
+            )
+        else:
+            df_field.to_csv(
+                os.path.join(self.output_path, f"E_field_{self.name}.csv"),
+                index=False,
+            )

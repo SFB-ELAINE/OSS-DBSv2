@@ -229,6 +229,7 @@ default_electrode_parameters = {
 def AbbottStJudeActiveTip6142_6145(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """Abbott St. Jude Active Tip 6142 6145 electrode."""
     parameters = default_electrode_parameters["AbbottStJudeActiveTip6142_6145"]
     return AbbottStJudeActiveTipModel(parameters, rotation, direction, position)
 
@@ -236,6 +237,7 @@ def AbbottStJudeActiveTip6142_6145(
 def AbbottStJudeActiveTip6146_6149(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """Abbott St. Jude Active Tip 6146 6149 electrode."""
     parameters = default_electrode_parameters["AbbottStJudeActiveTip6146_6149"]
     return AbbottStJudeActiveTipModel(parameters, rotation, direction, position)
 
@@ -243,6 +245,7 @@ def AbbottStJudeActiveTip6146_6149(
 def AbbottStJudeDirected6172(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """Abbott St. Jude Directed Tip 6172 electrode."""
     parameters = default_electrode_parameters["AbbottStJudeDirected6172"]
     return AbbottStJudeDirectedModel(parameters, rotation, direction, position)
 
@@ -250,6 +253,7 @@ def AbbottStJudeDirected6172(
 def AbbottStJudeDirected6173(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """Abbott St. Jude Directed Tip 6173 electrode."""
     parameters = default_electrode_parameters["AbbottStJudeDirected6173"]
     return AbbottStJudeDirectedModel(parameters, rotation, direction, position)
 
@@ -257,6 +261,7 @@ def AbbottStJudeDirected6173(
 def BostonScientificVercise(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """Boston Scientific Vercise electrode."""
     parameters = default_electrode_parameters["BostonScientificVercise"]
     return BostonScientificVerciseModel(parameters, rotation, direction, position)
 
@@ -264,6 +269,7 @@ def BostonScientificVercise(
 def BostonScientificVerciseDirected(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """Boston Scientific Vercise Directed electrode."""
     parameters = default_electrode_parameters["BostonScientificVerciseDirected"]
     return BostonScientificVerciseDirectedModel(
         parameters, rotation, direction, position
@@ -273,6 +279,7 @@ def BostonScientificVerciseDirected(
 def Medtronic3387(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """Medtronic 3387 electrode."""
     parameters = default_electrode_parameters["Medtronic3387"]
     return MedtronicModel(parameters, rotation, direction, position)
 
@@ -280,6 +287,7 @@ def Medtronic3387(
 def Medtronic3389(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """Medtronic 3389 electrode."""
     parameters = default_electrode_parameters["Medtronic3389"]
     return MedtronicModel(parameters, rotation, direction, position)
 
@@ -287,6 +295,7 @@ def Medtronic3389(
 def Medtronic3391(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """Medtronic 3391 electrode."""
     parameters = default_electrode_parameters["Medtronic3391"]
     return MedtronicModel(parameters, rotation, direction, position)
 
@@ -294,6 +303,7 @@ def Medtronic3391(
 def MedtronicSenSightB33015(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """Medtronic SenSight B33015 electrode."""
     parameters = default_electrode_parameters["MedtronicSenSightB33015"]
     return MedtronicSenSightModel(parameters, rotation, direction, position)
 
@@ -301,6 +311,7 @@ def MedtronicSenSightB33015(
 def MedtronicSenSightB33005(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """Medtronic SenSight B33005 electrode."""
     parameters = default_electrode_parameters["MedtronicSenSightB33005"]
     return MedtronicSenSightModel(parameters, rotation, direction, position)
 
@@ -308,6 +319,7 @@ def MedtronicSenSightB33005(
 def MicroElectrode(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """MicroElectrode electrode."""
     parameters = default_electrode_parameters["MicroElectrode"]
     return MicroElectrodeModel(parameters, rotation, direction, position)
 
@@ -315,6 +327,7 @@ def MicroElectrode(
 def MicroProbesSNEX100(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """MicroProbes SNEX 100 electrode."""
     parameters = default_electrode_parameters["MicroProbesSNEX100"]
     return MicroProbesSNEX100Model(parameters, rotation, direction, position)
 
@@ -322,6 +335,7 @@ def MicroProbesSNEX100(
 def MicroProbesRodentElectrode(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """MicroProbes rodent (unipolar) electrode."""
     parameters = default_electrode_parameters["MicroProbesRodentElectrode"]
     return MicroProbesRodentElectrodeModel(parameters, rotation, direction, position)
 
@@ -329,6 +343,7 @@ def MicroProbesRodentElectrode(
 def NeuroPaceDL344_3_5(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """NeuroPace DL344_3_5 electrode."""
     parameters = default_electrode_parameters["NeuroPaceDL344_3_5"]
     return NeuroPaceModel(parameters, rotation, direction, position)
 
@@ -336,6 +351,7 @@ def NeuroPaceDL344_3_5(
 def NeuroPaceDL344_10(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """NeuroPace DL344_10 electrode."""
     parameters = default_electrode_parameters["NeuroPaceDL344_10"]
     return NeuroPaceModel(parameters, rotation, direction, position)
 
@@ -343,6 +359,7 @@ def NeuroPaceDL344_10(
 def PINSMedicalL301(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """PINSMedical L301 electrode."""
     parameters = default_electrode_parameters["PINSMedicalL301"]
     return PINSMedicalModel(parameters, rotation, direction, position)
 
@@ -350,6 +367,7 @@ def PINSMedicalL301(
 def PINSMedicalL302(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """PINSMedical L302 electrode."""
     parameters = default_electrode_parameters["PINSMedicalL302"]
     return PINSMedicalModel(parameters, rotation, direction, position)
 
@@ -357,6 +375,7 @@ def PINSMedicalL302(
 def PINSMedicalL303(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """PINSMedical L303 electrode."""
     parameters = default_electrode_parameters["PINSMedicalL303"]
     return PINSMedicalModel(parameters, rotation, direction, position)
 
@@ -378,6 +397,7 @@ def DixiSEEG8(
 def DixiSEEG10(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """DixiSEEG10 electrode."""
     parameters = default_electrode_parameters["DixiSEEG10"]
     return DixiSEEGModel(parameters, rotation, direction, position)
 
@@ -392,6 +412,7 @@ def DixiSEEG12(
 def DixiSEEG15(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """DixiSEEG15 electrode."""
     parameters = default_electrode_parameters["DixiSEEG15"]
     return DixiSEEGModel(parameters, rotation, direction, position)
 

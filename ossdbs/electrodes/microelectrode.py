@@ -1,14 +1,17 @@
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 
 import netgen
 import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
+from .utilities import get_highest_edge, get_lowest_edge
 
 
 @dataclass
 class MicroElectrodeParameters:
+    """Electrode geometry parameters."""
+
     # dimensions [mm]
     tip_length: float
     tip_diameter: float
@@ -30,8 +33,8 @@ class MicroElectrodeModel(ElectrodeModel):
 
     Attributes
     ----------
-    parameters : MicroProbesRodentElectrodeParameters
-        Parameters for MicroProbes Rodent Electrode geometry.
+    parameters : MicroElectrodeParameters
+        Parameters for MicroElectrode geometry.
 
     rotation : float
         Rotation angle in degree of electrode.
@@ -44,12 +47,6 @@ class MicroElectrodeModel(ElectrodeModel):
     """
 
     _n_contacts = 1
-
-    def parameter_check(self):
-        # Check to ensure that all parameters are at least 0
-        for param in asdict(self._parameters).values():
-            if param < 0:
-                raise ValueError("Parameter values cannot be less than zero")
 
     def _construct_encapsulation_geometry(
         self, thickness: float
@@ -94,15 +91,8 @@ class MicroElectrodeModel(ElectrodeModel):
         height = self._parameters.contact_length
         contact = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
         contact.bc(self._boundaries["Contact_1"])
-        min_edge_z_val = float("inf")
-        max_edge_z_val = float("-inf")
-        for edge in contact.edges:
-            if edge.center.z < min_edge_z_val:
-                min_edge_z_val = edge.center.z
-                min_edge = edge
-            if edge.center.z > max_edge_z_val:
-                max_edge_z_val = edge.center.z
-                max_edge = edge
+        min_edge = get_lowest_edge(contact)
+        max_edge = get_highest_edge(contact)
         min_edge.name = "Contact_1"
         contact = contact.MakeFillet(contact.edges["Contact_1"], 0.05)
         max_edge.name = "Contact_1"

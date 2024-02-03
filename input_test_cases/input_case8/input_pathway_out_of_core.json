@@ -124,8 +124,9 @@
   },
   "EQSMode": false,
   "FEMOrder": 2,
-  "OutputPath": "./Results_PAM",
+  "OutputPath": "./Results_PAM_OOC",
   "ComputeImpedance": true,
   "ExportVTK": true,
-  "ExportElectrode": true
+  "ExportElectrode": true,
+  "OutOfCore": true
 }

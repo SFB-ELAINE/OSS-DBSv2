@@ -1,6 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 import netgen
 import netgen.occ as occ
@@ -58,6 +58,13 @@ class ElectrodeModel(ABC):
         self._encapsulation_thickness = 0.0
         self._index = 0
 
+    def parameter_check(self):
+        """Check electrode parameters."""
+        # Check to ensure that all parameters are at least 0
+        for param in asdict(self._parameters).values():
+            if param < 0:
+                raise ValueError("Parameter values cannot be less than zero")
+
     @property
     def n_contacts(self) -> int:
         """Returns number of contacts."""
@@ -111,11 +118,6 @@ class ElectrodeModel(ABC):
         return self._encapsulation_geometry
 
     @abstractmethod
-    def parameter_check(self):
-        """Check parameters."""
-        pass
-
-    @abstractmethod
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         pass
 
@@ -130,7 +132,7 @@ class ElectrodeModel(ABC):
 
         Parameters
         ----------
-        boundaries: dict
+        boundaries : dict
             {'Body': 'body_name',
              'Contact_1': 'contact_name',
              'Contact_2': ...}
@@ -156,7 +158,7 @@ class ElectrodeModel(ABC):
 
     @property
     def index(self) -> int:
-        """Electrode index."""
+        """Index of electrode, relevant if multiple electrodes used."""
         return self._index
 
     @index.setter

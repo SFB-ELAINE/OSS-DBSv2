@@ -1,3 +1,4 @@
+import logging
 import multiprocessing as mp
 from copy import deepcopy
 from functools import partial
@@ -6,6 +7,8 @@ from typing import List, Tuple, Union
 
 import numpy as np
 from scipy.fft import ifft
+
+_logger = logging.getLogger(__name__)
 
 
 def generate_signal(
@@ -74,6 +77,39 @@ def retrieve_time_domain_signal_from_fft(
     return timesteps, signal
 
 
+def reconstruct_time_signals(
+    freq_domain_signal: np.ndarray, signal_length: int
+) -> np.ndarray:
+    """Compute time signals from frequency-domain data.
+
+    Parameters
+    ----------
+    freq_domain_signal: np.ndarray
+      Frequency-domain signal to be transformed
+    signal_length: int
+      Length of initial time-domain signal
+
+    Notes
+    -----
+    According to the signal length, the highest frequency is
+    a negative or positive frequency (as it comes from the FFT).
+    """
+    # For even signals, highest frequency is not in positive frequencies
+    positive_freqs_part = freq_domain_signal
+    if signal_length % 2 == 0:
+        positive_freqs_part = freq_domain_signal[:-1]
+
+    # Append the reverted signal without the DC frequency
+    tmp_freq_domain = np.append(
+        positive_freqs_part,
+        np.conjugate(np.flip(freq_domain_signal[1:], axis=0)),
+        axis=0,
+    )
+    # run ifft with maximum possible amount of workers
+    result_in_time = ifft(tmp_freq_domain, axis=0, workers=-1)
+    return result_in_time.real
+
+
 def get_octave_band_indices(frequencies: np.ndarray) -> np.ndarray:
     """Return indices of octave band frequencies."""
     n_octaves = int(np.log2(len(frequencies) - 1)) + 1
@@ -130,4 +166,7 @@ def get_indices_in_octave_band(
     band_indices = np.arange(min_freq, max_freq + 1)
     if len(band_indices) == 0:
         band_indices = [freq_idx]
+
+    _logger.debug(f"Band indices from {band_indices[0]} to {band_indices[-1]}")
+
     return band_indices

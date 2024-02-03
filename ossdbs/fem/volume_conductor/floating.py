@@ -115,5 +115,6 @@ class VolumeConductorFloating(VolumeConductor):
             )
             contact.voltage = floating_potential / length
             _logger.debug(
-                f"Contact {contact.name} updated with floating potential {contact.voltage}"
+                f"""Contact {contact.name} updated
+                    with floating potential {contact.voltage}"""
             )

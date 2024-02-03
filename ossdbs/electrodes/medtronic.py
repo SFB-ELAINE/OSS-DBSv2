@@ -1,15 +1,18 @@
 # Medtronic 3387
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 
 import netgen
 import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
+from .utilities import get_highest_edge, get_lowest_edge
 
 
 @dataclass
 class MedtronicParameters:
+    """Electrode geometry parameters."""
+
     # dimensions [mm]
     tip_length: float
     contact_length: float
@@ -45,12 +48,6 @@ class MedtronicModel(ElectrodeModel):
     """
 
     _n_contacts = 4
-
-    def parameter_check(self):
-        # Check to ensure that all parameters are at least 0
-        for param in asdict(self._parameters).values():
-            if param < 0:
-                raise ValueError("Parameter values cannot be less than zero")
 
     def _construct_encapsulation_geometry(
         self, thickness: float
@@ -102,16 +99,10 @@ class MedtronicModel(ElectrodeModel):
         for count in range(self._n_contacts):
             name = self._boundaries[f"Contact_{count + 1}"]
             contact.bc(name)
-            min_edge_z_val = float("inf")
-            max_edge_z_val = float("-inf")
-            for edge in contact.edges:
-                if edge.center.z < min_edge_z_val:
-                    min_edge_z_val = edge.center.z
-                    min_edge = edge
-                if edge.center.z > max_edge_z_val:
-                    max_edge_z_val = edge.center.z
-                    max_edge = edge
-            # Only name edge with the min and max z values (edge between the non-contact and contact surface)
+            min_edge = get_lowest_edge(contact)
+            max_edge = get_highest_edge(contact)
+            # Only name edge with the min and max z values
+            # (edge between the non-contact and contact surface)
             min_edge.name = name
             max_edge.name = name
             vector = tuple(np.array(self._direction) * distance)
@@ -142,12 +133,6 @@ class MedtronicSenSightModel(ElectrodeModel):
     """
 
     _n_contacts = 8
-
-    def parameter_check(self):
-        # Check to ensure that all parameters are at least 0
-        for param in asdict(self._parameters).values():
-            if param < 0:
-                raise ValueError("Parameter values cannot be less than zero")
 
     def _construct_encapsulation_geometry(
         self, thickness: float
@@ -194,7 +179,7 @@ class MedtronicSenSightModel(ElectrodeModel):
     def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         vectors = []
         distance = self._parameters.tip_length
-        for index in range(0, 4):
+        for _ in range(0, 4):
             vectors.append(tuple(np.array(self._direction) * distance))
             distance += (
                 self._parameters.contact_length + self._parameters.contact_spacing
@@ -223,17 +208,10 @@ class MedtronicSenSightModel(ElectrodeModel):
             contact.bc(name)
             # Label max z value and min z value for contact_1 and contact_8
             if name == "Contact_1" or name == "Contact_8":
-                min_edge_z_val = float("inf")
-                for edge in contact.edges:
-                    if edge.center.z < min_edge_z_val:
-                        min_edge_z_val = edge.center.z
-                        min_edge = edge
+                min_edge = get_lowest_edge(contact)
                 min_edge.name = name
-                max_edge_z_val = float("-inf")
-                for edge in contact.edges:
-                    if edge.center.z > max_edge_z_val:
-                        max_edge_z_val = edge.center.z
-                        max_edge = edge
+
+                max_edge = get_highest_edge(contact)
                 max_edge.name = name
             else:
                 # Label all the named contacts appropriately
@@ -256,6 +234,7 @@ class MedtronicSenSightModel(ElectrodeModel):
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
         # Centering contact to label edges
         contact = contact.Rotate(axis, angle)
+        # TODO refactor / wrap in function
         # Find  max z, min z, max x, and max y values and label min x and min y edge
         max_z_val = max_y_val = max_x_val = float("-inf")
         min_z_val = float("inf")
@@ -284,7 +263,8 @@ class MedtronicSenSightModel(ElectrodeModel):
                 edge.name = "min z"
         # Reseting position so that 0 deg lies in the middle of contact
         contact = contact.Rotate(axis, angle)
-        # TODO: check that the starting axis of the contacts are correct according to the documentation
+        # TODO check that the starting axis of the contacts
+        # are correct according to the documentation
 
         return contact
 

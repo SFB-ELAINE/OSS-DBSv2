@@ -6,6 +6,7 @@ import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
+from .utilities import get_highest_edge, get_lowest_edge
 
 
 @dataclass
@@ -62,8 +63,8 @@ class DixiSEEGModel(ElectrodeModel):
         super().__init__(parameters, rotation, direction, position)
 
     def parameter_check(self):
-        """Check parameters."""
-        # to ensure that all parameters are at least 0
+        """Check electrode parameters."""
+        # ensure that all parameters are at least 0
         for param in asdict(self._parameters).values():
             if param < 0:
                 raise ValueError("Parameter values cannot be less than zero")
@@ -133,17 +134,9 @@ class DixiSEEGModel(ElectrodeModel):
         for count in range(self._parameters.n_contacts):
             name = self._boundaries[f"Contact_{count + 1}"]
             contact.bc(name)
-            min_edge_z_val = float("inf")
-            max_edge_z_val = float("-inf")
-            for edge in contact.edges:
-                if edge.center.z < min_edge_z_val:
-                    min_edge_z_val = edge.center.z
-                    min_edge = edge
-                if edge.center.z > max_edge_z_val:
-                    max_edge_z_val = edge.center.z
-                    max_edge = edge
-                    # Only name edge with the max z value for contact_1
-                max_edge.name = name
+            max_edge = get_highest_edge(contact)
+            max_edge.name = name
+
             # first contact is different from others
             if count == 0:
                 distance = (
@@ -152,6 +145,7 @@ class DixiSEEGModel(ElectrodeModel):
                 contacts.append(contact)
                 contact = contact_cyl
             else:
+                min_edge = get_lowest_edge(contact)
                 min_edge.name = name
                 vector = tuple(np.array(self._direction) * distance)
                 contacts.append(contact.Move(vector))

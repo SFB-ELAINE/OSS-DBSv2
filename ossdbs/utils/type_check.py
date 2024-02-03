@@ -7,6 +7,7 @@ class TypeChecker:
         },
         "Electrodes": list,
         "FailFlag": str,
+        "OutOfCore": bool,
         "ActivationThresholdVTA": (type(None), float),
         "Contacts": {"MaxMeshSize": float, "MaxMeshSizeEdge": float},
         "EncapsulationLayer": {
@@ -77,6 +78,7 @@ class TypeChecker:
                 "CollapseVTA": bool,
                 "PointDistance[mm]": (int, float),
                 "Shape": {"x": int, "y": int, "z": int},
+                "TimeDomain": bool,
             },
         },
     }

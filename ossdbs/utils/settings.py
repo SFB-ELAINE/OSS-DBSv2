@@ -89,10 +89,12 @@ class Settings:
                 "Direction": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 1},
                 "PointDistance[mm]": 0.1,
                 "CollapseVTA": False,
+                "TimeDomain": False,
             },
             "VoxelLattice": {
                 "Active": False,
                 "Shape": {"x": 10, "y": 10, "z": 10},
+                "TimeDomain": False,
             },
         },
         "OutputPath": "Results",
@@ -103,6 +105,7 @@ class Settings:
         "CalcAxonActivation": False,
         "ActivationThresholdVTA": None,
         "FailFlag": "oss",
+        "OutOfCore": False,
     }
 
     def __init__(self, partial_settings: dict) -> None:

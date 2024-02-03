@@ -13,7 +13,8 @@ class LeadSettings:
 
     Parameters
     ----------
-    mat_file_path : str, lead-dbs settings created in ea_genvat_butenko.m
+    mat_file_path : str
+        lead-dbs settings created in ea_genvat_butenko.m
 
     Notes
     -----
@@ -26,10 +27,14 @@ class LeadSettings:
         try:
             self._file = h5py.File(str(mat_file_path), "r")
             self._h5 = True
+        # TODO what do you want to catch here?
         except:
-            print("\n Please, save oss-dbs_parameters using 'save(oss-dbs_parameters_path, 'settings', '-v7.3')' ")
+            print(
+                """\n Please, save oss-dbs_parameters using
+                        'save(oss-dbs_parameters_path, 'settings', '-v7.3')'"""
+            )
             raise SystemExit
-            # ToDo: Fix non-binary .mat import
+            # TODO  Fix non-binary .mat import
             self._file = scipy.io.loadmat(mat_file_path)
             self._h5 = False
 
@@ -44,12 +49,15 @@ class LeadSettings:
         # for now restrict to one electrode per simulation
         self.NUM_ELECS = 1
 
-    def make_oss_settings(self, hemis_idx=0, output_path=""):
+    def make_oss_settings(self, hemis_idx: int = 0, output_path: str = "") -> dict:
         """Convert lead settings into OSS-DBS parameters.
 
         Parameters
         ----------
-        hemis_idx: int, hemisphere ID (0 - right, 1 - left)
+        hemis_idx: int
+            hemisphere ID (0 - right, 1 - left)
+        output_path: str
+            path to write file
 
         Returns
         -------
@@ -70,7 +78,11 @@ class LeadSettings:
         SIDES = ["rh", "lh"]
         side = SIDES[hemis_idx]
 
-        elec_dict, unit_directions, specs_array_length = self.import_implantation_settings(hemis_idx)
+        (
+            elec_dict,
+            unit_directions,
+            specs_array_length,
+        ) = self.import_implantation_settings(hemis_idx)
 
         # define if current-controlled
         current_controlled = bool(self.get_cur_ctrl()[hemis_idx])
@@ -88,14 +100,18 @@ class LeadSettings:
             case_grounding = True
             # SHOULD BE REMOVED LATER, only V = 0 is enough
             pulses_sign_amplitude = self.get_phi_vec() * 0.001  # switch to A
-            pulse_sign_amplitude = pulses_sign_amplitude[hemis_idx,:]
-            grounded_current = -1 * np.round(np.sum(pulse_sign_amplitude[~np.isnan(pulse_sign_amplitude)]), 6) # could be 0
+            pulse_sign_amplitude = pulses_sign_amplitude[hemis_idx, :]
+            grounded_current = -1 * np.round(
+                np.sum(pulse_sign_amplitude[~np.isnan(pulse_sign_amplitude)]), 6
+            )  # could be 0
         else:
             # otherwise not relevant, but set to 0.0 if non-active contacts present
             grounded_current = 0.0
 
-        grid_center, grid_resolution = self.get_grid_parameters(elec_dict['Name'], hemis_idx, unit_directions, specs_array_length)
-            
+        grid_center, grid_resolution = self.get_grid_parameters(
+            elec_dict["Name"], hemis_idx, unit_directions, specs_array_length
+        )
+
         # MAKE THE DICTIONARY
         partial_dict = {
             "ModelSide": 0,  # hardcoded for now, always keep to 0
@@ -140,12 +156,14 @@ class LeadSettings:
             },
             "PointModel": {
                 "Lattice": {
-                    "Active": not(bool(self.get_calc_axon_act())), # for now, disable lattice when using PAM
+                    "Active": not (
+                        bool(self.get_calc_axon_act())
+                    ),  # for now, disable lattice when using PAM
                     "Center": {
                         # center at the middle of the electrode array
                         "x[mm]": grid_center[0],
                         "y[mm]": grid_center[1],
-                        "z[mm]": grid_center[2]
+                        "z[mm]": grid_center[2],
                     },
                     "Shape": {"x": 71, "y": 71, "z": 71},
                     "Direction": {
@@ -158,7 +176,7 @@ class LeadSettings:
                 },
                 "Pathway": {
                     "Active": bool(self.get_calc_axon_act()),
-                    "FileName": os.path.join(output_path, "Allocated_axons.h5")
+                    "FileName": os.path.join(output_path, "Allocated_axons.h5"),
                 },
             },
             "StimulationSignal": {"CurrentControlled": current_controlled},
@@ -182,9 +200,7 @@ class LeadSettings:
             if current_controlled:
                 floating = True
         if floating:
-            partial_dict["Solver"]["PreconditionerKwargs"] = {
-                "coarsetype": "local"
-            }
+            partial_dict["Solver"]["PreconditionerKwargs"] = {"coarsetype": "local"}
 
         return partial_dict
 
@@ -195,39 +211,49 @@ class LeadSettings:
     #         json.dump(total_dict, f)
 
     def get_num_elecs(self):
+        """Number of electrodes."""
         return self.NUM_ELECS
 
     def get_pat_fold(self):
+        """Patient folder."""
         return self._get_str("Patient_folder")
 
     def get_est_in_temp(self):
+        """TODO description."""
         return bool(self._get_num("Estimate_In_Template"))
 
-    # MRIPath
     def get_mri_name(self):
+        """Path to MRI file."""
         mri_file = self._get_str("MRI_data_name")
         return os.path.abspath(mri_file)
 
     def get_dti_name(self):
+        """Path to DTI file."""
         return self._get_str("DTI_data_name")
 
     def get_gm_idx(self):
+        """Gray matter index in MRI."""
         return int(self._get_num("GM_index"))
 
     def get_wm_idx(self):
+        """White matter index in MRI."""
         return int(self._get_num("WM_index"))
 
     def get_csf_idx(self):
+        """CSF index in MRI."""
         return int(self._get_num("CSF_index"))
 
     def get_def_mat(self):
+        """Default material."""
         return self._get_str("default_material")
 
     def get_elec_type(self):
+        """Electrode type."""
         return self._get_str("Electrode_type")
 
     # TODO check if calculation matches Lead-DBS (Konstantin)
     def get_specs_array_length(self, oss_elec_name):
+        """TODO description."""
         elec_params = default_electrode_parameters[oss_elec_name]
         return elec_params.get_distance_l1_l4()
 
@@ -241,7 +267,7 @@ class LeadSettings:
         hemis_idx: int
             hemisphere ID (0 - right, 1 - left)
         specs_array_length: float
-            distance between the first and the last contact according to the electrode specs
+            distance between the first and the last contact
 
         Returns
         -------
@@ -258,35 +284,53 @@ class LeadSettings:
         return el_array_length / specs_array_length
 
     def get_cntct_loc(self):
+        """Contact location."""
         e1 = np.asarray(self._file[self._settings["contactLocation"][0, 0]][:, :])
         e2 = np.asarray(self._file[self._settings["contactLocation"][1, 0]][:, :])
         return np.stack((e1, e2))
 
     # Used to re-compute rot_z
     def get_y_mark_nat(self):
+        """Native y-marker."""
         return self._get_arr("yMarkerNative")
 
     def get_y_mark_mni(self):
+        """MNI y-marker."""
         return self._get_arr("yMarkerMNI")
 
     def get_head_nat(self):
+        """Native head."""
         return self._get_arr("headNative")
 
     def get_head_mni(self):
+        """MNI head."""
         return self._get_arr("headMNI")
 
     def get_imp_coord(self):
+        """Implantation coordinate."""
         return self._get_arr("Implantation_coordinate")
 
     def get_sec_coord(self):
+        """Second coordinate."""
         return self._get_arr("Second_coordinate")
-        
+
     def get_stim_center(self):
+        """Stimulation center."""
         return self._get_arr("stim_center")
 
-    # Always recalculated from the other settings
-    # IMPORTANT: it is actually not native but scrf!
-    def get_rot_z(self, index_side):
+    def get_rot_z(self, index_side: int):
+        """TODO description.
+
+        Parameters
+        ----------
+        index_side: int
+            Side of brain
+
+        Notes
+        -----
+         Always recalculated from the other settings
+        *IMPORTANT*: it is actually not native but scrf!
+        """
         head_nat = self.get_head_nat()[index_side, :]
         y = self.get_y_mark_nat()[index_side, :] - head_nat
         y_postop = y / np.linalg.norm(y)
@@ -294,57 +338,71 @@ class LeadSettings:
         return phi * 180.0 / np.pi
 
     def get_stim_set_mode(self):
+        """Stimulation mode."""
         return self._get_num("stimSetMode")
 
     def get_cur_ctrl(self):
+        """Current-controlled."""
         return self._get_arr("current_control").T[0]
 
     def remove_electrode(self):
+        """Remove electrode (collapse VTA?)."""
         return self._get_num("removeElectrode")
 
     def get_neuron_model(self):
+        """Neuron model."""
         return self._get_str("neuronModel")
 
     def get_signal_type(self):
+        """Signal type."""
         return self._get_str("signalType")
 
     def get_pulse_width(self):
+        """Pulse width."""
         return self._get_num("pulseWidth")
 
     def check_biphasic(self):
+        """Biphasic pulse."""
         return self._get_num("biphasic")
 
     def do_adaptive_ref(self):
+        """Adaptive mesh refinement."""
         return self._get_num("AdaptiveRef")
 
     def get_encapsulation_type(self):
+        """Encapsulation type."""
         return self._get_str("encapsulationType")
-    
+
     def get_act_thresh_vta(self):
+        """Activation threshold for VTA."""
         return self._get_num("Activation_threshold_VTA")
 
     def get_phi_vec(self):
+        """TODO description."""
         return self._get_arr("Phi_vector")
 
     def get_case_grnd(self):
+        """Case grounding."""
         return self._get_arr("Case_grounding")
 
-    def get_act_thresh_vta(self):
-        return self._get_num("Activation_threshold_VTA")
-
     def get_calc_axon_act(self):
+        """Calculate axon activation."""
         return self._get_num("calcAxonActivation")
 
     def get_connectome(self):
+        """TODO description."""
         return self._get_str("connectome")
 
     def get_axon_len(self):
+        """Axon length."""
         return self._get_arr("axonLength")
 
     def get_fib_diam(self):
+        """Fibre diameter."""
         return self._get_arr("fiberDiameter")
 
     def get_conectome_path(self):
+        """Connectome path."""
         return self._get_str("connectomePath")
 
     def get_connectome_tract_names(self):
@@ -369,29 +427,42 @@ class LeadSettings:
         return tract_names
 
     def get_inter_mode(self):
+        """Interactive mode."""
         return self._get_num("interactiveMode")
 
-    def add_stimsignal_params(self, partial_dict):
-
+    def add_stimsignal_params(self, partial_dict: dict):
+        """Add stimulation signal parameters."""
         partial_dict["StimulationSignal"]["Type"] = self.get_signal_type()
-        if partial_dict["StimulationSignal"]["Type"] == 'Train':
-            partial_dict["StimulationSignal"]["Type"] = 'Rectangle'
+        if partial_dict["StimulationSignal"]["Type"] == "Train":
+            partial_dict["StimulationSignal"]["Type"] = "Rectangle"
         partial_dict["StimulationSignal"]["PulseWidth[us]"] = self.get_pulse_width()
 
         if self.check_biphasic():
-            partial_dict["StimulationSignal"]["CounterPulseWidth[us]"] = self.get_pulse_width()
+            partial_dict["StimulationSignal"][
+                "CounterPulseWidth[us]"
+            ] = self.get_pulse_width()
 
         # hardwired for now
         partial_dict["StimulationSignal"]["Frequency[Hz]"] = 130.0
-        partial_dict["StimulationSignal"]["SpectrumMode"] = 'OctaveBand'
-        partial_dict["StimulationSignal"]["CutoffFrequency"] = 250000.0  # 2 us time step
+        partial_dict["StimulationSignal"]["SpectrumMode"] = "OctaveBand"
+        partial_dict["StimulationSignal"][
+            "CutoffFrequency"
+        ] = 250000.0  # 2 us time step
         partial_dict["StimulationSignal"]["PulseTopWidth[us]"] = 0.0
         partial_dict["StimulationSignal"]["InterPulseWidth[us]"] = 0.0
 
         return partial_dict
 
+    def stretch_electrode(self, oss_electrode_name: str, hemi_idx: int):
+        """Stretch electrode geometry.
 
-    def stretch_electrode(self, oss_electrode_name, hemi_idx):
+        Parameters
+        ----------
+        oss_electrode_name: str
+            electrode name in OSS-DBS format
+        hemi_idx: int
+            Index of brain side
+        """
         stretch_list = ["tip_length", "contact_length", "contact_spacing"]
         specs_array_length = self.get_specs_array_length(oss_electrode_name)
         stretch_factor = self.get_stretch_factor(specs_array_length, hemi_idx)
@@ -408,13 +479,17 @@ class LeadSettings:
                 stretched_parameters[parameter] = value
         return stretched_parameters
 
-    def get_tip_position(self, oss_elec_name, hemi_idx):
+    def get_tip_position(self, oss_elec_name: str, hemi_idx: int):
         """Get tip, implantation trajectory from head
-        (Implantation_coordinate) and tail (Second_coordinate), and length of the contact span
+        (Implantation_coordinate) and tail (Second_coordinate),
+        and length of the contact span.
 
         Parameters
         ----------
-        oss_elec_name: str, electrode name in OSS-DBS format
+        oss_elec_name: str
+            electrode name in OSS-DBS format
+        hemi_idx: int
+            Index of brain side
 
         Returns
         -------
@@ -435,16 +510,21 @@ class LeadSettings:
 
         return unit_directions, tip_position, specs_array_length
 
-    def get_grid_parameters(self, electrode_name, hemis_idx, unit_directions,
-                                                               specs_array_length):
-        """Center lattice at the center of estimated stimulation volume and set resolution
+    def get_grid_parameters(
+        self, electrode_name, hemis_idx, unit_directions, specs_array_length
+    ):
+        """Center lattice w.r.t. etimated stimulation volume and set resolution.
 
         Parameters
         ----------
-        electrode_name: str, OSS-DBS notation
-        unit_directions: numpy.ndarray, implantation trajectory
-        specs_array_length: float, length of the contact span
-        hemis_idx: int, hemisphere ID (0 - right, 1 - left)
+        electrode_name: str
+            OSS-DBS notation
+        unit_directions: numpy.ndarray
+            implantation trajectory
+        specs_array_length: float
+            length of the contact span
+        hemis_idx: int
+            hemisphere ID (0 - right, 1 - left)
 
         Returns
         -------
@@ -453,15 +533,22 @@ class LeadSettings:
         """
         # get grid center for lattice / voxel lattice model
         if np.any(np.isnan(self.get_stim_center()[hemis_idx, :])):
-            self.grid_center = self.get_imp_coord()[hemis_idx, :] + unit_directions[hemis_idx,
-                                                                    :] * specs_array_length / 2
+            self.grid_center = (
+                self.get_imp_coord()[hemis_idx, :]
+                + unit_directions[hemis_idx, :] * specs_array_length / 2
+            )
         else:
             grid_center = self.get_stim_center()[hemis_idx, :]
 
         # set resolution
-        # coarser resolution for large span electrodes and large amplitudes (>5 mA or 5 V)
+        # coarser resolution for large span electrodes
+        # and large amplitudes (>5 mA or 5 V)
         phi_vector = self.get_phi_vec()[hemis_idx, :]
-        if electrode_name == 'BostonScientificVercise' or electrode_name == 'BostonScientificVerciseCustom' or np.max(np.abs(phi_vector[~np.isnan(phi_vector)])) > 5.0:
+        if (
+            electrode_name == "BostonScientificVercise"
+            or electrode_name == "BostonScientificVerciseCustom"
+            or np.max(np.abs(phi_vector[~np.isnan(phi_vector)])) > 5.0
+        ):
             grid_resolution = 0.4
         else:
             grid_resolution = 0.33
@@ -473,8 +560,10 @@ class LeadSettings:
 
         Parameters
         ----------
-        hemis_idx: int, hemisphere ID (0 - right, 1 - left)
-        elec_dict: dict, default=None, electrode dictionary to create/update
+        hemis_idx: int
+            hemisphere ID (0 - right, 1 - left)
+        elec_dict: dict
+            default=None, electrode dictionary to create/update
 
         Returns
         -------
@@ -526,7 +615,9 @@ class LeadSettings:
         stretched_parameters = self.stretch_electrode(electrode_name, hemis_idx)
 
         # get tip position from the head and tail markers
-        unit_directions, tip_pos, specs_array_length = self.get_tip_position(electrode_name, hemis_idx)
+        unit_directions, tip_pos, specs_array_length = self.get_tip_position(
+            electrode_name, hemis_idx
+        )
 
         elec_dict_imp = {
             # Assuming both electrodes are the same type
@@ -548,7 +639,7 @@ class LeadSettings:
                 "Material": self.get_encapsulation_type(),
                 "DielectricModel": "ColeCole3",
                 "DielectricParameters": None,
-                "MaxMeshSize": 0.1
+                "MaxMeshSize": 0.1,
             },
         }
         if elec_dict is None:
@@ -556,20 +647,26 @@ class LeadSettings:
         else:
             elec_dict.update(elec_dict_imp)
 
-        if elec_dict_imp["EncapsulationLayer"]["Material"] == 'None':
-            elec_dict_imp["EncapsulationLayer"]["Material"] = 'Gray matter'
+        if elec_dict_imp["EncapsulationLayer"]["Material"] == "None":
+            elec_dict_imp["EncapsulationLayer"]["Material"] = "Gray matter"
             elec_dict_imp["EncapsulationLayer"]["Thickness[mm]"] = 0.0
 
         return elec_dict, unit_directions, specs_array_length
 
-    def import_stimulation_settings(self, hemis_idx, current_controlled, elec_dict=None):
+    def import_stimulation_settings(
+        self, hemis_idx, current_controlled, elec_dict=None
+    ):
         """Convert Lead-DBS stim settings to OSS-DBS parameters,
         update electrode dictionary.
 
         Parameters
         ----------
-        hemis_idx: int, hemisphere ID (0 - right, 1 - left)
-        elec_dict: dict, default=None, electrode dictionary to create/update
+        hemis_idx: int
+            hemisphere ID (0 - right, 1 - left)
+        current_controlled: bool
+            Current-controlled stimulation
+        elec_dict: dict
+            default=None, electrode dictionary to create/update
 
         Returns
         -------
@@ -587,13 +684,9 @@ class LeadSettings:
 
         # check stimulation mode
         if self.get_cur_ctrl()[hemis_idx]:
-            pulse_amp_key = "Current[A]"
-            not_pulse_amp_key = "Voltage[V]"
             # Lead-DBS uses mA as the input
             pulse_amps = pulse_amps * 0.001
         else:
-            pulse_amp_key = "Voltage[V]"
-            not_pulse_amp_key = "Current[A]"
             # Fix of VC random grounding bug for Lead-DBS stim settings
             pulse_amps[pulse_amps == 0] = float("nan")
 
@@ -610,7 +703,8 @@ class LeadSettings:
             else:
                 # for VC, case grounding is defined explicitly
                 case_grounding = bool(self.get_case_grnd()[index_side])
-                # shift all voltages if bipolar case to have 0V and cathodes (as in the stimulators)
+                # shift all voltages if bipolar case
+                # to have 0V and cathodes (as in the stimulators)
                 if np.nanmax(pulse_amp) > 0.0:
                     pulse_amp[:] = pulse_amp[:] - np.nanmax(pulse_amp)
 

@@ -30,14 +30,27 @@ class Lattice(PointModel):
         center: tuple,
         distance: float,
         direction: tuple,
+        collapse_vta: bool = False,
     ) -> None:
-        self._distance = abs(distance)
+        if distance < 0:
+            raise ValueError("The spacing between points must be positive.")
+        self._distance = distance
+        if len(shape) != 3:
+            raise ValueError("Pass a 3-valued tuple as the lattice shape.")
         self._shape = shape
+        self.collapse_VTA = collapse_vta
         self._center = center
         norm = np.linalg.norm(direction)
+        # TODO why can norm be not be there?
         self._direction = tuple(direction / norm) if norm else (0, 0, 1)
         self._location = np.full(shape[0] * shape[1] * shape[2], "")
         self._coordinates = self._initialize_coordinates()
+
+        # identifiers
+        self._name = "Lattice"
+
+        # never compute time-domain signal
+        self.time_domain_conversion = False
 
     def _initialize_coordinates(self) -> np.ndarray:
         """Generates coordinates of points.

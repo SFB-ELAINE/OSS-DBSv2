@@ -18,7 +18,7 @@ from ossdbs.fem import (
     VolumeConductorNonFloating,
 )
 from ossdbs.model_geometry import BoundingBox, BrainGeometry, ModelGeometry
-from ossdbs.point_analysis import Lattice, Pathway, PointModel, VoxelLattice
+from ossdbs.point_analysis import Lattice, Pathway, VoxelLattice
 from ossdbs.stimulation_signals import (
     FrequencyDomainSignal,
     RectangleSignal,
@@ -231,13 +231,14 @@ def prepare_solver(settings):
     )
 
 
-def generate_neuron_grid(settings: dict) -> PointModel:
-    """Generate a grid to evaluate volume conductor model."""
+def generate_point_models(settings: dict):
+    """Generate a list of point models."""
+    point_models = []
     if settings["PointModel"]["Pathway"]["Active"]:
         file_name = settings["PointModel"]["Pathway"]["FileName"]
         _logger.info(f"Import neuron geometries stored in {file_name}")
-        return Pathway(file_name)
-    elif settings["PointModel"]["Lattice"]["Active"]:
+        point_models.append(Pathway(file_name))
+    if settings["PointModel"]["Lattice"]["Active"]:
         shape_par = settings["PointModel"]["Lattice"]["Shape"]
         shape = shape_par["x"], shape_par["y"], shape_par["z"]
         center_par = settings["PointModel"]["Lattice"]["Center"]
@@ -246,11 +247,19 @@ def generate_neuron_grid(settings: dict) -> PointModel:
         direction = dir_par["x[mm]"], dir_par["y[mm]"], dir_par["z[mm]"]
         distance = settings["PointModel"]["Lattice"]["PointDistance[mm]"]
 
-        _logger.info("from lattice")
-        return Lattice(
-            shape=shape, center=center, distance=distance, direction=direction
+        point_models.append(
+            Lattice(
+                shape=shape,
+                center=center,
+                distance=distance,
+                direction=direction,
+            )
         )
-    elif settings["PointModel"]["VoxelLattice"]["Active"]:
+
+        collapse_vta = settings["PointModel"]["Lattice"]["CollapseVTA"]
+        point_models[-1].collapse_vta = collapse_vta
+
+    if settings["PointModel"]["VoxelLattice"]["Active"]:
         _logger.info("from voxel lattice")
         center_par = settings["PointModel"]["Lattice"]["Center"]
         center = center_par["x[mm]"], center_par["y[mm]"], center_par["z[mm]"]
@@ -259,8 +268,8 @@ def generate_neuron_grid(settings: dict) -> PointModel:
         header = mri_image.header
         shape_par = settings["PointModel"]["VoxelLattice"]["Shape"]
         shape = np.array([shape_par["x"], shape_par["y"], shape_par["z"]])
-        return VoxelLattice(center, affine, shape, header)
-    return None
+        point_models.append(VoxelLattice(center, affine, shape, header))
+    return point_models
 
 
 def generate_meshsize_file_from_neuron_grid():
@@ -402,6 +411,8 @@ def run_volume_conductor_model(settings, volume_conductor):
     _logger.info("Run volume conductor model")
     volume_conductor.output_path = settings["OutputPath"]
     _logger.info(f"Output path set to: {volume_conductor.output_path}")
+
+    out_of_core = settings["OutOfCore"]
     compute_impedance = False
     if "ComputeImpedance" in settings:
         if settings["ComputeImpedance"]:
@@ -414,14 +425,14 @@ def run_volume_conductor_model(settings, volume_conductor):
     else:
         export_vtk = False
 
-    point_model = generate_neuron_grid(settings)
+    point_models = generate_point_models(settings)
 
     vcm_timings = volume_conductor.run_full_analysis(
         compute_impedance,
         export_vtk,
-        point_model=point_model,
+        point_models=point_models,
         activation_threshold=settings["ActivationThresholdVTA"],
-        collapse_vta=settings["PointModel"]["Lattice"]["CollapseVTA"],
+        out_of_core=out_of_core,
     )
     return vcm_timings
 

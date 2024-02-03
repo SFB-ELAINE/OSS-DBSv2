@@ -9,7 +9,7 @@ from ossdbs.api import (
     generate_electrodes,
     generate_mesh,
     generate_model_geometry,
-    generate_neuron_grid,
+    generate_point_models,
     load_images,
     prepare_dielectric_properties,
     prepare_solver,
@@ -39,7 +39,7 @@ def set_logger(level=logging.INFO):
         _logger.addHandler(ch)
     else:
         for handler in _logger.handlers:
-            if type(handler) == logging.StreamHandler:
+            if isinstance(handler, logging.StreamHandler):
                 handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
                 handler.setLevel(level)
 
@@ -64,5 +64,5 @@ __all__ = (
     "set_contact_and_encapsulation_layer_properties",
     "Mesh",
     "run_volume_conductor_model",
-    "generate_neuron_grid",
+    "generate_point_models",
 )

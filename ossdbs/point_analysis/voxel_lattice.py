@@ -40,12 +40,22 @@ class VoxelLattice(PointModel):
         self._affine = affine
         self._shape = shape
         self._header = header
+        self.collapse_VTA = False
+
+        # TODO is that correct?
+        self._location = None
 
         # Check on dimension condition on shape input
         if np.sum(shape[shape / 2 == 0]) > 0:
             raise Exception("Each dimension of the shape must be an odd number")
 
         self._coordinates = self._initialize_coordinates()
+
+        # identifiers
+        self._name = "VoxelLattice"
+
+        # never compute time-domain signal
+        self.time_domain_conversion = False
 
     def _initialize_coordinates(self) -> np.ndarray:
         """Generates grids of points in the MRI voxels.
