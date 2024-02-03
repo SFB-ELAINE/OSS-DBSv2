@@ -37,9 +37,11 @@ cd ..
 cd input_case7
 echo $PWD
 ossdbs input_vta.json
+ossdbs input_vta_out_of_core.json
 cd ..
 
 cd input_case8
 echo $PWD
 ossdbs input_pathway.json
+ossdbs input_pathway_out_of_core.json
 cd ..

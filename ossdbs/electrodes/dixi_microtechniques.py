@@ -1,5 +1,5 @@
 # Dixi Microtechniques SEEG
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 
 import netgen
 import netgen.occ as occ
@@ -12,6 +12,7 @@ from .utilities import get_highest_edge, get_lowest_edge
 @dataclass
 class DixiSEEGParameters:
     """Parameters for Dixi electrodes."""
+
     # dimensions [mm]
     tip_length: float
     contact_length: float
