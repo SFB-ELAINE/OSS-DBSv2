@@ -12,5 +12,5 @@ signal = RectangleSignal(frequency, pulse_width, inter_pulse_width, counter_puls
 fft_frequencies, fft_signal = signal.get_fft_spectrum(cutoff_frequency)
 
 timesteps, signal_retrieved = signal.retrieve_time_domain_signal(fft_signal, cutoff_frequency)
-plt.plot(timesteps / 1e-6, signal_retrieved)
+plt.plot(timesteps / 1e-3, signal_retrieved)
 plt.show()

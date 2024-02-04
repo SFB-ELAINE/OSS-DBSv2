@@ -1,33 +1,33 @@
+"""Open-source software for deep brain stimulation."""
 import logging
 
-from .__version__ import __version__
-
-from ossdbs.model_geometry import (BrainGeometry,
-                                   ModelGeometry)
-from ossdbs.fem import (Mesh,
-                        ConductivityCF)
-from ossdbs.api import (generate_electrodes,
-                        create_bounding_box,
-                        generate_brain_model,
-                        generate_mesh,
-                        prepare_solver,
-                        prepare_dielectric_properties,
-                        prepare_volume_conductor_model,
-                        prepare_stimulation_signal,
-                        run_volume_conductor_model,
-                        set_contact_and_encapsulation_layer_properties,
-                        generate_model_geometry,
-                        generate_neuron_grid)
-from ossdbs.utils.nifti1image import (MagneticResonanceImage,
-                                      DiffusionTensorImage)
 import ngsolve
 
+from ossdbs.api import (
+    create_bounding_box,
+    generate_brain_model,
+    generate_electrodes,
+    generate_mesh,
+    generate_model_geometry,
+    generate_point_models,
+    load_images,
+    prepare_dielectric_properties,
+    prepare_solver,
+    prepare_stimulation_signal,
+    prepare_volume_conductor_model,
+    run_volume_conductor_model,
+    set_contact_and_encapsulation_layer_properties,
+)
+from ossdbs.fem import ConductivityCF, Mesh
+from ossdbs.model_geometry import BrainGeometry, ModelGeometry
+from ossdbs.utils.nifti1image import DiffusionTensorImage, MagneticResonanceImage
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
 
 
 def set_logger(level=logging.INFO):
+    """Set log level."""
     _logger.setLevel(level)
     if level == logging.DEBUG:
         ngsolve.ngsglobals.msg_level = 10
@@ -39,28 +39,30 @@ def set_logger(level=logging.INFO):
         _logger.addHandler(ch)
     else:
         for handler in _logger.handlers:
-            if type(handler) == logging.StreamHandler:
+            if isinstance(handler, logging.StreamHandler):
                 handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
                 handler.setLevel(level)
 
 
-__all__ = ('__version__',
-           'set_logger',
-           'BrainGeometry',
-           'ModelGeometry',
-           'ConductivityCF',
-           'generate_electrodes',
-           'generate_brain_model',
-           'generate_model_geometry',
-           'generate_mesh',
-           'prepare_solver',
-           'prepare_volume_conductor_model',
-           'prepare_dielectric_properties',
-           'prepare_stimulation_signal',
-           'create_bounding_box',
-           'MagneticResonanceImage',
-           'DiffusionTensorImage',
-           'set_contact_and_encapsulation_layer_properties',
-           'Mesh',
-           'run_volume_conductor_model',
-           'generate_neuron_grid')
+__all__ = (
+    "set_logger",
+    "BrainGeometry",
+    "ModelGeometry",
+    "ConductivityCF",
+    "generate_electrodes",
+    "generate_brain_model",
+    "generate_model_geometry",
+    "generate_mesh",
+    "prepare_solver",
+    "prepare_volume_conductor_model",
+    "prepare_dielectric_properties",
+    "prepare_stimulation_signal",
+    "load_images",
+    "create_bounding_box",
+    "MagneticResonanceImage",
+    "DiffusionTensorImage",
+    "set_contact_and_encapsulation_layer_properties",
+    "Mesh",
+    "run_volume_conductor_model",
+    "generate_point_models",
+)

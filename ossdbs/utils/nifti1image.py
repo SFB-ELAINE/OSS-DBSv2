@@ -1,9 +1,10 @@
-from ossdbs.model_geometry import BoundingBox
+import netgen.occ
+import ngsolve
 import nibabel
 import numpy as np
 import numpy.linalg as npl
-import netgen.occ
-import ngsolve
+
+from ossdbs.model_geometry import BoundingBox
 
 
 class Nifti1Image:
@@ -16,7 +17,6 @@ class Nifti1Image:
 
     Notes
     -----
-
     TODO: add link to Nibabel documentation
 
     """
@@ -27,6 +27,7 @@ class Nifti1Image:
 
     @property
     def affine(self):
+        """Get affine transformation as 4x4 matrix."""
         return self._scaling * self._image.affine
 
     @property
@@ -63,9 +64,8 @@ class Nifti1Image:
 
     @property
     def trafo_matrix(self) -> np.ndarray:
-        return np.array([self.affine[0, :3],
-                         self.affine[1, :3],
-                         self.affine[2, :3]])
+        """Get trafo matrix, i.e. a 3x3 matrix."""
+        return np.array([self.affine[0, :3], self.affine[1, :3], self.affine[2, :3]])
 
     @property
     def translation(self) -> np.ndarray:
@@ -89,30 +89,31 @@ class Nifti1Image:
 
     @staticmethod
     def _load_image(file_path: str) -> nibabel.nifti1.Nifti1Image:
+        """Load image from file."""
         try:
             return nibabel.load(file_path)
-        except FileNotFoundError:
-            raise IOError('File Not Found.')
+        except FileNotFoundError as exc:
+            print(exc.errno)
+            raise
 
     @property
     def _scaling(self) -> float:
+        """Get scaling depending on used length unit."""
         xyz_unit = self._image.header.get_xyzt_units()[0]
-        return {'unknown': 1.0,
-                'meter': 1.0e3,
-                'mm': 1.0,
-                'micron': 1.0e-3}[xyz_unit]
+        return {"unknown": 1.0, "meter": 1.0e3, "mm": 1.0, "micron": 1.0e-3}[xyz_unit]
 
     def _crop_image(self, voxel_bounding_box: BoundingBox) -> np.ndarray:
         """Crop the image to match, for example, the brain geometry.
 
-        Parameters:
-            voxel_bounding_box:
-                    Defined in voxel space!
-        Returns
-        -------
-        TODO
-        """
+        Parameters
+        ----------
+        voxel_bounding_box: BoundingBox
+            Defined in voxel space
 
+        Notes
+        -----
+        The image is cropped in the voxel space!
+        """
         start_index = np.floor(np.array(voxel_bounding_box.start))
         x_s, y_s, z_s = start_index.astype(int)
         end_index = np.floor(np.array(voxel_bounding_box.end))
@@ -122,8 +123,19 @@ class Nifti1Image:
         return self.data[x_s:x_e, y_s:y_e, z_s:z_e], bbox
 
     def get_voxel_bounding_box(self, bounding_box: BoundingBox):
+        """Get bounding box around voxels in real space.
+
+        Notes
+        -----
+        The dimensions of the box is different from
+        the number of voxels scaled by the voxel size.
+        The box can be skewed in reality (described by
+        the affine transformation).
+        """
         inv_trafo = npl.inv(self.trafo_matrix)
-        inv_affine_trafo = netgen.occ.gp_GTrsf(mat=inv_trafo.ravel(), vec=-inv_trafo.dot(self.translation))
+        inv_affine_trafo = netgen.occ.gp_GTrsf(
+            mat=inv_trafo.ravel(), vec=-inv_trafo.dot(self.translation)
+        )
         box = netgen.occ.Box(bounding_box.start, bounding_box.end)
         box_voxel = inv_affine_trafo(box)
         voxel_bounding_box = box_voxel.bounding_box
@@ -137,64 +149,77 @@ class Nifti1Image:
                 bbox_start[i] = 0
             if bbox_end[i] > self.xyz_shape[i]:
                 bbox_end[i] = self.xyz_shape[i]
-        return BoundingBox(np.floor(np.array(bbox_start)).astype(int),
-                           np.floor(np.array(bbox_end)).astype(int))
+        return BoundingBox(
+            np.floor(np.array(bbox_start)).astype(int),
+            np.floor(np.array(bbox_end)).astype(int),
+        )
 
     @property
     def trafo_cf(self):
+        """Get the transformation matrix as NGSolve function."""
         if self._trafo_cf is None:
             # ravel because ngsolve needs a vector in a tuple
             inv_trafo_matrix = tuple(npl.inv(self.trafo_matrix).ravel())
-            mm_space_coordinates = ngsolve.CoefficientFunction((ngsolve.x, ngsolve.y, ngsolve.z), dims=(3,))
-            mm_space_to_voxel_space = ngsolve.CoefficientFunction(inv_trafo_matrix, dims=(3, 3))
+            mm_space_coordinates = ngsolve.CoefficientFunction(
+                (ngsolve.x, ngsolve.y, ngsolve.z), dims=(3,)
+            )
+            mm_space_to_voxel_space = ngsolve.CoefficientFunction(
+                inv_trafo_matrix, dims=(3, 3)
+            )
             # Getting image offset for translation
-            translation = ngsolve.CoefficientFunction(tuple(self.translation), dims=(3,))
-            self._trafo_cf = mm_space_to_voxel_space * (mm_space_coordinates - translation)
+            translation = ngsolve.CoefficientFunction(
+                tuple(self.translation), dims=(3,)
+            )
+            self._trafo_cf = mm_space_to_voxel_space * (
+                mm_space_coordinates - translation
+            )
             self._trafo_cf.Compile()
         return self._trafo_cf
 
 
 class MagneticResonanceImage(Nifti1Image):
+    """MRI image."""
 
     def __init__(self, file_path: str) -> None:
         super().__init__(file_path)
         if not self.data.ndim == 3:
-            raise IOError('MRI Data shape is not three dimensional.')
+            raise OSError("MRI Data shape is not three dimensional.")
 
 
 class DiffusionTensorImage(Nifti1Image):
+    """DTI image."""
 
     def __init__(self, file_path: str) -> None:
         super().__init__(file_path)
         if not self._image.get_fdata().ndim == 4:
-            raise IOError('Data Shape not four dimensional.')
+            raise OSError("Data Shape not four dimensional.")
         if not self._image.get_fdata().shape[-1] == 6:
-            raise IOError('Data Shape is not (x,y,z,6).')
+            raise OSError("Data Shape is not (x,y,z,6).")
 
     @property
     def components(self):
-        """Component and respective entry in flattened array
-        """
-        return {"xx": 0,
-                "xy": 1,
-                "xz": 2,
-                "yx": 1,
-                "yy": 3,
-                "yz": 4,
-                "zx": 2,
-                "zy": 4,
-                "zz": 5}
+        """Component and respective entry in flattened array."""
+        return {
+            "xx": 0,
+            "xy": 1,
+            "xz": 2,
+            "yx": 1,
+            "yy": 3,
+            "yz": 4,
+            "zx": 2,
+            "zy": 4,
+            "zz": 5,
+        }
 
     def get_component(self, component: str) -> np.ndarray:
-        """Get component of DTI tensor
+        """Get component of DTI tensor.
 
         Notes
         -----
-
         Determine which index to extract based on data shape (x,y,z,6)
         Note the pairs (xy,yx), (yz,zy), and (xz,zx) map to the same indices
         """
         if component not in self.components:
-            raise ValueError("Component must be in {}".format(self.components.keys()))
+            raise ValueError(f"Component must be in {self.components.keys()}")
         extract_index = self.components[component]
         return self.data[:, :, :, extract_index]

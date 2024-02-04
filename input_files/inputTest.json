@@ -1,9 +1,9 @@
 {
   "BrainRegion": {
     "Center": {
-      "x[mm]": 17.0,
-      "y[mm]": 8.0,
-      "z[mm]": 6.0
+      "x[mm]": -9.48,
+      "y[mm]": 11.61,
+      "z[mm]": 4.68
     },
     "Dimension": {
       "x[mm]": 40.0,
@@ -23,9 +23,9 @@
         "z[mm]": 1.0
       },
       "TipPosition": {
-        "x[mm]": 17.0,
-        "y[mm]": 8.0,
-        "z[mm]": 6.0
+        "x[mm]": -9.48,
+        "y[mm]": 11.61,
+        "z[mm]": 4.68
       },
       "Contacts": [
         {
@@ -38,7 +38,7 @@
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.01
+          "MaxMeshSizeEdge": 0.5
         },
         {
           "Contact_ID": 2,
@@ -50,19 +50,19 @@
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.01
+          "MaxMeshSizeEdge": 0.5
         }
       ],
       "EncapsulationLayer": {
         "Thickness[mm]": 0.0,
         "Material": "Blood",
         "DielectricModel": "ColeCole4",
-        "MaxMeshSize": 0.01
+        "MaxMeshSize": 0.5
       }
     }
   ],
   "MaterialDistribution": {
-    "MRIPath": "icbm_avg_152_segmented.nii.gz",
+    "MRIPath": "Butenko_segmask.nii.gz",
     "MRIMapping": {
       "Unknown": 0,
       "CSF": 1,
@@ -80,31 +80,29 @@
     "LoadMesh": false,
     "MeshElementOrder": 2,
     "MeshingHypothesis": {
-      "Type": "Default",
-      "MaxMeshSize": 0.1
+      "Type": "Fine",
+      "MaxMeshSize": 100
     },
     "MeshSize": {
       "Edges": {},
       "Faces": {},
-      "Volumes": {
-        "Brain": 0.1
-      }
+      "Volumes": {}
     },
     "SaveMesh": false
   },
   "EQSMode": false,
   "FEMOrder": 2,
-  "ComputeImpedance": true,
   "StimulationSignal": {
     "CurrentControlled": false,
     "Type": "Multisine",
     "ListOfFrequencies": [
-      130.0
+      10000.0
     ]
   },
   "Solver": {
     "Type": "CG",
     "Preconditioner": "bddc",
+    "PreconditionerKwargs": {},
     "PrintRates": true,
     "MaximumSteps": 200,
     "Precision": 1e-8
@@ -115,6 +113,7 @@
       "FileName": ""
     },
     "Lattice": {
+      "Active": false,
       "Center": {
         "x[mm]": 10,
         "y[mm]": 10,
@@ -133,7 +132,8 @@
       "PointDistance[mm]": 1
     }
   },
-  "OutputPath": "",
-  "SaveImpedance": true,
-  "ExportVTK": true
+  "OutputPath": "Results",
+  "ComputeImpedance": true,
+  "ExportVTK": true,
+  "ExportElectrode": true
 }

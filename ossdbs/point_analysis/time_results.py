@@ -1,13 +1,24 @@
 from dataclasses import dataclass
+
 import numpy as np
-from ossdbs.utils.vtk_export import FieldSolution
 
 
 @dataclass
 class TimeResult:
-    # TODO check what is really needed
-    points: np.ndarray
+    """Compile time-domain solution.
+
+    Notes
+    -----
+    The electric field is not always required
+    and is not added by default.
+    """
+
     time_steps: np.ndarray
+    points: np.ndarray
+    inside_csf: np.ndarray
+    inside_encap: np.ndarray
     potential: np.ndarray
-    current_density: np.ndarray
-    field_solution: FieldSolution
+    electric_field_magnitude: np.ndarray = None
+    electric_field_vector_x: np.ndarray = None
+    electric_field_vector_y: np.ndarray = None
+    electric_field_vector_z: np.ndarray = None

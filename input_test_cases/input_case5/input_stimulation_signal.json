@@ -1,0 +1,131 @@
+{
+  "BrainRegion": {
+    "Center": {
+      "x[mm]": -9.476,
+      "y[mm]": 11.605,
+      "z[mm]": 4.676
+    },
+    "Dimension": {
+      "x[mm]": 40.0,
+      "y[mm]": 40.0,
+      "z[mm]": 40.0
+    },
+    "Shape": "Ellipsoid"
+  },
+  "Electrodes": [
+    {
+      "Name": "MedtronicSenSightB33005",
+      "Rotation[Degrees]": 0,
+      "Direction": {
+        "x[mm]": 0.0,
+        "y[mm]": 0.0,
+        "z[mm]": 1.0
+      },
+      "TipPosition": {
+        "x[mm]": -9.476,
+        "y[mm]": 11.605,
+        "z[mm]": 4.676
+      },
+      "Contacts": [
+        {
+          "Contact_ID": 1,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 1.0,
+          "Floating": false
+        },
+        {
+          "Contact_ID": 2,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
+          "Floating": false
+        }
+      ],
+      "EncapsulationLayer": {
+        "Thickness[mm]": 0.0,
+        "Material": "Blood",
+        "DielectricModel": "ColeCole4",
+        "MaxMeshSize": 0.1
+      }
+    }
+  ],
+  "MaterialDistribution": {
+    "MRIPath": "../../input_files/Butenko_segmask.nii.gz",
+    "MRIMapping": {
+      "Gray matter": 1,
+      "White matter": 2,
+      "CSF": 3,
+      "Blood": 4,
+      "Unknown": 0
+    },
+    "DiffusionTensorActive": false,
+    "DTIPath": ""
+  },
+  "DielectricModel": {
+    "Type": "ColeCole4"
+  },
+  "StimulationSignal": {
+    "CurrentControlled": false,
+    "Type": "Rectangle",
+    "SpectrumMode": "OctaveBand",
+    "Frequency[Hz]": 130.0,
+    "PulseWidth[us]": 600,
+    "CounterPulseWidth[us]": 0.0,
+    "InterPulseWidth[us]": 0.0,
+    "CutoffFrequency": 1e6
+  },
+  "Mesh": {
+    "LoadMesh": false,
+    "MeshElementOrder": 2,
+    "MeshingHypothesis": {
+      "Type": "Default",
+      "MaxMeshSize": 1
+    },
+    "MeshSize": {
+      "Edges": {},
+      "Faces": {},
+      "Volumes": {}
+    },
+    "SaveMesh": false
+  },
+  "Solver": {
+    "Type": "CG",
+    "Preconditioner": "bddc",
+    "PreconditionerKwargs": {},
+    "PrintRates": true,
+    "MaximumSteps": 200,
+    "Precision": 1e-8
+  },
+  "PointModel": {
+    "Pathway": {
+      "Active": false,
+      "FileName": ""
+    },
+    "Lattice": {
+      "Active": false,
+      "Center": {
+        "x[mm]": 10,
+        "y[mm]": 10,
+        "z[mm]": 10
+      },
+      "Shape": {
+        "x": 10,
+        "y": 10,
+        "z": 10
+      },
+      "Direction": {
+        "x[mm]": 0,
+        "y[mm]": 0,
+        "z[mm]": 1
+      },
+      "PointDistance[mm]": 1
+    }
+  },
+  "EQSMode": false,
+  "FEMOrder": 2,
+  "OutputPath": "./Results_signal",
+  "ComputeImpedance": true,
+  "ExportVTK": true,
+  "ExportElectrode": true
+}

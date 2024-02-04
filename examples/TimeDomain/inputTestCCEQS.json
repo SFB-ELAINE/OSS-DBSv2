@@ -1,0 +1,133 @@
+{
+  "BrainRegion": {
+    "Center": {
+      "x[mm]": 17.0,
+      "y[mm]": 8.0,
+      "z[mm]": 6.0
+    },
+    "Dimension": {
+      "x[mm]": 40.0,
+      "y[mm]": 40.0,
+      "z[mm]": 40.0
+    },
+    "Shape": "Sphere"
+  },
+  "Electrodes": [
+    {
+      "Name": "BostonScientificVercise",
+      "PathToCustomParameters": "",
+      "Rotation[Degrees]": 0.0,
+      "Direction": {
+        "x[mm]": 0.0,
+        "y[mm]": 0.0,
+        "z[mm]": 1.0
+      },
+      "TipPosition": {
+        "x[mm]": 17.0,
+        "y[mm]": 8.0,
+        "z[mm]": 6.0
+      },
+      "Contacts": [
+        {
+          "Contact_ID": 1,
+          "Active": true,
+          "Current[A]": -0.001,
+          "Voltage[V]": 0.0,
+          "Floating": false,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        },
+        {
+          "Contact_ID": 2,
+          "Active": true,
+          "Current[A]": 0.001,
+          "Voltage[V]": 1.0,
+          "Floating": false,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          }
+        }
+      ],
+      "EncapsulationLayer": {
+        "Thickness[mm]": 0.0,
+        "Material": "Blood",
+        "DielectricModel": "ColeCole4"
+      }
+    }
+  ],
+  "MaterialDistribution": {
+    "MRIPath": "../../input_files/icbm_avg_152_segmented.nii.gz",
+    "MRIMapping": {
+      "Unknown": 0,
+      "CSF": 1,
+      "White matter": 2,
+      "Gray matter": 3,
+      "Blood": 4
+    },
+    "DiffusionTensorActive": false,
+    "DTIPath": ""
+  },
+  "DielectricModel": {
+    "Type": "ColeCole4"
+  },
+  "Mesh": {
+    "LoadMesh": false,
+    "MeshElementOrder": 2,
+    "MeshingHypothesis": {
+      "Type": "Coarse"
+    },
+    "SaveMesh": false
+  },
+  "EQSMode": false,
+  "FEMOrder": 2,
+  "ComputeImpedance": true,
+  "StimulationSignal": {
+    "CurrentControlled": true,
+    "Type": "Rectangle",
+    "Frequency[Hz]": 130.0,
+    "PulseWidth[us]": 600,
+    "CounterPulseWidth[us]": 0.0,
+    "InterPulseWidth[us]": 0.0,
+    "CutoffFrequency": 1e4
+  },
+  "Solver": {
+    "Type": "CG",
+    "Preconditioner": "bddc",
+    "PreconditionerKwargs": {},
+    "PrintRates": true,
+    "MaximumSteps": 200,
+    "Precision": 1e-8
+  },
+  "PointModel": {
+    "Pathway": {
+      "Active": false,
+      "FileName": ""
+    },
+    "Lattice": {
+      "Active": true,
+      "Center": {
+        "x[mm]": 17.0,
+        "y[mm]": 8.0,
+        "z[mm]": 6.0
+      },
+      "Shape": {
+        "x": 10,
+        "y": 10,
+        "z": 10
+      },
+      "Direction": {
+        "x[mm]": 0,
+        "y[mm]": 0,
+        "z[mm]": 1
+      },
+      "PointDistance[mm]": 1
+    }
+  },
+  "OutputPath": "Results",
+  "SaveImpedance": true,
+  "ExportVTK": true,
+  "ActivationThresholdVTA": 0.2
+}

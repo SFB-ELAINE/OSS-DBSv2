@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # Configuration file for the Sphinx documentation builder.
 #
 # This file does only contain a selection of the most common options. For a
@@ -12,22 +10,19 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+
 import os
 import sys
+import importlib.metadata
+
 sys.path.insert(0, os.path.abspath('..'))
-import ossdbs
 
 # -- Project information -----------------------------------------------------
 
 project = 'OSS-DBS'
-copyright = '2022, SFB 1270 ELAINE'
 author = 'SFB 1270 ELAINE'
 
-# The short X.Y version
-version = ossdbs.__version__
-# The full version, including alpha/beta/rc tags
-release = '/beta'
-
+version = importlib.metadata.version("ossdbs")
 
 # -- General configuration ---------------------------------------------------
 

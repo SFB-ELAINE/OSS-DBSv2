@@ -1,15 +1,26 @@
-from dataclasses import dataclass
+import os
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Optional, Tuple
+
+import matplotlib.pyplot as plt
 import numpy as np
-from .utilities import adjust_cutoff_frequency
-from scipy.fft import fft, fftfreq, ifft
+from scipy.fft import fft, fftfreq
+
+from .utilities import adjust_cutoff_frequency, retrieve_time_domain_signal_from_fft
 
 
 @dataclass
 class FrequencyDomainSignal:
+    """Store information for freqency domain signal."""
+
     frequencies: np.ndarray
     amplitudes: np.ndarray
     current_controlled: bool
+    base_frequency: float
+    cutoff_frequency: float
+    signal_length: int
+    octave_band_approximation: bool = False
 
 
 class TimeDomainSignal(ABC):
@@ -28,18 +39,18 @@ class TimeDomainSignal(ABC):
 
     Notes
     -----
-
     TODO document and clarify how to use amplitude
     The spectrum is also received from here.
 
     """
 
-    def __init__(self,
-                 frequency: float,
-                 pulse_width: float,
-                 inter_pulse_width: float,
-                 counter_pulse_width: float = None,
-                 ) -> None:
+    def __init__(
+        self,
+        frequency: float,
+        pulse_width: float,
+        inter_pulse_width: float,
+        counter_pulse_width: Optional[float] = None,
+    ) -> None:
         if np.isclose(frequency, 0):
             raise ValueError("Frequency must be greater than zero.")
         self._frequency = frequency
@@ -51,14 +62,17 @@ class TimeDomainSignal(ABC):
 
     @property
     def amplitude(self) -> float:
+        """Return signal amplitude."""
         return self._amplitude
 
     @amplitude.setter
     def amplitude(self, value) -> None:
+        """Set amplitude value."""
         self._amplitude = value
 
     @property
     def counter_amplitude(self) -> float:
+        """Get amplitude of counterpulse."""
         return self._counter_amplitude
 
     @counter_amplitude.setter
@@ -77,29 +91,24 @@ class TimeDomainSignal(ABC):
 
     @frequency.setter
     def frequency(self, value):
+        """Set frequency of signal."""
         self._frequency = value
 
     @abstractmethod
     def get_fourier_coefficients(frequencies: float) -> np.ndarray:
+        """Obtain Fourier coefficients of signal."""
         pass
 
-    def get_octave_band_spectrum(self,
-                                 cutoff_frequency: float) -> np.ndarray:
-        """TODO document
+    def get_frequencies_and_fourier_coefficients(
+        self, cutoff_frequency: float
+    ) -> np.ndarray:
+        """Get frequencies and Fourier coefficients up to cutoff frequency.
 
+        Parameters
+        ----------
+        cutoff_frequency: float
+            Highest considered frequency.
         """
-        # TODO better to use FFT?!
-        frequencies, fourier_coefficients = self.get_frequencies_and_fourier_coefficients(cutoff_frequency)
-        n_octaves = int(np.log2(len(frequencies) - 1)) + 1
-        octave_indices = 2 ** np.arange(0, n_octaves)
-        # TODO check
-        # old version
-        octave_frequencies = frequencies[octave_indices]
-        octave_amplitudes = fourier_coefficients[octave_indices]
-        return octave_frequencies, octave_amplitudes
-
-    def get_frequencies_and_fourier_coefficients(self,
-                                                 cutoff_frequency: float) -> np.ndarray:
         max_harmonic = int(cutoff_frequency / self.frequency)
         harmonics = np.arange(0, max_harmonic + 1)
         frequencies = harmonics * self.frequency
@@ -107,8 +116,18 @@ class TimeDomainSignal(ABC):
         return frequencies, coefficients
 
     def get_fft_spectrum(self, cutoff_frequency: float) -> np.ndarray:
-        cutoff_frequency = adjust_cutoff_frequency(cutoff_frequency, self.frequency)
-        # time step
+        """FFT spectrum of time-domain signal.
+
+        Parameters
+        ----------
+        cutoff_frequency: float
+            Highest considered frequency.
+
+        """
+        # we double the cutoff_frequency to actually sample until there
+        cutoff_frequency = adjust_cutoff_frequency(
+            2.0 * cutoff_frequency, self.frequency
+        )
         dt = 1.0 / cutoff_frequency
         # required length for frequency
         timesteps = int(cutoff_frequency / self.frequency)
@@ -116,13 +135,33 @@ class TimeDomainSignal(ABC):
         time_domain_signal = self.get_time_domain_signal(dt, timesteps)
         return fftfreq(len(time_domain_signal), d=dt), fft(time_domain_signal)
 
-    def retrieve_time_domain_signal(self, fft_signal, cutoff_frequency: float) -> np.ndarray:
-        cutoff_frequency = adjust_cutoff_frequency(cutoff_frequency, self.frequency)
-        dt = 1.0 / cutoff_frequency
-        timesteps = dt * np.arange(int(cutoff_frequency / self.frequency))
-
-        return timesteps, ifft(fft_signal).real
+    def retrieve_time_domain_signal(
+        self, fft_signal: np.ndarray, cutoff_frequency: float
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """Compute time-domain signal by FFT."""
+        return retrieve_time_domain_signal_from_fft(
+            fft_signal, cutoff_frequency, self.frequency
+        )
 
     @abstractmethod
     def get_time_domain_signal(self, dt: float, timesteps: int) -> np.ndarray:
+        """Time-domain signal for given timestep."""
         pass
+
+    def plot_time_domain_signal(self, cutoff_frequency, output_path, show=False):
+        """Plot signal and export to PDF."""
+        cutoff_frequency = adjust_cutoff_frequency(
+            2.0 * cutoff_frequency, self.frequency
+        )
+        dt = 1.0 / cutoff_frequency
+        # required length for frequency
+        timesteps = int(cutoff_frequency / self.frequency)
+        time_domain_signal = self.get_time_domain_signal(dt, timesteps)
+        plt.plot(dt * np.arange(0, timesteps), time_domain_signal)
+        plt.xlabel("Time / s")
+        plt.ylabel("Signal / arb. u.")
+        plt.savefig(os.path.join(output_path, "time_domain_signal.pdf"))
+        if show:
+            plt.show()
+        else:
+            plt.close()

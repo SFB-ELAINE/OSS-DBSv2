@@ -1,10 +1,9 @@
-
-
 from typing import Tuple
+
+import nibabel as nib
 import numpy as np
-import h5py
+
 from .point_model import PointModel
-from .time_results import TimeResult
 
 
 class Lattice(PointModel):
@@ -25,38 +24,57 @@ class Lattice(PointModel):
         Orientation of cuboid in 3d space.
     """
 
-    def __init__(self,
-                 shape: tuple,
-                 center: tuple,
-                 distance: float,
-                 direction: tuple
-                 ) -> None:
-        self.__distance = abs(distance)
-        self.__shape = shape
-        self.__center = center
+    def __init__(
+        self,
+        shape: tuple,
+        center: tuple,
+        distance: float,
+        direction: tuple,
+        collapse_vta: bool = False,
+    ) -> None:
+        if distance < 0:
+            raise ValueError("The spacing between points must be positive.")
+        self._distance = distance
+        if len(shape) != 3:
+            raise ValueError("Pass a 3-valued tuple as the lattice shape.")
+        self._shape = shape
+        self.collapse_VTA = collapse_vta
+        self._center = center
         norm = np.linalg.norm(direction)
-        self.__direction = tuple(direction / norm) if norm else (0, 0, 1)
-        self.__location = np.full(shape[0] * shape[1] * shape[2], '')
+        # TODO why can norm be not be there?
+        self._direction = tuple(direction / norm) if norm else (0, 0, 1)
+        self._location = np.full(shape[0] * shape[1] * shape[2], "")
+        self._coordinates = self._initialize_coordinates()
 
-    def coordinates(self) -> np.ndarray:
+        # identifiers
+        self._name = "Lattice"
+
+        # never compute time-domain signal
+        self.time_domain_conversion = False
+
+    def _initialize_coordinates(self) -> np.ndarray:
         """Generates coordinates of points.
 
         Returns
         -------
         np.ndarray
         """
-        m, n, o = self.__shape
-        x_values = (np.arange(m) - ((m - 1) / 2)) * self.__distance
-        y_values = (np.arange(n) - ((n - 1) / 2)) * self.__distance
-        z_values = (np.arange(o) - ((o - 1) / 2)) * self.__distance
+        m, n, o = self._shape
+        x_values = (np.arange(m) - ((m - 1) / 2)) * self._distance
+        y_values = (np.arange(n) - ((n - 1) / 2)) * self._distance
+        z_values = (np.arange(o) - ((o - 1) / 2)) * self._distance
 
-        alpha, beta = self.__rotation_angles_xz()
-        coordinates = [self.__rotation((x, y, z), alpha, beta)
-                       for x in x_values for y in y_values for z in z_values]
+        alpha, beta = self._rotation_angles_xz()
+        coordinates = [
+            self._rotation((x, y, z), alpha, beta)
+            for x in x_values
+            for y in y_values
+            for z in z_values
+        ]
 
-        return np.array(coordinates) + self.__center
+        return np.array(coordinates) + self._center
 
-    def __rotation(self, point, alpha, beta) -> np.ndarray:
+    def _rotation(self, point, alpha, beta) -> np.ndarray:
         cos_a = np.cos(alpha)
         sin_a = np.sin(alpha)
         r_x = np.array([[1, 0, 0], [0, cos_a, -sin_a], [0, sin_a, cos_a]])
@@ -67,8 +85,8 @@ class Lattice(PointModel):
 
         return np.dot(r_z, np.dot(r_x, point))
 
-    def __rotation_angles_xz(self) -> Tuple[float]:
-        x_d, y_d, z_d = self.__direction
+    def _rotation_angles_xz(self) -> Tuple[float]:
+        x_d, y_d, z_d = self._direction
 
         if not x_d and not y_d:
             return 0.0, 0.0
@@ -79,16 +97,44 @@ class Lattice(PointModel):
 
         return -np.arctan(y_d / x_d), -np.arctan(z_d / y_d)
 
-    def save(self, data: TimeResult, file_name: str) -> None:
-        with h5py.File(file_name, "w") as file:
-            self.__write_file(data, file)
+    def save_as_nifti(
+        self, scalar_field, filename, binarize=False, activation_threshold=None
+    ):
+        """Save scalar field in abstract orthogonal space in nifti format.
 
-    def set_location_names(self, names: np.ndarray) -> None:
-        self.__location = names
+        Parameters
+        ----------
+        scalar_field : numpy.ndarray
+            Nx1 array of scalar values on the lattice
+        filename: str
+            Name for the nifti file that should contain full path
+        binarize: bool
+            Choose to threshold the scalar field and save the binarized result
+        activation_threshold: float
+            Activation threshold for VTA estimate
+        """
+        # Assuming data is in the same format as it was generated,
+        # you can just reshape it
+        nifti_grid = scalar_field.reshape(self._shape)
 
-    def __write_file(self, data, file):
-        file.create_dataset('TimeSteps[s]', data=data.time_steps)
-        file.create_dataset('Points[mm]', data=data.points)
-        file.create_dataset('Location', data=self.__location.astype('S'))
-        file.create_dataset('Potential[V]', data=data.potential)
-        file.create_dataset('Current_density[A|m2]', data=data.current_density)
+        nifti_output = np.zeros(nifti_grid.shape, float)
+        if binarize:
+            nifti_output[nifti_grid >= activation_threshold] = 1
+            nifti_output[nifti_grid < activation_threshold] = 0
+        else:
+            nifti_output = nifti_grid  # V/mm
+
+        # create an abstract nifti
+        # define affine transform with the correct resolution and offset
+        affine = np.eye(4)
+        affine[0:3, 3] = [
+            self.coordinates[0][0],
+            self.coordinates[0][1],
+            self.coordinates[0][2],
+        ]
+        affine[0, 0] = self._distance
+        affine[1, 1] = self._distance
+        affine[2, 2] = self._distance
+
+        img = nib.Nifti1Image(nifti_output, affine)
+        nib.save(img, filename)

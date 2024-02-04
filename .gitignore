@@ -10,18 +10,22 @@ dist/
 *.egg-info/
 _build/
 docs/._*
+Results*/
+.idea/
+.ipynb_checkpoints/
 
 # Ignore file
+*.vol.gz
 *.pyc
 .coverage
 .coveragerc
 *.vtu
 .DS_Store
-
-case*/
 ng.ini
-
 *.swp
-test_cases/input_case2/micro_probes_SNEX100_custom.json
-input_files/impedance.csv
+impedance.csv
 *checkpoints.ipynb
+*.nii.gz
+*.nii
+success_*.txt
+fail_*.txt

@@ -1,20 +1,32 @@
 # PINS Medical L301
-from abc import ABC
-from dataclasses import dataclass, asdict
-from .electrode_model_template import ElectrodeModel
+from dataclasses import dataclass
+
 import netgen
 import netgen.occ as occ
 import numpy as np
 
+from .electrode_model_template import ElectrodeModel
+from .utilities import get_highest_edge, get_lowest_edge
+
 
 @dataclass
-class PINSMedicalParameters(ABC):
+class PINSMedicalParameters:
+    """Electrode geometry parameters."""
+
     # dimensions [mm]
     tip_length: float
     contact_length: float
     contact_spacing: float
     lead_diameter: float
     total_length: float
+
+    def get_center_first_contact(self) -> float:
+        """Returns distance between electrode tip and center of first contact."""
+        return self.tip_length + 0.5 * self.contact_length
+
+    def get_distance_l1_l4(self) -> float:
+        """Returns distance between first level contact and fourth level contact."""
+        return 3 * (self.contact_length + self.contact_spacing)
 
 
 class PINSMedicalModel(ElectrodeModel):
@@ -37,14 +49,9 @@ class PINSMedicalModel(ElectrodeModel):
 
     _n_contacts = 4
 
-    def parameter_check(self):
-        # Check to ensure that all parameters are at least 0
-        for param in (asdict(self._parameters).values()):
-            if (param < 0):
-                raise ValueError("Parameter values cannot be less than zero")
-
-    def _construct_encapsulation_geometry(self, thickness: float) \
-            -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def _construct_encapsulation_geometry(
+        self, thickness: float
+    ) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         """Generate geometry of encapsulation layer around electrode.
 
         Parameters
@@ -62,8 +69,8 @@ class PINSMedicalModel(ElectrodeModel):
         tip = occ.Sphere(c=center, r=radius)
         lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         encapsulation = tip + lead
-        encapsulation.bc('EncapsulationLayerSurface')
-        encapsulation.mat('EncapsulationLayer')
+        encapsulation.bc("EncapsulationLayerSurface")
+        encapsulation.mat("EncapsulationLayer")
         return encapsulation.Move(v=self._position) - self.geometry
 
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
@@ -79,7 +86,7 @@ class PINSMedicalModel(ElectrodeModel):
         height = self._parameters.total_length - self._parameters.tip_length
         lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         body = tip + lead
-        body.bc(self._boundaries['Body'])
+        body.bc(self._boundaries["Body"])
         return body
 
     def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
@@ -90,22 +97,18 @@ class PINSMedicalModel(ElectrodeModel):
         contacts = []
         distance = self._parameters.tip_length
         for count in range(self._n_contacts):
-            name = self._boundaries['Contact_{}'.format(count + 1)]
+            name = self._boundaries[f"Contact_{count + 1}"]
             contact.bc(name)
-            min_edge_z_val = float("inf")
-            max_edge_z_val = float("-inf")
-            for edge in contact.edges:
-                if (edge.center.z < min_edge_z_val):
-                    min_edge_z_val = edge.center.z
-                    min_edge = edge    
-                if (edge.center.z > max_edge_z_val):
-                    max_edge_z_val = edge.center.z
-                    max_edge = edge    
-            # Only name edge with the min and max z values (represents the edge between the non-contact and contact surface)
+            min_edge = get_lowest_edge(contact)
+            max_edge = get_highest_edge(contact)
+            # Only name edge with the min and max z values
+            # (represents the edge between the non-contact and contact surface)
             min_edge.name = name
             max_edge.name = name
             vector = tuple(np.array(self._direction) * distance)
             contacts.append(contact.Move(vector))
-            distance += self._parameters.contact_length + self._parameters.contact_spacing
+            distance += (
+                self._parameters.contact_length + self._parameters.contact_spacing
+            )
 
         return netgen.occ.Glue(contacts)

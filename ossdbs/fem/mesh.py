@@ -1,6 +1,8 @@
+import os
 from typing import List
-import netgen.occ
+
 import netgen.meshing
+import netgen.occ
 import ngsolve
 import numpy as np
 
@@ -19,25 +21,28 @@ class Mesh:
             True for complex data type, False otherwise.
     """
 
-    def __init__(self,
-                 geometry: netgen.occ.OCCGeometry,
-                 order: int) -> None:
+    def __init__(self, geometry: netgen.occ.OCCGeometry, order: int) -> None:
         self._geometry = geometry
         self._order = order
         self._mesh = None
 
     def generate_mesh(self, meshing_parameters: dict) -> None:
+        """Generate NGSolve mesh."""
         netgen_mp = self._meshing_parameters(meshing_parameters)
         self._mesh = ngsolve.Mesh(self.geometry.GenerateMesh(mp=netgen_mp))
         self._mesh.Curve(order=self.order)
 
     def load_mesh(self, filename: str) -> None:
+        """Load NGSolve mesh from file."""
+        if not os.path.isfile(filename):
+            raise ValueError("Provide a correct filename to load the mesh")
         self._mesh = ngsolve.Mesh(filename=filename)
         self._mesh.ngmesh.SetGeometry(self._geometry)
         self._mesh.Curve(order=self.order)
 
     def _meshing_parameters(self, mesh_parameters: dict):
-        mesh_type = mesh_parameters['Type']
+        """Prepare NGSolve meshing parameters."""
+        mesh_type = mesh_parameters["Type"]
 
         if mesh_type == "Custom":
             if "CustomParameters" in mesh_parameters:
@@ -46,18 +51,23 @@ class Mesh:
                     raise ValueError("CustomParameters have to passed as a dict.")
                 return netgen.meshing.MeshingParameters(**custom_parameters)
             else:
-                raise ValueError("You need to specific CustomParameters if you want to generate a custom mesh.")
+                raise ValueError(
+                    """You need to specify CustomParameters
+                    if you want to generate a custom mesh."""
+                )
 
-        return {'Coarse': netgen.meshing.meshsize.coarse,
-                'Fine': netgen.meshing.meshsize.fine,
-                'Moderate': netgen.meshing.meshsize.moderate,
-                'VeryCoarse': netgen.meshing.meshsize.very_coarse,
-                'VeryFine': netgen.meshing.meshsize.very_fine,
-                'Default': netgen.meshing.MeshingParameters(),
-                }[mesh_type]
+        return {
+            "Coarse": netgen.meshing.meshsize.coarse,
+            "Fine": netgen.meshing.meshsize.fine,
+            "Moderate": netgen.meshing.meshsize.moderate,
+            "VeryCoarse": netgen.meshing.meshsize.very_coarse,
+            "VeryFine": netgen.meshing.meshsize.very_fine,
+            "Default": netgen.meshing.MeshingParameters(),
+        }[mesh_type]
 
     @property
     def order(self) -> int:
+        """Order of curved mesh."""
         return self._order
 
     @order.setter
@@ -66,36 +76,37 @@ class Mesh:
 
     @property
     def geometry(self) -> netgen.occ.OCCGeometry:
+        """Underlying CAD geometry of mesh."""
         return self._geometry
 
     @property
     def boundaries(self) -> List:
+        """Get list of boundary names."""
         return self.ngsolvemesh.GetBoundaries()
 
     @property
     def materials(self) -> List:
+        """Get list of material names."""
         return self.ngsolvemesh.GetMaterials()
 
-    def boundary_coefficients(self, boundaries: dict) \
-            -> ngsolve.fem.CoefficientFunction:
+    def boundary_coefficients(
+        self, boundaries: dict
+    ) -> ngsolve.fem.CoefficientFunction:
         """Return a boundary coefficient function.
 
         Returns
         -------
         ngsolve.fem.CoefficientFunction
         """
-
         return self._mesh.BoundaryCF(boundaries)
 
-    def material_coefficients(self, materials: dict) \
-            -> ngsolve.fem.CoefficientFunction:
+    def material_coefficients(self, materials: dict) -> ngsolve.fem.CoefficientFunction:
         """Return a boundary coefficient function.
 
         Returns
         -------
         ngsolve.fem.CoefficientFunction
         """
-
         return self._mesh.MaterialCF(materials)
 
     @property
@@ -108,7 +119,7 @@ class Mesh:
         """
         return self._mesh
 
-    def is_included(self, points: np.ndarray) -> np.ndarray:
+    def not_included(self, points: np.ndarray) -> np.ndarray:
         """Check each point in collection for collision with geometry.
         True if point is included in geometry, false otherwise.
 
@@ -125,15 +136,27 @@ class Mesh:
         """
         x, y, z = points.T
         mips = self._mesh(x, y, z)
-        return np.array([mip[5] != -1 for mip in mips])
+        return np.array([mip[5] == -1 for mip in mips])
 
     def refine(self, at_surface: bool = False) -> None:
-        """Refine the mesh."""
+        """Refine the mesh.
 
+        Parameters
+        ----------
+        at_surface: bool
+            Whether to mark surface elements.
+        """
         self._mesh.Refine(mark_surface_elements=at_surface)
         self._mesh.Curve(order=self._order)
 
     def curve(self, order: int) -> None:
+        """Curve mesh and overwrite mesh order.
+
+        Parameters
+        ----------
+        order: int
+            Order of curved mesh
+        """
         self._order = order
         self._mesh.Curve(order=order)
 
@@ -145,13 +168,9 @@ class Mesh:
         file_name : str
             File name of the mesh data.
         """
-
         self._mesh.ngmesh.Save(file_name)
 
-    def refine_at_voxel(self,
-                        start: tuple,
-                        end: tuple,
-                        data: np.ndarray) -> None:
+    def refine_at_voxel(self, start: tuple, end: tuple, data: np.ndarray) -> None:
         """Refine the mesh at the marked locations.
 
         Parameters
@@ -165,13 +184,11 @@ class Mesh:
         data : np.ndarray
             Voxelvalues.
         """
-
         space = ngsolve.L2(self._mesh, order=0)
         grid_function = ngsolve.GridFunction(space=space)
-        cf = ngsolve.VoxelCoefficient(start=start,
-                                      end=end,
-                                      values=data.astype(float),
-                                      linear=False)
+        cf = ngsolve.VoxelCoefficient(
+            start=start, end=end, values=data.astype(float), linear=False
+        )
         grid_function.Set(cf)
         flags = grid_function.vec.FV().NumPy()
 
@@ -184,7 +201,7 @@ class Mesh:
 
         Parameters
         ----------
-        boundaries : List[str]
+        materials : List[str]
             Collection of material names.
 
         """
@@ -200,7 +217,6 @@ class Mesh:
         boundaries : list of str
             Collection of boundary names.
         """
-
         for element in self._mesh.Elements(ngsolve.VOL):
             self._mesh.SetRefinementFlag(ei=element, refine=False)
         for element in self._mesh.Elements(ngsolve.BND):
@@ -214,8 +230,8 @@ class Mesh:
         Parameters
         ----------
         gridfunction : ngsolve.GridFunction
+            Solution to estimate error from
         """
-
         flux = ngsolve.grad(gridfunction)
         space = self.mesh.flux_space()
         flux_potential = ngsolve.GridFunction(space=space)
@@ -223,10 +239,9 @@ class Mesh:
         difference = flux - flux_potential
         error = difference * ngsolve.Conj(difference)
 
-        element_errors = ngsolve.Integrate(cf=error,
-                                           mesh=self._mesh,
-                                           VOL_or_BND=ngsolve.VOL,
-                                           element_wise=True).real
+        element_errors = ngsolve.Integrate(
+            cf=error, mesh=self._mesh, VOL_or_BND=ngsolve.VOL, element_wise=True
+        ).real
         limit = 0.5 * max(element_errors)
         for element in self._mesh.Elements(ngsolve.BND):
             to_refine = element_errors[element.nr] > limit

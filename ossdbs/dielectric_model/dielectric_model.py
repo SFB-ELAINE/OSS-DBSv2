@@ -1,5 +1,6 @@
-import numpy as np
 from abc import ABC, abstractmethod
+
+import numpy as np
 
 
 class DielectricModel(ABC):
@@ -7,7 +8,6 @@ class DielectricModel(ABC):
 
     Notes
     -----
-
     To add another model, define its complex permittivity
     and add the static conductivity.
     """
@@ -31,7 +31,7 @@ class DielectricModel(ABC):
         return np.real(self.complex_permittivity(omega))
 
     @abstractmethod
-    def complex_permittivity(self, omega: float) -> float:
+    def complex_permittivity(self, omega: float) -> complex:
         """Calculate the permittivity by the angular frequency omega.
 
         Parameters
@@ -88,4 +88,5 @@ class DielectricModel(ABC):
     @property
     @abstractmethod
     def static_conductivity(self) -> float:
+        """Return conductivity at zero Hz (static limit)."""
         pass

@@ -27,7 +27,8 @@ settings = {"Electrodes":
                 {"Thickness[mm]": 1.0,
                  }
               }
-             ]
+             ],
+             "ExportElectrode": False
             }
 
 electrodes = ossdbs.generate_electrodes(settings)

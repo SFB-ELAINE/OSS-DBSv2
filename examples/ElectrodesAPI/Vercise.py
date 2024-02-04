@@ -6,7 +6,7 @@ are colored to highlight their location.
 """
 
 import ossdbs
-from ngsolve import Draw, Mesh
+from ngsolve import Draw, Mesh, TaskManager
 import netgen.occ as occ
 
 settings = {"Electrodes":
@@ -15,13 +15,15 @@ settings = {"Electrodes":
               "Direction": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 1},
               "TipPosition": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 0},
               },
-             ]
+             ],
+             "ExportElectrode": False
             }
 
 electrodes = ossdbs.generate_electrodes(settings)
 vercise = electrodes[0]
 occgeo = occ.OCCGeometry(vercise.geometry)
-mesh = Mesh(occgeo.GenerateMesh())
+with TaskManager():
+    mesh = Mesh(occgeo.GenerateMesh()).Curve(2)
 Draw(mesh)
 print(mesh.GetBoundaries())
 print(mesh.GetMaterials())

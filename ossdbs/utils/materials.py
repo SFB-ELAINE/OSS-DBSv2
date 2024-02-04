@@ -1,6 +1,1 @@
-MATERIALS = {'Blood': 4,
-             'Gray matter': 3,
-             'White matter': 2,
-             'CSF': 1,
-             'Unknown': 0
-             }
+MATERIALS = {"Blood": 4, "Gray matter": 1, "White matter": 2, "CSF": 3, "Unknown": 0}
