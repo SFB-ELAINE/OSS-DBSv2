@@ -332,8 +332,13 @@ class LeadSettings:
          Always recalculated from the other settings
         *IMPORTANT*: it is actually not native but scrf!
         """
-        head_nat = self.get_head_nat()[index_side, :]
-        y = self.get_y_mark_nat()[index_side, :] - head_nat
+        
+        if self.get_est_in_temp():
+            head_MNI = self.get_head_mni()[index_side, :]
+            y = self.get_y_mark_mni()[index_side, :] - head_MNI        
+        else:
+            head_nat = self.get_head_nat()[index_side, :]
+            y = self.get_y_mark_nat()[index_side, :] - head_nat
         y_postop = y / np.linalg.norm(y)
         phi = np.arctan2(-y_postop[0], y_postop[1])
         return phi * 180.0 / np.pi
