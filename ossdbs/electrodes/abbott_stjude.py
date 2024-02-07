@@ -238,9 +238,9 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
         body = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
-        #new_direction = tuple(np.cross(self.__direction_2(), self._direction))
+        # new_direction = tuple(np.cross(self.__direction_2(), self._direction))
         # tilted y-vector marker is in YZ-plane and orthogonal to _direction
-        new_direction = tuple([0, self._direction[2], -1 * self._direction[1]])
+        new_direction = (0, self._direction[2], -self._direction[1])
         eraser = occ.HalfSpace(p=point, n=new_direction)
         delta = 15
         angle = 30 + delta
@@ -279,7 +279,7 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
                 or np.isclose(edge.center.y, radius / 2)
             ):
                 edge.name = "min z"
-        contact = contact.Rotate(axis, -1*angle)
+        contact = contact.Rotate(axis, -angle)
         # TODO check that the starting axis of the contacts
         # are correct according to the documentation
         return contact
