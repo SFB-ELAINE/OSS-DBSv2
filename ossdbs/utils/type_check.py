@@ -1,3 +1,7 @@
+# Copyright 2023, 2024 Konstantin Butenko, Johannes Reding, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+
 class TypeChecker:
     """Check types of input dictionary."""
 

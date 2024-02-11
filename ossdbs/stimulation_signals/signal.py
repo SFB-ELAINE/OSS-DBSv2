@@ -1,3 +1,6 @@
+# Copyright 2023, 2024 Johannes Reding, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass

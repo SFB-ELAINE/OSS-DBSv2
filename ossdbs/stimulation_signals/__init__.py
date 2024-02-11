@@ -1,3 +1,6 @@
+# Copyright 2023, 2024 Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Stimulation signal utility."""
 
 from .rectangle_signal import RectangleSignal

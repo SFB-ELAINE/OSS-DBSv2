@@ -1,3 +1,6 @@
+# Copyright 2023, 2024 Johannes Reding, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Core module for volume-conductor model."""
 from .conductivity import ConductivityCF
 from .floating import VolumeConductorFloating

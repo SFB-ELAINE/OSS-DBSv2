@@ -1,3 +1,7 @@
+# Copyright 2023, 2024 Konstantin Butenko, Shruthi Chakravarthy
+# Copyright 2023, 2024 Jan Philipp Payonk, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from .abbott_stjude import (
     AbbottStJudeActiveTipModel,
     AbbottStJudeActiveTipParameters,
@@ -383,6 +387,7 @@ def PINSMedicalL303(
 def DixiSEEG5(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """DixiSEEG5 electrode."""
     parameters = default_electrode_parameters["DixiSEEG5"]
     return DixiSEEGModel(parameters, rotation, direction, position)
 
@@ -390,6 +395,7 @@ def DixiSEEG5(
 def DixiSEEG8(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """DixiSEEG8 electrode."""
     parameters = default_electrode_parameters["DixiSEEG8"]
     return DixiSEEGModel(parameters, rotation, direction, position)
 
@@ -405,6 +411,7 @@ def DixiSEEG10(
 def DixiSEEG12(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """DixiSEEG12 electrode."""
     parameters = default_electrode_parameters["DixiSEEG12"]
     return DixiSEEGModel(parameters, rotation, direction, position)
 
@@ -420,5 +427,6 @@ def DixiSEEG15(
 def DixiSEEG18(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
+    """DixiSEEG18 electrode."""
     parameters = default_electrode_parameters["DixiSEEG18"]
     return DixiSEEGModel(parameters, rotation, direction, position)

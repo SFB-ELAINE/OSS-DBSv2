@@ -1,3 +1,6 @@
+# Copyright 2023, 2024 Johannes Reding, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from dataclasses import dataclass
 
 from scipy.constants import epsilon_0 as e0

@@ -1,3 +1,6 @@
+# Copyright 2023, 2024 Jan Philipp Payonk, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Boston Scientific (Marlborough, Massachusetts, USA) vercise
 from dataclasses import dataclass
 

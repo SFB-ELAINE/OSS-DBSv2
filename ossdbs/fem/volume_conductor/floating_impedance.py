@@ -1,3 +1,6 @@
+# Copyright 2023, 2024 Jan Philipp Payonk, Johannes Reding, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import ngsolve
 
 from ossdbs.fem.solver import Solver
@@ -60,18 +63,14 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         components = solution.components[1:]
         self._floating_values = {
             contact.name: component.vec[0]
-            for (contact, component) in zip(
-                self.contacts.floating, components
-            )
+            for (contact, component) in zip(self.contacts.floating, components)
         }
 
     def __create_space(self):
         boundaries = [contact.name for contact in self.contacts.active]
 
         h1_space = self.h1_space(boundaries=boundaries)
-        number_spaces = [
-            self.number_space() for _ in self.contacts.floating
-        ]
+        number_spaces = [self.number_space() for _ in self.contacts.floating]
         spaces = [h1_space, *number_spaces]
         finite_elements_space = ngsolve.FESpace(spaces=spaces)
         return ngsolve.CompressCompound(fespace=finite_elements_space)

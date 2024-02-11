@@ -1,3 +1,7 @@
+# Copyright 2023, 2024 Konstantin Butenko, Jan Philipp Payonk
+# Copyright 2023, 2024 Johannes Reding, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from .materials import MATERIALS
 
 
