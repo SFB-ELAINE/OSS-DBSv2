@@ -428,6 +428,10 @@ def run_volume_conductor_model(settings, volume_conductor):
             _logger.info("Will export solution to VTK")
     else:
         export_vtk = False
+    if "ExportFrequency" in settings:
+        export_frequency = settings["ExportFrequency"]
+        if export_frequency is not None:
+            _logger.info(f"Set custom export frequency to {export_frequency}.")
 
     point_models = generate_point_models(settings)
 
@@ -437,6 +441,7 @@ def run_volume_conductor_model(settings, volume_conductor):
         point_models=point_models,
         activation_threshold=settings["ActivationThresholdVTA"],
         out_of_core=out_of_core,
+        export_frequency=export_frequency
     )
     return vcm_timings
 

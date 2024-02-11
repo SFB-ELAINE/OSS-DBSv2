@@ -104,6 +104,7 @@ class Settings:
         "OutputPath": "Results",
         "ComputeImpedance": False,
         "ExportVTK": False,
+        "ExportFrequency": None,
         "ExportElectrode": False,
         "ModelSide": 0,
         "CalcAxonActivation": False,

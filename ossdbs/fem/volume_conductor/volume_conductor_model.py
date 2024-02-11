@@ -122,6 +122,7 @@ class VolumeConductor(ABC):
         point_models: Optional[List[PointModel]] = None,
         activation_threshold: Optional[float] = None,
         out_of_core: bool = False,
+        export_frequency: float = None
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -137,10 +138,12 @@ class VolumeConductor(ABC):
             If VTA is estimated by threshold, provide it here.
         out_of_core: bool
             Indicate whether point model shall be done out-of-core
+        export_frequency: float
+            Frequency at which the VTK file should be exported.
+            Otherwise, median frequency is used.
 
         Notes
         -----
-        TODO full documentation
         The volume conductor model is run at all frequencies
         and the time-domain signal is computed (if relevant).
         """
@@ -171,9 +174,12 @@ class VolumeConductor(ABC):
         else:
             frequency_indices = np.arange(len(self.signal.frequencies))
 
-        middle_frequency_index = int(len(frequency_indices) / 2)
-        self._export_frequency = self.signal.frequencies[middle_frequency_index]
-        _logger.info(f"Set export frequency to {self._export_frequency}")
+        if export_frequency is None:
+            middle_frequency_index = frequency_indices[int(len(frequency_indices) / 2)]
+            self._export_frequency = self.signal.frequencies[middle_frequency_index]
+            _logger.info(f"Set export frequency to {self._export_frequency}")
+        else:
+            self._export_frequency = export_frequency
 
         if not multisine_mode:
             self._free_stimulation_variable = np.zeros(
