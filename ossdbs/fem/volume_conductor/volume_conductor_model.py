@@ -153,6 +153,8 @@ class VolumeConductor(ABC):
         if self.is_complex:
             dtype = complex
 
+        multisine_mode = np.all(np.isclose(self.signal.amplitudes, 1.0))
+
         # always compute impedance for CC with 2 contacts
         if self.current_controlled and len(self.contacts.active) == 2:
             _logger.info(
@@ -173,14 +175,15 @@ class VolumeConductor(ABC):
         self._export_frequency = self.signal.frequencies[middle_frequency_index]
         _logger.info(f"Set export frequency to {self._export_frequency}")
 
-        self._free_stimulation_variable = np.zeros(
-            shape=(len(self.signal.frequencies), len(self.contacts.active)),
-            dtype=complex,
-        )
-        self._stimulation_variable = np.zeros(
-            shape=(len(self.signal.frequencies), len(self.contacts.active)),
-            dtype=complex,
-        )
+        if not multisine_mode:
+            self._free_stimulation_variable = np.zeros(
+                shape=(len(self.signal.frequencies), len(self.contacts.active)),
+                dtype=complex,
+            )
+            self._stimulation_variable = np.zeros(
+                shape=(len(self.signal.frequencies), len(self.contacts.active)),
+                dtype=complex,
+            )
 
         if compute_impedance:
             self._impedances = np.ndarray(
@@ -229,7 +232,8 @@ class VolumeConductor(ABC):
             self._scale_factor = self.get_scale_factor(freq_idx)
             _logger.debug(f"Scale factor: {self._scale_factor}")
 
-            self._store_solution_at_contacts(band_indices)
+            if not multisine_mode:
+                self._store_solution_at_contacts(band_indices)
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 estimated_currents = self.estimate_currents()
                 _logger.debug(
@@ -274,8 +278,8 @@ class VolumeConductor(ABC):
             )
             df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
 
-        # export time domain solution
-        if len(self.signal.frequencies) > 1:
+        # export time domain solution if a proper signal has been passed
+        if len(self.signal.frequencies) > 1 and not multisine_mode:
             for point_model_idx, point_model in enumerate(point_models):
                 # skip point models that are not considered in time domain
                 if not point_model.time_domain_conversion:
@@ -309,7 +313,7 @@ class VolumeConductor(ABC):
         for point_model in point_models:
             point_model.close_output_file()
 
-        if len(self.signal.frequencies) > 1:
+        if len(self.signal.frequencies) > 1 and not multisine_mode:
             self.export_solution_at_contacts()
         return timings
 
