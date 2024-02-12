@@ -25,7 +25,7 @@ class NeuroPaceParameters:
 
     def get_center_first_contact(self) -> float:
         """Returns distance between electrode tip and center of first contact."""
-        return 0.5 * self.tip_length
+        return self.tip_length + 0.5 * self.contact_length
 
     def get_distance_l1_l4(self) -> float:
         """Returns distance between first level contact and fourth level contacts."""
