@@ -199,10 +199,15 @@ class ElectrodeModel(ABC):
             )
             / 2
         )
+        try:
+            radius = self._parameters.lead_diameter / 2
+        except AttributeError:
+            radius = 1  # Set larger radius in case lead_diameter is not defined
+
         cylinder = netgen.occ.Cylinder(
             p=self._position,
             d=self._direction,
-            r=self._parameters.lead_diameter,
+            r=radius,
             h=height,
         )
 
