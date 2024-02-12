@@ -1,3 +1,7 @@
+# Copyright 2023, 2024 Konstantin Butenko, Jan Philipp Payonk, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+
 def load_default_for_lead(settings):
     """Add parameters that are not defined in Lead-DBS GUI.
 

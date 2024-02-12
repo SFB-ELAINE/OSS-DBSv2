@@ -1,3 +1,7 @@
+# Copyright 2023, 2024 Konstantin Butenko, Jan Philipp Payonk
+# Copyright 2023, 2024 Johannes Reding, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import logging
 import os
 import time
@@ -118,6 +122,7 @@ class VolumeConductor(ABC):
         point_models: Optional[List[PointModel]] = None,
         activation_threshold: Optional[float] = None,
         out_of_core: bool = False,
+        export_frequency: float = None
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -133,10 +138,12 @@ class VolumeConductor(ABC):
             If VTA is estimated by threshold, provide it here.
         out_of_core: bool
             Indicate whether point model shall be done out-of-core
+        export_frequency: float
+            Frequency at which the VTK file should be exported.
+            Otherwise, median frequency is used.
 
         Notes
         -----
-        TODO full documentation
         The volume conductor model is run at all frequencies
         and the time-domain signal is computed (if relevant).
         """
@@ -148,6 +155,8 @@ class VolumeConductor(ABC):
         dtype = float
         if self.is_complex:
             dtype = complex
+
+        multisine_mode = np.all(np.isclose(self.signal.amplitudes, 1.0))
 
         # always compute impedance for CC with 2 contacts
         if self.current_controlled and len(self.contacts.active) == 2:
@@ -165,18 +174,22 @@ class VolumeConductor(ABC):
         else:
             frequency_indices = np.arange(len(self.signal.frequencies))
 
-        middle_frequency_index = int(len(frequency_indices) / 2)
-        self._export_frequency = self.signal.frequencies[middle_frequency_index]
-        _logger.info(f"Set export frequency to {self._export_frequency}")
+        if export_frequency is None:
+            middle_frequency_index = frequency_indices[int(len(frequency_indices) / 2)]
+            self._export_frequency = self.signal.frequencies[middle_frequency_index]
+            _logger.info(f"Set export frequency to {self._export_frequency}")
+        else:
+            self._export_frequency = export_frequency
 
-        self._free_stimulation_variable = np.zeros(
-            shape=(len(self.signal.frequencies), len(self.contacts.active)),
-            dtype=complex,
-        )
-        self._stimulation_variable = np.zeros(
-            shape=(len(self.signal.frequencies), len(self.contacts.active)),
-            dtype=complex,
-        )
+        if not multisine_mode:
+            self._free_stimulation_variable = np.zeros(
+                shape=(len(self.signal.frequencies), len(self.contacts.active)),
+                dtype=complex,
+            )
+            self._stimulation_variable = np.zeros(
+                shape=(len(self.signal.frequencies), len(self.contacts.active)),
+                dtype=complex,
+            )
 
         if compute_impedance:
             self._impedances = np.ndarray(
@@ -225,7 +238,8 @@ class VolumeConductor(ABC):
             self._scale_factor = self.get_scale_factor(freq_idx)
             _logger.debug(f"Scale factor: {self._scale_factor}")
 
-            self._store_solution_at_contacts(band_indices)
+            if not multisine_mode:
+                self._store_solution_at_contacts(band_indices)
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 estimated_currents = self.estimate_currents()
                 _logger.debug(
@@ -270,8 +284,8 @@ class VolumeConductor(ABC):
             )
             df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
 
-        # export time domain solution
-        if len(self.signal.frequencies) > 1:
+        # export time domain solution if a proper signal has been passed
+        if len(self.signal.frequencies) > 1 and not multisine_mode:
             for point_model_idx, point_model in enumerate(point_models):
                 # skip point models that are not considered in time domain
                 if not point_model.time_domain_conversion:
@@ -305,7 +319,7 @@ class VolumeConductor(ABC):
         for point_model in point_models:
             point_model.close_output_file()
 
-        if len(self.signal.frequencies) > 1:
+        if len(self.signal.frequencies) > 1 and not multisine_mode:
             self.export_solution_at_contacts()
         return timings
 

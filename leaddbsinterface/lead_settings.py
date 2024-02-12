@@ -1,3 +1,6 @@
+# Copyright 2023, 2024 Konstantin Butenko, Jan Philipp Payonk, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import os
 from dataclasses import asdict
 
@@ -186,8 +189,9 @@ class LeadSettings:
             "FailFlag": side,
             "TemplateSpace": self.get_est_in_temp(),
             "Solver": {},
-            "FEMOrder": 2 + int(self.get_calc_axon_act()),  # 2nd order is enough for stim volumes
-            "OutOfCore": bool(self.get_out_of_core())
+            # 2nd order enough for stim volumes
+            "FEMOrder": 2 + int(self.get_calc_axon_act()),
+            "OutOfCore": bool(self.get_out_of_core()),
         }
 
         # use actual signal parameters for PAM
@@ -332,10 +336,9 @@ class LeadSettings:
          Always recalculated from the other settings
         *IMPORTANT*: it is actually not native but scrf!
         """
-        
         if self.get_est_in_temp():
             head_MNI = self.get_head_mni()[index_side, :]
-            y = self.get_y_mark_mni()[index_side, :] - head_MNI        
+            y = self.get_y_mark_mni()[index_side, :] - head_MNI
         else:
             head_nat = self.get_head_nat()[index_side, :]
             y = self.get_y_mark_nat()[index_side, :] - head_nat
@@ -394,7 +397,7 @@ class LeadSettings:
     def get_calc_axon_act(self):
         """Calculate axon activation."""
         return self._get_num("calcAxonActivation")
-        
+
     def get_out_of_core(self):
         """Check if intermediate solution is unloaded."""
         return self._get_num("outOfCore")
@@ -611,7 +614,7 @@ class LeadSettings:
             "DIXI D08-10AM": "DixiSEEG10",
             "DIXI D08-12AM": "DixiSEEG12",
             "DIXI D08-15AM": "DixiSEEG15",
-            "DIXI D08-18AM": "DixiSEEG18"
+            "DIXI D08-18AM": "DixiSEEG18",
         }
 
         for lead in electrode_names.keys():

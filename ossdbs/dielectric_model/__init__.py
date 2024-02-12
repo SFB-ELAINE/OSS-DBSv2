@@ -1,3 +1,6 @@
+# Copyright 2023, 2024 Johannes Reding, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Dielectric properties of required tissues."""
 from .colecole3 import ColeCole3Model, default_cole_cole3_parameters
 from .colecole4 import ColeCole4Model, ColeColeParameters, default_cole_cole4_parameters

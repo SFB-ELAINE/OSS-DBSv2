@@ -1,3 +1,6 @@
+# Copyright 2023, 2024 Konstantin Butenko, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import argparse
 import json
 

@@ -1,3 +1,6 @@
+# Copyright 2023, 2024 Jan Philipp Payonk, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Dixi Microtechniques SEEG
 from dataclasses import asdict, dataclass
 

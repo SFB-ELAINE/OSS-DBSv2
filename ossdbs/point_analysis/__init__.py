@@ -1,3 +1,6 @@
+# Copyright 2023, 2024 Konstantin Butenko, Johannes Reding, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 """Models to evaluate VCM at specific points."""
 from .imp_coord import imp_coord
 from .lattice import Lattice

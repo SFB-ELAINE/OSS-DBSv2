@@ -1,3 +1,6 @@
+# Copyright 2023, 2024 Konstantin Butenko, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import numpy as np
 
 from ossdbs.electrodes.defaults import default_electrode_parameters

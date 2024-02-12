@@ -1,3 +1,7 @@
+# Copyright 2023, 2024 Konstantin Butenko, Shruthi Chakravarthy
+# Copyright 2023, 2024 Jan Philipp Payonk, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # PINS Medical L301
 from dataclasses import dataclass
 

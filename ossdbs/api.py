@@ -1,3 +1,7 @@
+# Copyright 2023, 2024 Konstantin Butenko, Shruthi Chakravarthy
+# Copyright 2023, 2024 Jan Philipp Payonk, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import logging
 
 import numpy as np
@@ -362,7 +366,7 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
         fourier_coefficients = np.ones(len(frequencies))
         base_frequency = frequencies[0]
         cutoff_frequency = frequencies[0]
-        signal_length = 1
+        signal_length = len(frequencies)
     else:
         spectrum_mode = signal_settings["SpectrumMode"]
         if spectrum_mode == "OctaveBand":
@@ -424,6 +428,10 @@ def run_volume_conductor_model(settings, volume_conductor):
             _logger.info("Will export solution to VTK")
     else:
         export_vtk = False
+    if "ExportFrequency" in settings:
+        export_frequency = settings["ExportFrequency"]
+        if export_frequency is not None:
+            _logger.info(f"Set custom export frequency to {export_frequency}.")
 
     point_models = generate_point_models(settings)
 
@@ -433,6 +441,7 @@ def run_volume_conductor_model(settings, volume_conductor):
         point_models=point_models,
         activation_threshold=settings["ActivationThresholdVTA"],
         out_of_core=out_of_core,
+        export_frequency=export_frequency
     )
     return vcm_timings
 

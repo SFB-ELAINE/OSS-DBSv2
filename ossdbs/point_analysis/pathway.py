@@ -1,3 +1,6 @@
+# Copyright 2023, 2024 Konstantin Butenko, Jan Philipp Payonk, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import logging
 import os
 from dataclasses import dataclass
@@ -412,19 +415,19 @@ class Pathway(PointModel):
         -----
         No Nifti file is exported for a Pathway model.
         """
-        Ex = self.tmp_Ex_freq_domain[frequency_index]
-        Ey = self.tmp_Ey_freq_domain[frequency_index]
-        Ez = self.tmp_Ez_freq_domain[frequency_index]
+        Ex = self.tmp_Ex_freq_domain[:, frequency_index]
+        Ey = self.tmp_Ey_freq_domain[:, frequency_index]
+        Ez = self.tmp_Ez_freq_domain[:, frequency_index]
         field_mags = compute_field_magnitude_from_components(Ex, Ey, Ez)
         df_field = pd.DataFrame(
             np.concatenate(
                 [
                     self.axon_index,
                     self.lattice,
-                    Ex,
-                    Ey,
-                    Ez,
-                    field_mags,
+                    Ex.reshape((Ex.shape[0], 1)).real,
+                    Ey.reshape((Ey.shape[0], 1)).real,
+                    Ez.reshape((Ez.shape[0], 1)).real,
+                    field_mags.reshape(field_mags.shape[0], 1),
                     self.inside_csf,
                     self.inside_encap,
                 ],
@@ -449,7 +452,7 @@ class Pathway(PointModel):
         if self.collapse_VTA:
             _logger.info("Collapse VTA by virtually removing the electrode")
             field_on_probed_points = np.concatenate(
-                [self.lattice, Ex, Ey, Ez, field_mags], axis=1
+                [self.lattice, Ex.reshape((Ex.shape[0], 1)).real, Ey.reshape((Ey.shape[0], 1)).real, Ez.reshape((Ey.shape[0], 1)).real, field_mags.reshape((field_mags.shape[0], 1)).real], axis=1
             )
 
             if electrode is None:

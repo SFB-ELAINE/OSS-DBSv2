@@ -1,3 +1,6 @@
+# Copyright 2023, 2024 Konstantin Butenko, Jan Philipp Payonk, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 from typing import Tuple
 
 import nibabel as nib

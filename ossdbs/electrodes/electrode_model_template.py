@@ -1,3 +1,7 @@
+# Copyright 2023, 2024 Konstantin Butenko, Shruthi Chakravarthy
+# Copyright 2023, 2024 Jan Philipp Payonk, Julius Zimmermann
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
@@ -195,10 +199,15 @@ class ElectrodeModel(ABC):
             )
             / 2
         )
+        try:
+            radius = self._parameters.lead_diameter / 2
+        except AttributeError:
+            radius = 1  # Set larger radius in case lead_diameter is not defined
+
         cylinder = netgen.occ.Cylinder(
             p=self._position,
             d=self._direction,
-            r=self._parameters.lead_diameter,
+            r=radius,
             h=height,
         )
 
