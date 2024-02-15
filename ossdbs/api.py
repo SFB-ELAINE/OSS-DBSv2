@@ -261,8 +261,6 @@ def generate_point_models(settings: dict):
             )
         )
 
-        collapse_vta = settings["PointModel"]["Lattice"]["CollapseVTA"]
-        point_models[-1].collapse_vta = collapse_vta
 
     if settings["PointModel"]["VoxelLattice"]["Active"]:
         _logger.info("from voxel lattice")
