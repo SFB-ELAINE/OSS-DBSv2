@@ -250,6 +250,7 @@ def generate_point_models(settings: dict):
         dir_par = settings["PointModel"]["Lattice"]["Direction"]
         direction = dir_par["x[mm]"], dir_par["y[mm]"], dir_par["z[mm]"]
         distance = settings["PointModel"]["Lattice"]["PointDistance[mm]"]
+        collapse_vta = settings["PointModel"]["Lattice"]["CollapseVTA"]
 
         point_models.append(
             Lattice(
@@ -260,7 +261,6 @@ def generate_point_models(settings: dict):
                 collapse_vta=collapse_vta,
             )
         )
-
 
     if settings["PointModel"]["VoxelLattice"]["Active"]:
         _logger.info("from voxel lattice")
@@ -440,7 +440,7 @@ def run_volume_conductor_model(settings, volume_conductor):
         point_models=point_models,
         activation_threshold=settings["ActivationThresholdVTA"],
         out_of_core=out_of_core,
-        export_frequency=export_frequency
+        export_frequency=export_frequency,
     )
     return vcm_timings
 
