@@ -257,6 +257,7 @@ def generate_point_models(settings: dict):
                 center=center,
                 distance=distance,
                 direction=direction,
+                collapse_vta=collapse_vta,
             )
         )
 
