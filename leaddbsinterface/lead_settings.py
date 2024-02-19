@@ -196,7 +196,7 @@ class LeadSettings:
 
         # use actual signal parameters for PAM
         if self.get_calc_axon_act():
-            partial_dict = self.add_stimsignal_params(partial_dict)
+            partial_dict = self.add_stimsignal_params(partial_dict, hemis_idx)
 
         # do not use h1amg as coarsetype preconditioner
         # if floating potentials are involved
@@ -368,7 +368,7 @@ class LeadSettings:
 
     def get_pulse_width(self):
         """Pulse width."""
-        return self._get_num("pulseWidth")
+        return self._get_arr("pulseWidth")
 
     def check_biphasic(self):
         """Biphasic pulse."""
@@ -443,17 +443,17 @@ class LeadSettings:
         """Interactive mode."""
         return self._get_num("interactiveMode")
 
-    def add_stimsignal_params(self, partial_dict: dict):
+    def add_stimsignal_params(self, partial_dict: dict, hemi_idx: int):
         """Add stimulation signal parameters."""
         partial_dict["StimulationSignal"]["Type"] = self.get_signal_type()
         if partial_dict["StimulationSignal"]["Type"] == "Train":
             partial_dict["StimulationSignal"]["Type"] = "Rectangle"
-        partial_dict["StimulationSignal"]["PulseWidth[us]"] = self.get_pulse_width()
+        partial_dict["StimulationSignal"]["PulseWidth[us]"] = float(self.get_pulse_width()[hemi_idx])
 
         if self.check_biphasic():
             partial_dict["StimulationSignal"][
                 "CounterPulseWidth[us]"
-            ] = self.get_pulse_width()
+            ] = float(self.get_pulse_width()[hemi_idx])
 
         # hardwired for now
         partial_dict["StimulationSignal"]["Frequency[Hz]"] = 130.0
