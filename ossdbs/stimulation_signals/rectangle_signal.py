@@ -64,8 +64,7 @@ class RectangleSignal(TimeDomainSignal):
                     self._pulse_width / dt + self._inter_pulse_width / dt
                 )
                 counter_pulse_end_idx = (
-                    offset
-                    + counter_pulse_start_idx
+                    counter_pulse_start_idx
                     + int(self._counter_pulse_width / dt)
                 )
                 signal[
