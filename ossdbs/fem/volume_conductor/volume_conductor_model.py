@@ -225,6 +225,10 @@ class VolumeConductor(ABC):
             sigma_has_changed = self._has_sigma_changed(freq_idx)
             if sigma_has_changed:
                 self.compute_solution(frequency)
+                print("Number of Elements:", self._mesh.ngsolvemesh.ne)
+                self._mesh.refine_by_error(self._potential)
+                print("Number of Elements:", self._mesh.ngsolvemesh.ne)
+                self.compute_solution(frequency)
                 if compute_impedance:
                     impedance = self.compute_impedance()
                     self._impedances[band_indices] = impedance
@@ -635,24 +639,6 @@ class VolumeConductor(ABC):
         for contact in self.contacts.floating:
             floating_voltages[contact.name] = contact.voltage
         return floating_voltages
-
-    def flux_space(self) -> ngsolve.comp.HDiv:
-        """Return a flux space on the mesh.
-
-        Returns
-        -------
-        ngsolve.HDiv
-
-        Notes
-        -----
-        The HDiv space is returned with a minimum order of 1.
-        It is needed for the a-posteriori error estimator
-        needed for adaptive mesh refinement.
-
-        """
-        return ngsolve.HDiv(
-            mesh=self.mesh, order=max(1, self._order - 1), complex=self._complex
-        )
 
     def h1_space(self, boundaries: List[str], is_complex: bool) -> ngsolve.H1:
         """Return a h1 space on the mesh.

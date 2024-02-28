@@ -236,7 +236,7 @@ class Mesh:
             Solution to estimate error from
         """
         flux = ngsolve.grad(gridfunction)
-        space = self.mesh.flux_space()
+        space = self.flux_space()
         flux_potential = ngsolve.GridFunction(space=space)
         flux_potential.Set(coefficient=flux)
         difference = flux - flux_potential
@@ -244,9 +244,27 @@ class Mesh:
 
         element_errors = ngsolve.Integrate(
             cf=error, mesh=self._mesh, VOL_or_BND=ngsolve.VOL, element_wise=True
-        ).real
+        )
         limit = 0.5 * max(element_errors)
         for element in self._mesh.Elements(ngsolve.BND):
             to_refine = element_errors[element.nr] > limit
             self._mesh.SetRefinementFlag(ei=element, refine=to_refine)
         self.refine()
+
+    def flux_space(self) -> ngsolve.comp.HDiv:
+        """Return a flux space on the mesh.
+
+        Returns
+        -------
+        ngsolve.HDiv
+
+        Notes
+        -----
+        The HDiv space is returned with a minimum order of 1.
+        It is needed for the a-posteriori error estimator
+        needed for adaptive mesh refinement.
+
+        """
+        return ngsolve.HDiv(
+            mesh=self._mesh, order=max(1, self._order - 1), complex=False  # how can we adjust here?
+        )

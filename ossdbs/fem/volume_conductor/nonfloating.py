@@ -63,6 +63,7 @@ class VolumeConductorNonFloating(VolumeConductor):
         _logger.debug("Assign potential values")
         boundary_values = self.contacts.voltages
         coefficient = self.mesh.boundary_coefficients(boundary_values)
+        self._potential = ngsolve.GridFunction(space=self._space)
         self._potential.Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
 
         _logger.debug("Prepare weak form")
