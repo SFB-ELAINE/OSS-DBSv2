@@ -28,8 +28,12 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
             order,
             meshing_parameters,
         )
-        self._space = self.__create_space()
         self._floating_values = {}
+        self.update_space()
+
+    def update_space(self):
+        """Update space (e.g., if mesh changes)."""
+        self._space = self.__create_space()
         self._solution = ngsolve.GridFunction(space=self._space)
         self._potential = self._solution.components[0]
 

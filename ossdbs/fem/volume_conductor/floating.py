@@ -33,6 +33,10 @@ class VolumeConductorFloating(VolumeConductor):
             meshing_parameters,
         )
         _logger.debug("Create space")
+        self.update_space()
+
+    def update_space(self):
+        """Update space (e.g., if mesh changes)."""
         self._space = self.__create_space()
         self._potential = ngsolve.GridFunction(space=self._space)
 

@@ -104,6 +104,11 @@ class VolumeConductor(ABC):
         frequency: float
             Frequency at which solution is computed
         """
+        return
+
+    def update_space(self):
+        """Update space (e.g., if mesh changes)."""
+        # Note: only needed if PlateauSpace is involved
         pass
 
     def run_full_analysis(
@@ -898,3 +903,4 @@ class VolumeConductor(ABC):
         difference = flux - flux_potential
         error = difference * ngsolve.Conj(difference)
         self.mesh.refine_by_error_cf(error)
+        self.update_space()
