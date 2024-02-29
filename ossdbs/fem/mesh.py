@@ -227,44 +227,20 @@ class Mesh:
             self._mesh.SetRefinementFlag(ei=element, refine=to_refine)
         self.refine(at_surface=True)
 
-    def refine_by_error(self, gridfunction: ngsolve.GridFunction) -> List:
+    def refine_by_error_cf(self, error_cf: ngsolve.GridFunction) -> List:
         """Refine the mesh by the error at each mesh element.
 
         Parameters
         ----------
-        gridfunction : ngsolve.GridFunction
-            Solution to estimate error from
+        error_cf : ngsolve.GridFunction
+            Estimated error from
         """
-        flux = ngsolve.grad(gridfunction)
-        space = self.flux_space()
-        flux_potential = ngsolve.GridFunction(space=space)
-        flux_potential.Set(coefficient=flux)
-        difference = flux - flux_potential
-        error = difference * ngsolve.Conj(difference)
-
-        element_errors = ngsolve.Integrate(
-            cf=error, mesh=self._mesh, VOL_or_BND=ngsolve.VOL, element_wise=True
+        elementwise_error = ngsolve.Integrate(
+            cf=error_cf, mesh=self._mesh, VOL_or_BND=ngsolve.VOL, element_wise=True
         )
-        limit = 0.5 * max(element_errors)
-        for element in self._mesh.Elements(ngsolve.BND):
-            to_refine = element_errors[element.nr] > limit
-            self._mesh.SetRefinementFlag(ei=element, refine=to_refine)
+        max_error = max(elementwise_error)
+        # convolved but here the Netgen (!) not NGsolve mesh is called
+        self._mesh.ngmesh.Elements3D().NumPy()["refine"] = (
+            elementwise_error.NumPy() > 0.25 * max_error
+        )
         self.refine()
-
-    def flux_space(self) -> ngsolve.comp.HDiv:
-        """Return a flux space on the mesh.
-
-        Returns
-        -------
-        ngsolve.HDiv
-
-        Notes
-        -----
-        The HDiv space is returned with a minimum order of 1.
-        It is needed for the a-posteriori error estimator
-        needed for adaptive mesh refinement.
-
-        """
-        return ngsolve.HDiv(
-            mesh=self._mesh, order=max(1, self._order - 1), complex=False  # how can we adjust here?
-        )

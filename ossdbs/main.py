@@ -18,6 +18,7 @@ from ossdbs.api import (
     load_images,
     prepare_dielectric_properties,
     prepare_solver,
+    prepare_stimulation_signal,
     prepare_volume_conductor_model,
     run_volume_conductor_model,
     set_contact_and_encapsulation_layer_properties,
@@ -160,7 +161,10 @@ def main() -> None:
         volume_conductor = prepare_volume_conductor_model(
             settings, geometry, conductivity, solver
         )
-        vcm_timings = run_volume_conductor_model(settings, volume_conductor)
+        frequency_domain_signal = prepare_stimulation_signal(settings)
+        vcm_timings = run_volume_conductor_model(
+            settings, volume_conductor, frequency_domain_signal
+        )
 
     time_1 = time.time()
     timings["VolumeConductor"] = time_1 - time_0

@@ -45,8 +45,6 @@ class VolumeConductor(ABC):
         Order of solver and mesh (curved elements)
     meshing_parameters: dict
         Dictionary with setting for meshing
-    frequency_domain_signal: FrequencyDomainSignal
-        Representation of signal in frequency domain
     """
 
     def __init__(
@@ -56,21 +54,14 @@ class VolumeConductor(ABC):
         solver: Solver,
         order: int,
         meshing_parameters: dict,
-        frequency_domain_signal: FrequencyDomainSignal,
     ) -> None:
         self._solver = solver
         self._order = order
 
         self._model_geometry = geometry
 
-        self._signal = frequency_domain_signal
-        _logger.debug(f"Signal with amplitudes: {self.signal.amplitudes}")
         # contacts of electrode
         self._contacts = Contacts(geometry.contacts)
-        # set voltages for two-contact current controlled stimulation
-        # check if current-controlled mode is correctly prepared
-        if self.current_controlled:
-            self.prepare_current_controlled_mode()
 
         _logger.debug(f"Assigned base contacts with properties:\n {self._contacts}")
 
@@ -87,12 +78,12 @@ class VolumeConductor(ABC):
         # generate the mesh
         self._mesh = Mesh(self._model_geometry.geometry, self._order)
         if meshing_parameters["LoadMesh"]:
-            self._mesh.load_mesh(meshing_parameters["LoadPath"])
+            self.mesh.load_mesh(meshing_parameters["LoadPath"])
         else:
-            self._mesh.generate_mesh(meshing_parameters["MeshingHypothesis"])
+            self.mesh.generate_mesh(meshing_parameters["MeshingHypothesis"])
 
         if meshing_parameters["SaveMesh"]:
-            self._mesh.save(meshing_parameters["SavePath"])
+            self.mesh.save(meshing_parameters["SavePath"])
 
         # to save previous solution and do post-processing
         self._frequency = None
@@ -117,12 +108,13 @@ class VolumeConductor(ABC):
 
     def run_full_analysis(
         self,
+        frequency_domain_signal: FrequencyDomainSignal,
         compute_impedance: bool = False,
         export_vtk: bool = False,
         point_models: Optional[List[PointModel]] = None,
         activation_threshold: Optional[float] = None,
         out_of_core: bool = False,
-        export_frequency: float = None
+        export_frequency: Optional[float] = None,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -141,12 +133,21 @@ class VolumeConductor(ABC):
         export_frequency: float
             Frequency at which the VTK file should be exported.
             Otherwise, median frequency is used.
+        frequency_domain_signal: FrequencyDomainSignal
+            Frequency-domain representation of stimulation signal
 
         Notes
         -----
         The volume conductor model is run at all frequencies
         and the time-domain signal is computed (if relevant).
         """
+        self.signal = frequency_domain_signal
+
+        # set voltages for two-contact current controlled stimulation
+        # check if current-controlled mode is correctly prepared
+        if self.current_controlled:
+            self.prepare_current_controlled_mode()
+
         if point_models is None:
             # use empty list
             point_models = []
@@ -225,9 +226,17 @@ class VolumeConductor(ABC):
             sigma_has_changed = self._has_sigma_changed(freq_idx)
             if sigma_has_changed:
                 self.compute_solution(frequency)
-                print("Number of Elements:", self._mesh.ngsolvemesh.ne)
-                self._mesh.refine_by_error(self._potential)
-                print("Number of Elements:", self._mesh.ngsolvemesh.ne)
+                # refine only at first frequency
+                if freq_idx == frequency_indices[0]:
+                    _logger.info(
+                        "Number of elements before refinement:"
+                        f"{self.mesh.ngsolvemesh.ne}"
+                    )
+                    self.adaptive_mesh_refinement()
+                    _logger.info(
+                        "Number of elements after refinement:"
+                        f"{self.mesh.ngsolvemesh.ne}"
+                    )
                 self.compute_solution(frequency)
                 if compute_impedance:
                     impedance = self.compute_impedance()
@@ -535,7 +544,7 @@ class VolumeConductor(ABC):
 
         """
         if len(self.contacts.active) == 2:
-            mesh = self._mesh.ngsolvemesh
+            mesh = self.mesh.ngsolvemesh
             # do not need to account for mm because of integration
             power = ngsolve.Integrate(self.electric_field * self.current_density, mesh)
             # TODO integrate surface impedance by thin layer
@@ -675,6 +684,26 @@ class VolumeConductor(ABC):
         """
         return ngsolve.NumberSpace(
             mesh=self.mesh.ngsolvemesh, order=0, complex=self.is_complex
+        )
+
+    def flux_space(self) -> ngsolve.comp.HDiv:
+        """Return a flux space on the mesh.
+
+        Returns
+        -------
+        ngsolve.HDiv
+
+        Notes
+        -----
+        The HDiv space is returned with a minimum order of 1.
+        It is needed for the a-posteriori error estimator
+        needed for adaptive mesh refinement.
+
+        """
+        return ngsolve.HDiv(
+            mesh=self.mesh.ngsolvemesh,
+            order=max(1, self._order - 1),
+            complex=self.is_complex,
         )
 
     def get_scale_factor(self, freq_idx: int) -> float:
@@ -859,3 +888,13 @@ class VolumeConductor(ABC):
             self._copy_frequency_domain_solution(
                 band_indices, point_model, potentials, fields
             )
+
+    def adaptive_mesh_refinement(self):
+        """Refine mesh adaptively."""
+        flux = self.current_density
+        hdiv_space = self.flux_space()
+        flux_potential = ngsolve.GridFunction(space=hdiv_space)
+        flux_potential.Set(coefficient=flux)
+        difference = flux - flux_potential
+        error = difference * ngsolve.Conj(difference)
+        self.mesh.refine_by_error_cf(error)

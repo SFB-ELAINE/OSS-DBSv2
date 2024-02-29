@@ -321,7 +321,6 @@ def prepare_volume_conductor_model(
 
     mesh_parameters = settings["Mesh"]
     floating_mode = model_geometry.get_floating_mode()
-    frequency_domain_signal = prepare_stimulation_signal(settings)
     if floating_mode == "Floating":
         _logger.debug("Floating mode selected")
         return VolumeConductorFloating(
@@ -330,7 +329,6 @@ def prepare_volume_conductor_model(
             solver,
             order,
             mesh_parameters,
-            frequency_domain_signal,
         )
 
     elif floating_mode == "FloatingImpedance":
@@ -341,7 +339,6 @@ def prepare_volume_conductor_model(
             solver,
             order,
             mesh_parameters,
-            frequency_domain_signal,
         )
     _logger.debug("Non floating mode selected")
     return VolumeConductorNonFloating(
@@ -350,7 +347,6 @@ def prepare_volume_conductor_model(
         solver,
         order,
         mesh_parameters,
-        frequency_domain_signal,
     )
 
 
@@ -402,7 +398,7 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
     return frequency_domain_signal
 
 
-def run_volume_conductor_model(settings, volume_conductor):
+def run_volume_conductor_model(settings, volume_conductor, frequency_domain_signal):
     """TODO document.
 
 
@@ -435,6 +431,7 @@ def run_volume_conductor_model(settings, volume_conductor):
     point_models = generate_point_models(settings)
 
     vcm_timings = volume_conductor.run_full_analysis(
+        frequency_domain_signal,
         compute_impedance,
         export_vtk,
         point_models=point_models,

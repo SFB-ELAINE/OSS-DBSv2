@@ -8,7 +8,6 @@ import ngsolve
 from ossdbs.fem.solver import Solver
 from ossdbs.fem.volume_conductor.volume_conductor_model import VolumeConductor
 from ossdbs.model_geometry import ModelGeometry
-from ossdbs.stimulation_signals import FrequencyDomainSignal
 
 from .conductivity import ConductivityCF
 
@@ -25,7 +24,6 @@ class VolumeConductorFloating(VolumeConductor):
         solver: Solver,
         order: int,
         meshing_parameters: dict,
-        frequency_domain_signal: FrequencyDomainSignal,
     ) -> None:
         super().__init__(
             geometry,
@@ -33,7 +31,6 @@ class VolumeConductorFloating(VolumeConductor):
             solver,
             order,
             meshing_parameters,
-            frequency_domain_signal,
         )
         _logger.debug("Create space")
         self._space = self.__create_space()
