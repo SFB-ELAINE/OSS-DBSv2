@@ -3,7 +3,8 @@
 # Copyright 2023, 2024 Tom Reincke, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# Boston Scientific (Marlborough, Massachusetts, USA) vercise
+# Boston Scientific (Marlborough, Massachusetts, USA) Cartesia
+import logging
 from dataclasses import dataclass
 
 import netgen
@@ -13,9 +14,11 @@ import numpy as np
 from .electrode_model_template import ElectrodeModel
 from .utilities import get_highest_edge, get_lowest_edge
 
+_logger = logging.getLogger(__name__)
+
 
 @dataclass
-class BostonScientificVerciseDirectedParameters:
+class BostonScientificCartesiaParameters:
     """Electrode geometry parameters."""
 
     # dimensions [mm]
@@ -25,21 +28,13 @@ class BostonScientificVerciseDirectedParameters:
     lead_diameter: float
     total_length: float
 
-    def get_center_first_contact(self) -> float:
-        """Returns distance between electrode tip and center of first contact."""
-        return 0.5 * self.tip_length
 
-    def get_distance_l1_l4(self) -> float:
-        """Returns distance between first level contact and fourth level contacts."""
-        return 3 * (self.contact_length + self.contact_spacing)
-
-
-class BostonScientificVerciseDirectedModel(ElectrodeModel):
-    """Boston Scientific vercise directional lead electrode.
+class BostonScientificCartesiaXModel(ElectrodeModel):
+    """Boston Scientific Cartesia X directional lead electrode.
 
     Attributes
     ----------
-    parameters : BostonScientificVerciseParameters
+    parameters : BostonScientificCartesiaParameters
         Parameters for the Boston Scientific Vercise geometry.
 
     rotation : float
@@ -52,7 +47,22 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         Position vector (x,y,z) of electrode tip.
     """
 
-    _n_contacts = 8
+    _n_contacts = 16
+
+    def __init__(
+        self,
+        parameters: dataclass,
+        rotation: float = 0,
+        direction: tuple = (0, 0, 1),
+        position: tuple = (0, 0, 0),
+    ) -> None:
+        """TODO Delete this function once the exact parameters are known."""
+        super().__init__(parameters, rotation, direction, position)
+        _logger.warning(
+            "The Boston Scientific Cartesia electrodes"
+            "do not rely on manufacturer specifications"
+            "and should be used with caution."
+        )
 
     def _construct_encapsulation_geometry(
         self, thickness: float
@@ -90,25 +100,21 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         radius = self._parameters.lead_diameter * 0.5
         center = tuple(np.array(self._direction) * radius)
         height = self._parameters.total_length - self._parameters.tip_length
-        body = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
+        tip = netgen.occ.Sphere(c=center, r=radius)
+        lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
+        body = tip + lead
         body.bc(self._boundaries["Body"])
         return body
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        print("Working on the X")
         radius = self._parameters.lead_diameter * 0.5
-        direction = self._direction
-        center = tuple(np.array(direction) * radius)
-        # define half space at tip_center
-        # to construct a hemisphere as part of the contact tip
-        half_space = netgen.occ.HalfSpace(p=center, n=direction)
-        contact_tip = occ.Sphere(c=center, r=radius) * half_space
-        h_pt2 = self._parameters.tip_length - radius
-        contact_pt2 = occ.Cylinder(p=center, d=direction, r=radius, h=h_pt2)
-        contact_1 = contact_tip + contact_pt2
 
+        # add distances
         vectors = []
+        # TODO adjust to start at right height
         distance = self._parameters.tip_length + self._parameters.contact_spacing
-        for _ in range(0, 3):
+        for _ in range(0, 6):
             vectors.append(tuple(np.array(self._direction) * distance))
             distance += (
                 self._parameters.contact_length + self._parameters.contact_spacing
@@ -117,29 +123,35 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         point = (0, 0, 0)
         height = self._parameters.contact_length
         axis = occ.Axis(p=point, d=self._direction)
-        contact_8 = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
+        contact_16 = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
         contact_directed = self._contact_directed()
 
         contacts = [
-            contact_1,
             contact_directed.Move(v=vectors[0]),
             contact_directed.Rotate(axis, 120).Move(v=vectors[0]),
             contact_directed.Rotate(axis, 240).Move(v=vectors[0]),
             contact_directed.Move(v=vectors[1]),
             contact_directed.Rotate(axis, 120).Move(v=vectors[1]),
             contact_directed.Rotate(axis, 240).Move(v=vectors[1]),
-            contact_8.Move(v=vectors[2]),
+            contact_directed.Move(v=vectors[2]),
+            contact_directed.Rotate(axis, 120).Move(v=vectors[2]),
+            contact_directed.Rotate(axis, 240).Move(v=vectors[2]),
+            contact_directed.Move(v=vectors[3]),
+            contact_directed.Rotate(axis, 120).Move(v=vectors[3]),
+            contact_directed.Rotate(axis, 240).Move(v=vectors[3]),
+            contact_directed.Move(v=vectors[4]),
+            contact_directed.Rotate(axis, 120).Move(v=vectors[4]),
+            contact_directed.Rotate(axis, 240).Move(v=vectors[4]),
+            contact_16.Move(v=vectors[5]),
         ]
 
         for index, contact in enumerate(contacts, 1):
             name = self._boundaries[f"Contact_{index}"]
             contact.bc(name)
-            # Label max z value and min z value for contact_8
-            if name == "Contact_8":
+            # Label max z value and min z value for contact_16
+            if name == "Contact_16":
                 min_edge = get_lowest_edge(contact)
                 min_edge.name = name
-            # Only label contact edge with maximum z value for contact_1
-            if name == "Contact_1" or name == "Contact_8":
                 max_edge = get_highest_edge(contact)
                 max_edge.name = name
             else:
@@ -157,8 +169,8 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         # tilted y-vector marker is in YZ-plane and orthogonal to _direction
         new_direction = (0, self._direction[2], -self._direction[1])
         eraser = occ.HalfSpace(p=point, n=new_direction)
-        delta = 15
-        angle = 30 + delta
+
+        angle = 45
         axis = occ.Axis(p=point, d=self._direction)
 
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
@@ -201,31 +213,14 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         return contact
 
 
-@dataclass
-class BostonScientificVerciseParameters:
-    """Electrode geometry parameters."""
-
-    # dimensions [mm]
-    tip_length: float
-    contact_length: float
-    contact_spacing: float
-    lead_diameter: float
-    total_length: float
-
-    def get_center_first_contact(self) -> float:
-        """Returns distance between electrode tip and center of first contact."""
-        return self.tip_length + 0.5 * self.contact_length
-
-    def get_distance_l1_l4(self) -> float:
-        """Returns distance between first level contact and fourth level contacts."""
-        return 7 * (self.contact_length + self.contact_spacing)
-
-
-class BostonScientificVerciseModel(ElectrodeModel):
-    """Boston Scientific vercise standard lead electrode.
+class BostonScientificCartesiaHXModel(BostonScientificCartesiaXModel):
+    """Boston Scientific Cartesia HX directional lead electrode.
 
     Attributes
     ----------
+    parameters : BostonScientificCartesiaParameters
+        Parameters for the Boston Scientific Vercise geometry.
+
     rotation : float
         Rotation angle in degree of electrode.
 
@@ -236,66 +231,57 @@ class BostonScientificVerciseModel(ElectrodeModel):
         Position vector (x,y,z) of electrode tip.
     """
 
-    _n_contacts = 8
-
-    def _construct_encapsulation_geometry(
-        self, thickness: float
-    ) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        """Generate geometry of encapsulation layer around electrode.
-
-        Parameters
-        ----------
-        thickness : float
-            Thickness of encapsulation layer.
-
-        Returns
-        -------
-        geometry : netgen.libngpy._NgOCC.TopoDS_Shape
-        """
-        radius = self._parameters.lead_diameter * 0.5 + thickness
-        height = self._parameters.total_length - self._parameters.tip_length
-        center = tuple(np.array(self._direction) * self._parameters.lead_diameter * 0.5)
-        tip = occ.Sphere(c=center, r=radius)
-        lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
-        encapsulation = tip + lead
-        encapsulation.mat("EncapsulationLayer")
-        return encapsulation.Move(v=self._position) - self.geometry
-
-    def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        contacts = self._contacts()
-        # TODO check
-        electrode = netgen.occ.Glue([self.__body() - contacts, contacts])
-        return electrode.Move(v=self._position)
-
-    def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        radius = self._parameters.lead_diameter * 0.5
-        center = tuple(np.array(self._direction) * radius)
-        tip = occ.Sphere(c=center, r=radius)
-        height = self._parameters.total_length - self._parameters.tip_length
-        lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
-        body = tip + lead
-        body.bc(self._boundaries["Body"])
-        return body
-
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        point = (0, 0, 0)
+        print("Working on the HX")
         radius = self._parameters.lead_diameter * 0.5
-        height = self._parameters.contact_length
-        contact = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
-        contacts = []
-        distance = self._parameters.tip_length
-        for count in range(self._n_contacts):
-            name = self._boundaries[f"Contact_{count + 1}"]
-            contact.bc(name)
-            min_edge = get_lowest_edge(contact)
-            max_edge = get_highest_edge(contact)
-            # Only name edge with the min and max z values
-            # (represents the edge between the non-contact and contact surface)
-            min_edge.name = name
-            max_edge.name = name
-            vector = tuple(np.array(self._direction) * distance)
-            contacts.append(contact.Move(vector))
+
+        # add distances
+        vectors = []
+        # TODO adjust to start at right height
+        distance = self._parameters.tip_length + self._parameters.contact_spacing
+        for _ in range(0, 8):
+            vectors.append(tuple(np.array(self._direction) * distance))
             distance += (
                 self._parameters.contact_length + self._parameters.contact_spacing
             )
-        return netgen.occ.Glue(contacts)
+
+        point = (0, 0, 0)
+        height = self._parameters.contact_length
+        axis = occ.Axis(p=point, d=self._direction)
+        contact_16 = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
+        contact_directed = self._contact_directed()
+
+        contacts = [
+            contact_directed.Move(v=vectors[0]),
+            contact_directed.Rotate(axis, 120).Move(v=vectors[0]),
+            contact_directed.Rotate(axis, 240).Move(v=vectors[0]),
+            contact_directed.Move(v=vectors[1]),
+            contact_directed.Rotate(axis, 120).Move(v=vectors[1]),
+            contact_directed.Rotate(axis, 240).Move(v=vectors[1]),
+            contact_directed.Move(v=vectors[2]),
+            contact_directed.Rotate(axis, 120).Move(v=vectors[2]),
+            contact_directed.Rotate(axis, 240).Move(v=vectors[2]),
+            contact_directed.Move(v=vectors[3]),
+            contact_directed.Rotate(axis, 120).Move(v=vectors[3]),
+            contact_directed.Rotate(axis, 240).Move(v=vectors[3]),
+            contact_16.Move(v=vectors[4]),
+            contact_16.Move(v=vectors[5]),
+            contact_16.Move(v=vectors[6]),
+            contact_16.Move(v=vectors[7]),
+        ]
+
+        for index, contact in enumerate(contacts, 1):
+            name = self._boundaries[f"Contact_{index}"]
+            contact.bc(name)
+            # Label max z value and min z value for single contacts
+            if name in ["Contact_13", "Contact_14", "Contact_15", "Contact_16"]:
+                min_edge = get_lowest_edge(contact)
+                min_edge.name = name
+                max_edge = get_highest_edge(contact)
+                max_edge.name = name
+            else:
+                # Label all the named contacts appropriately
+                for edge in contact.edges:
+                    if edge.name is not None:
+                        edge.name = name
+        return netgen.occ.Fuse(contacts)

@@ -8,6 +8,11 @@ from .abbott_stjude import (
     AbbottStJudeDirectedModel,
     AbbottStJudeParameters,
 )
+from .boston_scientific_cartesia import (
+    BostonScientificCartesiaHXModel,
+    BostonScientificCartesiaParameters,
+    BostonScientificCartesiaXModel,
+)
 from .boston_scientific_vercise import (
     BostonScientificVerciseDirectedModel,
     BostonScientificVerciseDirectedParameters,
@@ -79,6 +84,21 @@ default_electrode_parameters = {
         total_length=450.0,
     ),
     "BostonScientificVerciseDirected": BostonScientificVerciseDirectedParameters(
+        tip_length=1.5,
+        contact_length=1.5,
+        contact_spacing=0.5,
+        lead_diameter=1.3,
+        total_length=450.0,
+    ),
+    # TODO adjust parameters
+    "BostonScientificCartesiaX": BostonScientificCartesiaParameters(
+        tip_length=1.5,
+        contact_length=1.5,
+        contact_spacing=0.5,
+        lead_diameter=1.3,
+        total_length=450.0,
+    ),
+    "BostonScientificCartesiaHX": BostonScientificCartesiaParameters(
         tip_length=1.5,
         contact_length=1.5,
         contact_spacing=0.5,
@@ -278,6 +298,22 @@ def BostonScientificVerciseDirected(
     return BostonScientificVerciseDirectedModel(
         parameters, rotation, direction, position
     )
+
+
+def BostonScientificCartesiaX(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """Boston Scientific Cartesia X electrode."""
+    parameters = default_electrode_parameters["BostonScientificCartesiaX"]
+    return BostonScientificCartesiaXModel(parameters, rotation, direction, position)
+
+
+def BostonScientificCartesiaHX(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """Boston Scientific Cartesia HX electrode."""
+    parameters = default_electrode_parameters["BostonScientificCartesiaHX"]
+    return BostonScientificCartesiaHXModel(parameters, rotation, direction, position)
 
 
 def Medtronic3387(

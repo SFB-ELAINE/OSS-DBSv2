@@ -211,7 +211,7 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         return encapsulation.Move(v=self._position) - self.geometry
 
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        contacts = self.__contacts()
+        contacts = self._contacts()
         electrode = netgen.occ.Glue([self.__body() - contacts, contacts])
         return electrode.Move(v=self._position)
 
@@ -231,7 +231,7 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         body.bc(self._boundaries["Body"])
         return body
 
-    def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         direction = self._direction
         contact_radius = self._parameters.contact_radius
         tip_center = tuple(np.array(self._direction) * self._parameters.contact_radius)
@@ -438,7 +438,7 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         return encapsulation.Move(v=self._position) - self.geometry
 
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        electrode = occ.Glue([self.__body(), self.__contacts()])
+        electrode = occ.Glue([self.__body(), self._contacts()])
         return electrode.Move(v=self._position)
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
@@ -468,7 +468,7 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         body.bc(self._boundaries["Body"])
         return body
 
-    def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         direction = self._direction
         radius_1 = self._parameters.core_electrode_diameter * 0.5
         center = tuple(np.array(self._direction) * radius_1)

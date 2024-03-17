@@ -102,7 +102,7 @@ class DixiSEEGModel(ElectrodeModel):
         return encapsulation.Move(v=self._position) - self.geometry
 
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        contacts = self.__contacts()
+        contacts = self._contacts()
         # TODO check
         electrode = netgen.occ.Glue([self.__body() - contacts, contacts])
         return electrode.Move(v=self._position)
@@ -117,7 +117,7 @@ class DixiSEEGModel(ElectrodeModel):
         body.bc(self._boundaries["Body"])
         return body
 
-    def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self._parameters.lead_diameter * 0.5
         direction = self._direction
 
