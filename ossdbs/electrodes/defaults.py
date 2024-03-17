@@ -90,16 +90,15 @@ default_electrode_parameters = {
         lead_diameter=1.3,
         total_length=450.0,
     ),
-    # TODO adjust parameters
     "BostonScientificCartesiaX": BostonScientificCartesiaParameters(
-        tip_length=1.5,
+        tip_length=1.0,
         contact_length=1.5,
         contact_spacing=0.5,
         lead_diameter=1.3,
         total_length=450.0,
     ),
     "BostonScientificCartesiaHX": BostonScientificCartesiaParameters(
-        tip_length=1.5,
+        tip_length=1.0,
         contact_length=1.5,
         contact_spacing=0.5,
         lead_diameter=1.3,
