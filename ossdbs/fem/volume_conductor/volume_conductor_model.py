@@ -551,16 +551,15 @@ class VolumeConductor(ABC):
         if len(self.contacts.active) == 2:
             mesh = self.mesh.ngsolvemesh
             # do not need to account for mm because of integration
-            power = ngsolve.Integrate(self.electric_field * self.current_density, mesh)
+            power = ngsolve.Integrate(
+                ngsolve.Conj(self.electric_field) * self.current_density, mesh
+            )
             # TODO integrate surface impedance by thin layer
             voltage = 0
             for idx, contact in enumerate(self.contacts.active):
                 voltage += (-1) ** idx * contact.voltage
-            if self.is_complex:
-                sign = np.sign(voltage.real)
-            else:
-                sign = np.sign(voltage)
-            return sign * voltage / power
+            _logger.debug(f"Voltage drop for impedance: {voltage}")
+            return voltage * np.conj(voltage) / power
         else:
             # TODO implement meaningful way to access contribution of individual
             # electrode to impedance

@@ -236,7 +236,7 @@ class Mesh:
             Estimated error from
         """
         elementwise_error = ngsolve.Integrate(
-            cf=error_cf, mesh=self._mesh, VOL_or_BND=ngsolve.VOL, element_wise=True
+            cf=error_cf.real, mesh=self._mesh, VOL_or_BND=ngsolve.VOL, element_wise=True
         )
         max_error = max(elementwise_error)
         # convolved but here the Netgen (!) not NGsolve mesh is called

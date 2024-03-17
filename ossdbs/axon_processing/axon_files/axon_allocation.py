@@ -14,7 +14,7 @@ import numpy as np
 import scipy
 
 # adopted from nibabel
-from nibabel_SequenceArray import ArraySequence
+from nibabel.streamlines import ArraySequence
 from scipy.io import savemat
 
 
