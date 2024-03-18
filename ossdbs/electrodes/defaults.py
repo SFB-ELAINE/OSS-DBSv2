@@ -96,6 +96,7 @@ default_electrode_parameters = {
         contact_spacing=0.5,
         lead_diameter=1.3,
         total_length=450.0,
+        contacts_skipped=5.0,
     ),
     "BostonScientificCartesiaHX": BostonScientificCartesiaParameters(
         tip_length=1.0,
@@ -103,6 +104,7 @@ default_electrode_parameters = {
         contact_spacing=0.5,
         lead_diameter=1.3,
         total_length=450.0,
+        contacts_skipped=7.0,
     ),
     "Medtronic3387": MedtronicParameters(
         tip_length=1.5,
