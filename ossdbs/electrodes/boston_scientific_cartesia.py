@@ -31,7 +31,7 @@ class BostonScientificCartesiaParameters:
 
     def get_center_first_contact(self) -> float:
         """Returns distance between electrode tip and center of first contact."""
-        return 0.5 * self.tip_length
+        return self.tip_length + 0.5 * self.contact_length
 
     def get_distance_l1_l4(self) -> float:
         """Returns distance between first contact (directed)
@@ -71,8 +71,8 @@ class BostonScientificCartesiaXModel(ElectrodeModel):
         super().__init__(parameters, rotation, direction, position)
         _logger.warning(
             "The Boston Scientific Cartesia electrodes"
-            "do not rely on manufacturer specifications"
-            "and should be used with caution."
+            " do not rely on manufacturer specifications"
+            " and should be used with caution."
         )
 
     def _construct_encapsulation_geometry(
