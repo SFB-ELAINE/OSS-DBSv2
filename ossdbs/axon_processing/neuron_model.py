@@ -1,5 +1,4 @@
 import fileinput
-import json
 import logging
 import multiprocessing as mp
 import os
@@ -8,12 +7,18 @@ import subprocess
 import sys
 from abc import ABC, abstractmethod
 from importlib import resources
+from typing import Optional
 
 import h5py
 import neuron
 import numpy as np
-from axon import Axon
-from scipy.io import savemat
+
+from .axon import Axon
+from .utilities import (
+    create_leaddbs_outputs,
+    create_paraview_outputs,
+    store_axon_statuses,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -27,6 +32,12 @@ class NeuronSimulator(ABC):
     _downsampled = False
     # needs to be implemented
     _axon_model = None
+    # Extra steps in NEURON
+    _extra_initialization = False
+    # Initial voltage
+    _v_init = -70.0
+    # hoc file for execution
+    _hoc_file = None
 
     def __init__(self, pathways_dict: dict, output_path: str):
         # create local directory if it does not exist
@@ -38,12 +49,14 @@ class NeuronSimulator(ABC):
         if sys.platform == "win32":
             self._neuron_executable = "mknrndll"
         self._pathways_dict = pathways_dict
-        self._output_path = output_path  # TODO needs to be full path or relative?
+        self._output_path = output_path
 
         # create output path if it does not exist
         if not os.path.isdir(output_path):
+            _logger.info(f"Created directory {output_path}")
             os.mkdir(self.output_path)
         # copy NEURON files and compile them
+        _logger.info("Copy and compile NEURON files")
         self.copy_neuron_files()
         self.compile_neuron_files()
 
@@ -52,6 +65,12 @@ class NeuronSimulator(ABC):
         # signal dict will be created when
         # time-domain solution is loaded
         self._signal_dict = None
+
+    @property
+    def hoc_file(self):
+        if self._hoc_file is None:
+            raise NotImplementedError("Need to implement default hoc file!")
+        return self._hoc_file
 
     @property
     def axon_model(self):
@@ -73,14 +92,11 @@ class NeuronSimulator(ABC):
     def connectome_name(self):
         return self._pathways_dict["connectome_name"]
 
-    def get_pathway_name(self, idx: int):
-        return self._pathways_dict["pathway_name"][idx]
-
     def get_axon_diam(self, idx: int):
         return self._pathways_dict["axon_diams"][idx]
 
     def get_n_Ranvier(self, idx: int):
-        return (self._pathways_dict["n_Ranvier"][idx],)
+        return self._pathways_dict["n_Ranvier"][idx]
 
     def get_N_seeded_neurons(self, idx: int):
         return self._pathways_dict["N_seeded_neurons"][idx]
@@ -134,7 +150,8 @@ class NeuronSimulator(ABC):
         )
         pwd = os.getcwd()
         local_neuron_path = os.path.join(pwd, self._neuron_workdir)
-        shutil.copytree(path_to_neuron_files, local_neuron_path)
+        # Directory can already exist
+        shutil.copytree(path_to_neuron_files, local_neuron_path, dirs_exist_ok=True)
 
     @property
     def pathways_dict(self):
@@ -142,7 +159,7 @@ class NeuronSimulator(ABC):
         return self._pathways_dict
 
     @abstractmethod
-    def modify_hoc_file(self):
+    def modify_hoc_file(self, nRanvier, stepsPerMs, axon_morphology):
         """Update parameters in the hoc file."""
         pass
 
@@ -152,13 +169,14 @@ class NeuronSimulator(ABC):
         return self._neuron_executable
 
     @abstractmethod
-    def paste_to_hoc(self):
+    def paste_to_hoc(self, parameters_dict: dict):
         """Paste Python parameters into HOC file."""
         pass
 
-    @abstractmethod
-    def paste_paraview_vis(self):
-        """Convert to paraview file."""
+    # TODO needed?
+    # @abstractmethod
+    # def paste_paraview_vis(self):
+    #     """Convert to paraview file."""
 
     @abstractmethod
     def compile_neuron_files(self):
@@ -174,152 +192,22 @@ class NeuronSimulator(ABC):
         """
         self._td_solution = h5py.File(time_domain_h5_file, "r")
 
-    def create_leaddbs_outputs(self, Axon_Lead_DBS):
-        """Export axons with activation state in Lead-DBS supported format.
-
-        Parameters
-        ----------
-        Axon_Lead_DBS: NxM numpy.ndarray, geometry, index and activation status of neurons (equivalent of connectome.fibers format in Lead-DBS)
-
-        """
-        mdic = {
-            "fibers": Axon_Lead_DBS,
-            "ea_fibformat": "1.0",
-            "connectome_name": self.connectome_name,
-        }  # For Lead-DBS .mat files
-
-        if self.scaling_index is None:
-            if self.pathway_name is None:
-                savemat(self.output_path + "/Axon_state.mat", mdic)
-            else:
-                savemat(
-                    self.output_path + "/Axon_state_" + self.pathway_name + ".mat", mdic
-                )
-        else:
-            if self.pathway_name is None:
-                savemat(
-                    self.output_path
-                    + "/Axon_state_"
-                    + str(self.scaling_index)
-                    + ".mat",
-                    mdic,
-                )
-            else:
-                savemat(
-                    self.output_path
-                    + "/Axon_state_"
-                    + self.pathway_name
-                    + "_"
-                    + str(self.scaling_index)
-                    + ".mat",
-                    mdic,
-                )
-
-    def create_paraview_outputs(self, Axon_Lead_DBS):
-        """Export axons with activation state in Paraview supported format.
-
-        Parameters
-        ----------
-        Axon_Lead_DBS: NxM numpy.ndarray, geometry, index and activation status of neurons (equivalent of connectome.fibers format in Lead-DBS)
-
-        """
-        if self.scaling_index is None:
-            if self.pathway_name is None:
-                np.savetxt(
-                    self.output_path + "/Axon_state.csv",
-                    Axon_Lead_DBS,
-                    delimiter=",",
-                    header="x-pt,y-pt,z-pt,idx,status",
-                )
-            else:
-                np.savetxt(
-                    self.output_path + "/Axon_state_" + self.pathway_name + ".csv",
-                    Axon_Lead_DBS,
-                    delimiter=",",
-                    header="x-pt,y-pt,z-pt,idx,status",
-                )
-        else:
-            if self.pathway_name is None:
-                np.savetxt(
-                    self.output_path
-                    + "/Axon_state_"
-                    + str(self.scaling_index)
-                    + ".csv",
-                    Axon_Lead_DBS,
-                    delimiter=",",
-                    header="x-pt,y-pt,z-pt,idx,status",
-                )
-            else:
-                np.savetxt(
-                    self.output_path
-                    + "/Axon_state_"
-                    + self.pathway_name
-                    + "_"
-                    + str(self.scaling_index)
-                    + ".csv",
-                    Axon_Lead_DBS,
-                    delimiter=",",
-                    header="x-pt,y-pt,z-pt,idx,status",
-                )
-
-    def store_axon_statuses(
-        self,
-        percent_activated,
-        percent_damaged,
-        percent_csf,
-        scaling_index=None,
-        pathway_name=None,
+    def process_pathways(
+        self, scaling: float = 1.0, scaling_index: Optional[int] = None
     ):
-        """Store PAM results.
-
-        Parameters
-        ----------
-        percent_activated: float, percent of the original(!) number of neurons that are activated for the particular stimulation
-        percent_damaged: float, percent of the original(!) number of neurons that are 'damaged' for the particular electrode placement
-        percent_csf: float, percent of the original(!) number of neurons that intersect with CSF for the particular brain segmentation
-
-        Note
-        ----------
-        For activation state of particular neuron see 'fiberActivation*' files as those restore original(!) indices as in the connectome.
-        """
-        summary_dict = {
-            "percent_activated": percent_activated,
-            "percent_damaged": percent_damaged,
-            "percent_csf": percent_csf,
-        }
-
-        if self.scaling_index is None:
-            if self.pathway_name is None:
-                path_to_save = os.path.join(self.output_path, "Pathway_status.json")
-            else:
-                summary_dict["pathway_name"] = self.pathway_name
-                path_to_save = os.path.join(
-                    self.output_path, f"Pathway_status_{pathway_name}.json"
-                )
-        else:
-            summary_dict["scaling_index"] = str(self.scaling_index)
-            if self.pathway_name is None:
-                path_to_save = os.path.join(
-                    self.output_path, f"Pathway_status_{scaling_index}.json"
-                )
-            else:
-                summary_dict["pathway_name"] = self.pathway_name
-                path_to_save = os.path.join(
-                    self.output_path,
-                    f"Pathway_status_{pathway_name}_{scaling_index}.json",
-                )
-        with open(path_to_save, "w") as save_as_dict:
-            json.dump(summary_dict, save_as_dict)
-
-    def process_pathways(self, scaling: float, scaling_index):
         """Go through all pathways and compute the activation.
 
         Parameters
         ----------
         scaling: float
-            scaling factor for the whole solution (different from scaling_vector)
+            scaling factor for the whole solution
         scaling_index: int
             index of the scaling factor or scaling vector
+
+
+        Notes
+        -----
+        TODO Do scaling outside this routine?
         """
         if self._td_solution is None:
             raise ValueError("Need to load time-domain solution from H5 file first.")
@@ -340,8 +228,9 @@ class NeuronSimulator(ABC):
         _logger.info("Going through pathways")
         for pathway_idx, pathway_name in enumerate(pathways):
             pathway_dataset = self._td_solution[pathway_name]
-            assert pathway_name == self.get_pathway_name(pathway_idx)
-            self.check_pathway_activation(pathway_dataset, pathway_idx)
+            self.check_pathway_activation(
+                pathway_dataset, pathway_idx, pathway_name, scaling_index
+            )
 
         # close H5 file
         self._td_solution.close()
@@ -358,18 +247,9 @@ class NeuronSimulator(ABC):
         v_ext: NxM numpy.ndarray, extracellular el. potential distribution (mV) in space (on the neuron) and time (DBS signal)
 
         """
+        scaling = self.signal_dict["scaling"]
         v_ext = np.zeros_like(v_time_sol, float)
-        if self.scaling_vector is None:
-            v_ext = v_time_sol * 1000.0 * self.scaling  # convert to mV
-        else:
-            for contact_i in range(len(self.scaling_vector)):
-                v_ext = (
-                    v_ext
-                    + v_time_sol
-                    * 1000.0
-                    * self.scaling
-                    * self.scaling_vector[contact_i]
-                )  # convert to mV
+        v_ext = v_time_sol * 1000.0 * scaling  # convert to mV
 
         return v_ext
 
@@ -390,36 +270,27 @@ class NeuronSimulator(ABC):
         list, neuron index in the pathway and its activation status (1 or 0)
 
         """
-        if self.downsampled:
-            v_time_sol = self.upsample_voltage(v_time_sol)
         v_ext = self.get_v_ext(v_time_sol)
-        spike = self.run_NEURON(
-            self.v_init, v_ext, self.hoc_file, self.extra_initialization
-        )
+        spike = self.run_NEURON(v_ext, self._extra_initialization)
         return output.put([neuron_index, spike])
 
     def run_NEURON(
         self,
-        v_init: float,
         v_ext: np.ndarray,
-        hoc_file: str,
-        extra_initialization: bool,
+        extra_initialization: bool = False,
     ) -> bool:
         """Load a NEURON model and run simulation.
 
         Parameters
         ----------
-        v_init: float
-            Initial potential, resting potential
-        v_time_sol: np.ndarray
+        v_ext: np.ndarray
             NxM extracellular potential distribution in mV (N: neuron, M: time)
-        hoc_file: str
-            Name of .hoc file to be loaded
         extra_initialization: bool
             Delete and create nodes (needed for MRG2002 model)
         """
         # prints {load_file("...")}
-        neuron.h(f'{{load_file("{hoc_file}")}}')
+        _logger.info(f"Load file: {self.hoc_file}")
+        neuron.h(f'{{load_file("{self.hoc_file}")}}')
         if extra_initialization:
             neuron.h.deletenodes()
             neuron.h.createnodes()
@@ -435,7 +306,8 @@ class NeuronSimulator(ABC):
         )
         # Number of DBS pulses is 1! Hardcoded (TODO)
         neuron.h.n_pulse = 1
-        neuron.h.v_init = v_init
+        # Initial potential is hardcoded (TODO?)
+        neuron.h.v_init = self._v_init
 
         # feed the potential in time for compartment i to the NEURON model
         for i in range(v_ext.shape[0]):
@@ -447,7 +319,9 @@ class NeuronSimulator(ABC):
         activated = bool(neuron.h.stoprun)
         return activated
 
-    def check_pathway_activation(self, pathway_dataset, pathway_idx):
+    def check_pathway_activation(
+        self, pathway_dataset, pathway_idx, pathway_name=None, scaling_index=None
+    ):
         """Parallelized probing of action potentials at all stimulated neurons (axons) described by supplied pathway datagroups.
 
         Parameters
@@ -465,17 +339,16 @@ class NeuronSimulator(ABC):
 
         # get parameters
         N_neurons = self.get_N_seeded_neurons(pathway_idx)
-        pathway_name = self.get_pathway_name(pathway_idx)
         axon_diam = self.get_axon_diam(pathway_idx)
         n_Ranvier = self.get_n_Ranvier(pathway_idx)
         orig_N_neurons = self.get_N_orig_neurons(pathway_idx)
 
         # check actual number of n_segments in case downsampeld
-        ax_mh = self.get_axon_morphology(self.axon_model, axon_diam, None, n_Ranvier)
+        ax_mh = self.get_axon_morphology(axon_diam, n_Ranvier=n_Ranvier)
         n_segments_actual = ax_mh["n_segments"]
-
-        # TODO
-        self.modify_hoc_file()
+        stepsPerMs = int(1.0 / self.signal_dict["time_step"])
+        # edit hoc file locally to change parameters
+        self.modify_hoc_file(n_Ranvier, stepsPerMs, ax_mh)
 
         # check pre-status
         pre_status = pathway_dataset["Status"]
@@ -485,6 +358,13 @@ class NeuronSimulator(ABC):
         List_of_activated = []
         List_of_not_activated = []
         Activated_models = 0
+
+        # TODO get rid of that step?
+        # TODO current limitation loading of NEURON files
+        os.chdir(self._neuron_workdir)
+        _logger.info(
+            f"Changed current working directory for NEURON execution to {os.getcwd()}"
+        )
 
         neuron_index = 0
         while neuron_index < N_neurons:
@@ -497,16 +377,16 @@ class NeuronSimulator(ABC):
                 neuron = pathway_dataset["axon" + str(neuron_index)]
                 Axon_Lead_DBS[
                     neuron_index
-                    * self.n_segments_actual : (neuron_index + 1)
-                    * self.n_segments_actual,
+                    * n_segments_actual : (neuron_index + 1)
+                    * n_segments_actual,
                     :3,
                 ] = np.array(neuron["Points[mm]"])
 
                 # add index
                 Axon_Lead_DBS[
                     neuron_index
-                    * self.n_segments_actual : (neuron_index + 1)
-                    * self.n_segments_actual,
+                    * n_segments_actual : (neuron_index + 1)
+                    * n_segments_actual,
                     3,
                 ] = (
                     neuron_index + 1
@@ -516,17 +396,21 @@ class NeuronSimulator(ABC):
                 if pre_status[neuron_index] != 0:
                     Axon_Lead_DBS[
                         neuron_index
-                        * self.n_segments_actual : (neuron_index + 1)
-                        * self.n_segments_actual,
+                        * n_segments_actual : (neuron_index + 1)
+                        * n_segments_actual,
                         4,
                     ] = pre_status[neuron_index]
                     neuron_index += 1
                     continue
 
                 neuron_time_sol = np.array(neuron["Potential[V]"])
-
+                # upsample
+                if self.downsampled:
+                    neuron_time_sol = self.upsample_voltage(
+                        neuron_time_sol, axon_diam, ax_mh
+                    )
                 processes = mp.Process(
-                    target=self.get_axon_status,
+                    target=self.get_axon_status_multiprocessing,
                     args=(neuron_index, neuron_time_sol, output),
                 )
                 proc.append(processes)
@@ -569,8 +453,21 @@ class NeuronSimulator(ABC):
                 # the status was already assigned
                 continue
 
-        self.create_leaddbs_outputs(Axon_Lead_DBS)
-        self.create_paraview_outputs(Axon_Lead_DBS)
+        os.chdir("../")
+        _logger.info(f"Changed current working directory back to {os.getcwd()}")
+
+        create_leaddbs_outputs(
+            self.output_path,
+            Axon_Lead_DBS,
+            scaling_index=scaling_index,
+            pathway_name=pathway_name,
+        )
+        create_paraview_outputs(
+            self.output_path,
+            Axon_Lead_DBS,
+            scaling_index=scaling_index,
+            pathway_name=pathway_name,
+        )
 
         percent_activated = np.round(
             100.0 * Activated_models / float(orig_N_neurons), 2
@@ -587,11 +484,23 @@ class NeuronSimulator(ABC):
         _logger.info(f"Neurons damaged: {percent_damaged}%")
         _logger.info(f"Neurons in CSF {percent_csf}%")
 
-        self.store_axon_statuses(percent_activated, percent_damaged, percent_csf)
+        store_axon_statuses(
+            self.output_path,
+            percent_activated,
+            percent_damaged,
+            percent_csf,
+            scaling_index=scaling_index,
+            pathway_name=pathway_name,
+        )
 
 
 class MRG2002(NeuronSimulator):
     _axon_model = "MRG2002"
+    # needs extra compilation steps
+    _extra_initialization = True
+    # different initial resting potential
+    _v_init = -80.0
+    _hoc_file = "axon4pyfull.hoc"
 
     @property
     def resources_path(self):
@@ -711,184 +620,92 @@ class MRG2002(NeuronSimulator):
         )
         return axon_morphology
 
-    def paste_to_hoc(
-        self,
-        axonnodes,
-        paranodes1,
-        paranodes2,
-        axoninter,
-        axontotal,
-        v_init,
-        fiberD,
-        paralength1,
-        paralength2,
-        nodelength,
-        nodeD,
-        axonD,
-        paraD1,
-        paraD2,
-        deltax,
-        nl,
-        steps_per_ms,
-    ):
-        axonnodes_line = "axonnodes="
-        axonnodes_input = f"axonnodes={axonnodes}\n"
+    def paste_to_hoc(self, parameters_dict: dict) -> None:
+        info_to_update = [
+            "axonnodes",
+            "paranodes1",
+            "paranodes2",
+            "axoninter",
+            "axontotal",
+            "v_init",
+            "fiberD",
+            "paralength1",
+            "paralength2",
+            "nodelength",
+            "nodeD",
+            "axonD",
+            "paraD1",
+            "paraD2",
+            "deltax",
+            "nl",
+            "steps_per_ms",
+        ]
 
-        paranodes1_line = "paranodes1="
-        paranodes1_input = f"paranodes1={paranodes1}\n"
+        # check that all parameters are in dict
+        if not set(info_to_update) == set(parameters_dict.keys()):
+            raise ValueError("Need to provide all parameters: {info_to_update}")
 
-        paranodes2_line = "paranodes2="
-        paranodes2_input = f"paranodes2={paranodes2}\n"
-
-        axoninter_line = "axoninter="
-        axoninter_input = f"axoninter={axoninter}\n"
-
-        axontotal_line = "axontotal="
-        axontotal_input = f"axontotal={axontotal}\n"
-
-        nv_init_line = "v_init="
-        nv_init_input = f"v_init={v_init}\n"  # normally, -80mv
-
-        fiberD_line = "fiberD="
-        fiberD_input = f"fiberD={fiberD}\n"  # fiber diameter
-
-        paralength1_line = "paralength1="
-        paralength1_input = f"paralength1={paralength1}\n"
-
-        paralength2_line = "paralength2="
-        paralength2_input = f"paralength2={paralength2}\n"
-
-        nodelength_line = "nodelength="
-        nodelength_input = f"nodelength={nodelength}\n"
-
-        nodeD_line = "nodeD="
-        nodeD_input = f"nodeD={nodeD}\n"
-
-        axonD_line = "axonD="
-        axonD_input = f"axonD={axonD}\n"
-
-        paraD1_line = "paraD1="
-        paraD1_input = f"paraD1={paraD1}\n"
-
-        paraD2_line = "paraD2="
-        paraD2_input = f"paraD2={paraD2}\n"
-
-        deltax_line = "deltax="
-        deltax_input = f"deltax={deltax}\n"
-
-        nl_line = "nl="
-        nl_input = f"nl={nl}\n"
-
-        steps_per_ms_line = "steps_per_ms="
-        steps_per_ms_input = f"steps_per_ms={steps_per_ms}\n"
-
-        x = fileinput.input(files="axon4pyfull.hoc", inplace=1)
-        for line in x:
-            if line.startswith(axonnodes_line):
-                line = axonnodes_input
-            if line.startswith(paranodes1_line):
-                line = paranodes1_input
-            if line.startswith(paranodes2_line):
-                line = paranodes2_input
-            if line.startswith(axoninter_line):
-                line = axoninter_input
-            if line.startswith(axontotal_line):
-                line = axontotal_input
-            if line.startswith(nv_init_line):
-                line = nv_init_input
-            if line.startswith(fiberD_line):
-                line = fiberD_input
-            if line.startswith(paralength1_line):
-                line = paralength1_input
-            if line.startswith(paralength2_line):
-                line = paralength2_input
-            if line.startswith(nodelength_line):
-                line = nodelength_input
-
-            if line.startswith(nodeD_line):
-                line = nodeD_input
-            if line.startswith(axonD_line):
-                line = axonD_input
-            if line.startswith(paraD1_line):
-                line = paraD1_input
-            if line.startswith(paraD2_line):
-                line = paraD2_input
-            if line.startswith(deltax_line):
-                line = deltax_input
-            if line.startswith(nl_line):
-                line = nl_input
-            if line.startswith(steps_per_ms_line):
-                line = steps_per_ms_input
+        hoc_file = fileinput.input(
+            files=os.path.join(self._neuron_workdir, "axon4pyfull.hoc"), inplace=1
+        )
+        for line in hoc_file:
+            if any(line.startswith(matched_info := info) for info in info_to_update):
+                _logger.debug(f"Matched: {matched_info}")
+                _logger.debug(line)
+                replacement_line = f"{matched_info}={parameters_dict[matched_info]}\n"
+                line = replacement_line
+                _logger.debug(line)
             print(line, end="")
-        x.close()
-
-        return True
+        hoc_file.close()
 
     def compile_neuron_files(self):
+        _logger.info("Compile axnode")
         subprocess.run(
-            "nocmodl axnode.mod",
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
-            cwd=self._neuron_workdir,
+            ["nocmodl", "axnode.mod"],
+            # stdout=subprocess.STDOUT,  # TODO later pipe output
+            # stdout=subprocess.DEVNULL,
+            # stderr=subprocess.STDOUT,
+            cwd=os.path.abspath(self._neuron_workdir),
         )  # might not work with remote hard drives
-        # TODO test if works
+        _logger.info("Compile NEURON executable")
         subprocess.run(
             self.neuron_executable,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
-            cwd=self._neuron_workdir,
+            # stdout=subprocess.STDOUT,
+            # stdout=subprocess.DEVNULL,
+            # stderr=subprocess.STDOUT,
+            cwd=os.path.abspath(self._neuron_workdir),
         )
 
-    def paste_paraview_vis(self, Points_on_model, N_comp_in_between):
-        NPoints_line = "Points_on_model"
-        NPoints_input = f"Points_on_model={Points_on_model}\n"  # NEURON uses ms
-        N_comp_in_between_line = "N_comp_in_between"
-        N_comp_in_between_input = (
-            f"N_comp_in_between={N_comp_in_between}\n"  # NEURON uses ms
-        )
-
-        fl = fileinput.input(
-            files="Visualization_files/Paraview_vis_axon.py", inplace=1
-        )
-        for line in fl:
-            if line.startswith(NPoints_line):
-                line = NPoints_input
-            if line.startswith(N_comp_in_between_line):
-                line = N_comp_in_between_input
-            print(line, end="")
-        fl.close()
-
-        return True
-
-    def modify_hoc_file(self, nRanvier, stepsPerMs, axon_morphology, axonDiam):
-        if self.axonDiam >= 5.7:
+    def modify_hoc_file(self, nRanvier, stepsPerMs, axon_morphology):
+        axonDiam = axon_morphology["axon_diam"]
+        print("AxonDiam: ", axonDiam)
+        if axonDiam >= 5.7:
             axoninter = (nRanvier - 1) * 6
         else:
             axoninter = (nRanvier - 1) * 3
 
-        v_init = -80.0
+        parameters_dict = {
+            "axonnodes": nRanvier,
+            "paranodes1": axon_morphology["n_para1"],
+            "paranodes2": axon_morphology["n_para2"],
+            "axoninter": axoninter,
+            "axontotal": axon_morphology["n_segments"],
+            "v_init": self._v_init,
+            "fiberD": axonDiam,
+            "paralength1": axon_morphology["para1_length"] * 1e3,
+            "paralength2": axon_morphology["para2_length"] * 1e3,
+            "nodelength": axon_morphology["ranvier_length"] * 1e3,
+            "nodeD": axon_morphology["node_d"],
+            "axonD": axon_morphology["axon_d"],
+            "paraD1": axon_morphology["para1_d"],
+            "paraD2": axon_morphology["para2_d"],
+            "deltax": axon_morphology["node_step"] * 1e3,
+            "nl": axon_morphology["lamellas"],
+            "steps_per_ms": stepsPerMs,
+        }
+        self.paste_to_hoc(parameters_dict)
 
-        self.paste_to_hoc(
-            nRanvier,
-            axon_morphology["n_para1"],
-            axon_morphology["n_para2"],
-            axoninter,
-            axon_morphology["n_segments"],
-            v_init,
-            axonDiam,
-            axon_morphology["para1_length"] * 1e3,
-            axon_morphology["para2_length"] * 1e3,
-            axon_morphology["ranvier_length"] * 1e3,
-            axon_morphology["node_d"],
-            axon_morphology["axon_d"],
-            axon_morphology["para1_d"],
-            axon_morphology["para2_d"],
-            axon_morphology["node_step"] * 1e3,
-            axon_morphology["lamellas"],
-            stepsPerMs,
-        )
-
-    def upsample_voltage(self, v_time_sol):
+    def upsample_voltage(self, v_time_sol, axonDiam, axon_morphology):
         """Upsample potential distribution for downsampled neurons by interpolating.
 
         Parameters
@@ -902,59 +719,51 @@ class MRG2002(NeuronSimulator):
         Notes
         -----
         TODO estimate ratios directly from the morphology
+        TODO refactor code
         """
         # let's interpolate voltage between node - center_l - center_r - node
         # assume 11 segments
         # n_segments_ds = ((n_segments_full - 1) / 11) * 3 +1
 
         v_time_sol_full = np.zeros(
-            (self.axon_morphology["n_segments"], v_time_sol.shape[1]), float
+            (axon_morphology["n_segments"], v_time_sol.shape[1]), float
         )
 
-        if self.axonDiam >= 5.7:
+        if axonDiam >= 5.7:
             # fill out nodes first
-            for k in np.arange(0, self.axon_morphology["n_segments"], 11):
+            for k in np.arange(0, axon_morphology["n_segments"], 11):
                 z = int(k / 11) * 3
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
             # now two segments in between
-            for k in np.arange(3, self.axon_morphology["n_segments"], 11):
+            for k in np.arange(3, axon_morphology["n_segments"], 11):
                 z = int(k / 11) * 3 + 1
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
-            for k in np.arange(8, self.axon_morphology["n_segments"], 11):
+            for k in np.arange(8, axon_morphology["n_segments"], 11):
                 z = int(k / 11) * 3 + 2
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
             # node -- -- intern -- -- -- -- intern -- -- node  ->  node-para1-para2-intern-intern-intern-intern-intern-intern-para2-para1-node
             internodal_length = (
-                self.axon_morphology["node_step"]
-                - self.axon_morphology["ranvier_length"]
-                - (
-                    self.axon_morphology["para2_length"]
-                    + self.axon_morphology["para1_length"]
-                )
+                axon_morphology["node_step"]
+                - axon_morphology["ranvier_length"]
+                - (axon_morphology["para2_length"] + axon_morphology["para1_length"])
                 * 2.0
             ) / 6.0
             dist_node_internode = (
-                (self.axon_morphology["ranvier_length"] + internodal_length) * 0.5
-                + self.axon_morphology["para1_length"]
-                + self.axon_morphology["para2_length"]
+                (axon_morphology["ranvier_length"] + internodal_length) * 0.5
+                + axon_morphology["para1_length"]
+                + axon_morphology["para2_length"]
             )
             ratio_1 = (
-                (
-                    self.axon_morphology["ranvier_length"]
-                    + self.axon_morphology["para1_length"]
-                )
+                (axon_morphology["ranvier_length"] + axon_morphology["para1_length"])
                 * 0.5
                 / dist_node_internode
             )
             ratio_2 = (
                 ratio_1
-                + (
-                    self.axon_morphology["para1_length"]
-                    + self.axon_morphology["para2_length"]
-                )
+                + (axon_morphology["para1_length"] + axon_morphology["para2_length"])
                 * 0.5
                 / dist_node_internode
             )
@@ -968,7 +777,7 @@ class MRG2002(NeuronSimulator):
                 [9, 10],
             ]  # local indices of interpolated segments
             for interv in range(len(list_interp)):
-                for j in np.arange(0, self.axon_morphology["n_segments"] - 1, 11):
+                for j in np.arange(0, axon_morphology["n_segments"] - 1, 11):
                     if interv == 0:
                         v_time_sol_full[j + 1, :] = (1 - ratio_1) * v_time_sol_full[
                             j, :
@@ -1004,46 +813,37 @@ class MRG2002(NeuronSimulator):
             # let's interpolate voltage between node - center - node
             # assume 8 segments
             # fill out nodes first
-            for k in np.arange(0, self.axon_morphology["n_segments"], 8):
+            for k in np.arange(0, axon_morphology["n_segments"], 8):
                 z = int(k / 8) * 2
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
             # now the center between nodes
-            for k in np.arange(4, self.axon_morphology["n_segments"], 8):
+            for k in np.arange(4, axon_morphology["n_segments"], 8):
                 z = int(k / 8) * 2 + 1
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
             # node -- -- -- internodal -- -- -- node  ->  node-para1-para2-intern-intern-intern-para2-para1-node
-            dist_node_internode = self.axon_morphology["node_step"] / 2.0
+            dist_node_internode = axon_morphology["node_step"] / 2.0
             internodal_length = (
-                self.axon_morphology["node_step"]
-                - self.axon_morphology["ranvier_length"]
-                - (
-                    self.axon_morphology["para2_length"]
-                    + self.axon_morphology["para1_length"]
-                )
+                axon_morphology["node_step"]
+                - axon_morphology["ranvier_length"]
+                - (axon_morphology["para2_length"] + axon_morphology["para1_length"])
                 * 2
             ) / 3.0
             ratio_1 = (
-                (
-                    self.axon_morphology["ranvier_length"]
-                    + self.axon_morphology["para1_length"]
-                )
+                (axon_morphology["ranvier_length"] + axon_morphology["para1_length"])
                 * 0.5
                 / dist_node_internode
             )
             ratio_2 = (
                 ratio_1
-                + (
-                    self.axon_morphology["para1_length"]
-                    + self.axon_morphology["para2_length"]
-                )
+                + (axon_morphology["para1_length"] + axon_morphology["para2_length"])
                 * 0.5
                 / dist_node_internode
             )
             ratio_3 = (
                 ratio_2
-                + (self.axon_morphology["para2_length"] + internodal_length)
+                + (axon_morphology["para2_length"] + internodal_length)
                 * 0.5
                 / dist_node_internode
             )
@@ -1054,7 +854,7 @@ class MRG2002(NeuronSimulator):
                 [5, 6, 7],
             ]  # local indices of interpolated segments
             for interv in range(len(list_interp)):
-                for j in np.arange(0, self.axon_morphology["n_segments"] - 1, 8):
+                for j in np.arange(0, axon_morphology["n_segments"] - 1, 8):
                     if interv == 0:  # ratios based on intercompartment distances
                         v_time_sol_full[j + 1, :] = (1 - ratio_1) * v_time_sol_full[
                             j, :
@@ -1081,6 +881,7 @@ class MRG2002(NeuronSimulator):
 
 class McNeal1976(NeuronSimulator):
     _axon_model = "McNeal1976"
+    _hoc_file = "init_B5_extracellular.hoc"
 
     @property
     def resources_path(self):
@@ -1094,15 +895,11 @@ class McNeal1976(NeuronSimulator):
             cwd=self._neuron_workdir,
         )
 
-    def get_axon_morphology(
-        self, axon_model, axon_diam, axon_length=None, n_Ranvier=None
-    ) -> dict:
+    def get_axon_morphology(self, axon_diam, axon_length=None, n_Ranvier=None) -> dict:
         """Get geometric description of a single axon.
 
         Parameters
         ----------
-         axon_model: str
-            NEURON model ('MRG2002', 'MRG2002_DS' (downsampled), 'McNeal1976' (classic McNeal's))
          axon_diam: float
             diameter in micrometers for all fibers in the pathway
          axon_length: float, optional
@@ -1119,7 +916,7 @@ class McNeal1976(NeuronSimulator):
         TODO rewrite
 
         """
-        axon_morphology = {"axon_model": axon_model, "axon_diam": axon_diam}
+        axon_morphology = {"axon_model": self.axon_model, "axon_diam": axon_diam}
 
         # node -- -- -- internodal -- -- -- node
         axon_morphology["n_comp"] = 2  # only nodes and one internodal per segment
@@ -1146,69 +943,46 @@ class McNeal1976(NeuronSimulator):
         )
         return axon_morphology
 
-    def paste_to_hoc(self, axonnodes, axoninter, axontotal, v_init, steps_per_ms):
+    def paste_to_hoc(self, parameters_dict):
+        info_to_update = ["axonnodes", "v_init", "steps_per_ms"]
+
+        if not set(info_to_update) == set(parameters_dict.keys()):
+            raise ValueError("Need to provide all parameters: {info_to_update}")
+
+        hoc_file = fileinput.input(
+            files=os.path.join(self._neuron_workdir, "init_B5_extracellular.hoc"),
+            inplace=1,
+        )
+
+        for line in hoc_file:
+            if any(line.startswith(matched_info := info) for info in info_to_update):
+                _logger.debug(f"Matched: {matched_info}")
+                _logger.debug(line)
+                replacement_line = f"{matched_info}={parameters_dict[matched_info]}\n"
+                line = replacement_line
+                _logger.debug(line)
+            print(line, end="")
+        hoc_file.close()
+
         NNODES_line = "NNODES ="
+        axonnodes = parameters_dict["axonnodes"]
         NNODES_input = f"NNODES = {axonnodes}\n"
 
-        axonnodes_line = "axonnodes="
-        axonnodes_input = f"axonnodes={axonnodes}\n"
-
-        nv_init_line = "v_init="
-        nv_init_input = f"v_init={v_init}\n"
-
-        steps_per_ms_line = "steps_per_ms="
-        steps_per_ms_input = f"steps_per_ms={steps_per_ms}\n"
-
-        x = fileinput.input(files="init_B5_extracellular.hoc", inplace=1)
-        for line in x:
-            if line.startswith(axonnodes_line):
-                line = axonnodes_input
-            if line.startswith(nv_init_line):
-                line = nv_init_input
-            if line.startswith(steps_per_ms_line):
-                line = steps_per_ms_input
-            print(line, end="")
-        x.close()
-
-        x = fileinput.input(files="axon5.hoc", inplace=1)
-        for line in x:
+        hoc_file = fileinput.input(
+            files=os.path.join(self._neuron_workdir, "axon5.hoc"), inplace=1
+        )
+        for line in hoc_file:
             if line.startswith(NNODES_line):
                 line = NNODES_input
             print(line, end="")
-        x.close()
+        hoc_file.close()
 
         return True
 
-    def modify_hoc_file(self, nRanvier, axon_morphology, stepsPerMs):
-        n_internodal = axon_morphology["n_segments"] - nRanvier
-        v_init = -70.0
-        self.paste_to_hoc(
-            nRanvier,
-            n_internodal,
-            axon_morphology["n_segments"],
-            v_init,
-            stepsPerMs,
-        )
-
-    def paste_paraview_vis(self, Points_on_model, N_comp_in_between):
-        # strings to be replaced
-        NPoints_line = "Points_on_model"
-        NPoints_input = f"Points_on_model={Points_on_model}\n"  # NEURON uses ms
-        N_comp_in_between_line = "N_comp_in_between"
-        N_comp_in_between_input = (
-            f"N_comp_in_between={N_comp_in_between}\n"  # NEURON uses ms
-        )
-
-        # TODO why are these pathes hardcorded?
-        fl = fileinput.input(
-            files="Visualization_files/Paraview_vis_axon.py", inplace=1
-        )
-        for line in fl:
-            if line.startswith(NPoints_line):
-                line = NPoints_input
-            if line.startswith(N_comp_in_between_line):
-                line = N_comp_in_between_input
-            print(line, end="")
-        fl.close()
-
-        return True
+    def modify_hoc_file(self, nRanvier, stepsPerMs, axon_morphology):
+        parameters_dict = {
+            "v_init": self._v_init,
+            "axonnodes": nRanvier,
+            "steps_per_ms": stepsPerMs,
+        }
+        self.paste_to_hoc(parameters_dict)
