@@ -120,6 +120,7 @@ class VolumeConductor(ABC):
         activation_threshold: Optional[float] = None,
         out_of_core: bool = False,
         export_frequency: Optional[float] = None,
+        adaptive_mesh_refinement: bool = False,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -140,6 +141,8 @@ class VolumeConductor(ABC):
             Otherwise, median frequency is used.
         frequency_domain_signal: FrequencyDomainSignal
             Frequency-domain representation of stimulation signal
+        adaptive_mesh_refinement: bool
+            Perform adaptive mesh refinement (only at first frequency)
 
         Notes
         -----
@@ -232,7 +235,7 @@ class VolumeConductor(ABC):
             if sigma_has_changed:
                 self.compute_solution(frequency)
                 # refine only at first frequency
-                if freq_idx == frequency_indices[0]:
+                if freq_idx == frequency_indices[0] and adaptive_mesh_refinement:
                     _logger.info(
                         "Number of elements before refinement:"
                         f"{self.mesh.ngsolvemesh.ne}"
