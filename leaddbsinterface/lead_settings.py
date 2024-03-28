@@ -184,7 +184,7 @@ class LeadSettings:
             },
             "StimulationSignal": {"CurrentControlled": current_controlled},
             "CalcAxonActivation": int(self.get_calc_axon_act()),
-            "ActivationThresholdVTA": self.get_act_thresh_vta(),
+            "ActivationThresholdVTA": float(self.get_act_thresh_vta()[hemis_idx]),
             "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATHS[hemis_idx]),
             "FailFlag": side,
             "TemplateSpace": self.get_est_in_temp(),
@@ -384,7 +384,7 @@ class LeadSettings:
 
     def get_act_thresh_vta(self):
         """Activation threshold for VTA."""
-        return self._get_num("Activation_threshold_VTA")
+        return self._get_arr("Activation_threshold_VTA")
 
     def get_phi_vec(self):
         """TODO description."""
