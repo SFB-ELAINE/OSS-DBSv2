@@ -27,7 +27,7 @@ class NeuronSimulator(ABC):
     """Interface to NEURON simulator."""
 
     # directory, where all NEURON simulations will be conducted
-    _neuron_workdir = "neuron_model"
+    _neuron_workdir = os.getcwd()  # "neuron_model"
     # by default we don't assume a downsampled model
     _downsampled = False
     # needs to be implemented
@@ -123,7 +123,9 @@ class NeuronSimulator(ABC):
         raise NotImplementedError("Need to add the resource path in source code.")
 
     @abstractmethod
-    def get_axon_morphology(self, axon_diam, axon_length=None, n_Ranvier=None) -> dict:
+    def get_axon_morphology(
+        self, axon_diam, axon_length=None, n_Ranvier=None, downsampled=False
+    ) -> dict:
         """Get geometric description of a single axon.
 
         Parameters
@@ -288,8 +290,7 @@ class NeuronSimulator(ABC):
         extra_initialization: bool
             Delete and create nodes (needed for MRG2002 model)
         """
-        # prints {load_file("...")}
-        _logger.info(f"Load file: {self.hoc_file}")
+        _logger.debug(f"Load file: {self.hoc_file}")
         neuron.h(f'{{load_file("{self.hoc_file}")}}')
         if extra_initialization:
             neuron.h.deletenodes()
@@ -300,10 +301,13 @@ class NeuronSimulator(ABC):
         neuron.h.setupAPWatcher_0()  # 'left' end of axon
         neuron.h.setupAPWatcher_1()  # 'right' end of axon
 
-        neuron.h.dt = self.signal_dict["time_step"]
-        neuron.h.tstop = (
-            self.signal_dict["N_time_steps"] * self.signal_dict["time_step"]
-        )
+        time_step = self.signal_dict["time_step"]
+        run_time = self.signal_dict["N_time_steps"] * self.signal_dict["time_step"]
+        _logger.debug(f"Set time step to {time_step} ms")
+        _logger.debug(f"Number of time steps is {self.signal_dict['N_time_steps']}")
+        _logger.debug(f"Will run neuron for {run_time} ms")
+        neuron.h.dt = time_step
+        neuron.h.tstop = run_time
         # Number of DBS pulses is 1! Hardcoded (TODO)
         neuron.h.n_pulse = 1
         # Initial potential is hardcoded (TODO?)
@@ -313,6 +317,7 @@ class NeuronSimulator(ABC):
         for i in range(v_ext.shape[0]):
             neuron.h.wf[i] = neuron.h.Vector(v_ext[i, :])
 
+        _logger.debug("Stimulation")
         neuron.h.stimul()
         neuron.h.run()
         # decide if activated
@@ -343,12 +348,17 @@ class NeuronSimulator(ABC):
         n_Ranvier = self.get_n_Ranvier(pathway_idx)
         orig_N_neurons = self.get_N_orig_neurons(pathway_idx)
 
-        # check actual number of n_segments in case downsampeld
-        ax_mh = self.get_axon_morphology(axon_diam, n_Ranvier=n_Ranvier)
+        # TODO refactor, very confusing to have 2 things being almost the same
+        axon_morphology = self.get_axon_morphology(axon_diam, n_Ranvier=n_Ranvier)
+        # check actual number of n_segments in case downsampled
+        ax_mh = self.get_axon_morphology(
+            axon_diam, n_Ranvier=n_Ranvier, downsampled=self.downsampled
+        )
         n_segments_actual = ax_mh["n_segments"]
+        _logger.debug(f"n_segments_actual: {n_segments_actual}")
         stepsPerMs = int(1.0 / self.signal_dict["time_step"])
         # edit hoc file locally to change parameters
-        self.modify_hoc_file(n_Ranvier, stepsPerMs, ax_mh)
+        self.modify_hoc_file(n_Ranvier, stepsPerMs, axon_morphology)
 
         # check pre-status
         pre_status = pathway_dataset["Status"]
@@ -358,13 +368,6 @@ class NeuronSimulator(ABC):
         List_of_activated = []
         List_of_not_activated = []
         Activated_models = 0
-
-        # TODO get rid of that step?
-        # TODO current limitation loading of NEURON files
-        os.chdir(self._neuron_workdir)
-        _logger.info(
-            f"Changed current working directory for NEURON execution to {os.getcwd()}"
-        )
 
         neuron_index = 0
         while neuron_index < N_neurons:
@@ -406,9 +409,11 @@ class NeuronSimulator(ABC):
                 neuron_time_sol = np.array(neuron["Potential[V]"])
                 # upsample
                 if self.downsampled:
+                    _logger.debug(f"Before upsampling: {neuron_time_sol.shape}")
                     neuron_time_sol = self.upsample_voltage(
-                        neuron_time_sol, axon_diam, ax_mh
+                        neuron_time_sol, axon_diam, axon_morphology
                     )
+                    _logger.debug(f"After upsampling: {neuron_time_sol.shape}")
                 processes = mp.Process(
                     target=self.get_axon_status_multiprocessing,
                     args=(neuron_index, neuron_time_sol, output),
@@ -453,12 +458,10 @@ class NeuronSimulator(ABC):
                 # the status was already assigned
                 continue
 
-        os.chdir("../")
-        _logger.info(f"Changed current working directory back to {os.getcwd()}")
-
         create_leaddbs_outputs(
             self.output_path,
             Axon_Lead_DBS,
+            self.connectome_name,
             scaling_index=scaling_index,
             pathway_name=pathway_name,
         )
@@ -506,7 +509,9 @@ class MRG2002(NeuronSimulator):
     def resources_path(self):
         return "MRG2002"
 
-    def get_axon_morphology(self, axon_diam, axon_length=None, n_Ranvier=None) -> dict:
+    def get_axon_morphology(
+        self, axon_diam, axon_length=None, n_Ranvier=None, downsampled=False
+    ) -> dict:
         """Get geometric description of a single axon.
 
         Parameters
@@ -536,7 +541,7 @@ class MRG2002(NeuronSimulator):
         axon_morphology["para1_length"] = 1e-3 * nr["para1_length"]
         axon_morphology["para2_length"] = 1e-3 * nr["para2_length"]
         axon_morphology["node_step"] = 1e-3 * nr["deltax"]
-        if self.downsampled:
+        if downsampled:
             if axon_diam >= 5.7:
                 # node -- -- internodal -- -- -- -- internodal -- -- node
                 axon_morphology["n_comp"] = 3
@@ -661,24 +666,25 @@ class MRG2002(NeuronSimulator):
     def compile_neuron_files(self):
         _logger.info("Compile axnode")
         subprocess.run(
-            ["nocmodl", "axnode.mod"],
-            # stdout=subprocess.STDOUT,  # TODO later pipe output
+            [self.neuron_executable, "axnode"],
+            # stdout=subprocess.STDOUT,
             # stdout=subprocess.DEVNULL,
             # stderr=subprocess.STDOUT,
+            shell=True,
             cwd=os.path.abspath(self._neuron_workdir),
-        )  # might not work with remote hard drives
+        )
         _logger.info("Compile NEURON executable")
         subprocess.run(
             self.neuron_executable,
             # stdout=subprocess.STDOUT,
             # stdout=subprocess.DEVNULL,
             # stderr=subprocess.STDOUT,
+            shell=True,
             cwd=os.path.abspath(self._neuron_workdir),
         )
 
     def modify_hoc_file(self, nRanvier, stepsPerMs, axon_morphology):
         axonDiam = axon_morphology["axon_diam"]
-        print("AxonDiam: ", axonDiam)
         if axonDiam >= 5.7:
             axoninter = (nRanvier - 1) * 6
         else:
@@ -721,26 +727,30 @@ class MRG2002(NeuronSimulator):
         TODO estimate ratios directly from the morphology
         TODO refactor code
         """
+        _logger.debug("Upsampling voltage")
         # let's interpolate voltage between node - center_l - center_r - node
         # assume 11 segments
         # n_segments_ds = ((n_segments_full - 1) / 11) * 3 +1
 
-        v_time_sol_full = np.zeros(
-            (axon_morphology["n_segments"], v_time_sol.shape[1]), float
+        n_segments_actual = axon_morphology["n_segments"]
+        _logger.debug(
+            f"Upsampling from {v_time_sol.shape[0]} to {n_segments_actual} segments"
         )
+
+        v_time_sol_full = np.zeros((n_segments_actual, v_time_sol.shape[1]), float)
 
         if axonDiam >= 5.7:
             # fill out nodes first
-            for k in np.arange(0, axon_morphology["n_segments"], 11):
+            for k in np.arange(0, n_segments_actual, 11):
                 z = int(k / 11) * 3
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
             # now two segments in between
-            for k in np.arange(3, axon_morphology["n_segments"], 11):
+            for k in np.arange(3, n_segments_actual, 11):
                 z = int(k / 11) * 3 + 1
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
-            for k in np.arange(8, axon_morphology["n_segments"], 11):
+            for k in np.arange(8, n_segments_actual, 11):
                 z = int(k / 11) * 3 + 2
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
@@ -777,7 +787,7 @@ class MRG2002(NeuronSimulator):
                 [9, 10],
             ]  # local indices of interpolated segments
             for interv in range(len(list_interp)):
-                for j in np.arange(0, axon_morphology["n_segments"] - 1, 11):
+                for j in np.arange(0, n_segments_actual - 1, 11):
                     if interv == 0:
                         v_time_sol_full[j + 1, :] = (1 - ratio_1) * v_time_sol_full[
                             j, :
@@ -813,12 +823,12 @@ class MRG2002(NeuronSimulator):
             # let's interpolate voltage between node - center - node
             # assume 8 segments
             # fill out nodes first
-            for k in np.arange(0, axon_morphology["n_segments"], 8):
+            for k in np.arange(0, n_segments_actual, 8):
                 z = int(k / 8) * 2
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
             # now the center between nodes
-            for k in np.arange(4, axon_morphology["n_segments"], 8):
+            for k in np.arange(4, n_segments_actual, 8):
                 z = int(k / 8) * 2 + 1
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
@@ -895,7 +905,9 @@ class McNeal1976(NeuronSimulator):
             cwd=self._neuron_workdir,
         )
 
-    def get_axon_morphology(self, axon_diam, axon_length=None, n_Ranvier=None) -> dict:
+    def get_axon_morphology(
+        self, axon_diam, axon_length=None, n_Ranvier=None, downsampled=False
+    ) -> dict:
         """Get geometric description of a single axon.
 
         Parameters
