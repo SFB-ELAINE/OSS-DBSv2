@@ -2,16 +2,22 @@ import fileinput
 import logging
 import multiprocessing as mp
 import os
+import platform
 import shutil
 import subprocess
 import sys
 from abc import ABC, abstractmethod
-from importlib import resources
 from typing import Optional
 
 import h5py
 import neuron
 import numpy as np
+
+subversion = platform.python_version_tuple()
+if int(subversion[1]) == 8:
+    from importlib_resources import files
+else:
+    from importlib.resources import files
 
 from .axon import Axon
 from .utilities import (
@@ -146,7 +152,7 @@ class NeuronSimulator(ABC):
 
     def copy_neuron_files(self):
         """Copy files from template folder to local folder."""
-        path_to_ossdbs = resources.files("ossdbs")
+        path_to_ossdbs = files("ossdbs")
         path_to_neuron_files = path_to_ossdbs.joinpath(
             "axon_processing", "neuron_templates", self.resources_path
         )
