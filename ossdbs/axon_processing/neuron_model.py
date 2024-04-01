@@ -10,7 +10,6 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 import h5py
-import neuron
 import numpy as np
 
 subversion = platform.python_version_tuple()
@@ -186,9 +185,17 @@ class NeuronSimulator(ABC):
     # def paste_paraview_vis(self):
     #     """Convert to paraview file."""
 
-    @abstractmethod
     def compile_neuron_files(self):
         """Compile a NEURON file."""
+        _logger.info("Compile NEURON executable")
+        subprocess.run(
+            self.neuron_executable,
+            # TODO pipe output
+            # stdout=subprocess.STDOUT,
+            # stdout=subprocess.DEVNULL,
+            # stderr=subprocess.STDOUT,
+            cwd=os.path.abspath(self._neuron_workdir),
+        )
 
     def load_solution(self, time_domain_h5_file: str):
         """Load solution from h5 file.
@@ -297,6 +304,9 @@ class NeuronSimulator(ABC):
             Delete and create nodes (needed for MRG2002 model)
         """
         _logger.debug(f"Load file: {self.hoc_file}")
+        # Do not move the import! Causes trouble
+        import neuron
+
         neuron.h(f'{{load_file("{self.hoc_file}")}}')
         if extra_initialization:
             neuron.h.deletenodes()
@@ -669,26 +679,6 @@ class MRG2002(NeuronSimulator):
             print(line, end="")
         hoc_file.close()
 
-    def compile_neuron_files(self):
-        _logger.info("Compile axnode")
-        subprocess.run(
-            [self.neuron_executable, "axnode"],
-            # stdout=subprocess.STDOUT,
-            # stdout=subprocess.DEVNULL,
-            # stderr=subprocess.STDOUT,
-            shell=True,
-            cwd=os.path.abspath(self._neuron_workdir),
-        )
-        _logger.info("Compile NEURON executable")
-        subprocess.run(
-            self.neuron_executable,
-            # stdout=subprocess.STDOUT,
-            # stdout=subprocess.DEVNULL,
-            # stderr=subprocess.STDOUT,
-            shell=True,
-            cwd=os.path.abspath(self._neuron_workdir),
-        )
-
     def modify_hoc_file(self, nRanvier, stepsPerMs, axon_morphology):
         axonDiam = axon_morphology["axon_diam"]
         if axonDiam >= 5.7:
@@ -902,14 +892,6 @@ class McNeal1976(NeuronSimulator):
     @property
     def resources_path(self):
         return "McNeal1976"
-
-    def compile_neuron_files(self):
-        subprocess.run(
-            self.neuron_executable,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.STDOUT,
-            cwd=self._neuron_workdir,
-        )
 
     def get_axon_morphology(
         self, axon_diam, axon_length=None, n_Ranvier=None, downsampled=False
