@@ -44,7 +44,12 @@ class NeuronSimulator(ABC):
     # hoc file for execution
     _hoc_file = None
 
-    def __init__(self, pathways_dict: dict, output_path: str):
+    def __init__(
+        self,
+        pathways_dict: dict,
+        output_path: str,
+        scaling_vector: Optional[list] = None,
+    ):
         # create local directory if it does not exist
         if not os.path.isdir(self._neuron_workdir):
             os.mkdir(self._neuron_workdir)
@@ -55,6 +60,7 @@ class NeuronSimulator(ABC):
             self._neuron_executable = "mknrndll"
         self._pathways_dict = pathways_dict
         self._output_path = output_path
+        self._scaling_vector = None
 
         # create output path if it does not exist
         if not os.path.isdir(output_path):
@@ -264,8 +270,12 @@ class NeuronSimulator(ABC):
         """
         scaling = self.signal_dict["scaling"]
         v_ext = np.zeros_like(v_time_sol, float)
-        v_ext = v_time_sol * 1000.0 * scaling  # convert to mV
+        if self._scaling_vector is None:
+            return v_time_sol * 1000.0 * scaling  # convert to mV
 
+        # case with contact-wise scaling
+        for scaling_comp in self._scaling_vector:
+            v_ext = v_ext + v_time_sol * 1000.0 * scaling * scaling_comp
         return v_ext
 
     def get_axon_status_multiprocessing(self, neuron_index, v_time_sol, output):
@@ -423,13 +433,14 @@ class NeuronSimulator(ABC):
                     continue
 
                 neuron_time_sol = np.array(neuron["Potential[V]"])
-                # upsample
+                # upsample, TODO maybe move inside mp.Process
                 if self.downsampled:
                     _logger.debug(f"Before upsampling: {neuron_time_sol.shape}")
                     neuron_time_sol = self.upsample_voltage(
                         neuron_time_sol, axon_diam, axon_morphology
                     )
                     _logger.debug(f"After upsampling: {neuron_time_sol.shape}")
+
                 processes = mp.Process(
                     target=self.get_axon_status_multiprocessing,
                     args=(neuron_index, neuron_time_sol, output),
