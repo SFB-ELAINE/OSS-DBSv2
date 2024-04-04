@@ -184,7 +184,7 @@ class LeadSettings:
             },
             "StimulationSignal": {"CurrentControlled": current_controlled},
             "CalcAxonActivation": int(self.get_calc_axon_act()),
-            "ActivationThresholdVTA": self.get_act_thresh_vta(),
+            "ActivationThresholdVTA": float(self.get_act_thresh_vta()[hemis_idx]),
             "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATHS[hemis_idx]),
             "FailFlag": side,
             "TemplateSpace": self.get_est_in_temp(),
@@ -384,7 +384,7 @@ class LeadSettings:
 
     def get_act_thresh_vta(self):
         """Activation threshold for VTA."""
-        return self._get_num("Activation_threshold_VTA")
+        return self._get_arr("Activation_threshold_VTA")
 
     def get_phi_vec(self):
         """TODO description."""
@@ -594,8 +594,8 @@ class LeadSettings:
             "Abbott ActiveTip (6142-6145)": "AbbottStJudeActiveTip6142_6145",
             "Boston Scientific Vercise": "BostonScientificVercise",
             "Boston Scientific Vercise Directed": "BostonScientificVerciseDirected",
-            "Boston Scientific Vercise Cartesia HX": "",
-            "Boston Scientific Vercise Cartesia X": "",
+            "Boston Scientific Vercise Cartesia HX": "BostonScientificCartesiaHX",
+            "Boston Scientific Vercise Cartesia X": "BostonScientificCartesiaX",
             "ELAINE Rat Electrode": "MicroProbesRodentElectrode",
             "Medtronic 3387": "Medtronic3387",
             "Medtronic 3389": "Medtronic3389",
