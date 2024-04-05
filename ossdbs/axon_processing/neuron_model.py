@@ -18,7 +18,7 @@ if int(subversion[1]) == 8:
 else:
     from importlib.resources import files
 
-from .axon import Axon
+from .axon_models import AxonMorphologyMcNeal1976, AxonMorphologyMRG2002
 from .utilities import (
     create_leaddbs_outputs,
     create_paraview_outputs,
@@ -43,6 +43,8 @@ class NeuronSimulator(ABC):
     _v_init = -70.0
     # hoc file for execution
     _hoc_file = None
+    # axon morphology class
+    _ax_morph_class = None
 
     def __init__(
         self,
@@ -132,28 +134,6 @@ class NeuronSimulator(ABC):
     def resources_path(self):
         """Path were NEURON templates are stored."""
         raise NotImplementedError("Need to add the resource path in source code.")
-
-    @abstractmethod
-    def get_axon_morphology(
-        self, axon_diam, axon_length=None, n_Ranvier=None, downsampled=False
-    ) -> dict:
-        """Get geometric description of a single axon.
-
-        Parameters
-        ----------
-         axon_diam: float
-            diameter in micrometers for all fibers in the pathway
-         axon_length: float, optional
-            axon lengths in mm for all fibers in the pathway. If not specified, provide n_Ranvier
-         n_Ranvier: int, optional
-            number of nodes of Ranvier per axon. If not specified, provide axon_l
-        ength.
-
-        Returns
-        -------
-        dict
-
-        """
 
     def copy_neuron_files(self):
         """Copy files from template folder to local folder."""
@@ -375,10 +355,12 @@ class NeuronSimulator(ABC):
         orig_N_neurons = self.get_N_orig_neurons(pathway_idx)
 
         # TODO refactor, very confusing to have 2 things being almost the same
-        axon_morphology = self.get_axon_morphology(axon_diam, n_Ranvier=n_Ranvier)
+        axon_morphology = self._ax_morph_class().get_axon_morphology(
+            axon_diam, n_Ranvier=n_Ranvier
+        )
         # check actual number of n_segments in case downsampled
-        ax_mh = self.get_axon_morphology(
-            axon_diam, n_Ranvier=n_Ranvier, downsampled=self.downsampled
+        ax_mh = self._ax_morph_class(downsampled=self.downsampled).get_axon_morphology(
+            axon_diam, n_Ranvier=n_Ranvier
         )
         n_segments_actual = ax_mh["n_segments"]
         _logger.debug(f"n_segments_actual: {n_segments_actual}")
@@ -532,125 +514,11 @@ class MRG2002(NeuronSimulator):
     _v_init = -80.0
     _hoc_file = "axon4pyfull.hoc"
 
+    _ax_morph_class = AxonMorphologyMRG2002
+
     @property
     def resources_path(self):
         return "MRG2002"
-
-    def get_axon_morphology(
-        self, axon_diam, axon_length=None, n_Ranvier=None, downsampled=False
-    ) -> dict:
-        """Get geometric description of a single axon.
-
-        Parameters
-        ----------
-         axon_diam: float
-            diameter in micrometers for all fibers in the pathway
-         axon_length: float, optional
-            axon lengths in mm for all fibers in the pathway. If not specified, provide n_Ranvier
-         n_Ranvier: int, optional
-            number of nodes of Ranvier per axon. If not specified, provide axon_l
-        ength.
-
-        Returns
-        -------
-        dict
-
-
-        TODO rewrite
-
-        """
-        axon_morphology = {"axon_model": self.axon_model, "axon_diam": axon_diam}
-        param_ax = {"centered": True, "diameter": axon_diam}
-        a = Axon(param_ax)
-        nr = Axon.get_axonparams(a)
-
-        axon_morphology["ranvier_length"] = 1e-3 * nr["ranvier_length"]
-        axon_morphology["para1_length"] = 1e-3 * nr["para1_length"]
-        axon_morphology["para2_length"] = 1e-3 * nr["para2_length"]
-        axon_morphology["node_step"] = 1e-3 * nr["deltax"]
-        if downsampled:
-            if axon_diam >= 5.7:
-                # node -- -- internodal -- -- -- -- internodal -- -- node
-                axon_morphology["n_comp"] = 3
-                axon_morphology["inter_length"] = (
-                    axon_morphology["node_step"]
-                    - axon_morphology["para1_length"] * 2
-                    - axon_morphology["para2_length"] * 2
-                ) / 6
-            else:
-                # node -- -- -- internodal -- -- -- node
-                axon_morphology["n_comp"] = 2
-                axon_morphology["inter_length"] = (
-                    axon_morphology["node_step"]
-                    - axon_morphology["para1_length"] * 2
-                    - axon_morphology["para2_length"] * 2
-                ) / 3
-        else:
-            axon_morphology["n_comp"] = int(
-                (
-                    (nr["ranvier_nodes"] - 1)
-                    + nr["inter_nodes"]
-                    + nr["para1_nodes"]
-                    + nr["para2_nodes"]
-                )
-                / (nr["ranvier_nodes"] - 1)
-            )
-
-            if axon_diam >= 5.7:
-                axon_morphology["inter_length"] = (
-                    axon_morphology["node_step"]
-                    - axon_morphology["para1_length"] * 2
-                    - axon_morphology["para2_length"] * 2
-                ) / 6
-            else:
-                axon_morphology["inter_length"] = (
-                    axon_morphology["node_step"]
-                    - axon_morphology["para1_length"] * 2
-                    - axon_morphology["para2_length"] * 2
-                ) / 3
-        # check what was provided, axon_length takes precedence
-        if axon_length is not None:
-            axon_morphology["axon_length"] = axon_length
-            axon_morphology["n_Ranvier"] = int(
-                axon_length / axon_morphology["node_step"]
-            )
-        else:
-            axon_morphology["n_Ranvier"] = n_Ranvier
-            axon_morphology["axon_length"] = n_Ranvier * axon_morphology["node_step"]
-
-        # always odd number of nodes of Ranvier!
-        if axon_morphology["n_Ranvier"] % 2 == 0:
-            axon_morphology["n_Ranvier"] -= 1
-            axon_morphology["axon_length"] = (
-                axon_morphology["n_Ranvier"] * axon_morphology["node_step"]
-            )
-
-        axon_morphology["n_para1"] = (
-            nr["para1_nodes"] * (axon_morphology["n_Ranvier"] - 1) / (21 - 1)
-        )
-        axon_morphology["n_para2"] = (
-            nr["para2_nodes"] * (axon_morphology["n_Ranvier"] - 1) / (21 - 1)
-        )
-
-        axon_morphology["n_segments"] = int(
-            (axon_morphology["n_Ranvier"] - 1) * axon_morphology["n_comp"] + 1
-        )  # overall number of points on Axon incl. internodal
-
-        # additional params for NEURON model, see axon.py
-        (
-            axon_morphology["axon_d"],
-            axon_morphology["node_d"],
-            axon_morphology["para1_d"],
-            axon_morphology["para2_d"],
-            axon_morphology["lamellas"],
-        ) = (
-            nr["axon_diameter"],
-            nr["node_diameter"],
-            nr["para1_diameter"],
-            nr["para2_diameter"],
-            nr["lamellas"],
-        )
-        return axon_morphology
 
     def paste_to_hoc(self, parameters_dict: dict) -> None:
         info_to_update = [
@@ -899,60 +767,11 @@ class MRG2002(NeuronSimulator):
 class McNeal1976(NeuronSimulator):
     _axon_model = "McNeal1976"
     _hoc_file = "init_B5_extracellular.hoc"
+    _ax_morph_class = AxonMorphologyMcNeal1976
 
     @property
     def resources_path(self):
         return "McNeal1976"
-
-    def get_axon_morphology(
-        self, axon_diam, axon_length=None, n_Ranvier=None, downsampled=False
-    ) -> dict:
-        """Get geometric description of a single axon.
-
-        Parameters
-        ----------
-         axon_diam: float
-            diameter in micrometers for all fibers in the pathway
-         axon_length: float, optional
-            axon lengths in mm for all fibers in the pathway. If not specified, provide n_Ranvier
-         n_Ranvier: int, optional
-            number of nodes of Ranvier per axon. If not specified, provide axon_l
-        ength.
-
-        Returns
-        -------
-        dict
-
-
-        TODO rewrite
-
-        """
-        axon_morphology = {"axon_model": self.axon_model, "axon_diam": axon_diam}
-
-        # node -- -- -- internodal -- -- -- node
-        axon_morphology["n_comp"] = 2  # only nodes and one internodal per segment
-        axon_morphology["node_step"] = axon_diam * 0.2  # from 1 to 2 mm
-        # check what was provided, axon_length takes precedence
-        if axon_length is not None:
-            axon_morphology["axon_length"] = axon_length
-            axon_morphology["n_Ranvier"] = int(
-                axon_length / axon_morphology["node_step"]
-            )
-        else:
-            axon_morphology["n_Ranvier"] = n_Ranvier
-            axon_morphology["axon_length"] = n_Ranvier * axon_morphology["node_step"]
-
-        # always odd number of nodes of Ranvier!
-        if axon_morphology["n_Ranvier"] % 2 == 0:
-            axon_morphology["n_Ranvier"] -= 1
-            axon_morphology["axon_length"] = (
-                axon_morphology["n_Ranvier"] * axon_morphology["node_step"]
-            )
-
-        axon_morphology["n_segments"] = int(
-            (axon_morphology["n_Ranvier"] - 1) * axon_morphology["n_comp"] + 1
-        )
-        return axon_morphology
 
     def paste_to_hoc(self, parameters_dict):
         info_to_update = ["axonnodes", "v_init", "steps_per_ms"]
