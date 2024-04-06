@@ -7,17 +7,20 @@ import logging
 import math
 import os
 from abc import ABC, abstractmethod
+from typing import Optional
 
 import h5py
 import numpy as np
 import scipy
-from dipy.tracking.metrics import length as dipy_length
-from nibabel.streamlines import ArraySequence
-from scipy import spatial
 from scipy.io import savemat
 
 from .axon import Axon
-from .utilities import convert_fibers_to_streamlines, resample_streamline_for_Ranvier
+from .utilities import (
+    convert_fibers_to_streamlines,
+    normalized,
+    place_axons_on_streamlines,
+    resample_fibers_to_Ranviers,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -26,12 +29,16 @@ class AxonMorphology(ABC):
     """Axon morphology class."""
 
     def __init__(self, downsampled=False):
-        self._downsampled = downsampled
+        self.downsampled = downsampled
 
     @property
     def downsampled(self):
         """Full or downsampled model."""
         return self._downsampled
+
+    @downsampled.setter
+    def downsampled(self, value):
+        self._downsampled = value
 
     @abstractmethod
     def get_axon_morphology(self, axon_diam, axon_length=None, n_Ranvier=None):
@@ -51,22 +58,30 @@ class AxonMorphology(ABC):
 class AxonMorphologyMRG2002(AxonMorphology):
     """Axon morphology for MRG2002 model."""
 
-    def get_axon_morphology(self, axon_diam, axon_length=None, n_Ranvier=None) -> dict:
+    def get_axon_morphology(
+        self,
+        axon_diam: float,
+        axon_length: Optional[float] = None,
+        n_Ranvier: Optional[int] = None,
+    ) -> dict:
         """Get geometric description of a single axon.
 
         Parameters
         ----------
-         axon_diam: float
-            diameter in micrometers for all fibers in the pathway
-         axon_length: float, optional
-            axon lengths in mm for all fibers in the pathway. If not specified, provide n_Ranvier
-         n_Ranvier: int, optional
-            number of nodes of Ranvier per axon. If not specified, provide axon_length.
+        axon_diam: float
+           diameter in micrometers for all fibers in the pathway
+        axon_length: float, optional
+           axon lengths in mm for all fibers in the pathway
+        n_Ranvier: int, optional
+           number of nodes of Ranvier per axon.
 
         Returns
         -------
         dict
 
+        Notes
+        -----
+        Either axon_length or n_Ranvier needs to be specified.
 
         TODO rewrite
 
@@ -181,7 +196,8 @@ class AxonMorphologyMRG2002(AxonMorphology):
 
         if axon_morphology["axon_diam"] >= 5.7:
             if not self.downsampled:
-                # only internodal compartments. The distances will be computed from the node of Ranvier using loc_pos
+                # only internodal compartments.
+                # The distances will be computed from the node of Ranvier using loc_pos
                 for inx_loc in np.arange(1, axon_morphology["n_comp"]):
                     inx_loc = int(inx_loc)
                     if inx_loc == 1:
@@ -220,9 +236,10 @@ class AxonMorphologyMRG2002(AxonMorphology):
                 loc_coords[inx_loc - 1] = loc_pos
             else:
                 # node -- -- internodal -- -- -- -- internodal -- -- node
-                for inx_loc in np.arange(
-                    1, axon_morphology["n_comp"]
-                ):  # only internodal compartments. The distances will be computed from the node of Ranvier using loc_pos
+                for inx_loc in np.arange(1, axon_morphology["n_comp"]):
+                    # only internodal compartments.
+                    # The distances will be computed from the
+                    # node of Ranvier using loc_pos
                     if inx_loc == 1:
                         loc_pos = (
                             (
@@ -284,30 +301,43 @@ class AxonMorphologyMRG2002(AxonMorphology):
 
 
 class AxonMorphologyMcNeal1976(AxonMorphology):
-    def get_axon_morphology(self, axon_diam, axon_length=None, n_Ranvier=None) -> dict:
+    """Axon morphology class for the McNeal1976 model."""
+
+    @AxonMorphology.downsampled.setter
+    def downsampled(self, value):
+        """Downsampled never works for McNeal1976."""
+        if value is True:
+            raise NotImplementedError("Downsampled McNeal1976 not implemented.")
+        self._downsampled = value
+
+    def get_axon_morphology(
+        self,
+        axon_diam: float,
+        axon_length: Optional[float] = None,
+        n_Ranvier: Optional[int] = None,
+    ) -> dict:
         """Get geometric description of a single axon.
 
         Parameters
         ----------
-         axon_diam: float
-            diameter in micrometers for all fibers in the pathway
-         axon_length: float, optional
-            axon lengths in mm for all fibers in the pathway. If not specified, provide n_Ranvier
-         n_Ranvier: int, optional
-            number of nodes of Ranvier per axon. If not specified, provide axon_l
-        ength.
+        axon_diam: float
+           diameter in micrometers for all fibers in the pathway
+        axon_length: float, optional
+           axon lengths in mm for all fibers in the pathway
+        n_Ranvier: int, optional
+           number of nodes of Ranvier per axon.
 
         Returns
         -------
         dict
 
+        Notes
+        -----
+        Either axon_length or n_Ranvier needs to be specified.
 
         TODO rewrite
 
         """
-        if self.downsampled is True:
-            raise NotImplementedError("Downsampled McNeal1976 not implemented.")
-
         axon_morphology = {"axon_diam": axon_diam}
 
         # node -- -- -- internodal -- -- -- node
@@ -382,8 +412,6 @@ class AxonModels:
         oss-dbs_parameters.mat is created via Lead-DBS. For .json parameters, see _import_custom_neurons()
 
         """
-        self.description_file = description_file
-
         # To find files
         self.stim_dir = stim_dir
 
@@ -392,18 +420,59 @@ class AxonModels:
         if hemis_idx not in [0, 1]:
             raise ValueError("hemis_idx has to be either 0 or 1")
 
-        # Lead-DBS input
-        _, file_ending = os.path.splitext(self.description_file)
+        # defaults, they will be overwritten
+        # TODO wrap them in @property ?
+        self.pathway_mat_file = None
+        self.axon_diams_all = None
+        self.axon_lengths_all = None
+        self.centering_coordinates = None
+        self.projection_names = None
+        self.connectome_name = "MyTracts"
+
+        self._read_input(description_file, hemis_idx)
+
+    def _read_input(self, description_file: str, hemis_idx: int):
+        """Reads input from input file.
+
+        Notes
+        -----
+        If a .mat file is provided, it is assumed that
+        the information comes from Lead-DBS.
+        Otherwise, a custom neuron parser is used.
+        """
+        _, file_ending = os.path.splitext(description_file)
         if file_ending == ".mat":
-            self._import_leaddbs_neurons(hemis_idx)
+            _logger.info("Read Lead-DBS file.")
+            self._import_leaddbs_neurons(description_file, hemis_idx)
         elif file_ending == ".json":
-            self.projection_names = None
-            self.connectome_name = "MyTracts"
-            self._import_custom_neurons()
+            _logger.info("Read custom neuron json file.")
+            self._import_custom_neurons(description_file)
         else:
             raise NotImplementedError(
                 f"Unsupported input format {file_ending}, provide either a json or a mat-file."
             )
+
+    @property
+    def stim_dir(self):
+        """Stimulation directory, where all files are to be found."""
+        return self._stim_dir
+
+    @stim_dir.setter
+    def stim_dir(self, value: str):
+        if not os.path.isdir(value):
+            raise ValueError("The provided stimulation directory does not exist.")
+        self._stim_dir = value
+
+    @property
+    def axon_model(self):
+        return self._axon_model
+
+    @axon_model.setter
+    def axon_model(self, value):
+        valid_models = ["MRG2002", "MRG2002_DS", "McNeal1976"]
+        if value not in valid_models:
+            ValueError(f"The NEURON model is not valid, use one of {valid_models}.")
+        self._axon_model = value
 
     @property
     def combined_h5_file(self):
@@ -420,7 +489,7 @@ class AxonModels:
         else:
             self._combined_h5_file = value
 
-    def _import_leaddbs_neurons(self, hemis_idx):
+    def _import_leaddbs_neurons(self, description_file, hemis_idx):
         """Import Lead-DBS description for axon models from oss-dbs_parameters.mat.
 
         Parameters
@@ -430,7 +499,7 @@ class AxonModels:
         """
         # load .mat of different versions (WON'T WORK THIS WAY ATM!)
         try:
-            file_inp = h5py.File(self.description_file, mode="r")
+            file_inp = h5py.File(description_file, mode="r")
         except ValueError:
             raise ValueError(
                 "Please, save oss-dbs_parameters using "
@@ -444,12 +513,9 @@ class AxonModels:
             for i in range(array_ascii.shape[0]):
                 list_ascii.append(array_ascii[i][0])
             self.axon_model = "".join(chr(i) for i in list_ascii)
-            if self.axon_model not in ["MRG2002", "MRG2002_DS", "McNeal1976"]:
-                ValueError(
-                    "The selected NEURON models is not recognized, check oss-dbs_parameters.mat"
-                )
+            _logger.debug(f"Use {self.axon_model}")
         else:
-            # Assume Reilly's (McNeals1976) by default
+            _logger.debug("Use McNeal1976 model by default")
             self.axon_model = "McNeal1976"
 
         # connectome name within Lead-DBS (e.g. 'Multi-Tract: PetersenLUIC')
@@ -495,6 +561,7 @@ class AxonModels:
             file_inp["settings"]["stimSetMode"][0][0]
         )  # if StimSets are used, create a dummy ampl_vector
         if stimSets:
+            _logger.info("Use stimSets")
             stim_protocols = np.genfromtxt(
                 os.path.join(self.stim_dir, f"Current_protocols_{hemis_idx}.csv"),
                 dtype=float,
@@ -531,7 +598,7 @@ class AxonModels:
         self.axon_lengths_all = list(file_inp["settings"]["axonLength"][:][0][:])
         self.axon_diams_all = list(file_inp["settings"]["fiberDiameter"][:][0][:])
 
-    def _import_custom_neurons(self):
+    def _import_custom_neurons(self, description_file):
         """Import custom description for axon models from a .json dictionary.
 
         Example json input
@@ -551,7 +618,7 @@ class AxonModels:
          }
 
         """
-        with open(self.description_file) as fp:
+        with open(description_file) as fp:
             custom_dict = json.load(fp)
 
         self.pathway_mat_file = custom_dict["pathway_mat_file"]
@@ -573,14 +640,7 @@ class AxonModels:
         if "connectome_name" in custom_dict:
             self.connectome_name = custom_dict["connectome_name"]
 
-    def convert_fibers_to_axons(self):
-        """Seed axons iterating over all pathways."""
-        # within a projection (pathway), number of nodes of Ranvier per axon is fixed
-        n_Ranvier_per_projection_all = np.zeros(len(self.axon_lengths_all), int)
-        n_Neurons_all = np.zeros(len(self.axon_lengths_all), int)
-        orig_n_Neurons_all = np.zeros(len(self.axon_lengths_all), int)
-
-        # TODO add AxonMorphology call
+    def _select_axon_morphology_model(self):
         if "MRG2002" in self.axon_model:
             if "MRG2002_DS" == self.axon_model:
                 ax_morph_model = AxonMorphologyMRG2002(downsampled=True)
@@ -588,6 +648,52 @@ class AxonModels:
                 ax_morph_model = AxonMorphologyMRG2002()
         else:
             ax_morph_model = AxonMorphologyMcNeal1976()
+        return ax_morph_model
+
+    def _get_local_axons_fibers(
+        self, i: int, axon_morphology: dict, ax_morph_model: AxonMorphology
+    ):
+        """Get local information."""
+        # multiple .mat files (manual input)
+        if len(self.pathway_mat_file) > 1:
+            return self._deploy_axons_fibers(
+                self.pathway_mat_file[i],
+                self.projection_names[i],
+                axon_morphology,
+                ax_morph_model,
+                False,
+            )
+
+        # multiple pathways in one .mat file (Lead-DBS dMRI_MultiTract connectome)
+        elif "Multi-Tract" in self.connectome_name:
+            return self._deploy_axons_fibers(
+                self.pathway_mat_file[0],
+                self.projection_names[i],
+                axon_morphology,
+                ax_morph_model,
+                True,
+            )
+
+        # one .mat file without pathway differentiation (Lead-DBS dMRI connectome)
+        else:
+            return self._deploy_axons_fibers(
+                self.pathway_mat_file[0],
+                self.projection_names[i],
+                axon_morphology,
+                ax_morph_model,
+                False,
+            )
+
+    def convert_fibers_to_axons(self):
+        """Seed axons iterating over all pathways."""
+        # within a projection (pathway), number of nodes of Ranvier per axon is fixed
+        n_Ranvier_per_projection_all = np.zeros(
+            shape=len(self.axon_lengths_all), dtype=int
+        )
+        n_Neurons_all = np.zeros(shape=len(self.axon_lengths_all), dtype=int)
+        orig_n_Neurons_all = np.zeros(shape=len(self.axon_lengths_all), dtype=int)
+
+        ax_morph_model = self._select_axon_morphology_model()
 
         # iterate over projections (fibers) and seed axons
         for i in range(len(self.axon_diams_all)):
@@ -596,54 +702,20 @@ class AxonModels:
                 self.axon_diams_all[i], self.axon_lengths_all[i]
             )
 
-            # multiple .mat files (manual input)
-            if len(self.pathway_mat_file) > 1:
-                (
-                    n_Ranvier_per_projection_all[i],
-                    n_Neurons_all[i],
-                    orig_n_Neurons_all[i],
-                ) = self.deploy_axons_fibers(
-                    self.pathway_mat_file[i],
-                    self.projection_names[i],
-                    axon_morphology,
-                    ax_morph_model,
-                    False,
-                )
-
-            # multiple pathways in one .mat file (Lead-DBS dMRI_MultiTract connectome)
-            elif "Multi-Tract" in self.connectome_name:
-                (
-                    n_Ranvier_per_projection_all[i],
-                    n_Neurons_all[i],
-                    orig_n_Neurons_all[i],
-                ) = self.deploy_axons_fibers(
-                    self.pathway_mat_file[0],
-                    self.projection_names[i],
-                    axon_morphology,
-                    ax_morph_model,
-                    True,
-                )
-
-            # one .mat file without pathway differentiation (Lead-DBS dMRI connectome)
-            else:
-                (
-                    n_Ranvier_per_projection_all[i],
-                    n_Neurons_all[i],
-                    orig_n_Neurons_all[i],
-                ) = self.deploy_axons_fibers(
-                    self.pathway_mat_file[0],
-                    self.projection_names[i],
-                    axon_morphology,
-                    ax_morph_model,
-                    False,
-                )
-
+            (
+                n_Ranvier_per_projection,
+                n_Neurons,
+                orig_n_Neurons,
+            ) = self._get_local_axons_fibers(i, axon_morphology, ax_morph_model)
             _logger.info(
                 f"{n_Neurons_all[i]} axons seeded for "
                 f"{self.projection_names[i]} with "
                 f"{n_Ranvier_per_projection_all[i]}"
                 " nodes of Ranvier"
             )
+            n_Ranvier_per_projection_all[i] = n_Ranvier_per_projection
+            n_Neurons_all[i] = n_Neurons
+            orig_n_Neurons_all[i] = orig_n_Neurons
 
         # only add axon diameters for seeded axons
         self.axon_diams = []
@@ -689,7 +761,7 @@ class AxonModels:
         ) as save_as_dict:
             json.dump(axon_dict, save_as_dict)
 
-    def deploy_axons_fibers(
+    def _deploy_axons_fibers(
         self,
         pathway_file: str,
         projection_name: str,
@@ -736,16 +808,19 @@ class AxonModels:
             file = scipy.io.loadmat(pathway_file)
 
         if multiple_projections_per_file is False:
-            # fiber_array has 4 columns (x,y,z,fiber_index), raws - all points
+            # fiber_array has 4 columns (x,y,z,fiber_index)
+            # rows - all points
             fiber_array = file["fibers"][:]
         else:
             fiber_array = file[projection_name]["fibers"][:]
 
         if fiber_array.ndim == 1:
             _logger.warning(
-                f"{projection_name}: Projection is empty, check settings for fib. diameter and axon length"
+                f"{projection_name}: Projection is empty"
+                " check settings for fibre diameter and axon length."
+                " No nodes were seeded."
             )
-            return 0, 0, 0  # no nodes were seeded
+            return 0, 0, 0
         else:
             # flip check
             if fiber_array.shape[1] == 4 and fiber_array.shape[0] != 4:
@@ -784,12 +859,12 @@ class AxonModels:
         # streamlines_axons already contain the position of Ranvier nodes. Now we get internodal compartments
         # and store all coordinates in a 3D array: compartment index, spatial axis, axon index
         axon_array = np.zeros(
-            (axon_morphology["n_segments"], 3, len(streamlines_axons)), float
+            (axon_morphology["n_segments"], 3, len(streamlines_axons)), dtype=float
         )
 
         # 2-D version for Paraview visualization
         axon_array_2D = np.zeros(
-            (axon_morphology["n_segments"] * len(streamlines_axons), 4), float
+            (axon_morphology["n_segments"] * len(streamlines_axons), 4), dtype=float
         )
 
         # save axons as separate datasets within groups that correspond to pathways
@@ -823,7 +898,7 @@ class AxonModels:
 
                 inx_comp = inx_comp + axon_morphology["n_comp"]
 
-            # last node of Ranview
+            # last node of Ranvier
             axon_array[-1, :, inx_axn] = streamlines_axons[inx_axn][-1]
 
             axon_array_2D[
@@ -853,123 +928,3 @@ class AxonModels:
         )
 
         return axon_morphology["n_Ranvier"], len(streamlines_axons), orig_N_fibers
-
-
-def normalized(vector, axis=-1, order=2):
-    """Get L2 norm of a vector."""
-    l2 = np.atleast_1d(np.linalg.norm(vector, order, axis))
-    l2[l2 == 0] = 1
-    return vector / np.expand_dims(l2, axis)
-
-
-def place_axons_on_streamlines(
-    streamlines_resampled, axon_morphology, centering_coordinates
-):
-    """Allocate axons on the streamlines with seeding points defined by centering_coordinates.
-
-    Parameters
-    ----------
-     streamlines_resampled: list, streamlines sampled by nodes of Ranvier, stored as ArraySequence()
-     axon_morphology: dict, geometric description of a single axon, see get_axon_morphology
-     centering_coordinates: list of lists, 3-D coordinates used to center axons on fibers (e.g. active contacts)
-
-    Returns
-    -------
-    list, axons (truncated streamlines), stored as ArraySequence()
-
-    """
-    axons_ROI_centered = ArraySequence()
-
-    for inx_axn in range(len(streamlines_resampled)):
-        single_streamline_ROI_centered = np.zeros(
-            (axon_morphology["n_Ranvier"], 3), float
-        )
-
-        A = streamlines_resampled[inx_axn]
-        distance_list = []
-        index_list = []
-        for j in range(len(centering_coordinates)):
-            distance, index = spatial.KDTree(A).query(
-                centering_coordinates[j]
-            )  # distance is a local index of closest node of Ranvier on the axon
-            distance_list.append(distance)
-            index_list.append(index)
-
-        index = index_list[
-            distance_list.index(min(distance_list))
-        ]  # index of the closest point as assigned as index
-
-        loc_index = 0
-        # choose where to start seeding the axon
-        if index < int(axon_morphology["n_Ranvier"] / 2):
-            # axon---fiber---fiber---fiber---fiber---#
-            for i in range(0, int(axon_morphology["n_Ranvier"])):
-                single_streamline_ROI_centered[loc_index, :] = A[i]
-                loc_index += 1
-        elif index + int(axon_morphology["n_Ranvier"] / 2) + 1 > A.shape[0]:
-            # fiber---fiber---fiber---fiber---axon---#
-            for i in range(A.shape[0] - axon_morphology["n_Ranvier"], A.shape[0]):
-                single_streamline_ROI_centered[loc_index, :] = A[i]
-                loc_index += 1
-        else:
-            # ---fiber---fiber---axon---fiber---fiber---#
-            if axon_morphology["n_Ranvier"] % 2 == 0:
-                for i in range(
-                    index - int(axon_morphology["n_Ranvier"] / 2),
-                    index + int(axon_morphology["n_Ranvier"] / 2),
-                ):
-                    single_streamline_ROI_centered[loc_index, :] = A[i]
-                    loc_index += 1
-            else:
-                for i in range(
-                    index - int(axon_morphology["n_Ranvier"] / 2),
-                    index + int(axon_morphology["n_Ranvier"] / 2) + 1,
-                ):
-                    single_streamline_ROI_centered[loc_index, :] = A[i]
-                    loc_index += 1
-
-        axons_ROI_centered.append(single_streamline_ROI_centered)
-
-    if len(axons_ROI_centered) != len(streamlines_resampled):
-        raise RuntimeError("Failed to sample some axons!")
-
-    return axons_ROI_centered
-
-
-def resample_fibers_to_Ranviers(streamlines, axon_morphology):
-    """Get streamlines resampled by nodes of Ranvier for a specific axonal morphology.
-
-    Parameters
-    ----------
-     streamlines: list, arbitrary sampled streamlines, stored as ArraySequence()
-     axon_morphology: dict, geometric description of a single axon, see get_axon_morphology
-
-    Returns
-    -------
-    list, resampled streamlines, stored as ArraySequence()
-
-    """
-    # resampling to nodes of Ranvier for arbitrary fiber length
-    lengths_streamlines_filtered = list(map(dipy_length, streamlines))
-    streamlines_resampled = ArraySequence()
-
-    excluded_streamlines = []
-    # total_points = 0
-    for streamline_index in range(len(lengths_streamlines_filtered)):
-        n_Ranvier_this_axon = int(
-            lengths_streamlines_filtered[streamline_index]
-            / axon_morphology["node_step"]
-        )
-        streamline_resampled = resample_streamline_for_Ranvier(
-            streamlines[streamline_index],
-            n_Ranvier_this_axon * axon_morphology["node_step"],
-            n_Ranvier_this_axon,
-        )
-        if len(streamline_resampled) < axon_morphology["n_Ranvier"]:
-            _logger.info(f"Streamline {streamline_index} is too short")
-            excluded_streamlines.append(streamline_index)
-        else:
-            streamlines_resampled.append(streamline_resampled)
-            # total_points = total_points + len(streamline_resampled)
-
-    return streamlines_resampled, excluded_streamlines
