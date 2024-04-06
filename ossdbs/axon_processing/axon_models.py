@@ -23,11 +23,14 @@ _logger = logging.getLogger(__name__)
 
 
 class AxonMorphology(ABC):
+    """Axon morphology class."""
+
     def __init__(self, downsampled=False):
         self._downsampled = downsampled
 
     @property
     def downsampled(self):
+        """Full or downsampled model."""
         return self._downsampled
 
     @abstractmethod
@@ -46,6 +49,8 @@ class AxonMorphology(ABC):
 
 
 class AxonMorphologyMRG2002(AxonMorphology):
+    """Axon morphology for MRG2002 model."""
+
     def get_axon_morphology(self, axon_diam, axon_length=None, n_Ranvier=None) -> dict:
         """Get geometric description of a single axon.
 
@@ -351,12 +356,9 @@ class AxonMorphologyMcNeal1976(AxonMorphology):
 
 
 class AxonModels:
-    """Model to represent axons for simulation in OSS-DBS
-    Fiber trajectories are used to allocate axon models.
-    """
-
-    def __init__(self, stim_dir, hemis_idx, description_file):
-        """
+    def __init__(self, stim_dir: str, hemis_idx: int, description_file: str):
+        """Model to represent axons for simulation in OSS-DBS
+        Fiber trajectories are used to allocate axon models.
 
         Parameters
         ----------
@@ -366,7 +368,6 @@ class AxonModels:
             hemisphere ID (0 - right, 1 - left)
         description_file: str
             full path to oss-dbs_parameters.mat or a .json file that contains the following parameters:
-
                 pathway_mat_file: list of full paths to pathways files in lead-dbs format (could be just one)
                 axon_diams_all: list of diameters in micrometers for all provided fibers, one per pathway
                 axon_lengths_all: list of axon lengths in mm, one per pathway
@@ -386,10 +387,15 @@ class AxonModels:
         # To find files
         self.stim_dir = stim_dir
 
+        # better safe than sorry because of MATLAB
+        hemis_idx = int(hemis_idx)
+        if hemis_idx not in [0, 1]:
+            raise ValueError("hemis_idx has to be either 0 or 1")
+
         # Lead-DBS input
         _, file_ending = os.path.splitext(self.description_file)
         if file_ending == ".mat":
-            self._import_leaddbs_neurons(int(hemis_idx))
+            self._import_leaddbs_neurons(hemis_idx)
         elif file_ending == ".json":
             self.projection_names = None
             self.connectome_name = "MyTracts"
@@ -398,6 +404,21 @@ class AxonModels:
             raise NotImplementedError(
                 f"Unsupported input format {file_ending}, provide either a json or a mat-file."
             )
+
+    @property
+    def combined_h5_file(self):
+        """Name of final HDF5 file."""
+        return self._combined_h5_file
+
+    @combined_h5_file.setter
+    def combined_h5_file(self, value):
+        """Name of final HDF5 file."""
+        # must have h5 ending
+        _, file_ending = os.path.splitext(value)
+        if file_ending != ".h5":
+            self._combined_h5_file = value + ".h5"
+        else:
+            self._combined_h5_file = value
 
     def _import_leaddbs_neurons(self, hemis_idx):
         """Import Lead-DBS description for axon models from oss-dbs_parameters.mat.
@@ -410,8 +431,8 @@ class AxonModels:
         # load .mat of different versions (WON'T WORK THIS WAY ATM!)
         try:
             file_inp = h5py.File(self.description_file, mode="r")
-        except:
-            ValueError(
+        except ValueError:
+            raise ValueError(
                 "Please, save oss-dbs_parameters using "
                 "'save(oss-dbs_parameters_path, 'settings', '-v7.3')'"
             )
@@ -503,8 +524,8 @@ class AxonModels:
                 self.centering_coordinates.append(b[:, i])
 
         # hardcoded name for axons pre-filtered by Lead-DBS
-        self.combined_h5_file = os.path.join(self.stim_dir, "Allocated_axons")
-        self.output_directory = self.combined_h5_file.rsplit(os.sep, 1)[0]
+        self.combined_h5_file = os.path.join(self.stim_dir, "Allocated_axons.h5")
+        self.output_directory = os.path.dirname(self.combined_h5_file)
 
         # morphology set in Lead-DBS
         self.axon_lengths_all = list(file_inp["settings"]["axonLength"][:][0][:])
@@ -515,9 +536,9 @@ class AxonModels:
 
         Example json input
         custom_dict = {
-             'pathway_mat_file': ['/home/konstantin/Documents/GitHub/leaddbs/connectomes/dMRI_MultiTract/Petersen/SMA_hdp_left.mat',
-                                  '/home/konstantin/Documents/GitHub/leaddbs/connectomes/dMRI_MultiTract/Petersen/SMA_hdp_right.mat',
-                                  '/home/konstantin/Documents/GitHub/leaddbs/connectomes/dMRI_MultiTract/Petersen/gpe2stn_sm_left.mat'],
+             'pathway_mat_file': ['SMA_hdp_left.mat',
+                                  'SMA_hdp_right.mat',
+                                  'gpe2stn_sm_left.mat'],
 
              # axon diameter and length is the same for all axons within the pathway
              'axon_diams_all': [5.7,5.7,3.0],
@@ -526,7 +547,7 @@ class AxonModels:
              # in this case, we just have some STN coordinates for left and right in MNI
              'centering_coordinates': [[7.5838, -18.3984, 1.8932],[-7.5838, -18.3984, 1.8932]],
              'axon_model': 'McNeal1976',
-             'combined_h5_file': '/home/konstantin/Documents/dataset/all_tracts'
+             'combined_h5_file': 'dataset/all_tracts'
          }
 
         """
@@ -539,10 +560,7 @@ class AxonModels:
         self.centering_coordinates = custom_dict["centering_coordinates"]
         self.axon_model = custom_dict["axon_model"]
         self.combined_h5_file = custom_dict["combined_h5_file"]
-        # strip extention if provided
-        if self.combined_h5_file[-3:] == ".h5":
-            self.combined_h5_file = self.combined_h5_file[:-3]
-        self.output_directory = self.combined_h5_file.rsplit(os.sep, 1)[0]
+        self.output_directory = os.path.dirname(self.combined_h5_file)
 
         if "projection_names" in custom_dict:
             self.projection_names = custom_dict["projection_names"]
@@ -659,7 +677,7 @@ class AxonModels:
             "n_Ranvier": n_Ranvier_per_projection,
             "axon_diams": self.axon_diams,
             "Axon_Model_Type": self.axon_model,
-            "Name_prepared_neuron_array": self.combined_h5_file + ".h5",
+            "Name_prepared_neuron_array": self.combined_h5_file,
             "Neuron_model_array_prepared": True,
             "N_seeded_neurons": n_Neurons,
             "N_orig_neurons": orig_n_Neurons,
@@ -775,9 +793,9 @@ class AxonModels:
         )
 
         # save axons as separate datasets within groups that correspond to pathways
-        hf = h5py.File(f"{self.combined_h5_file}.h5", "a")
-        # TODO this part fails if the file already existed.
         # TODO Why is the h5py file opened in 'a' mode?
+        hf = h5py.File(self.combined_h5_file, "a")
+        # TODO this part fails if the file already existed.
         g = hf.create_group(projection_name)
 
         # get local coordinates for internodal compartments
@@ -828,7 +846,11 @@ class AxonModels:
         hf.close()
 
         mdic = {"fibers": axon_array_2D, "ea_fibformat": "1.0"}
-        savemat(self.combined_h5_file + "_" + projection_name + "_axons.mat", mdic)
+        # omit ending in h5_file
+        savemat(
+            f"{self.combined_h5_file.replace('.h5', '')}_{projection_name}_axons.mat",
+            mdic,
+        )
 
         return axon_morphology["n_Ranvier"], len(streamlines_axons), orig_N_fibers
 
