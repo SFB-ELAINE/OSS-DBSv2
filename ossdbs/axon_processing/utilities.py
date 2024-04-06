@@ -3,6 +3,7 @@
 
 import json
 import os
+from typing import Optional
 
 import numpy as np
 from dipy.tracking.streamline import set_number_of_points
@@ -10,22 +11,26 @@ from nibabel.streamlines import ArraySequence
 from scipy.io import savemat
 
 
-def find_nearest(array, value):
+def find_nearest(array: np.ndarray, value: float):
+    """Find index and value closest to value."""
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return idx, array[idx]
 
 
-def convert_fibers_to_streamlines(fibers):
+def convert_fibers_to_streamlines(fibers: np.ndarray):
     """Convert Lead-DBS fibers to Nibabel streamlines.
 
     Parameters
     ----------
-    fibers,: fiber descriptions (Lead-DBS format)
+    fibers: np.ndarray
+        fiber descriptions (Lead-DBS format)
 
     Returns
     -------
-    list, streamlines stored as ArraySequence(), i.e. list that describes each fiber in a sublist
+    list
+        streamlines stored as ArraySequence(),
+        i.e. list that describes each fiber in a sublist
 
     """
     streamlines = ArraySequence()
@@ -53,14 +58,27 @@ def convert_fibers_to_streamlines(fibers):
 
 
 def create_leaddbs_outputs(
-    output_path, Axon_Lead_DBS, connectome_name, scaling_index=None, pathway_name=None
+    output_path: str,
+    Axon_Lead_DBS: np.ndarray,
+    connectome_name: str,
+    scaling_index: Optional[int] = None,
+    pathway_name: Optional[str] = None,
 ):
     """Export axons with activation state in Lead-DBS supported format.
 
     Parameters
     ----------
-    Axon_Lead_DBS: NxM numpy.ndarray, geometry, index and activation status of neurons (equivalent of connectome.fibers format in Lead-DBS)
-
+    output_path: str
+        Path to save file
+    Axon_Lead_DBS: numpy.ndarray
+        NxM array with geometry, index and activation status of neurons
+        (equivalent of connectome.fibers format in Lead-DBS)
+    connectome_name: str
+        Name of connectome_name
+    scaling_index: int
+        Index of scaling (used for superposition)
+    pathway_name: str
+        Name of pathway
     """
     mdic = {
         "fibers": Axon_Lead_DBS,
@@ -86,13 +104,26 @@ def create_leaddbs_outputs(
 
 
 def create_paraview_outputs(
-    output_path, Axon_Lead_DBS, scaling_index=None, pathway_name=None
+    output_path: str,
+    Axon_Lead_DBS: np.ndarray,
+    scaling_index: Optional[int] = None,
+    pathway_name: Optional[str] = None,
 ):
     """Export axons with activation state in Paraview supported format.
 
     Parameters
     ----------
-    Axon_Lead_DBS: NxM numpy.ndarray, geometry, index and activation status of neurons (equivalent of connectome.fibers format in Lead-DBS)
+    output_path: str
+        Path to save file
+    Axon_Lead_DBS: numpy.ndarray
+        NxM array with geometry, index and activation status of neurons
+        (equivalent of connectome.fibers format in Lead-DBS)
+    connectome_name: str
+        Name of connectome_name
+    scaling_index: int
+        Index of scaling (used for superposition)
+    pathway_name: str
+        Name of pathway
 
     """
     if scaling_index is None:
@@ -130,24 +161,35 @@ def create_paraview_outputs(
 
 
 def store_axon_statuses(
-    output_path,
-    percent_activated,
-    percent_damaged,
-    percent_csf,
-    scaling_index=None,
-    pathway_name=None,
+    output_path: str,
+    percent_activated: float,
+    percent_damaged: float,
+    percent_csf: float,
+    scaling_index: Optional[int] = None,
+    pathway_name: Optional[bool] = None,
 ):
     """Store PAM results.
 
     Parameters
     ----------
-    percent_activated: float, percent of the original(!) number of neurons that are activated for the particular stimulation
-    percent_damaged: float, percent of the original(!) number of neurons that are 'damaged' for the particular electrode placement
-    percent_csf: float, percent of the original(!) number of neurons that intersect with CSF for the particular brain segmentation
+    percent_activated: float
+        percentage of the original(!) number of neurons that are activated
+    percent_damaged: float
+        percent of the original(!) number of neurons that are 'damaged'
+    percent_csf: float
+        percentage of the original(!) number of neurons that intersect with CSF
+    output_path: str
+        Path to save file
+    scaling_index: int
+        Index of scaling (used for superposition)
+    pathway_name: str
+        Name of pathway
 
-    Note
-    ----------
-    For activation state of particular neuron see 'fiberActivation*' files as those restore original(!) indices as in the connectome.
+
+    Notse
+    -----
+    For activation state of particular neuron see 'fiberActivation*' files
+    as those restore original(!) indices as in the connectome.
     """
     summary_dict = {
         "percent_activated": percent_activated,
@@ -195,10 +237,12 @@ def resample_streamline_for_Ranvier(streamline_array, estim_axon_length, n_Ranvi
     -------
     list, streamline resampled to nodes of Ranvier
     """
-    # after this index we cut the streamline (do not mix up with truncation to the actual axon!)
+    # after this index we cut the streamline
+    # (do not mix up with truncation to the actual axon!)
     cut_index, cummulated_length = index_for_length(streamline_array, estim_axon_length)
 
-    # Don't mix up sums and positions. +1 for the last Ranvier node, +1 for the sum, +1 for index
+    # Don't mix up sums and positions.
+    # +1 for the last Ranvier node, +1 for the sum, +1 for index
     streamline_array_Ranvier = np.zeros((cut_index + 1 + 1 + 1, 3), float)
     last_segment_length = estim_axon_length - cummulated_length
 
