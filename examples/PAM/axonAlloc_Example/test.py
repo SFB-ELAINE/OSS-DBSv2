@@ -1,4 +1,9 @@
+import logging
+
+import ossdbs
 from ossdbs.axon_processing import AxonModels
+
+ossdbs.set_logger(level=logging.INFO)
 
 stim_dir = "./"
 hemis_idx = 1
