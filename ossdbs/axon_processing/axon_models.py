@@ -67,8 +67,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
 
         """
         axon_morphology = {"axon_diam": axon_diam}
-        param_ax = {"centered": True, "diameter": axon_diam}
-        a = Axon(param_ax)
+        a = Axon(centered=True, diameter=axon_diam)
         nr = Axon.get_axonparams(a)
 
         axon_morphology["ranvier_length"] = 1e-3 * nr["ranvier_length"]
@@ -159,12 +158,13 @@ class AxonMorphologyMRG2002(AxonMorphology):
         )
         return axon_morphology
 
-    def get_local_compartment_coords(self, axon_morphology):
+    def get_local_compartment_coords(self, axon_morphology: dict) -> np.ndarray:
         """Get 1-D coordinates of internodal compartments relative to the node at 0.0.
 
         Parameters
         ----------
-         axon_morphology: dict, geometric description of a single axon, see get_axon_morphology
+        axon_morphology: dict
+            geometric description of a single axon, see get_axon_morphology
 
         Returns
         -------
@@ -621,12 +621,10 @@ class AxonModels:
                 )
 
             _logger.info(
-                n_Neurons_all[i],
-                " axons seeded for ",
-                self.projection_names[i],
-                " with ",
-                n_Ranvier_per_projection_all[i],
-                " nodes of Ranvier\n",
+                f"{n_Neurons_all[i]} axons seeded for "
+                f"{self.projection_names[i]} with "
+                f"{n_Ranvier_per_projection_all[i]}"
+                " nodes of Ranvier"
             )
 
         # only add axon diameters for seeded axons
@@ -675,29 +673,39 @@ class AxonModels:
 
     def deploy_axons_fibers(
         self,
-        pathway_file,
-        projection_name,
-        axon_morphology,
-        ax_morph_model,
-        multiple_projections_per_file=False,
+        pathway_file: str,
+        projection_name: str,
+        axon_morphology: dict,
+        ax_morph_model: AxonMorphology,
+        multiple_projections_per_file: bool = False,
     ):
         """Convert streamlines (fibers) to axons and store in OSS-DBS supported format.
 
         Parameters
         ----------
-        pathway_file,: str, full path to .mat file containing fiber descriptions (Lead-DBS format)
-        projection_name: str, pathway name
-        axon_morphology: dict, geometric description of a single axon, see get_axon_morphology
-        multiple_projections_per_file: bool, optional, flag if pathway_file contains multiple pathways
+        pathway_file: str
+            full path to .mat file containing fiber descriptions (Lead-DBS format)
+        projection_name: str
+            pathway name
+        axon_morphology: dict
+            geometric description of a single axon, see get_axon_morphology
+        multiple_projections_per_file: bool, optional
+            flag if pathway_file contains multiple pathways
 
         Returns
         -------
-        int, number of nodes of Ranvier for axons in this pathway. Returns 0 if failed to see (fiber is too short)
-        int, number of axons seeded for the pathway
+        int
+            number of nodes of Ranvier for axons in this pathway.
+            Returns 0 if failed to see (fiber is too short)
+        int
+            number of axons seeded for the pathway
+
+        TODO third output missing
 
         Notes
         -----
-        Pathways are stored as separate groups in the specified .h5 file. Axons are stored in separate 2-D datasets.
+        Pathways are stored as separate groups in the specified .h5 file.
+        Axons are stored in separate 2-D datasets.
         For Paraview visualization, use axon_array_2D_<projection_name>
         For Lead-DBS visualization, use <projection_name>_axons.mat
 
@@ -705,7 +713,8 @@ class AxonModels:
         # TODO fallback for non hdf5
         try:
             file = h5py.File(pathway_file, mode="r")
-        except:
+        except ValueError:
+            _logger.warning("Fell back to MATLAB file")
             file = scipy.io.loadmat(pathway_file)
 
         if multiple_projections_per_file is False:
@@ -767,6 +776,8 @@ class AxonModels:
 
         # save axons as separate datasets within groups that correspond to pathways
         hf = h5py.File(f"{self.combined_h5_file}.h5", "a")
+        # TODO this part fails if the file already existed.
+        # TODO Why is the h5py file opened in 'a' mode?
         g = hf.create_group(projection_name)
 
         # get local coordinates for internodal compartments
@@ -933,7 +944,7 @@ def resample_fibers_to_Ranviers(streamlines, axon_morphology):
             n_Ranvier_this_axon,
         )
         if len(streamline_resampled) < axon_morphology["n_Ranvier"]:
-            _logger.info("streamline ", streamline_index, " is too short")
+            _logger.info(f"Streamline {streamline_index} is too short")
             excluded_streamlines.append(streamline_index)
         else:
             streamlines_resampled.append(streamline_resampled)

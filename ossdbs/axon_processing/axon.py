@@ -3,32 +3,27 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import copy
+from typing import ClassVar
 
 import numpy as np
 
 
-# TODO rewrite
 class Axon:
-    """Axon parameters for the axon model based on the myelinated axon model by CC McIntyre.
+    """Axon parameters for the myelinated axon model by CC McIntyre.
 
+    TODO Document attributes
+    TODO rewrite
     Parameters for 2 um and 3 um fiber diameter are taken from:
     Sotiropoulos, S N  and Steinmetz, P N. Assessing the direct effects of deep
     brain stimulation using embedded axon models. J Neural Eng, vol. 4,
     pp. 107-19, Jun 2007.
 
-    Parameters
-    ----------
-    params : dict
-        'centered' : (True, False)
-            If True, the axon reference nodes are centered to the center compartment
-        'diameter' : float
-            Diameter of the axonal fiber. Supported diameters are available by AXONPARAMETERS key.
-
     """
 
-    # condg for fiber diameter 2.0 um and 3.0 um is determined using the polyfit from the
-    # data 5.7 um and larger. Resulting fitting function: 0.0001x^2+0.0139x+0.5235
-    AXONPARAMETERS = {
+    # condg for fiber diameter 2.0 um and 3.0 um is determined
+    # using the polyfit from the data with 5.7 um and larger.
+    # Resulting fitting function: 0.0001x^2+0.0139x+0.5235
+    AXONPARAMETERS: ClassVar[dict] = {
         2.0: {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -61,7 +56,9 @@ class Axon:
             "condg": 0.567,
             "lamellas": 43,
         },
-        # (fiberD==5.7) {g=0.605 axonD=3.4 nodeD=1.9 paraD1=1.9 paraD2=3.4 deltax=500 paralength2=35 nl=80}
+        # (fiberD==5.7)
+        # {g=0.605 axonD=3.4 nodeD=1.9 paraD1=1.9 paraD2=3.4
+        # deltax=500 paralength2=35 nl=80}
         5.7: {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -78,7 +75,9 @@ class Axon:
             "condg": 0.605,
             "lamellas": 80,
         },
-        # (fiberD==7.3) {g=0.630 axonD=4.6 nodeD=2.4 paraD1=2.4 paraD2=4.6 deltax=750 paralength2=38 nl=100}
+        # (fiberD==7.3)
+        # {g=0.630 axonD=4.6 nodeD=2.4 paraD1=2.4 paraD2=4.6
+        # deltax=750 paralength2=38 nl=100}
         7.3: {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -95,7 +94,9 @@ class Axon:
             "condg": 0.630,
             "lamellas": 100,
         },
-        # (fiberD==8.7) {g=0.661 axonD=5.8 nodeD=2.8 paraD1=2.8 paraD2=5.8 deltax=1000 paralength2=40 nl=110}
+        # (fiberD==8.7)
+        # {g=0.661 axonD=5.8 nodeD=2.8 paraD1=2.8 paraD2=5.8
+        # deltax=1000 paralength2=40 nl=110}
         8.7: {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -112,7 +113,9 @@ class Axon:
             "condg": 0.661,
             "lamellas": 110,
         },
-        # (fiberD==10.0) {g=0.690 axonD=6.9 nodeD=3.3 paraD1=3.3 paraD2=6.9 deltax=1150 paralength2=46 nl=120}
+        # (fiberD==10.0)
+        # {g=0.690 axonD=6.9 nodeD=3.3 paraD1=3.3 paraD2=6.9
+        # deltax=1150 paralength2=46 nl=120}
         10.0: {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -129,7 +132,9 @@ class Axon:
             "condg": 0.690,
             "lamellas": 120,
         },
-        # (fiberD==11.5) {g=0.700 axonD=8.1 nodeD=3.7 paraD1=3.7 paraD2=8.1 deltax=1250 paralength2=50 nl=130}
+        # (fiberD==11.5)
+        # {g=0.700 axonD=8.1 nodeD=3.7 paraD1=3.7 paraD2=8.1
+        # deltax=1250 paralength2=50 nl=130}
         11.5: {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -146,7 +151,9 @@ class Axon:
             "condg": 0.700,
             "lamellas": 130,
         },
-        # (fiberD==12.8) {g=0.719 axonD=9.2 nodeD=4.2 paraD1=4.2 paraD2=9.2 deltax=1350 paralength2=54 nl=135}
+        # (fiberD==12.8)
+        # {g=0.719 axonD=9.2 nodeD=4.2 paraD1=4.2 paraD2=9.2
+        # deltax=1350 paralength2=54 nl=135}
         12.8: {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -163,7 +170,9 @@ class Axon:
             "condg": 0.719,
             "lamellas": 135,
         },
-        # (fiberD==14.0) {g=0.739 axonD=10.4 nodeD=4.7 paraD1=4.7 paraD2=10.4 deltax=1400 paralength2=56 nl=140}
+        # (fiberD==14.0)
+        # {g=0.739 axonD=10.4 nodeD=4.7 paraD1=4.7 paraD2=10.4
+        # deltax=1400 paralength2=56 nl=140}
         14.0: {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -180,7 +189,9 @@ class Axon:
             "condg": 0.739,
             "lamellas": 140,
         },
-        # (fiberD==15.0) {g=0.767 axonD=11.5 nodeD=5.0 paraD1=5.0 paraD2=11.5 deltax=1450 paralength2=58 nl=145}
+        # (fiberD==15.0)
+        # {g=0.767 axonD=11.5 nodeD=5.0 paraD1=5.0 paraD2=11.5
+        # deltax=1450 paralength2=58 nl=145}
         15.0: {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -197,7 +208,9 @@ class Axon:
             "condg": 0.767,
             "lamellas": 145,
         },
-        # (fiberD==16.0) {g=0.791 axonD=12.7 nodeD=5.5 paraD1=5.5 paraD2=12.7 deltax=1500 paralength2=60 nl=150}
+        # (fiberD==16.0)
+        # {g=0.791 axonD=12.7 nodeD=5.5 paraD1=5.5 paraD2=12.7
+        # deltax=1500 paralength2=60 nl=150}
         16.0: {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -216,22 +229,26 @@ class Axon:
         },
     }
 
-    def __init__(self, params):
-        self._params = params
-        if params is None:
-            self._params = {}
-        if "centered" not in self._params:
-            self._params["centered"] = True
-        if "diameter" not in params:
-            self._params["diameter"] = 5.7
+    def __init__(self, centered: bool = True, diameter: float = 5.7):
+        self._centered = centered
+        self._diameter = diameter
 
-        self._axonparams = self._create_axon_parameters(self._params["diameter"])
+        self._axonparams = self._create_axon_parameters(self.diameter)
         self._ref_nodes = self._create_ref_nodes()
-        self._create_nodes()
+        self._nodes = self._create_nodes()
+
+    @property
+    def centered(self) -> bool:
+        """Axon reference nodes are centered to the center compartment."""
+        return self._centered
+
+    @property
+    def diameter(self) -> float:
+        """Diameter of the axonal fiber, needs to be in AXONPARAMETERS."""
+        return self._diameter
 
     def get_axonparams(self):
-        """
-        Returns the axonparameter as given by paper mentioned in the class documentation.
+        """Returns the typical parameters of the axon.
 
         Returns
         -------
@@ -275,7 +292,12 @@ class Axon:
         return self._axonparams
 
     def _create_ref_nodes(self):
-        """Topology: Node,MYSA,FLUT,STIN(6x),FLUT,MYSA;Node,... : 11 in total
+        """Create reference nodes.
+
+        Notes
+        -----
+        Topology:
+            Node,MYSA,FLUT,STIN(6x),FLUT,MYSA;Node,... : 11 in total
         Determine the location of the nodes along the axon at which
         the extracellular potential will be applied.
         """
@@ -326,7 +348,8 @@ class Axon:
         return ref_nodes * 1e-6  # um -> m
 
     def _create_nodes(self):
-        if self._params["centered"]:
+        """Create nodes of axon."""
+        if self.centered:
             ref_nodes = (
                 self._ref_nodes - self._ref_nodes[0] / 2 - self._ref_nodes[-1] / 2
             )
@@ -341,15 +364,14 @@ class Axon:
         nodes[:, 2] = np.zeros(
             len(ref_nodes),
         )
-        self._nodes = nodes
-        return self._nodes
+        return nodes
 
-    def _create_axon_parameters(self, diameter):
+    def _create_axon_parameters(self, diameter: float) -> dict:
+        """Build dictionary with axon parameters."""
         if diameter not in self.AXONPARAMETERS:
             raise Exception(
                 "Couldn't find axon with diameter "
-                + str(diameter)
-                + " in axon parameter lookup map."
+                f"{diameter} in axon parameter lookup map."
             )
 
         axon_parameters = copy.deepcopy(self.AXONPARAMETERS[diameter])
