@@ -166,11 +166,6 @@ class NeuronSimulator(ABC):
         """Paste Python parameters into HOC file."""
         pass
 
-    # TODO needed?
-    # @abstractmethod
-    # def paste_paraview_vis(self):
-    #     """Convert to paraview file."""
-
     def compile_neuron_files(self):
         """Compile a NEURON file."""
         _logger.info("Compile NEURON executable")
@@ -354,16 +349,16 @@ class NeuronSimulator(ABC):
         n_Ranvier = self.get_n_Ranvier(pathway_idx)
         orig_N_neurons = self.get_N_orig_neurons(pathway_idx)
 
-        # TODO refactor, very confusing to have 2 things being almost the same
-        axon_morphology = self._ax_morph_class().get_axon_morphology(
-            axon_diam, n_Ranvier=n_Ranvier
-        )
-        # check actual number of n_segments in case downsampled
-        ax_mh = self._ax_morph_class(downsampled=self.downsampled).get_axon_morphology(
-            axon_diam, n_Ranvier=n_Ranvier
-        )
-        n_segments_actual = ax_mh["n_segments"]
-        _logger.debug(f"n_segments_actual: {n_segments_actual}")
+        axon_morphology = self._ax_morph_class()
+        axon_morphology.update_axon_morphology(axon_diam, n_Ranvier=n_Ranvier)
+        if self.downsampled:
+            # check actual number of n_segments in case downsampled
+            n_segments_actual = axon_morphology.get_n_segments(
+                downsampled=self.downsampled
+            )
+            _logger.debug(f"n_segments_actual: {n_segments_actual}")
+        else:
+            n_segments_actual = axon_morphology.n_segments
         stepsPerMs = int(1.0 / self.signal_dict["time_step"])
         # edit hoc file locally to change parameters
         self.modify_hoc_file(n_Ranvier, stepsPerMs, axon_morphology)
@@ -559,29 +554,29 @@ class MRG2002(NeuronSimulator):
         hoc_file.close()
 
     def modify_hoc_file(self, nRanvier, stepsPerMs, axon_morphology):
-        axonDiam = axon_morphology["axon_diam"]
-        if axonDiam >= 5.7:
+        fiber_diam = axon_morphology.fiber_diam
+        if fiber_diam >= 5.7:
             axoninter = (nRanvier - 1) * 6
         else:
             axoninter = (nRanvier - 1) * 3
 
         parameters_dict = {
             "axonnodes": nRanvier,
-            "paranodes1": axon_morphology["n_para1"],
-            "paranodes2": axon_morphology["n_para2"],
+            "paranodes1": axon_morphology.n_para1,
+            "paranodes2": axon_morphology.n_para2,
             "axoninter": axoninter,
-            "axontotal": axon_morphology["n_segments"],
+            "axontotal": axon_morphology.n_segments,
             "v_init": self._v_init,
-            "fiberD": axonDiam,
-            "paralength1": axon_morphology["para1_length"] * 1e3,
-            "paralength2": axon_morphology["para2_length"] * 1e3,
-            "nodelength": axon_morphology["ranvier_length"] * 1e3,
-            "nodeD": axon_morphology["node_d"],
-            "axonD": axon_morphology["axon_d"],
-            "paraD1": axon_morphology["para1_d"],
-            "paraD2": axon_morphology["para2_d"],
-            "deltax": axon_morphology["node_step"] * 1e3,
-            "nl": axon_morphology["lamellas"],
+            "fiberD": fiber_diam,
+            "paralength1": axon_morphology.para1_length * 1e3,
+            "paralength2": axon_morphology.para2_length * 1e3,
+            "nodelength": axon_morphology.ranvier_length * 1e3,
+            "nodeD": axon_morphology.node_d,
+            "axonD": axon_morphology.axon_d,
+            "paraD1": axon_morphology.para1_d,
+            "paraD2": axon_morphology.para2_d,
+            "deltax": axon_morphology.node_step * 1e3,
+            "nl": axon_morphology.lamellas,
             "steps_per_ms": stepsPerMs,
         }
         self.paste_to_hoc(parameters_dict)
@@ -607,7 +602,7 @@ class MRG2002(NeuronSimulator):
         # assume 11 segments
         # n_segments_ds = ((n_segments_full - 1) / 11) * 3 +1
 
-        n_segments_actual = axon_morphology["n_segments"]
+        n_segments_actual = axon_morphology.n_segments
         _logger.debug(
             f"Upsampling from {v_time_sol.shape[0]} to {n_segments_actual} segments"
         )
@@ -631,24 +626,23 @@ class MRG2002(NeuronSimulator):
 
             # node -- -- intern -- -- -- -- intern -- -- node  ->  node-para1-para2-intern-intern-intern-intern-intern-intern-para2-para1-node
             internodal_length = (
-                axon_morphology["node_step"]
-                - axon_morphology["ranvier_length"]
-                - (axon_morphology["para2_length"] + axon_morphology["para1_length"])
-                * 2.0
+                axon_morphology.node_step
+                - axon_morphology.ranvier_length
+                - (axon_morphology.para2_length + axon_morphology.para1_length) * 2.0
             ) / 6.0
             dist_node_internode = (
-                (axon_morphology["ranvier_length"] + internodal_length) * 0.5
-                + axon_morphology["para1_length"]
-                + axon_morphology["para2_length"]
+                (axon_morphology.ranvier_length + internodal_length) * 0.5
+                + axon_morphology.para1_length
+                + axon_morphology.para2_length
             )
             ratio_1 = (
-                (axon_morphology["ranvier_length"] + axon_morphology["para1_length"])
+                (axon_morphology.ranvier_length + axon_morphology.para1_length)
                 * 0.5
                 / dist_node_internode
             )
             ratio_2 = (
                 ratio_1
-                + (axon_morphology["para1_length"] + axon_morphology["para2_length"])
+                + (axon_morphology.para1_length + axon_morphology.para2_length)
                 * 0.5
                 / dist_node_internode
             )
@@ -708,27 +702,26 @@ class MRG2002(NeuronSimulator):
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
             # node -- -- -- internodal -- -- -- node  ->  node-para1-para2-intern-intern-intern-para2-para1-node
-            dist_node_internode = axon_morphology["node_step"] / 2.0
+            dist_node_internode = axon_morphology.node_step / 2.0
             internodal_length = (
-                axon_morphology["node_step"]
-                - axon_morphology["ranvier_length"]
-                - (axon_morphology["para2_length"] + axon_morphology["para1_length"])
-                * 2
+                axon_morphology.node_step
+                - axon_morphology.ranvier_length
+                - (axon_morphology.para2_length + axon_morphology.para1_length) * 2
             ) / 3.0
             ratio_1 = (
-                (axon_morphology["ranvier_length"] + axon_morphology["para1_length"])
+                (axon_morphology.ranvier_length + axon_morphology.para1_length)
                 * 0.5
                 / dist_node_internode
             )
             ratio_2 = (
                 ratio_1
-                + (axon_morphology["para1_length"] + axon_morphology["para2_length"])
+                + (axon_morphology.para1_length + axon_morphology.para2_length)
                 * 0.5
                 / dist_node_internode
             )
             ratio_3 = (
                 ratio_2
-                + (axon_morphology["para2_length"] + internodal_length)
+                + (axon_morphology.para2_length + internodal_length)
                 * 0.5
                 / dist_node_internode
             )
@@ -739,7 +732,7 @@ class MRG2002(NeuronSimulator):
                 [5, 6, 7],
             ]  # local indices of interpolated segments
             for interv in range(len(list_interp)):
-                for j in np.arange(0, axon_morphology["n_segments"] - 1, 8):
+                for j in np.arange(0, axon_morphology.n_segments - 1, 8):
                     if interv == 0:  # ratios based on intercompartment distances
                         v_time_sol_full[j + 1, :] = (1 - ratio_1) * v_time_sol_full[
                             j, :

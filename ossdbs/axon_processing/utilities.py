@@ -307,15 +307,17 @@ def index_for_length(xyz, req_length, along=True):
     return idx, cummulated_lengths[idx]
 
 
-def resample_fibers_to_Ranviers(streamlines: List, axon_morphology: dict):
+def resample_fibers_to_Ranviers(streamlines: List, node_step: int, n_Ranvier: int):
     """Get streamlines resampled by nodes of Ranvier for a specific axonal morphology.
 
     Parameters
     ----------
     streamlines: list
         arbitrary sampled streamlines, stored as ArraySequence()
-    axon_morphology
-        dict, geometric description of a single axon, see get_axon_morphology
+    node_step: int
+        Length from a node of Ranvier to the next
+    n_Ranvier: int
+        Number of nodes of Ranvier
 
     Returns
     -------
@@ -330,15 +332,14 @@ def resample_fibers_to_Ranviers(streamlines: List, axon_morphology: dict):
     # total_points = 0
     for streamline_index in range(len(lengths_streamlines_filtered)):
         n_Ranvier_this_axon = int(
-            lengths_streamlines_filtered[streamline_index]
-            / axon_morphology["node_step"]
+            lengths_streamlines_filtered[streamline_index] / node_step
         )
         streamline_resampled = resample_streamline_for_Ranvier(
             streamlines[streamline_index],
-            n_Ranvier_this_axon * axon_morphology["node_step"],
+            n_Ranvier_this_axon * node_step,
             n_Ranvier_this_axon,
         )
-        if len(streamline_resampled) < axon_morphology["n_Ranvier"]:
+        if len(streamline_resampled) < n_Ranvier:
             _logger.info(f"Streamline {streamline_index} is too short")
             excluded_streamlines.append(streamline_index)
         else:
@@ -357,7 +358,7 @@ def normalized(vector: np.ndarray, axis: int = -1, order: int = 2):
 
 # ruff: noqa: C901
 def place_axons_on_streamlines(
-    streamlines_resampled: List, axon_morphology: dict, centering_coordinates: List
+    streamlines_resampled: List, n_Ranvier: int, centering_coordinates: List
 ):
     """Allocate axons on streamlines at seeding points given by centering_coordinates.
 
@@ -365,8 +366,8 @@ def place_axons_on_streamlines(
     ----------
     streamlines_resampled: list
         streamlines sampled by nodes of Ranvier, stored as ArraySequence()
-    axon_morphology: dict
-        geometric description of a single axon, see get_axon_morphology
+    n_Ranvier: int
+        Number of nodes of Ranvier
     centering_coordinates: list of lists
         3-D coordinates used to center axons on fibers (e.g. active contacts)
 
@@ -378,9 +379,7 @@ def place_axons_on_streamlines(
     axons_ROI_centered = ArraySequence()
 
     for inx_axn in range(len(streamlines_resampled)):
-        single_streamline_ROI_centered = np.zeros(
-            (axon_morphology["n_Ranvier"], 3), float
-        )
+        single_streamline_ROI_centered = np.zeros((n_Ranvier, 3), float)
 
         A = streamlines_resampled[inx_axn]
         distance_list = []
@@ -398,29 +397,29 @@ def place_axons_on_streamlines(
 
         loc_index = 0
         # choose where to start seeding the axon
-        if index < int(axon_morphology["n_Ranvier"] / 2):
+        if index < int(n_Ranvier / 2):
             # axon---fiber---fiber---fiber---fiber---#
-            for i in range(0, int(axon_morphology["n_Ranvier"])):
+            for i in range(0, int(n_Ranvier)):
                 single_streamline_ROI_centered[loc_index, :] = A[i]
                 loc_index += 1
-        elif index + int(axon_morphology["n_Ranvier"] / 2) + 1 > A.shape[0]:
+        elif index + int(n_Ranvier / 2) + 1 > A.shape[0]:
             # fiber---fiber---fiber---fiber---axon---#
-            for i in range(A.shape[0] - axon_morphology["n_Ranvier"], A.shape[0]):
+            for i in range(A.shape[0] - n_Ranvier, A.shape[0]):
                 single_streamline_ROI_centered[loc_index, :] = A[i]
                 loc_index += 1
         else:
             # ---fiber---fiber---axon---fiber---fiber---#
-            if axon_morphology["n_Ranvier"] % 2 == 0:
+            if n_Ranvier % 2 == 0:
                 for i in range(
-                    index - int(axon_morphology["n_Ranvier"] / 2),
-                    index + int(axon_morphology["n_Ranvier"] / 2),
+                    index - int(n_Ranvier / 2),
+                    index + int(n_Ranvier / 2),
                 ):
                     single_streamline_ROI_centered[loc_index, :] = A[i]
                     loc_index += 1
             else:
                 for i in range(
-                    index - int(axon_morphology["n_Ranvier"] / 2),
-                    index + int(axon_morphology["n_Ranvier"] / 2) + 1,
+                    index - int(n_Ranvier / 2),
+                    index + int(n_Ranvier / 2) + 1,
                 ):
                     single_streamline_ROI_centered[loc_index, :] = A[i]
                     loc_index += 1

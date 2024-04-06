@@ -20,8 +20,6 @@ def get_axon_parameters_template(diameter: float):
     Returns
     -------
     dict
-        total_nodes: int
-            Total number of compartments
         ranvier_nodes: int
             Number of node of Ranvier compartments
         para1_nodes: int
@@ -36,12 +34,8 @@ def get_axon_parameters_template(diameter: float):
             Length of the first paranodal compartments
         para2_length: float
             Length of the second paranodal compartments
-        inter_length: float
-            Length of the internodal compartments
         deltax: float
             Length from a node of Ranvier to the next
-        fiberD: float
-            Fiber diameter
         axon_diameter: float
             Diameter of the axon
         node_diameter: float
@@ -284,128 +278,3 @@ def get_axon_parameters_template(diameter: float):
         raise NotImplementedError(
             f"Axon parameters for diameter {diameter} are not yet implemented."
         )
-
-
-class Axon:
-    """Axon parameters for the myelinated axon model by CC McIntyre.
-
-    Attributes
-    ----------
-    centered: bool
-        Axon reference nodes are centered to the center compartment
-    diameter: float
-        diameter of the axonal fiber
-
-    """
-
-    def __init__(self, centered: bool = True, diameter: float = 5.7):
-        self._centered = centered
-        self._diameter = diameter
-
-        self._axonparams = self._create_axon_parameters(self.diameter)
-        self._ref_nodes = self._create_ref_nodes()
-        self._nodes = self._create_nodes()
-
-    @property
-    def centered(self) -> bool:
-        """Axon reference nodes are centered to the center compartment."""
-        return self._centered
-
-    @property
-    def diameter(self) -> float:
-        """Diameter of the axonal fiber."""
-        return self._diameter
-
-    def get_axonparams(self):
-        """Returns the typical parameters of the axon."""
-        return self._axonparams
-
-    def _create_ref_nodes(self):
-        """Create reference nodes.
-
-        Notes
-        -----
-        Topology:
-            Node,MYSA,FLUT,STIN(6x),FLUT,MYSA;Node,... : 11 in total
-        Determine the location of the nodes along the axon at which
-        the extracellular potential will be applied.
-        """
-        n = self._axonparams["total_nodes"]
-        l_ranvier = self._axonparams["ranvier_length"]
-        l_para1 = self._axonparams["para1_length"]
-        l_para2 = self._axonparams["para2_length"]
-        l_inter = self._axonparams["inter_length"]
-
-        nranvier = self._axonparams["ranvier_nodes"]
-        nstin = int(float(self._axonparams["inter_nodes"]) / (nranvier - 1))
-        nmysa = int(float(self._axonparams["para1_nodes"]) / (nranvier - 1))
-        nflut = int(float(self._axonparams["para2_nodes"]) / (nranvier - 1))
-        ncomp = nstin + nmysa + nflut + 1
-
-        ref_nodes = np.zeros(n)
-        for i in range(n):
-            j = i % ncomp
-            if j == 0 or j == 1:  # mysa <-> ranvier node
-                if i == 0:  # first of all nodes
-                    ref_nodes[i] = l_ranvier / 2.0
-                else:
-                    ref_nodes[i] = ref_nodes[i - 1] + l_para1 / 2.0 + l_ranvier / 2.0
-            elif (j > 1 and j < (int(nmysa / 2) + 1)) or (
-                j > (int(nmysa / 2) + nflut + nstin) and j < (nmysa + nflut + nstin)
-            ):  # mysa <-> mysa node
-                ref_nodes[i] = ref_nodes[i - 1] + l_para1
-            elif j == (int(nmysa / 2) + 1) or j == (
-                int(nmysa / 2) + nflut + nstin
-            ):  # mysa <-> flut node
-                ref_nodes[i] = ref_nodes[i - 1] + l_para1 / 2.0 + l_para2 / 2.0
-            elif (
-                j > (int(nmysa / 2) + 1) and j < (int(nmysa / 2) + int(nflut / 2) + 1)
-            ) or (
-                j > (int(nmysa / 2) + int(nflut / 2) + nstin)
-                and j < (int(nmysa / 2) + nflut + nstin)
-            ):  # flut <-> flut node
-                ref_nodes[i] = ref_nodes[i - 1] + l_para2
-            elif j == (int(nmysa / 2) + int(nflut / 2) + 1) or j == (
-                int(nmysa / 2) + int(nflut / 2) + nstin
-            ):  # flut <-> stin node
-                ref_nodes[i] = ref_nodes[i - 1] + l_para2 / 2.0 + l_inter / 2.0
-            else:  # stin <-> stin node
-                ref_nodes[i] = ref_nodes[i - 1] + l_inter
-        return ref_nodes * 1e-6  # um -> m
-
-    def _create_nodes(self):
-        """Create nodes of axon."""
-        if self.centered:
-            ref_nodes = (
-                self._ref_nodes - self._ref_nodes[0] / 2 - self._ref_nodes[-1] / 2
-            )
-        else:
-            ref_nodes = self._ref_nodes
-        # standard position(along x axis in [x,y,z])
-        nodes = np.zeros((len(ref_nodes), 3))
-        nodes[:, 0] = ref_nodes
-        return nodes
-
-    def _create_axon_parameters(self, diameter: float) -> dict:
-        """Build dictionary with axon parameters."""
-        axon_parameters = get_axon_parameters_template(diameter)
-
-        nranvier = axon_parameters["ranvier_nodes"]
-        nstin = int(float(axon_parameters["inter_nodes"]) / (nranvier - 1))
-        nmysa = int(float(axon_parameters["para1_nodes"]) / (nranvier - 1))
-        nflut = int(float(axon_parameters["para2_nodes"]) / (nranvier - 1))
-
-        axon_parameters["fiberD"] = diameter
-        axon_parameters["total_nodes"] = (
-            axon_parameters["ranvier_nodes"]
-            + axon_parameters["para1_nodes"]
-            + axon_parameters["para2_nodes"]
-            + axon_parameters["inter_nodes"]
-        )
-        axon_parameters["inter_length"] = (
-            axon_parameters["deltax"]
-            - axon_parameters["ranvier_length"]
-            - nmysa * axon_parameters["para1_length"]
-            - nflut * axon_parameters["para2_length"]
-        ) / float(nstin)
-        return axon_parameters

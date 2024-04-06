@@ -14,7 +14,7 @@ import numpy as np
 import scipy
 from scipy.io import savemat
 
-from .axon import Axon
+from .axon_default_MRG2002 import get_axon_parameters_template
 from .utilities import (
     convert_fibers_to_streamlines,
     normalized,
@@ -31,6 +31,48 @@ class AxonMorphology(ABC):
     def __init__(self, downsampled=False):
         self.downsampled = downsampled
 
+        # defaults
+        self._n_Ranvier = None
+
+    @property
+    def n_segments(self):
+        return (self.n_Ranvier - 1) * self.n_comp + 1
+
+    @property
+    def fiber_diam(self):
+        return self._fiber_diam
+
+    @fiber_diam.setter
+    def fiber_diam(self, value):
+        if value < 0:
+            raise ValueError("Fiber diameter has to be greater than zero")
+        self._fiber_diam = value
+
+    @property
+    def axon_length(self):
+        return self._axon_length
+
+    @axon_length.setter
+    def axon_length(self, value):
+        self._axon_length = value
+        expected_n_Ranvier = int(value / self.node_step)
+        if not self.n_Ranvier == expected_n_Ranvier:
+            # Updating number of Ranviers to match axon length
+            self.n_Ranvier = expected_n_Ranvier
+
+    @property
+    def n_Ranvier(self):
+        return self._n_Ranvier
+
+    @n_Ranvier.setter
+    def n_Ranvier(self, value: int):
+        # must be an odd number!
+        if value % 2 == 0:
+            value -= 1
+            # update axon length
+            self.axon_length = value * self.node_step
+        self._n_Ranvier = value
+
     @property
     def downsampled(self):
         """Full or downsampled model."""
@@ -41,7 +83,7 @@ class AxonMorphology(ABC):
         self._downsampled = value
 
     @abstractmethod
-    def get_axon_morphology(self, axon_diam, axon_length=None, n_Ranvier=None):
+    def update_axon_morphology(self, axon_diam, axon_length=None, n_Ranvier=None):
         """Axon morphology for specific model."""
 
     @abstractmethod
@@ -54,13 +96,144 @@ class AxonMorphology(ABC):
 
         """
 
+    @property
+    def n_comp(self):
+        """Number of compartments."""
+        return self._n_comp
+
+    @property
+    @abstractmethod
+    def node_step(self):
+        """Node step."""
+
 
 class AxonMorphologyMRG2002(AxonMorphology):
     """Axon morphology for MRG2002 model."""
 
-    def get_axon_morphology(
+    @AxonMorphology.n_comp.setter
+    def n_comp(self, value):
+        self._n_comp = value
+
+    @property
+    def node_step(self):
+        return self._node_step
+
+    @node_step.setter
+    def node_step(self, value):
+        self._node_step = value
+
+    @property
+    def ranvier_length(self):
+        return self._ranvier_length
+
+    @ranvier_length.setter
+    def ranvier_length(self, value):
+        self._ranvier_length = value
+
+    @property
+    def para1_length(self):
+        return self._para1_length
+
+    @para1_length.setter
+    def para1_length(self, value):
+        self._para1_length = value
+
+    @property
+    def para2_length(self):
+        return self._para2_length
+
+    @para2_length.setter
+    def para2_length(self, value):
+        self._para2_length = value
+
+    @property
+    def ranvier_nodes(self):
+        return self._ranvier_nodes
+
+    @ranvier_nodes.setter
+    def ranvier_nodes(self, value):
+        self._ranvier_nodes = int(value)
+
+    @property
+    def inter_nodes(self):
+        return self._inter_nodes
+
+    @inter_nodes.setter
+    def inter_nodes(self, value):
+        self._inter_nodes = int(value)
+
+    @property
+    def para1_nodes(self):
+        return self._para1_nodes
+
+    @para1_nodes.setter
+    def para1_nodes(self, value):
+        self._para1_nodes = int(value)
+
+    @property
+    def para2_nodes(self):
+        return self._para2_nodes
+
+    @para2_nodes.setter
+    def para2_nodes(self, value):
+        self._para2_nodes = int(value)
+
+    @property
+    def n_para1(self):
+        return self._n_para1
+
+    @n_para1.setter
+    def n_para1(self, value):
+        self._n_para1 = value
+
+    @property
+    def n_para2(self):
+        return self._n_para2
+
+    @n_para2.setter
+    def n_para2(self, value):
+        self._n_para2 = value
+
+    @AxonMorphology.n_Ranvier.setter
+    def n_Ranvier(self, value):
+        # must be an odd number!
+        if value % 2 == 0:
+            value -= 1
+            # update axon length
+            self.axon_length = value * self.node_step
+        self._n_Ranvier = value
+        # MRG2002 specific code
+        self.n_para1 = (self.para1_nodes * self.n_Ranvier - 1) / (21 - 1)
+        self.n_para2 = (self.para2_nodes * self.n_Ranvier - 1) / (21 - 1)
+
+    def get_n_comp(self, downsampled):
+        if downsampled:
+            if self.fiber_diam >= 5.7:
+                # node -- -- internodal -- -- -- -- internodal -- -- node
+                n_comp = 3
+            else:
+                # node -- -- -- internodal -- -- -- node
+                n_comp = 2
+        else:
+            n_comp = int(
+                (
+                    self.ranvier_nodes
+                    - 1
+                    + self.inter_nodes
+                    + self.para1_nodes
+                    + self.para2_nodes
+                )
+                / (self.ranvier_nodes - 1)
+            )
+        return n_comp
+
+    def get_n_segments(self, downsampled):
+        n_comp = self.get_n_comp(downsampled)
+        return (self.n_Ranvier - 1) * n_comp + 1
+
+    def update_axon_morphology(
         self,
-        axon_diam: float,
+        fiber_diam: float,
         axon_length: Optional[float] = None,
         n_Ranvier: Optional[int] = None,
     ) -> dict:
@@ -82,226 +255,138 @@ class AxonMorphologyMRG2002(AxonMorphology):
         Notes
         -----
         Either axon_length or n_Ranvier needs to be specified.
-
-        TODO rewrite
-
         """
-        axon_morphology = {"axon_diam": axon_diam}
-        a = Axon(centered=True, diameter=axon_diam)
-        nr = Axon.get_axonparams(a)
+        self.fiber_diam = fiber_diam
+        template = get_axon_parameters_template(fiber_diam)
 
-        axon_morphology["ranvier_length"] = 1e-3 * nr["ranvier_length"]
-        axon_morphology["para1_length"] = 1e-3 * nr["para1_length"]
-        axon_morphology["para2_length"] = 1e-3 * nr["para2_length"]
-        axon_morphology["node_step"] = 1e-3 * nr["deltax"]
-        if self.downsampled:
-            if axon_diam >= 5.7:
-                # node -- -- internodal -- -- -- -- internodal -- -- node
-                axon_morphology["n_comp"] = 3
-                axon_morphology["inter_length"] = (
-                    axon_morphology["node_step"]
-                    - axon_morphology["para1_length"] * 2
-                    - axon_morphology["para2_length"] * 2
-                ) / 6
-            else:
-                # node -- -- -- internodal -- -- -- node
-                axon_morphology["n_comp"] = 2
-                axon_morphology["inter_length"] = (
-                    axon_morphology["node_step"]
-                    - axon_morphology["para1_length"] * 2
-                    - axon_morphology["para2_length"] * 2
-                ) / 3
+        # copy from template
+        # scaling from mm
+        self.ranvier_length = 1e-3 * template["ranvier_length"]
+        self.para1_length = 1e-3 * template["para1_length"]
+        self.para2_length = 1e-3 * template["para2_length"]
+        self.node_step = 1e-3 * template["deltax"]
+
+        # copy without scaling
+        self.ranvier_nodes = template["ranvier_nodes"]
+        self.inter_nodes = template["inter_nodes"]
+        self.para1_nodes = template["para1_nodes"]
+        self.para2_nodes = template["para2_nodes"]
+
+        self.n_comp = self.get_n_comp(self.downsampled)
+
+        tmp_inter_length = (
+            self.node_step - 2 * self.para1_length - 2 * self.para2_length * 2
+        )
+        if self.fiber_diam >= 5.7:
+            self.inter_length = tmp_inter_length / 6
         else:
-            axon_morphology["n_comp"] = int(
-                (
-                    (nr["ranvier_nodes"] - 1)
-                    + nr["inter_nodes"]
-                    + nr["para1_nodes"]
-                    + nr["para2_nodes"]
-                )
-                / (nr["ranvier_nodes"] - 1)
-            )
-
-            if axon_diam >= 5.7:
-                axon_morphology["inter_length"] = (
-                    axon_morphology["node_step"]
-                    - axon_morphology["para1_length"] * 2
-                    - axon_morphology["para2_length"] * 2
-                ) / 6
-            else:
-                axon_morphology["inter_length"] = (
-                    axon_morphology["node_step"]
-                    - axon_morphology["para1_length"] * 2
-                    - axon_morphology["para2_length"] * 2
-                ) / 3
+            self.inter_length = tmp_inter_length / 3
         # check what was provided, axon_length takes precedence
         if axon_length is not None:
-            axon_morphology["axon_length"] = axon_length
-            axon_morphology["n_Ranvier"] = int(
-                axon_length / axon_morphology["node_step"]
-            )
+            self.axon_length = axon_length
         else:
-            axon_morphology["n_Ranvier"] = n_Ranvier
-            axon_morphology["axon_length"] = n_Ranvier * axon_morphology["node_step"]
-
-        # always odd number of nodes of Ranvier!
-        if axon_morphology["n_Ranvier"] % 2 == 0:
-            axon_morphology["n_Ranvier"] -= 1
-            axon_morphology["axon_length"] = (
-                axon_morphology["n_Ranvier"] * axon_morphology["node_step"]
-            )
-
-        axon_morphology["n_para1"] = (
-            nr["para1_nodes"] * (axon_morphology["n_Ranvier"] - 1) / (21 - 1)
-        )
-        axon_morphology["n_para2"] = (
-            nr["para2_nodes"] * (axon_morphology["n_Ranvier"] - 1) / (21 - 1)
-        )
-
-        axon_morphology["n_segments"] = int(
-            (axon_morphology["n_Ranvier"] - 1) * axon_morphology["n_comp"] + 1
-        )  # overall number of points on Axon incl. internodal
+            self.n_Ranvier = n_Ranvier
 
         # additional params for NEURON model, see axon.py
-        (
-            axon_morphology["axon_d"],
-            axon_morphology["node_d"],
-            axon_morphology["para1_d"],
-            axon_morphology["para2_d"],
-            axon_morphology["lamellas"],
-        ) = (
-            nr["axon_diameter"],
-            nr["node_diameter"],
-            nr["para1_diameter"],
-            nr["para2_diameter"],
-            nr["lamellas"],
-        )
-        return axon_morphology
+        # TODO make properties
+        self.axon_d = template["axon_diameter"]
+        self.node_d = template["node_diameter"]
+        self.para1_d = template["para1_diameter"]
+        self.para2_d = template["para2_diameter"]
+        self.lamellas = template["lamellas"]
 
-    def get_local_compartment_coords(self, axon_morphology: dict) -> np.ndarray:
+    def get_local_compartment_coords(self) -> np.ndarray:
         """Get 1-D coordinates of internodal compartments relative to the node at 0.0.
 
         Parameters
         ----------
         axon_morphology: dict
-            geometric description of a single axon, see get_axon_morphology
+            geometric description of a single axon
 
         Returns
         -------
         Nx1 numpy.ndarray
 
         """
-        loc_coords = np.zeros(axon_morphology["n_comp"] - 1, float)
+        loc_coords = np.zeros(self.n_comp - 1, dtype=float)
         loc_pos = 0.0  # just for clarity
 
-        if axon_morphology["axon_diam"] >= 5.7:
+        if self.fiber_diam >= 5.7:
             if not self.downsampled:
                 # only internodal compartments.
                 # The distances will be computed from the node of Ranvier using loc_pos
-                for inx_loc in np.arange(1, axon_morphology["n_comp"]):
+                for inx_loc in np.arange(1, self.n_comp):
                     inx_loc = int(inx_loc)
                     if inx_loc == 1:
-                        loc_pos = (
-                            axon_morphology["ranvier_length"]
-                            + axon_morphology["para1_length"]
-                        ) / 2
+                        loc_pos = (self.ranvier_length + self.para1_length) / 2
 
                     if inx_loc == 2 or inx_loc == 10:
-                        loc_pos = (
-                            loc_pos
-                            + (
-                                axon_morphology["para1_length"]
-                                + axon_morphology["para2_length"]
-                            )
-                            / 2
-                        )
+                        loc_pos = loc_pos + (self.para1_length + self.para2_length) / 2
                     if inx_loc == 3 or inx_loc == 9:
-                        loc_pos = (
-                            loc_pos
-                            + (
-                                axon_morphology["para2_length"]
-                                + axon_morphology["inter_length"]
-                            )
-                            / 2
-                        )
-                    if (
-                        inx_loc == 4
-                        or inx_loc == 5
-                        or inx_loc == 6
-                        or inx_loc == 7
-                        or inx_loc == 8
-                    ):
-                        loc_pos = loc_pos + (axon_morphology["inter_length"]) / 1
-
+                        loc_pos = loc_pos + (self.para2_length + self.inter_length) / 2
+                    if inx_loc in [4, 5, 6, 7, 8]:
+                        loc_pos = loc_pos + self.inter_length / 1
                 loc_coords[inx_loc - 1] = loc_pos
             else:
                 # node -- -- internodal -- -- -- -- internodal -- -- node
-                for inx_loc in np.arange(1, axon_morphology["n_comp"]):
+                for inx_loc in np.arange(1, self.n_comp):
                     # only internodal compartments.
                     # The distances will be computed from the
                     # node of Ranvier using loc_pos
                     if inx_loc == 1:
                         loc_pos = (
-                            (
-                                axon_morphology["ranvier_length"]
-                                + axon_morphology["inter_length"]
-                            )
-                            / 2
-                            + axon_morphology["para1_length"]
-                            + axon_morphology["para2_length"]
+                            (self.ranvier_length + self.inter_length) / 2
+                            + self.para1_length
+                            + self.para2_length
                         )
                     elif inx_loc == 2:
-                        loc_pos = loc_pos + 5 * axon_morphology["inter_length"]
+                        loc_pos = loc_pos + 5 * self.inter_length
                     else:
                         raise RuntimeError("Wrong number of compartments")
-
                 loc_coords[inx_loc - 1] = loc_pos
 
-        elif axon_morphology["axon_diam"] < 5.7:
+        elif self.fiber_diam < 5.7:
             if not self.downsampled:
-                for inx_loc in np.arange(1, axon_morphology["n_comp"]):
+                for inx_loc in np.arange(1, self.n_comp):
                     if inx_loc == 1:
-                        loc_pos = (
-                            axon_morphology["ranvier_length"]
-                            + axon_morphology["para1_length"]
-                        ) / 2
+                        loc_pos = (self.ranvier_length + self.para1_length) / 2
                     if inx_loc == 2 or inx_loc == 7:
-                        loc_pos = (
-                            loc_pos
-                            + (
-                                axon_morphology["para1_length"]
-                                + axon_morphology["para2_length"]
-                            )
-                            / 2
-                        )
+                        loc_pos = loc_pos + (self.para1_length + self.para2_length) / 2
                     if inx_loc == 3 or inx_loc == 6:
-                        loc_pos = (
-                            loc_pos
-                            + (
-                                axon_morphology["para2_length"]
-                                + axon_morphology["inter_length"]
-                            )
-                            / 2
-                        )
+                        loc_pos = loc_pos + (self.para2_length + self.inter_length) / 2
                     if inx_loc == 4 or inx_loc == 5:
-                        loc_pos = (
-                            loc_pos + (axon_morphology["inter_length"]) / 1
-                        )  # switch to mm from µm
-
+                        loc_pos = loc_pos + self.inter_length  # switch to mm from µm
                 loc_coords[inx_loc - 1] = loc_pos
             else:
                 # mode -- -- -- internodal -- -- -- node
                 loc_coords[0] = (
-                    0.5 * axon_morphology["ranvier_length"]
-                    + 1.5 * axon_morphology["inter_length"]
-                    + axon_morphology["para1_length"]
-                    + axon_morphology["para2_length"]
+                    0.5 * self.ranvier_length
+                    + 1.5 * self.inter_length
+                    + self.para1_length
+                    + self.para2_length
                 )
         return loc_coords
 
 
 class AxonMorphologyMcNeal1976(AxonMorphology):
     """Axon morphology class for the McNeal1976 model."""
+
+    @property
+    def n_comp(self):
+        """Only nodes and one internodal per segment."""
+        # node -- -- -- internodal -- -- -- node
+        return 2
+
+    @property
+    def node_step(self):
+        return self.fiber_diam * 0.2
+
+    @node_step.setter
+    def node_step(self, value):
+        _logger.warning(
+            "The node step in the McNeal1976 model is fixed."
+            "The value remains unchanged."
+        )
 
     @AxonMorphology.downsampled.setter
     def downsampled(self, value):
@@ -310,9 +395,9 @@ class AxonMorphologyMcNeal1976(AxonMorphology):
             raise NotImplementedError("Downsampled McNeal1976 not implemented.")
         self._downsampled = value
 
-    def get_axon_morphology(
+    def update_axon_morphology(
         self,
-        axon_diam: float,
+        fiber_diam: float,
         axon_length: Optional[float] = None,
         n_Ranvier: Optional[int] = None,
     ) -> dict:
@@ -320,7 +405,7 @@ class AxonMorphologyMcNeal1976(AxonMorphology):
 
         Parameters
         ----------
-        axon_diam: float
+        fiber_diam: float
            diameter in micrometers for all fibers in the pathway
         axon_length: float, optional
            axon lengths in mm for all fibers in the pathway
@@ -334,43 +419,17 @@ class AxonMorphologyMcNeal1976(AxonMorphology):
         Notes
         -----
         Either axon_length or n_Ranvier needs to be specified.
-
-        TODO rewrite
-
         """
-        axon_morphology = {"axon_diam": axon_diam}
+        self.fiber_diam = fiber_diam
 
-        # node -- -- -- internodal -- -- -- node
-        axon_morphology["n_comp"] = 2  # only nodes and one internodal per segment
-        axon_morphology["node_step"] = axon_diam * 0.2  # from 1 to 2 mm
         # check what was provided, axon_length takes precedence
         if axon_length is not None:
-            axon_morphology["axon_length"] = axon_length
-            axon_morphology["n_Ranvier"] = int(
-                axon_length / axon_morphology["node_step"]
-            )
+            self.axon_length = axon_length
         else:
-            axon_morphology["n_Ranvier"] = n_Ranvier
-            axon_morphology["axon_length"] = n_Ranvier * axon_morphology["node_step"]
+            self.n_Ranvier = n_Ranvier
 
-        # always odd number of nodes of Ranvier!
-        if axon_morphology["n_Ranvier"] % 2 == 0:
-            axon_morphology["n_Ranvier"] -= 1
-            axon_morphology["axon_length"] = (
-                axon_morphology["n_Ranvier"] * axon_morphology["node_step"]
-            )
-
-        axon_morphology["n_segments"] = int(
-            (axon_morphology["n_Ranvier"] - 1) * axon_morphology["n_comp"] + 1
-        )
-        return axon_morphology
-
-    def get_local_compartment_coords(self, axon_morphology):
+    def get_local_compartment_coords(self):
         """Get 1-D coordinates of internodal compartments relative to the node at 0.0.
-
-        Parameters
-        ----------
-         axon_morphology: dict, geometric description of a single axon, see get_axon_morphology
 
         Returns
         -------
@@ -379,9 +438,9 @@ class AxonMorphologyMcNeal1976(AxonMorphology):
         """
         if self.downsampled is True:
             raise NotImplementedError("Downsampled McNeal1976 not implemented.")
-        loc_coords = np.zeros(axon_morphology["n_comp"] - 1, float)
+        loc_coords = np.zeros(self.n_comp - 1, dtype=float)
         # mode -- -- -- internodal -- -- -- node
-        loc_coords[0] = axon_morphology["node_step"] * 0.5
+        loc_coords[0] = self.node_step * 0.5
         return loc_coords
 
 
@@ -650,9 +709,7 @@ class AxonModels:
             ax_morph_model = AxonMorphologyMcNeal1976()
         return ax_morph_model
 
-    def _get_local_axons_fibers(
-        self, i: int, axon_morphology: dict, ax_morph_model: AxonMorphology
-    ):
+    def _get_local_axons_fibers(self, i: int, axon_morphology: AxonMorphology):
         """Get local information."""
         # multiple .mat files (manual input)
         if len(self.pathway_mat_file) > 1:
@@ -660,7 +717,6 @@ class AxonModels:
                 self.pathway_mat_file[i],
                 self.projection_names[i],
                 axon_morphology,
-                ax_morph_model,
                 False,
             )
 
@@ -670,7 +726,6 @@ class AxonModels:
                 self.pathway_mat_file[0],
                 self.projection_names[i],
                 axon_morphology,
-                ax_morph_model,
                 True,
             )
 
@@ -680,7 +735,6 @@ class AxonModels:
                 self.pathway_mat_file[0],
                 self.projection_names[i],
                 axon_morphology,
-                ax_morph_model,
                 False,
             )
 
@@ -693,12 +747,12 @@ class AxonModels:
         n_Neurons_all = np.zeros(shape=len(self.axon_lengths_all), dtype=int)
         orig_n_Neurons_all = np.zeros(shape=len(self.axon_lengths_all), dtype=int)
 
-        ax_morph_model = self._select_axon_morphology_model()
+        axon_morphology = self._select_axon_morphology_model()
 
         # iterate over projections (fibers) and seed axons
         for i in range(len(self.axon_diams_all)):
             # various geometric parameters for a single axon
-            axon_morphology = ax_morph_model.get_axon_morphology(
+            axon_morphology.update_axon_morphology(
                 self.axon_diams_all[i], self.axon_lengths_all[i]
             )
 
@@ -706,7 +760,7 @@ class AxonModels:
                 n_Ranvier_per_projection,
                 n_Neurons,
                 orig_n_Neurons,
-            ) = self._get_local_axons_fibers(i, axon_morphology, ax_morph_model)
+            ) = self._get_local_axons_fibers(i, axon_morphology)
             _logger.info(
                 f"{n_Neurons_all[i]} axons seeded for "
                 f"{self.projection_names[i]} with "
@@ -765,8 +819,7 @@ class AxonModels:
         self,
         pathway_file: str,
         projection_name: str,
-        axon_morphology: dict,
-        ax_morph_model: AxonMorphology,
+        axon_morphology: AxonMorphology,
         multiple_projections_per_file: bool = False,
     ):
         """Convert streamlines (fibers) to axons and store in OSS-DBS supported format.
@@ -777,8 +830,8 @@ class AxonModels:
             full path to .mat file containing fiber descriptions (Lead-DBS format)
         projection_name: str
             pathway name
-        axon_morphology: dict
-            geometric description of a single axon, see get_axon_morphology
+        axon_morphology: AxonMorphology
+            geometric description of a single axon
         multiple_projections_per_file: bool, optional
             flag if pathway_file contains multiple pathways
 
@@ -847,24 +900,24 @@ class AxonModels:
 
         # resample streamlines to nodes of Ranvier
         streamlines_resampled, excluded_streamlines_idx = resample_fibers_to_Ranviers(
-            streamlines, axon_morphology
+            streamlines, axon_morphology.node_step, axon_morphology.n_Ranvier
         )
 
         # truncate streamlines to match selected axon length
         # axons are seeded on the segment closest to active contacts or other ROI, see self.centering_coordinates
         streamlines_axons = place_axons_on_streamlines(
-            streamlines_resampled, axon_morphology, self.centering_coordinates
+            streamlines_resampled, axon_morphology.n_Ranvier, self.centering_coordinates
         )
 
         # streamlines_axons already contain the position of Ranvier nodes. Now we get internodal compartments
         # and store all coordinates in a 3D array: compartment index, spatial axis, axon index
         axon_array = np.zeros(
-            (axon_morphology["n_segments"], 3, len(streamlines_axons)), dtype=float
+            (axon_morphology.n_segments, 3, len(streamlines_axons)), dtype=float
         )
 
         # 2-D version for Paraview visualization
         axon_array_2D = np.zeros(
-            (axon_morphology["n_segments"] * len(streamlines_axons), 4), dtype=float
+            (axon_morphology.n_segments * len(streamlines_axons), 4), dtype=float
         )
 
         # save axons as separate datasets within groups that correspond to pathways
@@ -874,11 +927,11 @@ class AxonModels:
         g = hf.create_group(projection_name)
 
         # get local coordinates for internodal compartments
-        local_comp_coords = ax_morph_model.get_local_compartment_coords(axon_morphology)
+        local_comp_coords = axon_morphology.get_local_compartment_coords()
         glob_ind = 0
         for inx_axn in range(len(streamlines_axons)):
             inx_comp = 0
-            for inx in range(axon_morphology["n_Ranvier"] - 1):
+            for inx in range(axon_morphology.n_Ranvier - 1):
                 # compartments are seeded along the internodal vector
                 internodal_vector_normalized = normalized(
                     streamlines_axons[inx_axn][inx + 1]
@@ -889,28 +942,28 @@ class AxonModels:
                 axon_array[inx_comp, :, inx_axn] = streamlines_axons[inx_axn][inx]
 
                 # now place the compartments until the next node
-                for loc_comp_inx in range(1, axon_morphology["n_comp"]):
+                for loc_comp_inx in range(1, axon_morphology.n_comp):
                     axon_array[inx_comp + loc_comp_inx, :, inx_axn] = (
                         axon_array[inx_comp, :, inx_axn]
                         + local_comp_coords[loc_comp_inx - 1]
                         * internodal_vector_normalized[0][:]
                     )
 
-                inx_comp = inx_comp + axon_morphology["n_comp"]
+                inx_comp = inx_comp + axon_morphology.n_comp
 
             # last node of Ranvier
             axon_array[-1, :, inx_axn] = streamlines_axons[inx_axn][-1]
 
             axon_array_2D[
-                glob_ind : glob_ind + axon_morphology["n_segments"], :3
+                glob_ind : glob_ind + axon_morphology.n_segments, :3
             ] = axon_array[:, :, inx_axn]
-            axon_array_2D[glob_ind : glob_ind + axon_morphology["n_segments"], 3] = (
+            axon_array_2D[glob_ind : glob_ind + axon_morphology.n_segments, 3] = (
                 inx_axn + 1
             )  # because in Matlab they start from 1
 
             g.create_dataset("axon" + str(inx_axn), data=axon_array[:, :, inx_axn])
 
-            glob_ind = glob_ind + axon_morphology["n_segments"]
+            glob_ind = glob_ind + axon_morphology.n_segments
 
         np.savetxt(
             os.path.join(self.output_directory, f"axon_array_2D_{projection_name}.csv"),
@@ -927,4 +980,4 @@ class AxonModels:
             mdic,
         )
 
-        return axon_morphology["n_Ranvier"], len(streamlines_axons), orig_N_fibers
+        return axon_morphology.n_Ranvier, len(streamlines_axons), orig_N_fibers
