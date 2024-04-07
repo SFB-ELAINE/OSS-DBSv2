@@ -36,10 +36,12 @@ class AxonMorphology(ABC):
 
     @property
     def n_segments(self):
+        """Number of segments."""
         return (self.n_Ranvier - 1) * self.n_comp + 1
 
     @property
     def fiber_diam(self):
+        """Fiber diameter."""
         return self._fiber_diam
 
     @fiber_diam.setter
@@ -50,6 +52,7 @@ class AxonMorphology(ABC):
 
     @property
     def axon_length(self):
+        """Length of axon."""
         return self._axon_length
 
     @axon_length.setter
@@ -62,6 +65,7 @@ class AxonMorphology(ABC):
 
     @property
     def n_Ranvier(self):
+        """Number of nodes of Ranvier compartments."""
         return self._n_Ranvier
 
     @n_Ranvier.setter
@@ -112,10 +116,12 @@ class AxonMorphologyMRG2002(AxonMorphology):
 
     @AxonMorphology.n_comp.setter
     def n_comp(self, value):
+        """Number of compartments."""
         self._n_comp = value
 
     @property
     def node_step(self):
+        """Node step."""
         return self._node_step
 
     @node_step.setter
@@ -124,6 +130,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
 
     @property
     def ranvier_length(self):
+        """Length of Ranvier compartment."""
         return self._ranvier_length
 
     @ranvier_length.setter
@@ -132,6 +139,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
 
     @property
     def para1_length(self):
+        """Length of the 1st paranodal compartments."""
         return self._para1_length
 
     @para1_length.setter
@@ -140,6 +148,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
 
     @property
     def para2_length(self):
+        """Length of the 2nd paranodal compartments."""
         return self._para2_length
 
     @para2_length.setter
@@ -148,6 +157,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
 
     @property
     def ranvier_nodes(self):
+        """Number of node of Ranvier compartments."""
         return self._ranvier_nodes
 
     @ranvier_nodes.setter
@@ -156,6 +166,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
 
     @property
     def inter_nodes(self):
+        """Number of internodal compartments."""
         return self._inter_nodes
 
     @inter_nodes.setter
@@ -164,6 +175,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
 
     @property
     def para1_nodes(self):
+        """Number of first paranodal compartments."""
         return self._para1_nodes
 
     @para1_nodes.setter
@@ -172,14 +184,17 @@ class AxonMorphologyMRG2002(AxonMorphology):
 
     @property
     def para2_nodes(self):
+        """Number of 2nd paranodal compartments."""
         return self._para2_nodes
 
     @para2_nodes.setter
     def para2_nodes(self, value):
         self._para2_nodes = int(value)
 
+    # TODO same as para1_nodes ?
     @property
     def n_para1(self):
+        """Number of all 1st paranodal compartments."""
         return self._n_para1
 
     @n_para1.setter
@@ -188,6 +203,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
 
     @property
     def n_para2(self):
+        """Number of all 2nd paranodal compartments."""
         return self._n_para2
 
     @n_para2.setter
@@ -196,6 +212,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
 
     @AxonMorphology.n_Ranvier.setter
     def n_Ranvier(self, value):
+        """Nodes of Ranvier."""
         # must be an odd number!
         if value % 2 == 0:
             value -= 1
@@ -207,6 +224,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
         self.n_para2 = (self.para2_nodes * self.n_Ranvier - 1) / (21 - 1)
 
     def get_n_comp(self, downsampled):
+        """Get number of compartments depending on sampling."""
         if downsampled:
             if self.fiber_diam >= 5.7:
                 # node -- -- internodal -- -- -- -- internodal -- -- node
@@ -228,6 +246,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
         return n_comp
 
     def get_n_segments(self, downsampled):
+        """Get number of segments depending on sampling."""
         n_comp = self.get_n_comp(downsampled)
         return (self.n_Ranvier - 1) * n_comp + 1
 
@@ -241,7 +260,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
 
         Parameters
         ----------
-        axon_diam: float
+        fiber_diam: float
            diameter in micrometers for all fibers in the pathway
         axon_length: float, optional
            axon lengths in mm for all fibers in the pathway
@@ -295,6 +314,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
         self.para2_d = template["para2_diameter"]
         self.lamellas = template["lamellas"]
 
+    # ruff: noqa: C901
     def get_local_compartment_coords(self) -> np.ndarray:
         """Get 1-D coordinates of internodal compartments relative to the node at 0.0.
 
@@ -379,10 +399,12 @@ class AxonMorphologyMcNeal1976(AxonMorphology):
 
     @property
     def node_step(self):
+        """Node step."""
         return self.fiber_diam * 0.2
 
     @node_step.setter
     def node_step(self, value):
+        """Node step."""
         _logger.warning(
             "The node step in the McNeal1976 model is fixed."
             "The value remains unchanged."
@@ -445,30 +467,45 @@ class AxonMorphologyMcNeal1976(AxonMorphology):
 
 
 class AxonModels:
+    """Model to represent axons for simulation in OSS-DBS."""
+
     def __init__(self, stim_dir: str, hemis_idx: int, description_file: str):
         """Model to represent axons for simulation in OSS-DBS
         Fiber trajectories are used to allocate axon models.
 
         Parameters
         ----------
-        stim_directory: str
-            full path to the stimulation or result folder where allocated axons are stored
+        stim_dir: str
+            full path to the folder where allocated axons are stored
         hemis_idx: int
             hemisphere ID (0 - right, 1 - left)
         description_file: str
-            full path to oss-dbs_parameters.mat or a .json file that contains the following parameters:
-                pathway_mat_file: list of full paths to pathways files in lead-dbs format (could be just one)
-                axon_diams_all: list of diameters in micrometers for all provided fibers, one per pathway
-                axon_lengths_all: list of axon lengths in mm, one per pathway
-                centering_coordinates: list of lists, 3-D coordinates used to center axons on fibers (e.g. active contacts)
-                axon_model: str, NEURON model ('MRG2002', 'MRG2002_DS' (downsampled), 'McNeal1976' (classic McNeal's))
-                combined_h5_file: str, full path to the file where axons are stored
+            full path to oss-dbs_parameters.mat or a .json file
+            that contains the following parameters:
+                pathway_mat_file: list
+                    full paths to pathways files
+                    in lead-dbs format (could be just one)
+                axon_diams_all: list
+                    diameters in micrometers for all
+                    provided fibers, one per pathway
+                axon_lengths_all: list
+                    axon lengths in mm, one per pathway
+                centering_coordinates: list[list]
+                    3-D coordinates used to center axons on fibers
+                    (e.g. active contacts)
+                axon_model: str
+                    NEURON model
+                combined_h5_file: str
+                    full path to the file where axons are stored
                 projection_names: list of str, optional
+                    Names
                 connectome_name: str, optional
+                    Connectome name
 
         Notes
         -----
-        oss-dbs_parameters.mat is created via Lead-DBS. For .json parameters, see _import_custom_neurons()
+        oss-dbs_parameters.mat is created via Lead-DBS.
+        For .json parameters, see _import_custom_neurons()
 
         """
         # To find files
@@ -508,7 +545,8 @@ class AxonModels:
             self._import_custom_neurons(description_file)
         else:
             raise NotImplementedError(
-                f"Unsupported input format {file_ending}, provide either a json or a mat-file."
+                f"Unsupported input format {file_ending}, "
+                "provide either a json or a mat-file."
             )
 
     @property
@@ -524,6 +562,7 @@ class AxonModels:
 
     @property
     def axon_model(self):
+        """Name of the axon model."""
         return self._axon_model
 
     @axon_model.setter
@@ -553,17 +592,20 @@ class AxonModels:
 
         Parameters
         ----------
-        hemis_idx: int, hemisphere ID (0 - right, 1 - left)
+        hemis_idx: int
+            hemisphere ID (0 - right, 1 - left)
+        description_file: str
+            File prepared by Lead-DBS
 
         """
         # load .mat of different versions (WON'T WORK THIS WAY ATM!)
         try:
             file_inp = h5py.File(description_file, mode="r")
-        except ValueError:
+        except ValueError as err:
             raise ValueError(
                 "Please, save oss-dbs_parameters using "
                 "'save(oss-dbs_parameters_path, 'settings', '-v7.3')'"
-            )
+            ) from err
 
         # try to read from .mat
         if "neuronModel" in file_inp["settings"]:
@@ -584,7 +626,8 @@ class AxonModels:
             list_ascii.append(array_ascii[i][0])
         self.connectome_name = "".join(chr(i) for i in list_ascii)
 
-        # 'Multi-tract' connectomes contain multiple pathways (projections) in separate .mat files
+        # 'Multi-tract' connectomes contain multiple pathways
+        # (projections) in separate .mat files
         if "Multi-Tract" in self.connectome_name:
             # this file is pre-filtered connectome assembled in one file in Lead-DBS
             self.pathway_mat_file = [
@@ -671,7 +714,8 @@ class AxonModels:
              'axon_lengths_all':[20.0,20.0,10.0],
 
              # in this case, we just have some STN coordinates for left and right in MNI
-             'centering_coordinates': [[7.5838, -18.3984, 1.8932],[-7.5838, -18.3984, 1.8932]],
+             'centering_coordinates': [[7.5838, -18.3984, 1.8932],
+                                       [-7.5838, -18.3984, 1.8932]],
              'axon_model': 'McNeal1976',
              'combined_h5_file': 'dataset/all_tracts'
          }
@@ -794,9 +838,13 @@ class AxonModels:
 
         Parameters
         ----------
-        n_Ranvier_per_projection: list, number of nodes of Ranvier for axons of each pathway (one entry per pathway)
-        n_Neurons: list, number of neurons seeded per pathway
-        orig_n_Neurons: list, number of neurons per pathway as defined in the connectome (before Kuncel pre-filtering)
+        n_Ranvier_per_projection: list
+            number of nodes of Ranvier for axons of each pathway (one entry per pathway)
+        n_Neurons: list
+            number of neurons seeded per pathway
+        orig_n_Neurons: list
+            number of neurons per pathway as defined
+            in the connectome (before Kuncel pre-filtering)
         """
         # dictionary to store axon parameters
         axon_dict = {
@@ -904,13 +952,16 @@ class AxonModels:
         )
 
         # truncate streamlines to match selected axon length
-        # axons are seeded on the segment closest to active contacts or other ROI, see self.centering_coordinates
+        # axons are seeded on the segment closest to active contacts
+        # or other ROI, see self.centering_coordinates
         streamlines_axons = place_axons_on_streamlines(
             streamlines_resampled, axon_morphology.n_Ranvier, self.centering_coordinates
         )
 
-        # streamlines_axons already contain the position of Ranvier nodes. Now we get internodal compartments
-        # and store all coordinates in a 3D array: compartment index, spatial axis, axon index
+        # streamlines_axons already contain the position of Ranvier nodes.
+        # Now we get internodal compartments
+        # and store all coordinates in a 3D array:
+        # compartment index, spatial axis, axon index
         axon_array = np.zeros(
             (axon_morphology.n_segments, 3, len(streamlines_axons)), dtype=float
         )

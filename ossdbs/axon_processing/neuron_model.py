@@ -12,18 +12,18 @@ from typing import Optional
 import h5py
 import numpy as np
 
-subversion = platform.python_version_tuple()
-if int(subversion[1]) == 8:
-    from importlib_resources import files
-else:
-    from importlib.resources import files
-
 from .axon_models import AxonMorphologyMcNeal1976, AxonMorphologyMRG2002
 from .utilities import (
     create_leaddbs_outputs,
     create_paraview_outputs,
     store_axon_statuses,
 )
+
+subversion = platform.python_version_tuple()
+if int(subversion[1]) == 8:
+    from importlib_resources import files
+else:
+    from importlib.resources import files
 
 _logger = logging.getLogger(__name__)
 
@@ -81,16 +81,19 @@ class NeuronSimulator(ABC):
 
     @property
     def hoc_file(self):
+        """Name of hoc file."""
         if self._hoc_file is None:
             raise NotImplementedError("Need to implement default hoc file!")
         return self._hoc_file
 
     @property
     def axon_model(self):
+        """Name of axon model."""
         return self._axon_model
 
     @property
     def signal_dict(self):
+        """Information about stimulation signal."""
         return self._signal_dict
 
     @signal_dict.setter
@@ -99,26 +102,33 @@ class NeuronSimulator(ABC):
 
     @property
     def axon_model_type(self):
+        """Type of axon model."""
         return self._pathways_dict["Axon_Model_Type"]
 
     @property
     def connectome_name(self):
+        """Name of connectome."""
         return self._pathways_dict["connectome_name"]
 
     def get_axon_diam(self, idx: int):
+        """Return the axon/fiber diameters."""
         return self._pathways_dict["axon_diams"][idx]
 
     def get_n_Ranvier(self, idx: int):
+        """Get the number of nodes of Ranvier."""
         return self._pathways_dict["n_Ranvier"][idx]
 
     def get_N_seeded_neurons(self, idx: int):
+        """Get the number of seeded neurons."""
         return self._pathways_dict["N_seeded_neurons"][idx]
 
     def get_N_orig_neurons(self, idx: int):
+        """Get the number of original neurons."""
         return self._pathways_dict["N_orig_neurons"][idx]
 
     @property
     def downsampled(self) -> bool:
+        """Return if model is downsampled."""
         return self._downsampled
 
     @downsampled.setter
@@ -232,16 +242,23 @@ class NeuronSimulator(ABC):
         self._td_solution.close()
 
     def get_v_ext(self, v_time_sol):
-        """Convert el. potential computed by OSS-DBS to extracellular el. potential taking into account scaling parameters.
+        """Convert potential computed by OSS-DBS to extracellular potential.
 
         Parameters
         ----------
-        v_time_sol: NxM numpy.ndarray, (abstract) el. potential distribution (in V) in space (on the neuron) and time (DBS signal)
+        v_time_sol: numpy.ndarray
+            NxM potential distribution (in V) in space (on the neuron)
+            and time (DBS signal)
 
         Returns
         -------
-        v_ext: NxM numpy.ndarray, extracellular el. potential distribution (mV) in space (on the neuron) and time (DBS signal)
+        v_ext: numpy.ndarray
+            NxM extracellular potential distribution (mV) in space (on the neuron)
+            and time (DBS signal)
 
+        Notes
+        -----
+        Scaling is taken into account!
         """
         scaling = self.signal_dict["scaling"]
         v_ext = np.zeros_like(v_time_sol, float)
@@ -261,7 +278,8 @@ class NeuronSimulator(ABC):
         neuron_index: int
             index of neuron in the pathway starting from 0
         v_time_sol: np.ndarray
-            (abstract) el. potential distribution (in V) in space (on the neuron) and time (DBS signal)
+            potential distribution (in V) in space (on the neuron)
+            and time (DBS signal)
         output:
             multiprocessing output data structure
 
@@ -325,19 +343,31 @@ class NeuronSimulator(ABC):
         activated = bool(neuron.h.stoprun)
         return activated
 
+    # ruff: noqa: C901
     def check_pathway_activation(
         self, pathway_dataset, pathway_idx, pathway_name=None, scaling_index=None
     ):
-        """Parallelized probing of action potentials at all stimulated neurons (axons) described by supplied pathway datagroups.
+        """Parallelized probing of action potentials at all stimulated neurons
+           (axons) described by supplied pathway datagroups.
 
         Parameters
         ----------
-        pathway_dataset: h5 group, contains datasets that describe geometries for all neuron (axons)
-        pre_status: Nx1 numpy.ndarray, vector of initial neuron (axon) statuses (0 - available for probing, -1 - intersected with electrode, -2 - inside CSF)
+        pathway_dataset: h5 group
+            contains datasets that describe geometries for all neuron (axons)
+        pre_status: numpy.ndarray
+            vector of initial neuron (axon) statuses
+            (0: available for probing, -1: intersected with electrode, -2: inside CSF)
+        pathway_name: str, optional
+            Name of pathway
+        pathway_idx: int
+            Index of pathway
+        scaling_index: int, optional
+            Index of scaling (needed for superposition)
 
         Note
         ----------
-        Creates 'Axon_states_*' .mat and .csv files for visualization in Lead-DBS and Paraview, respectively.
+        Creates 'Axon_states_*' .mat and .csv files for visualization
+        in Lead-DBS and Paraview, respectively.
         Also stores summary statistics in 'Pathway_status_*.json'
         """
         # use half of CPUs
@@ -398,7 +428,8 @@ class NeuronSimulator(ABC):
                     neuron_index + 1
                 )  # because Lead-DBS numbering starts from 1
 
-                # check which neurons were flagged with CSF and electrode intersection, skip probing of those
+                # check which neurons were flagged with CSF and electrode intersection
+                # skip probing of those
                 if pre_status[neuron_index] != 0:
                     Axon_Lead_DBS[
                         neuron_index
@@ -502,6 +533,8 @@ class NeuronSimulator(ABC):
 
 
 class MRG2002(NeuronSimulator):
+    """MRG2002 NEURON model."""
+
     _axon_model = "MRG2002"
     # needs extra compilation steps
     _extra_initialization = True
@@ -513,9 +546,11 @@ class MRG2002(NeuronSimulator):
 
     @property
     def resources_path(self):
+        """Link to template NEURON files."""
         return "MRG2002"
 
     def paste_to_hoc(self, parameters_dict: dict) -> None:
+        """Update the hoc file with parameters."""
         info_to_update = [
             "axonnodes",
             "paranodes1",
@@ -554,6 +589,7 @@ class MRG2002(NeuronSimulator):
         hoc_file.close()
 
     def modify_hoc_file(self, nRanvier, stepsPerMs, axon_morphology):
+        """Update parameters in the hoc file."""
         fiber_diam = axon_morphology.fiber_diam
         if fiber_diam >= 5.7:
             axoninter = (nRanvier - 1) * 6
@@ -586,7 +622,13 @@ class MRG2002(NeuronSimulator):
 
         Parameters
         ----------
-        v_time_sol: LxM numpy.ndarray, (abstract) el. potential distribution (in V) in space (on the neuron) and time (DBS signal)
+        v_time_sol: numpy.ndarray
+            LxM potential distribution (in V) in space (on the neuron)
+            and time (DBS signal)
+        axonDiam: float
+            Diameter of axon
+        axon_morphology: AxonMorphology
+            Model of axon morphology
 
         Returns
         -------
@@ -624,7 +666,9 @@ class MRG2002(NeuronSimulator):
                 z = int(k / 11) * 3 + 2
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
-            # node -- -- intern -- -- -- -- intern -- -- node  ->  node-para1-para2-intern-intern-intern-intern-intern-intern-para2-para1-node
+            # node -- -- intern -- -- -- -- intern -- -- node ->
+            # ruff: noqa: E501
+            # node-para1-para2-intern-intern-intern-intern-intern-intern-para2-para1-node
             internodal_length = (
                 axon_morphology.node_step
                 - axon_morphology.ranvier_length
@@ -758,15 +802,19 @@ class MRG2002(NeuronSimulator):
 
 
 class McNeal1976(NeuronSimulator):
+    """McNeal1976 NEURON model."""
+
     _axon_model = "McNeal1976"
     _hoc_file = "init_B5_extracellular.hoc"
     _ax_morph_class = AxonMorphologyMcNeal1976
 
     @property
     def resources_path(self):
+        """Link to template NEURON files."""
         return "McNeal1976"
 
     def paste_to_hoc(self, parameters_dict):
+        """Update the hoc file with parameters."""
         info_to_update = ["axonnodes", "v_init", "steps_per_ms"]
 
         if not set(info_to_update) == set(parameters_dict.keys()):
@@ -803,6 +851,7 @@ class McNeal1976(NeuronSimulator):
         return True
 
     def modify_hoc_file(self, nRanvier, stepsPerMs, axon_morphology):
+        """Update parameters in the hoc file."""
         parameters_dict = {
             "v_init": self._v_init,
             "axonnodes": nRanvier,
