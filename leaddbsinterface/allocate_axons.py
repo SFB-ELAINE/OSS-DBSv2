@@ -2,7 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
+import logging
 
+from ossdbs import set_logger
 from ossdbs.axon_processing import AxonModels
 
 
@@ -34,7 +36,13 @@ def main():
         help="the file with Lead-DBS parameter information "
         "(usually oss-dbs_parameters.mat)",
     )
+
+    parser.add_argument(
+        "--loglevel", type=int, help="specify verbosity of logger", default=logging.INFO
+    )
+
     args = parser.parse_args()
+    set_logger(level=args.loglevel)
 
     # process Lead-DBS input
     axons_for_PAM = AxonModels(

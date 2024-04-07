@@ -20,6 +20,7 @@ from ossdbs.api import (
     prepare_solver,
     prepare_stimulation_signal,
     prepare_volume_conductor_model,
+    run_PAM,
     run_volume_conductor_model,
     set_contact_and_encapsulation_layer_properties,
 )
@@ -171,6 +172,10 @@ def main() -> None:
 
     _logger.info(f"Timings:\n {pprint.pformat(timings)}")
     _logger.info(f"Volume conductor timings:\n {pprint.pformat(vcm_timings)}")
+
+    # run PAM
+    if settings["PathwayFile"] is not None:
+        run_PAM(settings)
 
     # write success file
     open(

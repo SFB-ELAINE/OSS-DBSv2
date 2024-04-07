@@ -65,6 +65,7 @@ repository = "https://github.com/SFB-ELAINE/oss-dbsv2"
 ossdbs =  'ossdbs.main:main'
 leaddbs2ossdbs = 'leaddbsinterface.convert_input_dictionary:main'
 prepareaxonmodel = 'leaddbsinterface.allocate_axons:main'
+run_pathway_activation = 'ossdbs.axon_processing.main:main'
 
 [tool.setuptools]
 packages = ["ossdbs", "leaddbsinterface"]

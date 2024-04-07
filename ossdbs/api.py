@@ -2,10 +2,13 @@
 # Copyright 2023, 2024 Jan Philipp Payonk, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import json
 import logging
+import os
 
 import numpy as np
 
+from ossdbs.axon_processing import MRG2002, McNeal1976
 from ossdbs.dielectric_model import (
     default_dielectric_parameters,
     dielectric_model_parameters,
@@ -453,3 +456,27 @@ def load_images(settings):
         _logger.info("Load DTI image")
         dti_image = DiffusionTensorImage(settings["MaterialDistribution"]["DTIPath"])
     return mri_image, dti_image
+
+
+def run_PAM(settings):
+    """Run pathway activation analysis."""
+    _logger.info("Running PAM")
+    pathway_file = settings["PathwayFile"]
+    pathway_solution_dir = settings["OutputPath"]
+    time_domain_solution = os.path.join(
+        settings["OutputPath"], "oss_time_result_PAM.h5"
+    )
+    with open(pathway_file) as fp:
+        pathways_dict = json.load(fp)
+
+    model_type = pathways_dict["Axon_Model_Type"]
+
+    if "MRG2002" in model_type:
+        neuron_model = MRG2002(pathways_dict, pathway_solution_dir)
+    elif "McNeal1976" in model_type:
+        neuron_model = McNeal1976(pathways_dict, pathway_solution_dir)
+    else:
+        raise NotImplementedError(f"Model {model_type} not yet implemented.")
+
+    neuron_model.load_solution(time_domain_solution)
+    neuron_model.process_pathways(scaling=1.0, scaling_index=None)

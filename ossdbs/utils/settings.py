@@ -111,6 +111,7 @@ class Settings:
         "ActivationThresholdVTA": None,
         "FailFlag": "oss",
         "OutOfCore": False,
+        "PathwayFile": None,
     }
 
     def __init__(self, partial_settings: dict) -> None:
