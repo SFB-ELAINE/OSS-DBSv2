@@ -31,7 +31,7 @@ dependencies = ["h5py==3.8.0",
                 "pandas==1.5.3",
                 "scipy==1.10.1",
 		"matplotlib",
-		"dipy==1.9.0",
+		"dipy==1.8.0",
 		"importlib_resources; python_version=='3.8'"
                 ]
 
