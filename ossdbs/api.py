@@ -445,6 +445,74 @@ def run_volume_conductor_model(settings, volume_conductor, frequency_domain_sign
     return vcm_timings
 
 
+def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_signal):
+    """TODO document.
+
+    Notes
+    -----
+    Run at all frequencies.
+    If the mode is multisine, a provided list of frequencies is used.
+    """
+    _logger.info("Run StimSets volume conductor model")
+
+    out_of_core = settings["OutOfCore"]
+    compute_impedance = False
+    if "ComputeImpedance" in settings:
+        if settings["ComputeImpedance"]:
+            _logger.info("Will compute impedance at each frequency")
+            compute_impedance = True
+    # no vtk export
+    export_vtk = False
+    # no intermediate exports
+    export_frequency = None
+    # no VTA analysis
+    activation_threshold = None
+    # prepare point model
+    point_models = generate_point_models(settings)
+
+    for contact in geometry.contacts:
+        if np.isclose(contact.voltage, 0) and contact.active:
+            ground_contact = contact.name
+            _logger.info(f"Will skip ground contact {contact.name}")
+    for contact in geometry.contacts:
+        if contact.name == ground_contact:
+            continue
+        # set current contact active, all other passive
+        for upd_contact in geometry.contacts:
+            # don't change ground
+            if upd_contact.name == ground_contact:
+                continue
+            active = False
+            floating = True
+            voltage = 0.0
+            if contact.name == upd_contact.name:
+                active = True
+                floating = False
+                voltage = 1.0
+            # do not update ground
+            contact_idx = geometry.get_contact_index(upd_contact.name)
+            geometry.update_contact(
+                contact_idx,
+                {"Floating": floating, "Active": active, "Voltage[V]": voltage},
+            )
+        volume_conductor = prepare_volume_conductor_model(
+            settings, geometry, conductivity, solver
+        )
+        _logger.info(f"Running with contacts:\n{volume_conductor.contacts}")
+
+        volume_conductor.output_path = settings["OutputPath"] + contact.name
+        vcm_timings = volume_conductor.run_full_analysis(
+            frequency_domain_signal,
+            compute_impedance,
+            export_vtk,
+            point_models=point_models,
+            activation_threshold=activation_threshold,
+            out_of_core=out_of_core,
+            export_frequency=export_frequency,
+        )
+        _logger.info(f"Timing for contact {contact.name}: {vcm_timings}")
+
+
 def load_images(settings):
     """Load MRI and DTI images."""
     _logger.info("Load MRI image")

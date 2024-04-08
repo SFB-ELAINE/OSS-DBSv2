@@ -38,7 +38,10 @@ class Mesh:
     def load_mesh(self, filename: str) -> None:
         """Load NGSolve mesh from file."""
         if not os.path.isfile(filename):
-            raise ValueError("Provide a correct filename to load the mesh")
+            raise ValueError(
+                "Provide a correct filename to load the mesh,"
+                f"could not find {filename}"
+            )
         self._mesh = ngsolve.Mesh(filename=filename)
         self._mesh.ngmesh.SetGeometry(self._geometry)
         self._mesh.Curve(order=self.order)

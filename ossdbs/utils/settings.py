@@ -112,6 +112,7 @@ class Settings:
         "FailFlag": "oss",
         "OutOfCore": False,
         "PathwayFile": None,
+        "StimSets": False,
     }
 
     def __init__(self, partial_settings: dict) -> None:
