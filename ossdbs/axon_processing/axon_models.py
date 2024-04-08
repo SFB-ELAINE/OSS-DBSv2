@@ -805,15 +805,16 @@ class AxonModels:
                 n_Neurons,
                 orig_n_Neurons,
             ) = self._get_local_axons_fibers(i, axon_morphology)
+            n_Ranvier_per_projection_all[i] = n_Ranvier_per_projection
+            n_Neurons_all[i] = n_Neurons
+            orig_n_Neurons_all[i] = orig_n_Neurons
+
             _logger.info(
                 f"{n_Neurons_all[i]} axons seeded for "
                 f"{self.projection_names[i]} with "
                 f"{n_Ranvier_per_projection_all[i]}"
                 " nodes of Ranvier"
             )
-            n_Ranvier_per_projection_all[i] = n_Ranvier_per_projection
-            n_Neurons_all[i] = n_Neurons
-            orig_n_Neurons_all[i] = orig_n_Neurons
 
         # only add axon diameters for seeded axons
         self.axon_diams = []
