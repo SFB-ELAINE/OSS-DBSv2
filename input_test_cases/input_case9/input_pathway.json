@@ -16,7 +16,7 @@
     {
       "Name": "BrainSurface",
       "Active": true,
-      "Voltage[V]": 0.0
+      "Current[A]": -1.0
     }],
   "Electrodes": [
     {
@@ -56,7 +56,7 @@
     "Type": "ColeCole4"
   },
   "StimulationSignal": {
-    "CurrentControlled": false,
+    "CurrentControlled": true,
     "Type": "Rectangle",
     "SpectrumMode": "OctaveBand",
     "Frequency[Hz]": 130.0,

@@ -456,11 +456,11 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
     _logger.info("Run StimSets volume conductor model")
 
     out_of_core = settings["OutOfCore"]
-    compute_impedance = False
-    if "ComputeImpedance" in settings:
-        if settings["ComputeImpedance"]:
-            _logger.info("Will compute impedance at each frequency")
-            compute_impedance = True
+    if not frequency_domain_signal.current_controlled:
+        _logger.warning(
+            "StimSets requires current-controlled stimulation"
+            ", thus the setting was switched on"
+        )
     # no vtk export
     export_vtk = False
     # no intermediate exports
@@ -470,30 +470,37 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
     # prepare point model
     point_models = generate_point_models(settings)
 
+    ground_contact = None
     for contact in geometry.contacts:
-        if np.isclose(contact.voltage, 0) and contact.active:
+        if np.isclose(contact.current, -1) and contact.active:
             ground_contact = contact.name
             _logger.info(f"Will skip ground contact {contact.name}")
+    if ground_contact is None:
+        raise ValueError(
+            "No ground contact set. " "Choose one active contact with current -1."
+        )
     for contact in geometry.contacts:
         if contact.name == ground_contact:
             continue
         # set current contact active, all other passive
         for upd_contact in geometry.contacts:
+            # reset all voltages
+            contact_idx = geometry.get_contact_index(upd_contact.name)
+            geometry.update_contact(contact_idx, {"Voltage[V]": 0.0})
             # don't change ground
             if upd_contact.name == ground_contact:
                 continue
             active = False
             floating = True
-            voltage = 0.0
+            current = 0.0
             if contact.name == upd_contact.name:
                 active = True
                 floating = False
-                voltage = 1.0
-            # do not update ground
-            contact_idx = geometry.get_contact_index(upd_contact.name)
+                current = 1.0
+            # write new contact settings
             geometry.update_contact(
                 contact_idx,
-                {"Floating": floating, "Active": active, "Voltage[V]": voltage},
+                {"Floating": floating, "Active": active, "Current[A]": current},
             )
         volume_conductor = prepare_volume_conductor_model(
             settings, geometry, conductivity, solver
@@ -503,8 +510,7 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
         volume_conductor.output_path = settings["OutputPath"] + contact.name
         vcm_timings = volume_conductor.run_full_analysis(
             frequency_domain_signal,
-            compute_impedance,
-            export_vtk,
+            export_vtk=export_vtk,
             point_models=point_models,
             activation_threshold=activation_threshold,
             out_of_core=out_of_core,
