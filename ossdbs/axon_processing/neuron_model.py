@@ -10,6 +10,7 @@ from abc import ABC, abstractmethod
 from typing import Optional
 
 import h5py
+import neuron
 import numpy as np
 
 from .axon_models import AxonMorphologyMcNeal1976, AxonMorphologyMRG2002
@@ -32,7 +33,7 @@ class NeuronSimulator(ABC):
     """Interface to NEURON simulator."""
 
     # directory, where all NEURON simulations will be conducted
-    _neuron_workdir = os.getcwd()  # "neuron_model"
+    _neuron_workdir = "neuron_model"
     # by default we don't assume a downsampled model
     _downsampled = False
     # needs to be implemented
@@ -187,6 +188,8 @@ class NeuronSimulator(ABC):
             # stderr=subprocess.STDOUT,
             cwd=os.path.abspath(self._neuron_workdir),
         )
+        # load mechanisms into environment
+        neuron.load_mechanisms(self._neuron_workdir)
 
     def load_solution(self, time_domain_h5_file: str):
         """Load solution from h5 file.
@@ -306,11 +309,10 @@ class NeuronSimulator(ABC):
         extra_initialization: bool
             Delete and create nodes (needed for MRG2002 model)
         """
-        _logger.debug(f"Load file: {self.hoc_file}")
-        # Do not move the import! Causes trouble
-        import neuron
-
-        neuron.h(f'{{load_file("{self.hoc_file}")}}')
+        _logger.debug(f"Load file: {os.path.join(self._neuron_workdir, self.hoc_file)}")
+        neuron.h(
+            f'{{load_file("{os.path.join(self._neuron_workdir, self.hoc_file)}")}}'
+        )
         if extra_initialization:
             neuron.h.deletenodes()
             neuron.h.createnodes()
