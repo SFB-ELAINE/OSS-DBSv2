@@ -34,8 +34,13 @@ class VolumeConductorNonFloating(VolumeConductor):
         )
         boundaries = [contact.name for contact in self.contacts.active]
         self._space = self.h1_space(boundaries=boundaries, is_complex=self.is_complex)
-        self._potential = ngsolve.GridFunction(space=self._space)
         self._floating_values = {}
+        self.update_space()
+
+    def update_space(self):
+        """Update space (e.g., if mesh changes)."""
+        # only GridFunction needs to be updated
+        self._potential = ngsolve.GridFunction(space=self._space)
 
     def compute_solution(self, frequency: float) -> ngsolve.comp.GridFunction:
         """Evaluate electrical potential of volume conductor.
@@ -60,7 +65,6 @@ class VolumeConductorNonFloating(VolumeConductor):
         _logger.debug("Assign potential values")
         boundary_values = self.contacts.voltages
         coefficient = self.mesh.boundary_coefficients(boundary_values)
-        self._potential = ngsolve.GridFunction(space=self._space)
         self._potential.Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
 
         _logger.debug("Prepare weak form")

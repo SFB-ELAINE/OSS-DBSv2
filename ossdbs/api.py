@@ -441,6 +441,7 @@ def run_volume_conductor_model(settings, volume_conductor, frequency_domain_sign
         activation_threshold=settings["ActivationThresholdVTA"],
         out_of_core=out_of_core,
         export_frequency=export_frequency,
+        adaptive_mesh_refinement=settings["AdaptiveMeshRefinement"],
     )
     return vcm_timings
 

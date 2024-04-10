@@ -13,6 +13,10 @@ from ossdbs.utils.nifti1image import DiffusionTensorImage, MagneticResonanceImag
 _logger = logging.getLogger(__name__)
 
 
+# TODO add a linear interpolation
+# linear_interpolation: bool = False
+
+
 class ConductivityCF:
     """Represents the conductivity distribution by magnetic resonance imaging.
 

@@ -13,6 +13,7 @@ class TypeChecker:
         "FailFlag": str,
         "OutOfCore": bool,
         "StimSets": bool,
+        "AdaptiveMeshRefinement": bool,
         "PathwayFile": (type(None), str),
         "ActivationThresholdVTA": (type(None), float),
         "Contacts": {"MaxMeshSize": float, "MaxMeshSizeEdge": float},

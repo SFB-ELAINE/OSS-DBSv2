@@ -106,10 +106,9 @@ class VolumeConductor(ABC):
         """
         return
 
+    @abstractmethod
     def update_space(self):
         """Update space (e.g., if mesh changes)."""
-        # Note: only needed if PlateauSpace is involved
-        pass
 
     def run_full_analysis(
         self,
@@ -212,7 +211,7 @@ class VolumeConductor(ABC):
                 self.signal.signal_length, out_of_core
             )
 
-        for freq_idx in frequency_indices:
+        for computing_idx, freq_idx in enumerate(frequency_indices):
             frequency = self.signal.frequencies[freq_idx]
             _logger.info(f"Computing at frequency: {frequency}")
             time_0 = time.time()
@@ -234,27 +233,42 @@ class VolumeConductor(ABC):
             sigma_has_changed = self._has_sigma_changed(freq_idx)
             if sigma_has_changed:
                 self.compute_solution(frequency)
+                if compute_impedance:
+                    impedance = self.compute_impedance()
+                    self._impedances[band_indices] = impedance
+
                 # refine only at first frequency
                 if freq_idx == frequency_indices[0] and adaptive_mesh_refinement:
+                    if not compute_impedance:
+                        impedance = self.compute_impedance()
+                    else:
+                        impedance = self._impedances[band_indices]
                     _logger.info(
                         "Number of elements before refinement:"
                         f"{self.mesh.ngsolvemesh.ne}"
                     )
-                    self.adaptive_mesh_refinement()
+                    error = 100
+                    refinements = 0
+                    # TODO write a meaningful algo
+                    while error > 0.1 and refinements < 10:
+                        self.adaptive_mesh_refinement()
+                        # solve on refined mesh
+                        self.compute_solution(frequency)
+                        new_impedance = self.compute_impedance()
+                        error = 100 * abs(impedance - new_impedance) / abs(impedance)
+                        refinements += 1
+
                     _logger.info(
                         "Number of elements after refinement:"
                         f"{self.mesh.ngsolvemesh.ne}"
                     )
-                self.compute_solution(frequency)
-                if compute_impedance:
-                    impedance = self.compute_impedance()
-                    self._impedances[band_indices] = impedance
             else:
                 _logger.info(f"Skipped computation at {frequency} Hz")
                 if compute_impedance:
-                    impedance = self._impedances[freq_idx - 1]
+                    # copy from previous frequency
+                    impedance = self._impedances[computing_idx - 1]
                     self._impedances[band_indices] = impedance
-
+            print(freq_idx, impedance)
             # scale factor: is one for VC and depends on impedance for other case
             self._scale_factor = self.get_scale_factor(freq_idx)
             _logger.debug(f"Scale factor: {self._scale_factor}")

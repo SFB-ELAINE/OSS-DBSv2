@@ -113,6 +113,7 @@ class Settings:
         "OutOfCore": False,
         "PathwayFile": None,
         "StimSets": False,
+        "AdaptiveMeshRefinement": False,
     }
 
     def __init__(self, partial_settings: dict) -> None:
