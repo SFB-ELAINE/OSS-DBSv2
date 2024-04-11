@@ -89,7 +89,15 @@ class ModelGeometry:
             brain_surfaces = brain.get_surface_names()
             for surface in brain_surfaces:
                 self._contacts.append(Contact(name=surface))
-        return netgen.occ.OCCGeometry(brain_geo)
+        try:
+            return netgen.occ.OCCGeometry(brain_geo)
+        except netgen.occ.OCCException:
+            _logger.error(
+                "The geometry couldn't be constructed. "
+                "Tip: reduce the size of the brain geometry "
+                "or remove the encapsulation layer."
+            )
+            raise
 
     @property
     def electrodes(self) -> List[ElectrodeModel]:
