@@ -53,6 +53,7 @@ class TimeDomainSignal(ABC):
         pulse_width: float,
         inter_pulse_width: float,
         counter_pulse_width: Optional[float] = None,
+        counter_pulse_amplitude: Optional[float] = 1.0,
     ) -> None:
         if np.isclose(frequency, 0):
             raise ValueError("Frequency must be greater than zero.")
@@ -60,8 +61,11 @@ class TimeDomainSignal(ABC):
         self._pulse_width = pulse_width
         self._inter_pulse_width = inter_pulse_width
         self._counter_pulse_width = counter_pulse_width
+        # the values here are relative amplitudes
+        # e.g., if the signal is 1V and the counter_pulse_amplitude is 0.5
+        # its amplitude will be 0.5V (same for 1mA)
         self._amplitude = 1.0
-        self._counter_amplitude = 1.0
+        self._counter_amplitude = counter_pulse_amplitude
 
     @property
     def amplitude(self) -> float:

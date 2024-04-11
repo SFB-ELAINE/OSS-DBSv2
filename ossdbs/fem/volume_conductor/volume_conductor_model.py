@@ -268,7 +268,6 @@ class VolumeConductor(ABC):
                     # copy from previous frequency
                     impedance = self._impedances[computing_idx - 1]
                     self._impedances[band_indices] = impedance
-            print(freq_idx, impedance)
             # scale factor: is one for VC and depends on impedance for other case
             self._scale_factor = self.get_scale_factor(freq_idx)
             _logger.debug(f"Scale factor: {self._scale_factor}")

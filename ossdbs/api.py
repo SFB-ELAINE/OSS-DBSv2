@@ -293,6 +293,7 @@ def generate_signal(settings) -> TimeDomainSignal:
             1e-6 * signal_settings["PulseWidth[us]"],
             1e-6 * signal_settings["InterPulseWidth[us]"],
             1e-6 * signal_settings["CounterPulseWidth[us]"],
+            signal_settings["CounterAmplitude"],
         )
     elif signal_type == "Triangle":
         signal = TriangleSignal(
@@ -300,6 +301,7 @@ def generate_signal(settings) -> TimeDomainSignal:
             1e-6 * signal_settings["PulseWidth[us]"],
             1e-6 * signal_settings["InterPulseWidth[us]"],
             1e-6 * signal_settings["CounterPulseWidth[us]"],
+            signal_settings["CounterAmplitude"],
         )
     elif signal_type == "Trapezoid":
         signal = TrapezoidSignal(
@@ -308,6 +310,7 @@ def generate_signal(settings) -> TimeDomainSignal:
             1e-6 * signal_settings["InterPulseWidth[us]"],
             1e-6 * signal_settings["CounterPulseWidth[us]"],
             1e-6 * signal_settings["PulseTopWidth[us]"],
+            signal_settings["CounterAmplitude"],
         )
     signal.plot_time_domain_signal(
         signal_settings["CutoffFrequency"], settings["OutputPath"]

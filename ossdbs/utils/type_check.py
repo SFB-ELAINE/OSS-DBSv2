@@ -67,6 +67,7 @@ class TypeChecker:
             "CounterPulseWidth[us]": (int, float),
             "InterPulseWidth[us]": (int, float),
             "SpectrumMode": str,
+            "CounterAmplitude": float,
             "CutoffFrequency": float,
         },
         "PointModel": {
