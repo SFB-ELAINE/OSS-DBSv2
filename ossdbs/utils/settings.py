@@ -81,7 +81,6 @@ class Settings:
             "Type": "CG",
             "Preconditioner": "bddc",
             "PreconditionerKwargs": {},
-            "PrintRates": False,
             "MaximumSteps": 10000,
             "Precision": 1e-12,
         },
