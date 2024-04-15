@@ -93,7 +93,6 @@ class Settings:
                 "Direction": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 1},
                 "PointDistance[mm]": 0.1,
                 "CollapseVTA": False,
-                "TimeDomain": False,
             },
             "VoxelLattice": {
                 "Active": False,

@@ -74,6 +74,7 @@ class VolumeConductor(ABC):
         # or current (voltage-controlled) stimulation
         self._free_stimulation_variable = None
         self._stimulation_variable = None
+        self._floatings_potentials = None
 
         # generate the mesh
         self._mesh = Mesh(self._model_geometry.geometry, self._order)
@@ -198,6 +199,10 @@ class VolumeConductor(ABC):
                 shape=(len(self.signal.frequencies), len(self.contacts.active)),
                 dtype=complex,
             )
+            self._floatings_potentials = np.zeros(
+                shape=(len(self.signal.frequencies), len(self.contacts.floating)),
+                dtype=complex,
+            )
 
         if compute_impedance:
             self._impedances = np.ndarray(
@@ -284,6 +289,7 @@ class VolumeConductor(ABC):
             timings["ComputeSolution"].append(time_1 - time_0)
             time_0 = time_1
 
+            _logger.info("Copy solution to point models")
             # copy solution to point models
             self._process_frequency_domain_solution(band_indices, point_models)
             time_1 = time.time()
@@ -292,6 +298,7 @@ class VolumeConductor(ABC):
 
             # export frequency-domain solution at one frequency
             if np.isclose(frequency, self._export_frequency):
+                _logger.info(f"Exporting at {self._export_frequency}")
                 # save vtk
                 if export_vtk:
                     self.vtk_export(freq_idx)
@@ -319,6 +326,7 @@ class VolumeConductor(ABC):
             df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
 
         # export time domain solution if a proper signal has been passed
+        _logger.info("Launching reconstruction of time domain")
         if len(self.signal.frequencies) > 1 and not multisine_mode:
             for point_model_idx, point_model in enumerate(point_models):
                 # skip point models that are not considered in time domain
@@ -379,10 +387,23 @@ class VolumeConductor(ABC):
             free_stimulation_variable_at_contact[
                 contact.name
             ] = stimulation_variable_in_time[:, contact_idx]
+
         df = pd.DataFrame(free_stimulation_variable_at_contact)
         df.to_csv(
             os.path.join(self.output_path, "stimulation_in_time.csv"), index=False
         )
+
+        floating_at_contact = {}
+        floating_at_contact["time"] = timesteps
+        floating_potentials_in_time = reconstruct_time_signals(
+            self._floatings_potentials, self.signal.signal_length
+        )
+        for contact_idx, contact in enumerate(self.contacts.floating):
+            floating_at_contact[contact.name] = floating_potentials_in_time[
+                :, contact_idx
+            ]
+        df = pd.DataFrame(floating_at_contact)
+        df.to_csv(os.path.join(self.output_path, "floating_in_time.csv"), index=False)
 
     @property
     def output_path(self) -> str:
@@ -811,6 +832,12 @@ class VolumeConductor(ABC):
                     self._stimulation_variable[freq_idx, contact_idx] = (
                         scale_factor * contact.voltage
                     )
+        for contact_idx, contact in enumerate(self.contacts.floating):
+            for freq_idx in band_indices:
+                scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
+                self._floatings_potentials[freq_idx, contact_idx] = (
+                    scale_factor * contact.voltage
+                )
 
     def _copy_frequency_domain_solution(
         self,
