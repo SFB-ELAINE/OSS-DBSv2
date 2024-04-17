@@ -14,7 +14,9 @@ class TypeChecker:
         "OutOfCore": bool,
         "StimSets": {
             "Active": bool,
-            "StimSetsFile": str,
+            "StimSetsFile": (type(None), str),
+            "Scaling": float,
+            "ScalingIndex": (type(None), int),
         },
         "AdaptiveMeshRefinement": bool,
         "PathwayFile": (type(None), str),

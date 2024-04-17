@@ -7,8 +7,6 @@ import logging
 
 from ossdbs import set_logger
 from ossdbs.api import run_PAM
-from ossdbs.utils.settings import Settings
-from ossdbs.utils.type_check import TypeChecker
 
 _logger = logging.getLogger(__name__)
 
@@ -25,43 +23,32 @@ def main() -> None:
         "--loglevel", type=int, help="specify verbosity of logger", default=logging.INFO
     )
     parser.add_argument(
-        "input_dictionary", type=str, help="input dictionary in JSON format"
-    )
-    parser.add_argument(
-        "pathway_file", type=str, help="input file with pathway information"
+        "input_dictionary",
+        type=str,
+        help="input dictionary in JSON format "
+        "as used for preparation of StimSets run",
     )
     parser.add_argument(
         "--scaling", type=float, help="specify scalar scaling of solution", default=1.0
     )
     parser.add_argument(
-        "--scaling_index", type=int, help="specify index of the scaled solution", default=None
-    )
-    parser.add_argument(
-        "path_to_time_domain_solution",
-        type=str,
-        help="path where time domain solution is stored",
+        "--scaling_index",
+        type=int,
+        help="specify index of the scaled solution",
+        required=True,
     )
 
     args = parser.parse_args()
+    set_logger(level=args.loglevel)
 
     _logger.info("Loading settings from input file")
     _logger.debug(f"Input file: {args.input_dictionary}")
     with open(args.input_dictionary) as json_file:
         input_settings = json.load(json_file)
 
-    settings = Settings(input_settings).complete_settings()
-    TypeChecker.check(settings)
+    if not input_settings["StimSets"]["Active"]:
+        _logger.info("No StimSets will be run.")
+    input_settings["StimSets"]["Scaling"] = args.scaling
+    input_settings["StimSets"]["ScalingIndex"] = args.scaling_index
 
-    settings["PathwayFile"] = args.pathway_file
-    settings["OutputPath"] = args.path_to_time_domain_solution
-    settings["Scaling"] = args.scaling
-    settings["ScalingVector"] = None  # do not allow scaling vectors from terminal
-    settings["ScalingIndex"] = args.scaling_index
-
-    print(settings["ScalingVector"])
-
-    set_logger(level=args.loglevel)
-
-    run_PAM(settings)
-
-    _logger.info("Loading settings from input file")
+    run_PAM(input_settings)

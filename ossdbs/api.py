@@ -7,7 +7,6 @@ import logging
 import os
 
 import numpy as np
-import math
 
 from ossdbs.axon_processing import MRG2002, McNeal1976
 from ossdbs.dielectric_model import (
@@ -556,37 +555,53 @@ def run_PAM(settings):
     else:
         raise NotImplementedError(f"Model {model_type} not yet implemented.")
 
-    if settings['StimSets']['Active'] or settings["ScalingVector"] is not None:
-        time_domain_solutions = []  # these should be loaded externally in case we call run_PAM iteratively (in optimization)
-                                    # although it is probably not critical
+    if settings["StimSets"]["Active"]:
+        # parameter checks
+        if not isinstance(settings["StimSets"]["Scaling"], float):
+            raise ValueError("Please provide a scaling factor as float.")
+        if settings["StimSets"]["ScalingIndex"] is None:
+            raise ValueError("Please provide a scaling index.")
+        if settings["StimSets"]["StimSetsFile"] is None:
+            raise ValueError(
+                "Provide a StimSetsFile, other options are not " "yet implemented."
+            )
 
-        if settings['StimSets']['Active']:
-            stim_protocols = np.genfromtxt(settings['StimSets']['StimSetsFile'],
-                                           dtype=float, delimiter=',', names=True)
-            scaling_vector = None  # defined in stim_protocols. Scaling can still be applied
-        else:
-            # for consistency
-            stim_protocols = np.array([settings["ScalingVector"]])
-            scaling_vector = settings["ScalingVector"]
+        # files to load individual solutions from
+        time_domain_solution_files = []
 
+        stim_protocols = np.genfromtxt(
+            settings["StimSets"]["StimSetsFile"], dtype=float, delimiter=",", names=True
+        )
+
+        # load unit solutions once
+        _logger.info("Load unit solutions")
+        n_contacts = len(list(stim_protocols[0]))
+        for contact_i in range(n_contacts):
+            time_domain_solution_files.append(
+                os.path.join(
+                    settings["OutputPath"],
+                    f"E1C{contact_i + 1}",
+                    "oss_time_result_PAM.h5",
+                )
+            )
+        neuron_model.load_unit_solutions(time_domain_solution_files)
+
+        # go through stimulation protocols
+        _logger.info("Running stimulation protocols")
         for protocol_i in range(stim_protocols.shape[0]):
-
-            if settings['StimSets']['Active']:
-                scaling_vector = list(stim_protocols[protocol_i])
+            # get the current scaling vector
+            scaling_vector = list(stim_protocols[protocol_i])
             # swap NaNs to zero current
-            scaling_vector = [0 if math.isnan(x) else x for x in scaling_vector]
-
-            if protocol_i == 0:
-                # load unit solutions once
-                for contact_i in range(len(scaling_vector)):
-                    time_domain_solutions.append(os.path.join(settings["OutputPath"] + "E1C" + str(contact_i + 1),"oss_time_result_PAM.h5"))
-                # this should be loaded externally in case we call run_PAM iteratively (in optimization)
-                neuron_model.load_unit_solutions(time_domain_solutions)
+            scaling_vector = [0 if np.isnan(x) else x for x in scaling_vector]
 
             neuron_model.superimpose_unit_solutions(scaling_vector)
-
             # when using optimizer, scaling_index should be provided externally
-            neuron_model.process_pathways(scaling=settings["Scaling"], scaling_index=protocol_i)
+            neuron_model.process_pathways(
+                scaling=settings["Scaling"], scaling_index=protocol_i
+            )
     else:
         neuron_model.load_solution(time_domain_solution)
-        neuron_model.process_pathways(scaling=settings["Scaling"], scaling_index=settings["ScalingIndex"])
+        neuron_model.process_pathways(
+            scaling=settings["StimSets"]["Scaling"],
+            scaling_index=settings["StimSets"]["ScalingIndex"],
+        )

@@ -113,7 +113,9 @@ class Settings:
         "PathwayFile": None,
         "StimSets": {
             "Active": False,
-            "StimSetsFile": "",
+            "StimSetsFile": None,
+            "Scaling": 1.0,
+            "ScalingIndex": None,
         },
         "AdaptiveMeshRefinement": False,
     }
