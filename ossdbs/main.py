@@ -192,8 +192,10 @@ def main() -> None:
     # run PAM
     if settings["PathwayFile"] is not None:
         if settings["StimSets"]["Active"]:
-            _logger.info("No PAM run because you specified StimSets."
-                         "Compute the pathway activation separately.")
+            _logger.info(
+                "No PAM run because you specified StimSets."
+                "Compute the pathway activation separately."
+            )
         else:
             run_PAM(settings)
             time_1 = time.time()
