@@ -116,6 +116,7 @@ class Settings:
             "StimSetsFile": None,
             "Scaling": 1.0,
             "ScalingIndex": None,
+            "CurrentVector": None,
         },
         "AdaptiveMeshRefinement": False,
     }

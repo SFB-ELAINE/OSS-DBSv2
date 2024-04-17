@@ -17,6 +17,7 @@ class TypeChecker:
             "StimSetsFile": (type(None), str),
             "Scaling": float,
             "ScalingIndex": (type(None), int),
+            "CurrentVector": (type(None), list),
         },
         "AdaptiveMeshRefinement": bool,
         "PathwayFile": (type(None), str),
