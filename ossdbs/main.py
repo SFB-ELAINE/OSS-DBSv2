@@ -158,7 +158,7 @@ def main() -> None:
     time_0 = time_1
 
     # save Mesh for StimSets
-    if settings["StimSets"]:
+    if settings["StimSets"]["Active"]:
         settings["Mesh"]["SaveMesh"] = True
         settings["Mesh"]["SavePath"] = "tmp_mesh"
         settings["Mesh"]["LoadPath"] = "tmp_mesh.vol.gz"
@@ -172,7 +172,7 @@ def main() -> None:
             settings, geometry, conductivity, solver
         )
         frequency_domain_signal = prepare_stimulation_signal(settings)
-        if not settings["StimSets"]:
+        if not settings["StimSets"]["Active"]:
             vcm_timings = run_volume_conductor_model(
                 settings, volume_conductor, frequency_domain_signal
             )

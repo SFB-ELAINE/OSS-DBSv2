@@ -76,6 +76,8 @@ class NeuronSimulator(ABC):
 
         # time-domain solution (not yet loaded)
         self._td_solution = None
+        # time-domain solution per contact
+        self._td_unit_solutions = None
         # signal dict will be created when
         # time-domain solution is loaded
         self._signal_dict = None
@@ -200,6 +202,56 @@ class NeuronSimulator(ABC):
             Name of file holding time-domain solution
         """
         self._td_solution = h5py.File(time_domain_h5_file, "r")
+
+    def load_unit_solutions(self, time_domain_h5_files: list):
+        """Load solutions from h5 file for each contact-ground.
+
+        Parameters
+        ----------
+        time_domain_h5_files: list
+            names of files holding time-domain solution
+        """
+
+        self._td_unit_solutions = []  # list where we store datasets
+        for solution_i in range(len(time_domain_h5_files)):
+            td_solution = h5py.File(time_domain_h5_files[solution_i], "r")
+            self._td_unit_solutions.append(td_solution)
+
+    def superimpose_unit_solutions(self, scaling_vector: list):
+        """Scale and superimpose solutions obtained for each contact-ground.
+        This should be done across all datagroups and datasets
+
+        Parameters
+        ----------
+        scaling_vector: list
+            current scaling across contacts
+        """
+
+        # very dumb way to get self._td_solution initialized
+        self._td_solution = h5py.File('combined_solution.h5', mode='w')
+        for obj in self._td_unit_solutions[0].keys():
+            self._td_unit_solutions[0].copy(obj, self._td_solution)
+
+        pathways = list(self._td_unit_solutions[0].keys())
+        pathways.remove("TimeSteps[s]")
+
+        for solution_i in range(len(self._td_unit_solutions)):
+            for pathway_idx, pathway_name in enumerate(pathways):
+                pathway_dataset = self._td_unit_solutions[solution_i][pathway_name]
+                #pathway_super_dataset = self._td_solution[solution_i][pathway_name]
+                N_neurons = self.get_N_seeded_neurons(pathway_idx)
+                for neuron_index in range(N_neurons):
+                    if pathway_dataset["Status"][neuron_index] == 0:
+                        # other statuses are the same across solutions
+
+                        neuron = pathway_dataset["axon" + str(neuron_index)]
+                        neuron_time_sol = np.array(neuron["Potential[V]"])
+
+                        # scale and superimpose
+                        if solution_i == 0:
+                            self._td_solution[pathway_name]["axon" + str(neuron_index)]["Potential[V]"][...] = neuron_time_sol * scaling_vector[solution_i]
+                        else:
+                            self._td_solution[pathway_name]["axon" + str(neuron_index)]["Potential[V]"][...] = self._td_solution[pathway_name]["axon" + str(neuron_index)]['Potential[V]'][...] + neuron_time_sol * scaling_vector[solution_i]
 
     def process_pathways(
         self, scaling: float = 1.0, scaling_index: Optional[int] = None

@@ -7,6 +7,7 @@ import logging
 import os
 
 import numpy as np
+import math
 
 from ossdbs.axon_processing import MRG2002, McNeal1976
 from ossdbs.dielectric_model import (
@@ -555,5 +556,37 @@ def run_PAM(settings):
     else:
         raise NotImplementedError(f"Model {model_type} not yet implemented.")
 
-    neuron_model.load_solution(time_domain_solution)
-    neuron_model.process_pathways(scaling=1.0, scaling_index=None)
+    if settings['StimSets']['Active'] or settings["ScalingVector"] is not None:
+        time_domain_solutions = []  # these should be loaded externally in case we call run_PAM iteratively (in optimization)
+                                    # although it is probably not critical
+
+        if settings['StimSets']['Active']:
+            stim_protocols = np.genfromtxt(settings['StimSets']['StimSetsFile'],
+                                           dtype=float, delimiter=',', names=True)
+            scaling_vector = None  # defined in stim_protocols. Scaling can still be applied
+        else:
+            # for consistency
+            stim_protocols = np.array([settings["ScalingVector"]])
+            scaling_vector = settings["ScalingVector"]
+
+        for protocol_i in range(stim_protocols.shape[0]):
+
+            if settings['StimSets']['Active']:
+                scaling_vector = list(stim_protocols[protocol_i])
+            # swap NaNs to zero current
+            scaling_vector = [0 if math.isnan(x) else x for x in scaling_vector]
+
+            if protocol_i == 0:
+                # load unit solutions once
+                for contact_i in range(len(scaling_vector)):
+                    time_domain_solutions.append(os.path.join(settings["OutputPath"] + "E1C" + str(contact_i + 1),"oss_time_result_PAM.h5"))
+                # this should be loaded externally in case we call run_PAM iteratively (in optimization)
+                neuron_model.load_unit_solutions(time_domain_solutions)
+
+            neuron_model.superimpose_unit_solutions(scaling_vector)
+
+            # when using optimizer, scaling_index should be provided externally
+            neuron_model.process_pathways(scaling=settings["Scaling"], scaling_index=protocol_i)
+    else:
+        neuron_model.load_solution(time_domain_solution)
+        neuron_model.process_pathways(scaling=settings["Scaling"], scaling_index=settings["ScalingIndex"])

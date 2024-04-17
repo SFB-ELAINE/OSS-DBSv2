@@ -12,7 +12,10 @@ class TypeChecker:
         "Electrodes": list,
         "FailFlag": str,
         "OutOfCore": bool,
-        "StimSets": bool,
+        "StimSets": {
+            "Active": bool,
+            "StimSetsFile": str,
+        },
         "AdaptiveMeshRefinement": bool,
         "PathwayFile": (type(None), str),
         "ActivationThresholdVTA": (type(None), float),
