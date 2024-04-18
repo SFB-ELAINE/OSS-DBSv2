@@ -556,16 +556,11 @@ def run_PAM(settings):
         raise NotImplementedError(f"Model {model_type} not yet implemented.")
 
     if settings["StimSets"]["Active"]:
-        # parameter checks
-        if not isinstance(settings["StimSets"]["Scaling"], float):
-            raise ValueError("Please provide a scaling factor as float.")
-        if settings["StimSets"]["ScalingIndex"] is None:
-            raise ValueError("Please provide a scaling index.")
 
         # files to load individual solutions from
         time_domain_solution_files = []
 
-        if settings["StimSets"]["StimSetsFile"] is None:
+        if settings["StimSets"]["StimSetsFile"] is not None:
             _logger.info("Load current vectors form file.")
             stim_protocols = np.genfromtxt(
                 settings["StimSets"]["StimSetsFile"],
@@ -576,11 +571,11 @@ def run_PAM(settings):
             n_stim_protocols = stim_protocols.shape[0]
             n_contacts = len(list(stim_protocols[0]))
         else:
-            if settings["StimSets"]["CurrentVector"] is None:
+            if settings["CurrentVector"] is None:
                 raise ValueError("Provide either a StimSetsFile or " "a CurrentVector")
             n_stim_protocols = 1
             # load current from input file
-            stim_protocols = [settings["StimSets"]["CurrentVector"]]
+            stim_protocols = [settings["CurrentVector"]]
             # assign contacts
             n_contacts = len(stim_protocols[0])
 
@@ -589,8 +584,7 @@ def run_PAM(settings):
         for contact_i in range(n_contacts):
             time_domain_solution_files.append(
                 os.path.join(
-                    settings["OutputPath"],
-                    f"E1C{contact_i + 1}",
+                    settings["OutputPath"] + f"E1C{contact_i + 1}",
                     "oss_time_result_PAM.h5",
                 )
             )
@@ -612,6 +606,6 @@ def run_PAM(settings):
     else:
         neuron_model.load_solution(time_domain_solution)
         neuron_model.process_pathways(
-            scaling=settings["StimSets"]["Scaling"],
-            scaling_index=settings["StimSets"]["ScalingIndex"],
+            scaling=settings["Scaling"],
+            scaling_index=settings["ScalingIndex"],
         )

@@ -48,7 +48,8 @@ def main() -> None:
 
     if not input_settings["StimSets"]["Active"]:
         _logger.info("No StimSets will be run.")
-    input_settings["StimSets"]["Scaling"] = args.scaling
-    input_settings["StimSets"]["ScalingIndex"] = args.scaling_index
+    input_settings["Scaling"] = args.scaling
+    input_settings["ScalingIndex"] = args.scaling_index
+    input_settings["CurrentVector"] = None
 
     run_PAM(input_settings)
