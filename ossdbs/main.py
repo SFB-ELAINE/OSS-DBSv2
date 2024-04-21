@@ -196,6 +196,8 @@ def main() -> None:
                 "No PAM run because you specified StimSets."
                 "Compute the pathway activation separately."
             )
+        elif settings["CalcAxonActivation"] is False:
+            _logger.info("Axon activation is not computed.")
         else:
             run_PAM(settings)
             time_1 = time.time()
