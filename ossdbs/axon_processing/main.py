@@ -35,7 +35,7 @@ def main() -> None:
         "--scaling_index",
         type=int,
         help="specify index of the scaled solution",
-        required=True,
+        default=None,
     )
 
     args = parser.parse_args()
