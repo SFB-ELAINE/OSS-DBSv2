@@ -20,7 +20,6 @@ from ossdbs.api import (
     prepare_solver,
     prepare_stimulation_signal,
     prepare_volume_conductor_model,
-    run_PAM,
     run_stim_sets,
     run_volume_conductor_model,
     set_contact_and_encapsulation_layer_properties,
@@ -191,6 +190,9 @@ def main() -> None:
 
     # run PAM
     if settings["PathwayFile"] is not None:
+        _logger.info("Please compute the pathway activation separately.")
+        # commented because of interaction with Lead-DBS
+        """
         if settings["StimSets"]["Active"]:
             _logger.info(
                 "No PAM run because you specified StimSets."
@@ -202,6 +204,7 @@ def main() -> None:
             run_PAM(settings)
             time_1 = time.time()
             timings["PAM"] = time_1 - time_0
+        """
 
     _logger.info(f"Timings:\n {pprint.pformat(timings)}")
 
