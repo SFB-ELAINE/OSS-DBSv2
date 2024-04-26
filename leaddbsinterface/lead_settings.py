@@ -197,6 +197,8 @@ class LeadSettings:
         # use actual signal parameters for PAM
         if self.get_calc_axon_act():
             partial_dict = self.add_stimsignal_params(partial_dict, hemis_idx)
+            # add path to the pathway parameter file
+            partial_dict["PathwayFile"] = self.get_pathway_params_path()
 
         # do not use h1amg as coarsetype preconditioner
         # if floating potentials are involved
@@ -417,6 +419,10 @@ class LeadSettings:
     def get_conectome_path(self):
         """Connectome path."""
         return self._get_str("connectomePath")
+        
+    def get_pathway_params_path(self):
+        """Path to the pathway parameters file."""
+        return self._get_str("pathwayParameterFile")
 
     def get_connectome_tract_names(self):
         """Get tract names in the connectome.
