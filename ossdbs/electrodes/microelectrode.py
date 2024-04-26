@@ -76,7 +76,7 @@ class MicroElectrodeModel(ElectrodeModel):
         return encapsulation.Move(v=self._position) - self.geometry
 
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        contact = self.__contacts()
+        contact = self._contacts()
         electrode = netgen.occ.Glue([self.__body(), contact])
         return electrode.Move(v=self._position)
 
@@ -88,7 +88,7 @@ class MicroElectrodeModel(ElectrodeModel):
         lead.bc(self._boundaries["Body"])
         return lead
 
-    def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         point = (0, 0, 0)
         radius = self._parameters.tip_diameter * 0.5
         height = self._parameters.contact_length

@@ -27,10 +27,13 @@ classifiers = [
 ]
 dependencies = ["h5py==3.8.0",
                 "ngsolve==6.2.2307",
-                "nibabel==4.0.2",
+                "nibabel==5.2.1",
                 "pandas==1.5.3",
                 "scipy==1.10.1",
-		"matplotlib"
+		"matplotlib",
+		"neuron==8.2.4",
+		"dipy==1.8.0",
+		"importlib_resources; python_version=='3.8'"
                 ]
 
 [project.optional-dependencies]
@@ -62,6 +65,8 @@ repository = "https://github.com/SFB-ELAINE/oss-dbsv2"
 [project.scripts]
 ossdbs =  'ossdbs.main:main'
 leaddbs2ossdbs = 'leaddbsinterface.convert_input_dictionary:main'
+prepareaxonmodel = 'leaddbsinterface.allocate_axons:main'
+run_pathway_activation = 'ossdbs.axon_processing.main:main'
 
 [tool.setuptools]
 packages = ["ossdbs", "leaddbsinterface"]

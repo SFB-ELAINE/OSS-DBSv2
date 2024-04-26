@@ -38,7 +38,10 @@ class Mesh:
     def load_mesh(self, filename: str) -> None:
         """Load NGSolve mesh from file."""
         if not os.path.isfile(filename):
-            raise ValueError("Provide a correct filename to load the mesh")
+            raise ValueError(
+                "Provide a correct filename to load the mesh,"
+                f"could not find {filename}"
+            )
         self._mesh = ngsolve.Mesh(filename=filename)
         self._mesh.ngmesh.SetGeometry(self._geometry)
         self._mesh.Curve(order=self.order)
@@ -227,26 +230,20 @@ class Mesh:
             self._mesh.SetRefinementFlag(ei=element, refine=to_refine)
         self.refine(at_surface=True)
 
-    def refine_by_error(self, gridfunction: ngsolve.GridFunction) -> List:
+    def refine_by_error_cf(self, error_cf: ngsolve.GridFunction) -> List:
         """Refine the mesh by the error at each mesh element.
 
         Parameters
         ----------
-        gridfunction : ngsolve.GridFunction
-            Solution to estimate error from
+        error_cf : ngsolve.GridFunction
+            Estimated error from
         """
-        flux = ngsolve.grad(gridfunction)
-        space = self.mesh.flux_space()
-        flux_potential = ngsolve.GridFunction(space=space)
-        flux_potential.Set(coefficient=flux)
-        difference = flux - flux_potential
-        error = difference * ngsolve.Conj(difference)
-
-        element_errors = ngsolve.Integrate(
-            cf=error, mesh=self._mesh, VOL_or_BND=ngsolve.VOL, element_wise=True
-        ).real
-        limit = 0.5 * max(element_errors)
-        for element in self._mesh.Elements(ngsolve.BND):
-            to_refine = element_errors[element.nr] > limit
-            self._mesh.SetRefinementFlag(ei=element, refine=to_refine)
+        elementwise_error = ngsolve.Integrate(
+            cf=error_cf.real, mesh=self._mesh, VOL_or_BND=ngsolve.VOL, element_wise=True
+        )
+        max_error = max(elementwise_error)
+        # convolved but here the Netgen (!) not NGsolve mesh is called
+        self._mesh.ngmesh.Elements3D().NumPy()["refine"] = (
+            elementwise_error.NumPy() > 0.25 * max_error
+        )
         self.refine()

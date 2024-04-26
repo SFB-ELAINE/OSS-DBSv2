@@ -21,7 +21,7 @@ Default Parameters (mm)
             * lead_diameter=1.0,
             * total_length=200.0,
 
-.. note::  The total length does not influence the computational domain that's why all the above electrodes are modeled at 400mm.
+.. note::  The total length does not affect the computational domain, so the above electrode is modelled with a length of 200mm.
 
 ----
 Code

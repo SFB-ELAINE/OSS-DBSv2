@@ -10,6 +10,7 @@ recursive-include examples *.ipynb
 recursive-include examples *.json
 recursive-include examples *.md
 recursive-include examples *.py
+recursive-include examples *.sh
 recursive-include input_files *.gz
 recursive-include input_files *.h5
 recursive-include input_files *.json
@@ -17,3 +18,9 @@ recursive-include input_test_cases *.json
 recursive-include input_test_cases *.md
 recursive-include input_test_cases *.sh
 recursive-include ossdbs *.py
+recursive-include ossdbs *.hoc
+recursive-include ossdbs *.html
+recursive-include ossdbs *.md
+recursive-include ossdbs *.mod
+recursive-include ossdbs *.txt
+recursive-include ossdbs *.ses

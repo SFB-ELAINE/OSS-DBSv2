@@ -11,7 +11,15 @@ class TypeChecker:
         },
         "Electrodes": list,
         "FailFlag": str,
+        "ModelSide": int,
+        "CalcAxonActivation": bool,
         "OutOfCore": bool,
+        "StimSets": {
+            "Active": bool,
+            "StimSetsFile": (type(None), str),
+        },
+        "AdaptiveMeshRefinement": bool,
+        "PathwayFile": (type(None), str),
         "ActivationThresholdVTA": (type(None), float),
         "Contacts": {"MaxMeshSize": float, "MaxMeshSizeEdge": float},
         "EncapsulationLayer": {
@@ -52,7 +60,6 @@ class TypeChecker:
             "Type": str,
             "Preconditioner": str,
             "PreconditionerKwargs": dict,
-            "PrintRates": bool,
             "MaximumSteps": int,
             "Precision": (int, float),
         },
@@ -64,6 +71,7 @@ class TypeChecker:
             "CounterPulseWidth[us]": (int, float),
             "InterPulseWidth[us]": (int, float),
             "SpectrumMode": str,
+            "CounterAmplitude": float,
             "CutoffFrequency": float,
         },
         "PointModel": {
@@ -82,7 +90,6 @@ class TypeChecker:
                 "CollapseVTA": bool,
                 "PointDistance[mm]": (int, float),
                 "Shape": {"x": int, "y": int, "z": int},
-                "TimeDomain": bool,
             },
         },
     }

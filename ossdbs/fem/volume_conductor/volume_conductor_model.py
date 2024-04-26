@@ -45,8 +45,6 @@ class VolumeConductor(ABC):
         Order of solver and mesh (curved elements)
     meshing_parameters: dict
         Dictionary with setting for meshing
-    frequency_domain_signal: FrequencyDomainSignal
-        Representation of signal in frequency domain
     """
 
     def __init__(
@@ -56,21 +54,14 @@ class VolumeConductor(ABC):
         solver: Solver,
         order: int,
         meshing_parameters: dict,
-        frequency_domain_signal: FrequencyDomainSignal,
     ) -> None:
         self._solver = solver
         self._order = order
 
         self._model_geometry = geometry
 
-        self._signal = frequency_domain_signal
-        _logger.debug(f"Signal with amplitudes: {self.signal.amplitudes}")
         # contacts of electrode
         self._contacts = Contacts(geometry.contacts)
-        # set voltages for two-contact current controlled stimulation
-        # check if current-controlled mode is correctly prepared
-        if self.current_controlled:
-            self.prepare_current_controlled_mode()
 
         _logger.debug(f"Assigned base contacts with properties:\n {self._contacts}")
 
@@ -83,16 +74,17 @@ class VolumeConductor(ABC):
         # or current (voltage-controlled) stimulation
         self._free_stimulation_variable = None
         self._stimulation_variable = None
+        self._floatings_potentials = None
 
         # generate the mesh
         self._mesh = Mesh(self._model_geometry.geometry, self._order)
         if meshing_parameters["LoadMesh"]:
-            self._mesh.load_mesh(meshing_parameters["LoadPath"])
+            self.mesh.load_mesh(meshing_parameters["LoadPath"])
         else:
-            self._mesh.generate_mesh(meshing_parameters["MeshingHypothesis"])
+            self.mesh.generate_mesh(meshing_parameters["MeshingHypothesis"])
 
         if meshing_parameters["SaveMesh"]:
-            self._mesh.save(meshing_parameters["SavePath"])
+            self.mesh.save(meshing_parameters["SavePath"])
 
         # to save previous solution and do post-processing
         self._frequency = None
@@ -113,16 +105,23 @@ class VolumeConductor(ABC):
         frequency: float
             Frequency at which solution is computed
         """
-        pass
+        return
 
+    @abstractmethod
+    def update_space(self):
+        """Update space (e.g., if mesh changes)."""
+
+    # ruff: noqa: C901
     def run_full_analysis(
         self,
+        frequency_domain_signal: FrequencyDomainSignal,
         compute_impedance: bool = False,
         export_vtk: bool = False,
         point_models: Optional[List[PointModel]] = None,
         activation_threshold: Optional[float] = None,
         out_of_core: bool = False,
-        export_frequency: float = None
+        export_frequency: Optional[float] = None,
+        adaptive_mesh_refinement: bool = False,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -141,12 +140,23 @@ class VolumeConductor(ABC):
         export_frequency: float
             Frequency at which the VTK file should be exported.
             Otherwise, median frequency is used.
+        frequency_domain_signal: FrequencyDomainSignal
+            Frequency-domain representation of stimulation signal
+        adaptive_mesh_refinement: bool
+            Perform adaptive mesh refinement (only at first frequency)
 
         Notes
         -----
         The volume conductor model is run at all frequencies
         and the time-domain signal is computed (if relevant).
         """
+        self.signal = frequency_domain_signal
+
+        # set voltages for two-contact current controlled stimulation
+        # check if current-controlled mode is correctly prepared
+        if self.current_controlled:
+            self.prepare_current_controlled_mode()
+
         if point_models is None:
             # use empty list
             point_models = []
@@ -190,6 +200,10 @@ class VolumeConductor(ABC):
                 shape=(len(self.signal.frequencies), len(self.contacts.active)),
                 dtype=complex,
             )
+            self._floatings_potentials = np.zeros(
+                shape=(len(self.signal.frequencies), len(self.contacts.floating)),
+                dtype=complex,
+            )
 
         if compute_impedance:
             self._impedances = np.ndarray(
@@ -203,7 +217,7 @@ class VolumeConductor(ABC):
                 self.signal.signal_length, out_of_core
             )
 
-        for freq_idx in frequency_indices:
+        for computing_idx, freq_idx in enumerate(frequency_indices):
             frequency = self.signal.frequencies[freq_idx]
             _logger.info(f"Computing at frequency: {frequency}")
             time_0 = time.time()
@@ -228,12 +242,38 @@ class VolumeConductor(ABC):
                 if compute_impedance:
                     impedance = self.compute_impedance()
                     self._impedances[band_indices] = impedance
+
+                # refine only at first frequency
+                if freq_idx == frequency_indices[0] and adaptive_mesh_refinement:
+                    if not compute_impedance:
+                        impedance = self.compute_impedance()
+                    else:
+                        impedance = self._impedances[band_indices]
+                    _logger.info(
+                        "Number of elements before refinement:"
+                        f"{self.mesh.ngsolvemesh.ne}"
+                    )
+                    error = 100
+                    refinements = 0
+                    # TODO write a meaningful algo
+                    while error > 0.1 and refinements < 10:
+                        self.adaptive_mesh_refinement()
+                        # solve on refined mesh
+                        self.compute_solution(frequency)
+                        new_impedance = self.compute_impedance()
+                        error = 100 * abs(impedance - new_impedance) / abs(impedance)
+                        refinements += 1
+
+                    _logger.info(
+                        "Number of elements after refinement:"
+                        f"{self.mesh.ngsolvemesh.ne}"
+                    )
             else:
                 _logger.info(f"Skipped computation at {frequency} Hz")
                 if compute_impedance:
-                    impedance = self._impedances[freq_idx - 1]
+                    # copy from previous frequency
+                    impedance = self._impedances[computing_idx - 1]
                     self._impedances[band_indices] = impedance
-
             # scale factor: is one for VC and depends on impedance for other case
             self._scale_factor = self.get_scale_factor(freq_idx)
             _logger.debug(f"Scale factor: {self._scale_factor}")
@@ -250,6 +290,7 @@ class VolumeConductor(ABC):
             timings["ComputeSolution"].append(time_1 - time_0)
             time_0 = time_1
 
+            _logger.info("Copy solution to point models")
             # copy solution to point models
             self._process_frequency_domain_solution(band_indices, point_models)
             time_1 = time.time()
@@ -258,9 +299,10 @@ class VolumeConductor(ABC):
 
             # export frequency-domain solution at one frequency
             if np.isclose(frequency, self._export_frequency):
+                _logger.info(f"Exporting at {self._export_frequency}")
                 # save vtk
                 if export_vtk:
-                    self.vtk_export(freq_idx)
+                    self.vtk_export(freq_idx, multisine_mode)
                     time_1 = time.time()
                     timings["VTKExport"].append(time_1 - time_0)
                     time_0 = time_1
@@ -285,6 +327,7 @@ class VolumeConductor(ABC):
             df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
 
         # export time domain solution if a proper signal has been passed
+        _logger.info("Launching reconstruction of time domain")
         if len(self.signal.frequencies) > 1 and not multisine_mode:
             for point_model_idx, point_model in enumerate(point_models):
                 # skip point models that are not considered in time domain
@@ -345,10 +388,23 @@ class VolumeConductor(ABC):
             free_stimulation_variable_at_contact[
                 contact.name
             ] = stimulation_variable_in_time[:, contact_idx]
+
         df = pd.DataFrame(free_stimulation_variable_at_contact)
         df.to_csv(
             os.path.join(self.output_path, "stimulation_in_time.csv"), index=False
         )
+
+        floating_at_contact = {}
+        floating_at_contact["time"] = timesteps
+        floating_potentials_in_time = reconstruct_time_signals(
+            self._floatings_potentials, self.signal.signal_length
+        )
+        for contact_idx, contact in enumerate(self.contacts.floating):
+            floating_at_contact[contact.name] = floating_potentials_in_time[
+                :, contact_idx
+            ]
+        df = pd.DataFrame(floating_at_contact)
+        df.to_csv(os.path.join(self.output_path, "floating_in_time.csv"), index=False)
 
     @property
     def output_path(self) -> str:
@@ -531,18 +587,17 @@ class VolumeConductor(ABC):
 
         """
         if len(self.contacts.active) == 2:
-            mesh = self._mesh.ngsolvemesh
+            mesh = self.mesh.ngsolvemesh
             # do not need to account for mm because of integration
-            power = ngsolve.Integrate(self.electric_field * self.current_density, mesh)
+            power = ngsolve.Integrate(
+                ngsolve.Conj(self.electric_field) * self.current_density, mesh
+            )
             # TODO integrate surface impedance by thin layer
             voltage = 0
             for idx, contact in enumerate(self.contacts.active):
                 voltage += (-1) ** idx * contact.voltage
-            if self.is_complex:
-                sign = np.sign(voltage.real)
-            else:
-                sign = np.sign(voltage)
-            return sign * voltage / power
+            _logger.debug(f"Voltage drop for impedance: {voltage}")
+            return voltage * np.conj(voltage) / power
         else:
             # TODO implement meaningful way to access contribution of individual
             # electrode to impedance
@@ -571,16 +626,23 @@ class VolumeConductor(ABC):
             estimated_currents[contact.name] = current
         return estimated_currents
 
-    def vtk_export(self, freq_idx: int) -> None:
+    def vtk_export(self, freq_idx: int, multisine_mode: bool = False) -> None:
         """Export all relevant properties to VTK.
 
         Parameters
         ----------
         freq_idx: int
             Index of frequency
+        multisine_mode: bool
+            If rectangular pulse is used (multisine_mode = False)
         """
         ngmesh = self.mesh.ngsolvemesh
-        scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
+
+        # use standard solution with 1V voltage drop
+        # unless we run multisine mode
+        scale_factor = 1.0
+        if multisine_mode:
+            scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
         FieldSolution(
             scale_factor * self.potential, "potential", ngmesh, self.is_complex
         ).save(os.path.join(self.output_path, "potential"))
@@ -636,24 +698,6 @@ class VolumeConductor(ABC):
             floating_voltages[contact.name] = contact.voltage
         return floating_voltages
 
-    def flux_space(self) -> ngsolve.comp.HDiv:
-        """Return a flux space on the mesh.
-
-        Returns
-        -------
-        ngsolve.HDiv
-
-        Notes
-        -----
-        The HDiv space is returned with a minimum order of 1.
-        It is needed for the a-posteriori error estimator
-        needed for adaptive mesh refinement.
-
-        """
-        return ngsolve.HDiv(
-            mesh=self.mesh, order=max(1, self._order - 1), complex=self._complex
-        )
-
     def h1_space(self, boundaries: List[str], is_complex: bool) -> ngsolve.H1:
         """Return a h1 space on the mesh.
 
@@ -689,6 +733,26 @@ class VolumeConductor(ABC):
         """
         return ngsolve.NumberSpace(
             mesh=self.mesh.ngsolvemesh, order=0, complex=self.is_complex
+        )
+
+    def flux_space(self) -> ngsolve.comp.HDiv:
+        """Return a flux space on the mesh.
+
+        Returns
+        -------
+        ngsolve.HDiv
+
+        Notes
+        -----
+        The HDiv space is returned with a minimum order of 1.
+        It is needed for the a-posteriori error estimator
+        needed for adaptive mesh refinement.
+
+        """
+        return ngsolve.HDiv(
+            mesh=self.mesh.ngsolvemesh,
+            order=max(1, self._order - 1),
+            complex=self.is_complex,
         )
 
     def get_scale_factor(self, freq_idx: int) -> float:
@@ -776,6 +840,12 @@ class VolumeConductor(ABC):
                     self._stimulation_variable[freq_idx, contact_idx] = (
                         scale_factor * contact.voltage
                     )
+        for contact_idx, contact in enumerate(self.contacts.floating):
+            for freq_idx in band_indices:
+                scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
+                self._floatings_potentials[freq_idx, contact_idx] = (
+                    scale_factor * contact.voltage
+                )
 
     def _copy_frequency_domain_solution(
         self,
@@ -873,3 +943,14 @@ class VolumeConductor(ABC):
             self._copy_frequency_domain_solution(
                 band_indices, point_model, potentials, fields
             )
+
+    def adaptive_mesh_refinement(self):
+        """Refine mesh adaptively."""
+        flux = self.current_density
+        hdiv_space = self.flux_space()
+        flux_potential = ngsolve.GridFunction(space=hdiv_space)
+        flux_potential.Set(coefficient=flux)
+        difference = flux - flux_potential
+        error = difference * ngsolve.Conj(difference)
+        self.mesh.refine_by_error_cf(error)
+        self.update_space()

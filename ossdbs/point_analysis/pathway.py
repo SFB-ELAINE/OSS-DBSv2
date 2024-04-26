@@ -168,11 +168,11 @@ class Pathway(PointModel):
                         "Electric field magnitude[Vm^(-1)]",
                         data=electric_field_magnitude,
                     )
-                if [
-                    data.electric_field_vector_x,
-                    data.electric_field_vector_y,
-                    data.electric_field_vector_z,
-                ].count(None) == 0:
+                if not (
+                    data.electric_field_vector_x is None
+                    and data.electric_field_vector_y is None
+                    and data.electric_field_vector_z is None
+                ):
                     # export field vector component-wise
                     electric_field_vector_x = data.electric_field_vector_x[start:end]
                     sub_group.create_dataset(
@@ -452,7 +452,14 @@ class Pathway(PointModel):
         if self.collapse_VTA:
             _logger.info("Collapse VTA by virtually removing the electrode")
             field_on_probed_points = np.concatenate(
-                [self.lattice, Ex.reshape((Ex.shape[0], 1)).real, Ey.reshape((Ey.shape[0], 1)).real, Ez.reshape((Ey.shape[0], 1)).real, field_mags.reshape((field_mags.shape[0], 1)).real], axis=1
+                [
+                    self.lattice,
+                    Ex.reshape((Ex.shape[0], 1)).real,
+                    Ey.reshape((Ey.shape[0], 1)).real,
+                    Ez.reshape((Ey.shape[0], 1)).real,
+                    field_mags.reshape((field_mags.shape[0], 1)).real,
+                ],
+                axis=1,
             )
 
             if electrode is None:

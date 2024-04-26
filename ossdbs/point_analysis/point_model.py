@@ -152,11 +152,11 @@ class PointModel(ABC):
             file.create_dataset(
                 "Electric field magnitude[Vm^(-1)]", data=data.electric_field_magnitude
             )
-        if [
-            data.electric_field_vector_x,
-            data.electric_field_vector_y,
-            data.electric_field_vector_z,
-        ].count(None) == 0:
+        if not (
+            data.electric_field_vector_x is None
+            and data.electric_field_vector_y is None
+            and data.electric_field_vector_z is None
+        ):
             file.create_dataset(
                 "Electric field vector x[Vm^(-1)]", data=data.electric_field_vector_x
             )
@@ -563,7 +563,7 @@ class PointModel(ABC):
         _logger.info("Create time results")
         field_magnitude = None
         # if all field entries are defined
-        if [Ex_in_time, Ey_in_time, Ez_in_time].count(None) == 0:
+        if not (Ex_in_time is None and Ey_in_time is None and Ez_in_time is None):
             field_magnitude = compute_field_magnitude_from_components(
                 Ex_in_time, Ey_in_time, Ez_in_time
             )

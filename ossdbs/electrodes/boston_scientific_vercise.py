@@ -79,7 +79,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         return encapsulation.Move(v=self._position) - self.geometry
 
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        contacts = self.__contacts()
+        contacts = self._contacts()
         # TODO check
         electrode = occ.Glue([self.__body() - contacts, contacts])
         axis = occ.Axis(p=(0, 0, 0), d=self._direction)
@@ -94,7 +94,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         body.bc(self._boundaries["Body"])
         return body
 
-    def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self._parameters.lead_diameter * 0.5
         direction = self._direction
         center = tuple(np.array(direction) * radius)
@@ -118,7 +118,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         height = self._parameters.contact_length
         axis = occ.Axis(p=point, d=self._direction)
         contact_8 = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
-        contact_directed = self.__contact_directed()
+        contact_directed = self._contact_directed()
 
         contacts = [
             contact_1,
@@ -149,12 +149,11 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
                         edge.name = name
         return netgen.occ.Fuse(contacts)
 
-    def __contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def _contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         point = (0, 0, 0)
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
         body = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
-        # new_direction = tuple(np.cross(self.__direction_2(), self._direction))
         # tilted y-vector marker is in YZ-plane and orthogonal to _direction
         new_direction = (0, self._direction[2], -self._direction[1])
         eraser = occ.HalfSpace(p=point, n=new_direction)
@@ -200,20 +199,6 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         contact = contact.Rotate(axis, -angle)
 
         return contact
-
-    def __direction_2(self):
-        x, y, z = self._direction
-
-        if not x and not y:
-            return (0, 1, 0)
-
-        if not x and not z:
-            return (0, 0, 1)
-
-        if not y and not z:
-            return (0, 1, 0)
-
-        return (x, y, not z)
 
 
 @dataclass
@@ -277,7 +262,7 @@ class BostonScientificVerciseModel(ElectrodeModel):
         return encapsulation.Move(v=self._position) - self.geometry
 
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        contacts = self.__contacts()
+        contacts = self._contacts()
         # TODO check
         electrode = netgen.occ.Glue([self.__body() - contacts, contacts])
         return electrode.Move(v=self._position)
@@ -292,7 +277,7 @@ class BostonScientificVerciseModel(ElectrodeModel):
         body.bc(self._boundaries["Body"])
         return body
 
-    def __contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         point = (0, 0, 0)
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length

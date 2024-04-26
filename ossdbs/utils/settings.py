@@ -73,6 +73,7 @@ class Settings:
             "CounterPulseWidth[us]": 0.0,
             "InterPulseWidth[us]": 0.0,
             "SpectrumMode": "FullSpectrum",
+            "CounterAmplitude": 1.0,  # relative to amplitude given by contact
             "CutoffFrequency": 1e8,
             "CurrentControlled": False,
         },
@@ -80,7 +81,6 @@ class Settings:
             "Type": "CG",
             "Preconditioner": "bddc",
             "PreconditionerKwargs": {},
-            "PrintRates": False,
             "MaximumSteps": 10000,
             "Precision": 1e-12,
         },
@@ -93,7 +93,6 @@ class Settings:
                 "Direction": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 1},
                 "PointDistance[mm]": 0.1,
                 "CollapseVTA": False,
-                "TimeDomain": False,
             },
             "VoxelLattice": {
                 "Active": False,
@@ -111,6 +110,12 @@ class Settings:
         "ActivationThresholdVTA": None,
         "FailFlag": "oss",
         "OutOfCore": False,
+        "PathwayFile": None,
+        "StimSets": {
+            "Active": False,
+            "StimSetsFile": None,
+        },
+        "AdaptiveMeshRefinement": False,
     }
 
     def __init__(self, partial_settings: dict) -> None:

@@ -18,7 +18,9 @@ from ossdbs.api import (
     load_images,
     prepare_dielectric_properties,
     prepare_solver,
+    prepare_stimulation_signal,
     prepare_volume_conductor_model,
+    run_stim_sets,
     run_volume_conductor_model,
     set_contact_and_encapsulation_layer_properties,
 )
@@ -154,19 +156,57 @@ def main() -> None:
     timings["ConductivityCF"] = time_1 - time_0
     time_0 = time_1
 
+    # save Mesh for StimSets
+    if settings["StimSets"]["Active"]:
+        settings["Mesh"]["SaveMesh"] = True
+        settings["Mesh"]["SavePath"] = "tmp_mesh"
+        settings["Mesh"]["LoadPath"] = "tmp_mesh.vol.gz"
+        settings["Mesh"]["LoadMesh"] = False
+        # because of floating
+        settings["Solver"]["PreconditionerKwargs"] = {"coarsetype": "local"}
     # run in parallel
     with ngsolve.TaskManager():
         solver = prepare_solver(settings)
         volume_conductor = prepare_volume_conductor_model(
             settings, geometry, conductivity, solver
         )
-        vcm_timings = run_volume_conductor_model(settings, volume_conductor)
+        frequency_domain_signal = prepare_stimulation_signal(settings)
+        if not settings["StimSets"]["Active"]:
+            vcm_timings = run_volume_conductor_model(
+                settings, volume_conductor, frequency_domain_signal
+            )
+            _logger.info("Volume conductor timings:\n" f"{pprint.pformat(vcm_timings)}")
+        else:
+            # mesh was saved already
+            settings["Mesh"]["SaveMesh"] = False
+            settings["Mesh"]["LoadMesh"] = True
+            run_stim_sets(
+                settings, geometry, conductivity, solver, frequency_domain_signal
+            )
 
     time_1 = time.time()
     timings["VolumeConductor"] = time_1 - time_0
+    time_0 = time_1
+
+    # run PAM
+    if settings["PathwayFile"] is not None:
+        _logger.info("Please compute the pathway activation separately.")
+        # commented because of interaction with Lead-DBS
+        """
+        if settings["StimSets"]["Active"]:
+            _logger.info(
+                "No PAM run because you specified StimSets."
+                "Compute the pathway activation separately."
+            )
+        elif settings["CalcAxonActivation"] is False:
+            _logger.info("Axon activation is not computed.")
+        else:
+            run_PAM(settings)
+            time_1 = time.time()
+            timings["PAM"] = time_1 - time_0
+        """
 
     _logger.info(f"Timings:\n {pprint.pformat(timings)}")
-    _logger.info(f"Volume conductor timings:\n {pprint.pformat(vcm_timings)}")
 
     # write success file
     open(

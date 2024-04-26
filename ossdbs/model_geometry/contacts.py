@@ -80,14 +80,18 @@ class Contacts:
         for contact in contacts:
             check_contact(contact)
         self._all_contacts = contacts
+        self._update_contacts()
+
+    def _update_contacts(self) -> None:
+        """Update contacts after change."""
         # Dirichlet boundary conditions
-        self._active = [contact for contact in contacts if contact.active]
+        self._active = [contact for contact in self._all_contacts if contact.active]
         # Floating boundary conditions
-        self._floating = [contact for contact in contacts if contact.floating]
+        self._floating = [contact for contact in self._all_contacts if contact.floating]
         # Do not stimulate / Neumann boundary condition
         self._unused = [
             contact
-            for contact in contacts
+            for contact in self._all_contacts
             if not contact.floating and not contact.active
         ]
 
@@ -207,6 +211,15 @@ class Contacts:
         for contact in self._all_contacts:
             if contact.name in impedance_values:
                 contact.impedance = impedance_values[contact.name]
+
+    def update_contact(self, name, floating=None, active=None):
+        """Change type of contact."""
+        contact = self.__getitem__(name)
+        if floating is not None:
+            contact.floating = floating
+        if active is not None:
+            contact.active = active
+        self._update_contacts()
 
     def __getitem__(self, name):
         """Get contact by name."""

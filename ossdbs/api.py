@@ -2,10 +2,13 @@
 # Copyright 2023, 2024 Jan Philipp Payonk, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import json
 import logging
+import os
 
 import numpy as np
 
+from ossdbs.axon_processing import MRG2002, McNeal1976
 from ossdbs.dielectric_model import (
     default_dielectric_parameters,
     dielectric_model_parameters,
@@ -229,7 +232,6 @@ def prepare_solver(settings):
 
     return solver(
         precond_par=preconditioner,
-        printrates=parameters["PrintRates"],
         maxsteps=parameters["MaximumSteps"],
         precision=parameters["Precision"],
     )
@@ -290,6 +292,7 @@ def generate_signal(settings) -> TimeDomainSignal:
             1e-6 * signal_settings["PulseWidth[us]"],
             1e-6 * signal_settings["InterPulseWidth[us]"],
             1e-6 * signal_settings["CounterPulseWidth[us]"],
+            signal_settings["CounterAmplitude"],
         )
     elif signal_type == "Triangle":
         signal = TriangleSignal(
@@ -297,6 +300,7 @@ def generate_signal(settings) -> TimeDomainSignal:
             1e-6 * signal_settings["PulseWidth[us]"],
             1e-6 * signal_settings["InterPulseWidth[us]"],
             1e-6 * signal_settings["CounterPulseWidth[us]"],
+            signal_settings["CounterAmplitude"],
         )
     elif signal_type == "Trapezoid":
         signal = TrapezoidSignal(
@@ -305,6 +309,7 @@ def generate_signal(settings) -> TimeDomainSignal:
             1e-6 * signal_settings["InterPulseWidth[us]"],
             1e-6 * signal_settings["CounterPulseWidth[us]"],
             1e-6 * signal_settings["PulseTopWidth[us]"],
+            signal_settings["CounterAmplitude"],
         )
     signal.plot_time_domain_signal(
         signal_settings["CutoffFrequency"], settings["OutputPath"]
@@ -321,7 +326,6 @@ def prepare_volume_conductor_model(
 
     mesh_parameters = settings["Mesh"]
     floating_mode = model_geometry.get_floating_mode()
-    frequency_domain_signal = prepare_stimulation_signal(settings)
     if floating_mode == "Floating":
         _logger.debug("Floating mode selected")
         return VolumeConductorFloating(
@@ -330,7 +334,6 @@ def prepare_volume_conductor_model(
             solver,
             order,
             mesh_parameters,
-            frequency_domain_signal,
         )
 
     elif floating_mode == "FloatingImpedance":
@@ -341,7 +344,6 @@ def prepare_volume_conductor_model(
             solver,
             order,
             mesh_parameters,
-            frequency_domain_signal,
         )
     _logger.debug("Non floating mode selected")
     return VolumeConductorNonFloating(
@@ -350,7 +352,6 @@ def prepare_volume_conductor_model(
         solver,
         order,
         mesh_parameters,
-        frequency_domain_signal,
     )
 
 
@@ -402,7 +403,7 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
     return frequency_domain_signal
 
 
-def run_volume_conductor_model(settings, volume_conductor):
+def run_volume_conductor_model(settings, volume_conductor, frequency_domain_signal):
     """TODO document.
 
 
@@ -435,14 +436,90 @@ def run_volume_conductor_model(settings, volume_conductor):
     point_models = generate_point_models(settings)
 
     vcm_timings = volume_conductor.run_full_analysis(
+        frequency_domain_signal,
         compute_impedance,
         export_vtk,
         point_models=point_models,
         activation_threshold=settings["ActivationThresholdVTA"],
         out_of_core=out_of_core,
         export_frequency=export_frequency,
+        adaptive_mesh_refinement=settings["AdaptiveMeshRefinement"],
     )
     return vcm_timings
+
+
+def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_signal):
+    """TODO document.
+
+    Notes
+    -----
+    Run at all frequencies.
+    If the mode is multisine, a provided list of frequencies is used.
+    """
+    _logger.info("Run StimSets volume conductor model")
+
+    out_of_core = settings["OutOfCore"]
+    if not frequency_domain_signal.current_controlled:
+        _logger.warning(
+            "StimSets requires current-controlled stimulation"
+            ", thus the setting was switched on"
+        )
+    # no vtk export
+    export_vtk = False
+    # no intermediate exports
+    export_frequency = None
+    # no VTA analysis
+    activation_threshold = None
+    # prepare point model
+    point_models = generate_point_models(settings)
+
+    ground_contact = None
+    for contact in geometry.contacts:
+        if np.isclose(contact.current, -1) and contact.active:
+            ground_contact = contact.name
+            _logger.info(f"Will skip ground contact {contact.name}")
+    if ground_contact is None:
+        raise ValueError(
+            "No ground contact set. " "Choose one active contact with current -1."
+        )
+    for contact in geometry.contacts:
+        if contact.name == ground_contact:
+            continue
+        # set current contact active, all other passive
+        for upd_contact in geometry.contacts:
+            # reset all voltages
+            contact_idx = geometry.get_contact_index(upd_contact.name)
+            geometry.update_contact(contact_idx, {"Voltage[V]": 0.0})
+            # don't change ground
+            if upd_contact.name == ground_contact:
+                continue
+            active = False
+            floating = True
+            current = 0.0
+            if contact.name == upd_contact.name:
+                active = True
+                floating = False
+                current = 1.0
+            # write new contact settings
+            geometry.update_contact(
+                contact_idx,
+                {"Floating": floating, "Active": active, "Current[A]": current},
+            )
+        volume_conductor = prepare_volume_conductor_model(
+            settings, geometry, conductivity, solver
+        )
+        _logger.info(f"Running with contacts:\n{volume_conductor.contacts}")
+
+        volume_conductor.output_path = settings["OutputPath"] + contact.name
+        vcm_timings = volume_conductor.run_full_analysis(
+            frequency_domain_signal,
+            export_vtk=export_vtk,
+            point_models=point_models,
+            activation_threshold=activation_threshold,
+            out_of_core=out_of_core,
+            export_frequency=export_frequency,
+        )
+        _logger.info(f"Timing for contact {contact.name}: {vcm_timings}")
 
 
 def load_images(settings):
@@ -456,3 +533,79 @@ def load_images(settings):
         _logger.info("Load DTI image")
         dti_image = DiffusionTensorImage(settings["MaterialDistribution"]["DTIPath"])
     return mri_image, dti_image
+
+
+def run_PAM(settings):
+    """Run pathway activation analysis."""
+    _logger.info("Running PAM")
+    pathway_file = settings["PathwayFile"]
+    pathway_solution_dir = settings["OutputPath"]
+    time_domain_solution = os.path.join(
+        settings["OutputPath"], "oss_time_result_PAM.h5"
+    )
+    with open(pathway_file) as fp:
+        pathways_dict = json.load(fp)
+
+    model_type = pathways_dict["Axon_Model_Type"]
+
+    if "MRG2002" in model_type:
+        neuron_model = MRG2002(pathways_dict, pathway_solution_dir)
+    elif "McNeal1976" in model_type:
+        neuron_model = McNeal1976(pathways_dict, pathway_solution_dir)
+    else:
+        raise NotImplementedError(f"Model {model_type} not yet implemented.")
+
+    if settings["StimSets"]["Active"]:
+
+        # files to load individual solutions from
+        time_domain_solution_files = []
+
+        if settings["StimSets"]["StimSetsFile"] is not None:
+            _logger.info("Load current vectors form file.")
+            stim_protocols = np.genfromtxt(
+                settings["StimSets"]["StimSetsFile"],
+                dtype=float,
+                delimiter=",",
+                names=True,
+            )
+            n_stim_protocols = stim_protocols.shape[0]
+            n_contacts = len(list(stim_protocols[0]))
+        else:
+            if settings["CurrentVector"] is None:
+                raise ValueError("Provide either a StimSetsFile or " "a CurrentVector")
+            n_stim_protocols = 1
+            # load current from input file
+            stim_protocols = [settings["CurrentVector"]]
+            # assign contacts
+            n_contacts = len(stim_protocols[0])
+
+        # load unit solutions once
+        _logger.info("Load unit solutions")
+        for contact_i in range(n_contacts):
+            time_domain_solution_files.append(
+                os.path.join(
+                    settings["OutputPath"] + f"E1C{contact_i + 1}",
+                    "oss_time_result_PAM.h5",
+                )
+            )
+        neuron_model.load_unit_solutions(time_domain_solution_files)
+
+        # go through stimulation protocols
+        _logger.info("Running stimulation protocols")
+        for protocol_i in range(n_stim_protocols):
+            # get the scaling vector for the current
+            scaling_vector = list(stim_protocols[protocol_i])
+            # swap NaNs to zero current
+            scaling_vector = [0 if np.isnan(x) else x for x in scaling_vector]
+
+            neuron_model.superimpose_unit_solutions(scaling_vector)
+            # when using optimizer, scaling_index should be provided externally
+            neuron_model.process_pathways(
+                scaling=settings["Scaling"], scaling_index=protocol_i
+            )
+    else:
+        neuron_model.load_solution(time_domain_solution)
+        neuron_model.process_pathways(
+            scaling=settings["Scaling"],
+            scaling_index=settings["ScalingIndex"],
+        )

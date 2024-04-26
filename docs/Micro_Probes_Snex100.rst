@@ -2,7 +2,7 @@
 Microprobes SNEX 100 
 =====================
 
-* Manufacturer:  Microprobes
+* Manufacturer:  MicroProbes for Life Science
 * Products: Microprobes SNEX 100
 * Model: SNEX 100 
 * Serial Number: CEAX-200-SS
@@ -36,6 +36,3 @@ Code
 .. autoclass:: ossdbs.electrodes.micro_probes.MicroProbesSNEX100Model
     :members:
     :show-inheritance:
-
-To view examples of how to reference these electrodes, refer to the :doc:`Electrode Examples page <../Electrode_Examples>`.
-
