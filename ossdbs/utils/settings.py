@@ -111,7 +111,10 @@ class Settings:
         "FailFlag": "oss",
         "OutOfCore": False,
         "PathwayFile": None,
-        "StimSets": False,
+        "StimSets": {
+            "Active": False,
+            "StimSetsFile": None,
+        },
         "AdaptiveMeshRefinement": False,
     }
 

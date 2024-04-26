@@ -183,7 +183,7 @@ class LeadSettings:
                 },
             },
             "StimulationSignal": {"CurrentControlled": current_controlled},
-            "CalcAxonActivation": int(self.get_calc_axon_act()),
+            "CalcAxonActivation": bool(self.get_calc_axon_act()),
             "ActivationThresholdVTA": float(self.get_act_thresh_vta()[hemis_idx]),
             "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATHS[hemis_idx]),
             "FailFlag": side,
@@ -448,12 +448,14 @@ class LeadSettings:
         partial_dict["StimulationSignal"]["Type"] = self.get_signal_type()
         if partial_dict["StimulationSignal"]["Type"] == "Train":
             partial_dict["StimulationSignal"]["Type"] = "Rectangle"
-        partial_dict["StimulationSignal"]["PulseWidth[us]"] = float(self.get_pulse_width()[hemi_idx])
+        partial_dict["StimulationSignal"]["PulseWidth[us]"] = float(
+            self.get_pulse_width()[hemi_idx]
+        )
 
         if self.check_biphasic():
-            partial_dict["StimulationSignal"][
-                "CounterPulseWidth[us]"
-            ] = float(self.get_pulse_width()[hemi_idx])
+            partial_dict["StimulationSignal"]["CounterPulseWidth[us]"] = float(
+                self.get_pulse_width()[hemi_idx]
+            )
 
         # hardwired for now
         partial_dict["StimulationSignal"]["Frequency[Hz]"] = 130.0
@@ -650,7 +652,7 @@ class LeadSettings:
             "EncapsulationLayer": {
                 "Thickness[mm]": 0.1,
                 "Material": self.get_encapsulation_type(),
-                "DielectricModel": "ColeCole3",
+                "DielectricModel": "ColeCole4",
                 "DielectricParameters": None,
                 "MaxMeshSize": 0.1,
             },
