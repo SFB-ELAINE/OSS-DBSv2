@@ -82,6 +82,10 @@ class NeuronSimulator(ABC):
         # time-domain solution is loaded
         self._signal_dict = None
 
+        # check if downsampled
+        if "_DS" in pathways_dict["Axon_Model_Type"]:
+            self._downsampled = True
+
     @property
     def hoc_file(self):
         """Name of hoc file."""
