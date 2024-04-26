@@ -111,6 +111,7 @@ class VolumeConductor(ABC):
     def update_space(self):
         """Update space (e.g., if mesh changes)."""
 
+    # ruff: noqa: C901
     def run_full_analysis(
         self,
         frequency_domain_signal: FrequencyDomainSignal,
@@ -301,7 +302,7 @@ class VolumeConductor(ABC):
                 _logger.info(f"Exporting at {self._export_frequency}")
                 # save vtk
                 if export_vtk:
-                    self.vtk_export(freq_idx)
+                    self.vtk_export(freq_idx, multisine_mode)
                     time_1 = time.time()
                     timings["VTKExport"].append(time_1 - time_0)
                     time_0 = time_1
@@ -625,16 +626,23 @@ class VolumeConductor(ABC):
             estimated_currents[contact.name] = current
         return estimated_currents
 
-    def vtk_export(self, freq_idx: int) -> None:
+    def vtk_export(self, freq_idx: int, multisine_mode: bool = False) -> None:
         """Export all relevant properties to VTK.
 
         Parameters
         ----------
         freq_idx: int
             Index of frequency
+        multisine_mode: bool
+            If rectangular pulse is used (multisine_mode = False)
         """
         ngmesh = self.mesh.ngsolvemesh
-        scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
+
+        # use standard solution with 1V voltage drop
+        # unless we run multisine mode
+        scale_factor = 1.0
+        if multisine_mode:
+            scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
         FieldSolution(
             scale_factor * self.potential, "potential", ngmesh, self.is_complex
         ).save(os.path.join(self.output_path, "potential"))
