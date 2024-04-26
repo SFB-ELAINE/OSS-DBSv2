@@ -12,7 +12,6 @@ from typing import Optional
 import h5py
 import numpy as np
 import scipy
-from scipy.io import savemat
 
 from .axon_default_MRG2002 import get_axon_parameters_template
 from .utilities import (
@@ -1017,19 +1016,6 @@ class AxonModels:
 
             glob_ind = glob_ind + axon_morphology.n_segments
 
-        np.savetxt(
-            os.path.join(self.output_directory, f"axon_array_2D_{projection_name}.csv"),
-            axon_array_2D,
-            delimiter=" ",
-        )
-
         hf.close()
-
-        mdic = {"fibers": axon_array_2D, "ea_fibformat": "1.0"}
-        # omit ending in h5_file
-        savemat(
-            f"{self.combined_h5_file.replace('.h5', '')}_{projection_name}_axons.mat",
-            mdic,
-        )
 
         return axon_morphology.n_Ranvier, len(streamlines_axons), orig_N_fibers

@@ -555,5 +555,57 @@ def run_PAM(settings):
     else:
         raise NotImplementedError(f"Model {model_type} not yet implemented.")
 
-    neuron_model.load_solution(time_domain_solution)
-    neuron_model.process_pathways(scaling=1.0, scaling_index=None)
+    if settings["StimSets"]["Active"]:
+
+        # files to load individual solutions from
+        time_domain_solution_files = []
+
+        if settings["StimSets"]["StimSetsFile"] is not None:
+            _logger.info("Load current vectors form file.")
+            stim_protocols = np.genfromtxt(
+                settings["StimSets"]["StimSetsFile"],
+                dtype=float,
+                delimiter=",",
+                names=True,
+            )
+            n_stim_protocols = stim_protocols.shape[0]
+            n_contacts = len(list(stim_protocols[0]))
+        else:
+            if settings["CurrentVector"] is None:
+                raise ValueError("Provide either a StimSetsFile or " "a CurrentVector")
+            n_stim_protocols = 1
+            # load current from input file
+            stim_protocols = [settings["CurrentVector"]]
+            # assign contacts
+            n_contacts = len(stim_protocols[0])
+
+        # load unit solutions once
+        _logger.info("Load unit solutions")
+        for contact_i in range(n_contacts):
+            time_domain_solution_files.append(
+                os.path.join(
+                    settings["OutputPath"] + f"E1C{contact_i + 1}",
+                    "oss_time_result_PAM.h5",
+                )
+            )
+        neuron_model.load_unit_solutions(time_domain_solution_files)
+
+        # go through stimulation protocols
+        _logger.info("Running stimulation protocols")
+        for protocol_i in range(n_stim_protocols):
+            # get the scaling vector for the current
+            scaling_vector = list(stim_protocols[protocol_i])
+            # swap NaNs to zero current
+            scaling_vector = [0 if np.isnan(x) else x for x in scaling_vector]
+
+            neuron_model.superimpose_unit_solutions(scaling_vector)
+            # when using optimizer, scaling_index should be provided externally
+            neuron_model.process_pathways(
+                scaling=settings["Scaling"], scaling_index=protocol_i
+            )
+    else:
+        neuron_model.load_solution(time_domain_solution)
+        neuron_model.process_pathways(
+            scaling=settings["Scaling"],
+            scaling_index=settings["ScalingIndex"],
+        )

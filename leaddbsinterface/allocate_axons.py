@@ -18,9 +18,9 @@ def main():
         "activation modeling.",
     )
     parser.add_argument(
-        "leaddbs_dictionary",
+        "stimulation_folder",
         type=str,
-        help="input dictionary in mat or json format provided by Lead-DBS",
+        help="full path to the stimulation folder",
     )
     parser.add_argument(
         "--hemi_side",
@@ -46,7 +46,7 @@ def main():
 
     # process Lead-DBS input
     axons_for_PAM = AxonModels(
-        args.leaddbs_dictionary, args.hemi_side, args.description_file
+        args.stimulation_folder, args.hemi_side, args.description_file
     )
     axons_for_PAM.convert_fibers_to_axons()
 
