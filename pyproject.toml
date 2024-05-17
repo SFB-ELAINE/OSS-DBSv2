@@ -31,7 +31,10 @@ dependencies = ["h5py==3.8.0",
                 "pandas==1.5.3",
                 "scipy==1.10.1",
 		"matplotlib",
-		"neuron==8.2.4",
+		# always install NEURON under Linux
+		"neuron==8.2.4; platform_system=='Linux'", 
+		# on Mac, Python > 3.9 is required, Windows has no automated installer
+		"neuron==8.2.4; python_version>'3.8' and platform_system=='Darwin'", 
 		"dipy==1.8.0",
 		"importlib_resources; python_version=='3.8'"
                 ]
