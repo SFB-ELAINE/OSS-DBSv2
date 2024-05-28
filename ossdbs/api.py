@@ -595,8 +595,8 @@ def run_PAM(settings):
         for protocol_i in range(n_stim_protocols):
             # get the scaling vector for the current
             scaling_vector = list(stim_protocols[protocol_i])
-            # swap NaNs to zero current
-            scaling_vector = [0 if np.isnan(x) else x for x in scaling_vector]
+            # swap NaNs to zero current and convert to A (StimSets in mA)
+            scaling_vector = [0 if np.isnan(x) else x for x * 0.001 in scaling_vector]
 
             neuron_model.superimpose_unit_solutions(scaling_vector)
             # when using optimizer, scaling_index should be provided externally
