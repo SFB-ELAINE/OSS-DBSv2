@@ -556,7 +556,6 @@ def run_PAM(settings):
         raise NotImplementedError(f"Model {model_type} not yet implemented.")
 
     if settings["StimSets"]["Active"]:
-
         # files to load individual solutions from
         time_domain_solution_files = []
 
@@ -596,7 +595,7 @@ def run_PAM(settings):
             # get the scaling vector for the current
             scaling_vector = list(stim_protocols[protocol_i])
             # swap NaNs to zero current and convert to A (StimSets in mA)
-            scaling_vector = [0 if np.isnan(x) else x for x * 0.001 in scaling_vector]
+            scaling_vector = [0 if np.isnan(x) else 1e-3 * x for x in scaling_vector]
 
             neuron_model.superimpose_unit_solutions(scaling_vector)
             # when using optimizer, scaling_index should be provided externally
