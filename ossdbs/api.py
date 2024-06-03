@@ -158,7 +158,7 @@ def set_contact_and_encapsulation_layer_properties(settings, model_geometry):
         _logger.debug(f"Update Electrode {idx} with settings {new_parameters}")
         if "Contacts" in new_parameters:
             for contact_info in new_parameters["Contacts"]:
-                contact_idx = offset + idx + contact_info["Contact_ID"]
+                contact_idx = offset + contact_info["Contact_ID"]
                 # contacts are zero-indexed in the model_geometry
                 model_geometry.update_contact(contact_idx - 1, contact_info)
             offset += model_geometry.electrodes[idx].n_contacts
