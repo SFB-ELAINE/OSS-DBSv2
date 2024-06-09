@@ -42,6 +42,7 @@ __all__ = [
     "ConductivityCF",
     "GMRESSolver",
     "CGSolver",
+    "DirectSolver",
     "Mesh",
     "VolumeConductor",
     "VolumeConductorNonFloating",
