@@ -215,7 +215,6 @@ class NeuronSimulator(ABC):
         time_domain_h5_files: list
             names of files holding time-domain solution
         """
-
         self._td_unit_solutions = []  # list where we store datasets
         for solution_i in range(len(time_domain_h5_files)):
             td_solution = h5py.File(time_domain_h5_files[solution_i], "r")
@@ -223,16 +222,15 @@ class NeuronSimulator(ABC):
 
     def superimpose_unit_solutions(self, scaling_vector: list):
         """Scale and superimpose solutions obtained for each contact-ground.
-        This should be done across all datagroups and datasets
+        This should be done across all datagroups and datasets.
 
         Parameters
         ----------
         scaling_vector: list
             current scaling across contacts
         """
-
         # very dumb way to get self._td_solution initialized
-        self._td_solution = h5py.File('combined_solution.h5', mode='w')
+        self._td_solution = h5py.File("combined_solution.h5", mode="w")
         for obj in self._td_unit_solutions[0].keys():
             self._td_unit_solutions[0].copy(obj, self._td_solution)
 
@@ -242,7 +240,7 @@ class NeuronSimulator(ABC):
         for solution_i in range(len(self._td_unit_solutions)):
             for pathway_idx, pathway_name in enumerate(pathways):
                 pathway_dataset = self._td_unit_solutions[solution_i][pathway_name]
-                #pathway_super_dataset = self._td_solution[solution_i][pathway_name]
+                # pathway_super_dataset = self._td_solution[solution_i][pathway_name]
                 N_neurons = self.get_N_seeded_neurons(pathway_idx)
                 for neuron_index in range(N_neurons):
                     if pathway_dataset["Status"][neuron_index] == 0:
@@ -253,9 +251,18 @@ class NeuronSimulator(ABC):
 
                         # scale and superimpose
                         if solution_i == 0:
-                            self._td_solution[pathway_name]["axon" + str(neuron_index)]["Potential[V]"][...] = neuron_time_sol * scaling_vector[solution_i]
+                            self._td_solution[pathway_name]["axon" + str(neuron_index)][
+                                "Potential[V]"
+                            ][...] = (neuron_time_sol * scaling_vector[solution_i])
                         else:
-                            self._td_solution[pathway_name]["axon" + str(neuron_index)]["Potential[V]"][...] = self._td_solution[pathway_name]["axon" + str(neuron_index)]['Potential[V]'][...] + neuron_time_sol * scaling_vector[solution_i]
+                            self._td_solution[pathway_name]["axon" + str(neuron_index)][
+                                "Potential[V]"
+                            ][...] = (
+                                self._td_solution[pathway_name][
+                                    "axon" + str(neuron_index)
+                                ]["Potential[V]"][...]
+                                + neuron_time_sol * scaling_vector[solution_i]
+                            )
 
     def process_pathways(
         self, scaling: float = 1.0, scaling_index: Optional[int] = None

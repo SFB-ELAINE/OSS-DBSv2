@@ -14,9 +14,11 @@ _logger = logging.getLogger(__name__)
 class Solver(ABC):
     """Computes the boundary volume problem."""
 
+    DEFAULT_PRECONDITIONER = BDDCPreconditioner()
+
     def __init__(
         self,
-        precond_par: Preconditioner = BDDCPreconditioner(),
+        precond_par: Preconditioner = DEFAULT_PRECONDITIONER,
         maxsteps: int = 10000,
         precision: float = 1e-12,
     ) -> None:

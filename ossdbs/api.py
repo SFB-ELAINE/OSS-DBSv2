@@ -556,7 +556,6 @@ def run_PAM(settings):
         raise NotImplementedError(f"Model {model_type} not yet implemented.")
 
     if settings["StimSets"]["Active"]:
-
         # files to load individual solutions from
         time_domain_solution_files = []
 
