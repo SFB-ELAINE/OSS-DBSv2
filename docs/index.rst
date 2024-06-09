@@ -29,28 +29,42 @@ activation of specific axons and realistic fiber tracts to performe detailed pat
 modeling (PAM).
 
 A detailed overview over the implemented concepts can be find in the related sections of this
-documentation. For more details about the first veriosn of OSS-DBS you can refer to [Butenko2019]_.
+documentation. For more details about the first version of OSS-DBS you can refer to [Butenko2019]_.
 
-==============
+============
 Installation
-==============
-The software OSS-DBS can be easily installed using pip:
+============
+In near future, the software OSS-DBS can be easily installed using pip:
 
 .. code-block:: console
 
-    $ pip install oss_dbs
+    $ pip install ossdbs
+
+For now, please use:
+
+.. code-block:: console
+
+    $ git clone https://github.com/SFB-ELAINE/OSS-DBSv2.git 
+    $ pip install . 
+
 
 For first steps with OSS-DBS see the next section of this documentation.
-Some examples to run you can find in the Examples section.
+Some examples to run you can find in the :ref:`Examples <examples>` section.
 
-.. note::
-   To edit Sphinx documentation you need to install the following packages:
+For Developers
+==============
+
+Install 
 
 .. code-block:: console
 
-   $ pip install sphinx
-   $ pip install nbsphinx
-   $ pip install sphinx-rtd-theme
+   $ pip install -e ".[dev]"
+
+Or if you want to update the Sphinx documentation locally install
+
+.. code-block:: console
+
+   $ pip install -e ".[all]"
 
 =================
 Table of contents
@@ -61,10 +75,13 @@ Table of contents
    start
    examples
    brain_geometry
-   meshing
-   signals
-   volume_conductor_model
+   materials
+   stimulation_signals
    electrodes
+   point_analysis
+   axon_models
+   volume_conductor_model
+   utils
 
 
 Indices and tables

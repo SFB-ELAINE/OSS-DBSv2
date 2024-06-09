@@ -1,23 +1,29 @@
-Brain Geometry
-===============
+Brain geometry
+==============
 
-.. note::
-    How to create a brain geometry
+There are two types of geometries:
+a simple brain geometry derived from the MRI image
+and a full model geometry that also contains electrodes.
+
+Build electrode from MRI image
+------------------------------
+
+TODO
 
 Choose electrodes
 ------------------
 
+TODO
+
 Create final geometry
 ---------------------
 
+TODO
+
 API reference
---------------
+-------------
 
-The following contains the API references to the submoduls for the
-Brain Geometry and the Conductivity.
-
-
-Brain Geometry
+Brain geometry
 ^^^^^^^^^^^^^^
 
 .. automodule:: ossdbs.model_geometry.BrainGeometry
@@ -25,9 +31,26 @@ Brain Geometry
     :undoc-members:
     :show-inheritance:
 
-Conductivity
-^^^^^^^^^^^^
-.. automodule:: ossdbs.fem.volume_conductor.conductivity
+Model geometry
+^^^^^^^^^^^^^^
+
+.. automodule:: ossdbs.model_geometry.ModelGeometry
     :members:
     :undoc-members:
     :show-inheritance:
+
+
+Helper classes
+^^^^^^^^^^^^^^
+
+.. automodule:: ossdbs.model_geometry.BoundingBox
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: ossdbs.model_geometry.Contacts
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. autoclass:: ossdbs.model_geometry.Contact

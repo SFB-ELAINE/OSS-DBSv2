@@ -1,20 +1,20 @@
-Benchmarking OSS-DBS v.0.1
-===========================
+Benchmarking OSS-DBS v1
+=======================
+
+Here, we will show how OSS-DBS v1 [Butenko2019]_ compares to this version.
 
 .. note::
-    Need to find a good marker for benchmarking!
 
-This Benchmark with OSS-DBS v.0.1 [Butenko2019]_ will show that results from the new version are consistent
-with previous results. Also we will the improvements in the handling of the new version as well as the advanteges
-of the performance.
+   This page is under construction.
 
 Benchmarking case
-------------------
+-----------------
 
-For simplification we show the benchmark for an inhomogenius but isotropic case by using the quasi-static (QS)
-approximation of Maxwells' equation. Therefore we use a segmented ICBM 152 human brain atlas [Fonov2011]_ and place an electrode in
-the human subthamalic nucleus (STN). The electrode is specified as Medtronic 3389 with a voltage of 1V at the
-lowest contact and the third contact is used as ground contact.
+For simplification we show the benchmark for an inhomogeneous but isotropic case.
+We use the quasi-static (QS) approximation of Maxwells' equation. 
+The segmented ICBM 152 human brain atlas [Fonov2011]_ is considered.
+A Medtronic 3389 electrode is placed in the subthamalic nucleus (STN). 
+A voltage of 1V is applied at the lowest contact and the third contact is used as ground contact.
 
 Input
 ------
@@ -65,7 +65,7 @@ Here you can see how the input file in the new verion:
         }
 
 
-The coresponding input file to the old version has the following form:
+The corresponding input file in the old version has the following form:
 
 .. code-block:: bash
 
@@ -176,7 +176,7 @@ The coresponding input file to the old version has the following form:
 Results
 --------
 
-The results of both version ...
+TODO
 
 References
 -----------
