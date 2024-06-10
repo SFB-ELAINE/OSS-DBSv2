@@ -1,5 +1,7 @@
+.. _examples:
+
 Examples
-=========
+========
 
 Welcome to the example section of our software documentation! 
 In this section, we provide a variety of examples to help you understand how to use our software for specific applications. 
@@ -10,6 +12,4 @@ Whether you are new to the software or an experienced user, these examples can p
 .. toctree::
    :maxdepth: 1
 
-   example_benchmark
-   example_rat
-   example1
+   examples/example_benchmark

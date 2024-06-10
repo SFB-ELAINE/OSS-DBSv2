@@ -1,10 +1,9 @@
-Rodent Studies
-===============
+Rodent studies
+==============
 
-In this example we show how to run a studies for electrical stimulation in a
-rodents brain with OSS-DBS. Here we simulate the treatment of a wistar rat using a MRI
-based on Johnson et.al rat atlas. The image is segemented in GrayMatter, WhiteMatter
-and CerebrospinalFluid.
+In this example we show how to run a study in a rodent brain with OSS-DBS.
+Here, we simulate the treatment of a wistar rat using a MRI based on Johnson et.al rat atlas.
+The image is segemented in GrayMatter, WhiteMatter and CerebrospinalFluid.
 
 .. code-block:: bash
 
@@ -20,8 +19,9 @@ and CerebrospinalFluid.
         },
 
 
-For this studie we choose a custom made monopolar electrode from Microprobes espicially designed
-for small rodents. Since the electrode is symetric the rotaion has no impact and is left to 0.
+For this study we choose a custom made monopolar electrode from Microprobes especially designed
+for small rodents. 
+Since the electrode is symetric the rotaion has no impact and is left to 0.
 Further we want to implant the electrode crainial into the region of the subthalamic nucleus (STN)
 relativ to the given MRI. This electrode has only one contact so we set it as active with a
 voltage of 1 V.

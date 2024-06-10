@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
+from typing import Optional
 
 import ngsolve
 import numpy as np
@@ -18,22 +19,7 @@ _logger = logging.getLogger(__name__)
 
 
 class ConductivityCF:
-    """Represents the conductivity distribution by magnetic resonance imaging.
-
-    Attributes
-    ----------
-    material_distribution : np.ndarray
-        Matrix represents coding for the distribution of different materials.
-
-    bounding_box : BoundingBox
-        Represents a cuboid in real space.
-
-    dielectric_properties : dict
-        Dictionary with dielectric properties of each material
-
-    encapsulation_layers : dict
-        A dictionary containing the materials of the encapsulation layer
-    """
+    """Conductivity wrapper."""
 
     def __init__(
         self,
@@ -41,10 +27,29 @@ class ConductivityCF:
         brain_bounding_box: BoundingBox,
         dielectric_properties: dict,
         materials: dict,
-        encapsulation_layers=None,  # TODO type hint
+        encapsulation_layers: Optional[dict] = None,
         complex_data: bool = False,
         dti_image: DiffusionTensorImage = None,
     ) -> None:
+        """Convert MRI conductivity distribution to NGSolve.
+
+        Parameters
+        ----------
+        mri_image: MagneticResonanceImage
+            the MRI image holding the material distribution
+        dti_image: DiffusionTensorImage
+            the DTI image holding the anisotropy information
+        brain_bounding_box: BoundingBox
+            bounding box of the brain in real space.
+        materials: dict
+            mapping of materials to integers in MRI
+        dielectric_properties: dict
+            dictionary with dielectric properties of each material
+        encapsulation_layers: dict
+            a dictionary containing the materials of the encapsulation layer
+        complex_data: bool
+            if complex arithmetic is required
+        """
         if encapsulation_layers is None:
             encapsulation_layers = []
         self._dielectric_properties = dielectric_properties

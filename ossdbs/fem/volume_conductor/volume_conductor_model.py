@@ -786,7 +786,12 @@ class VolumeConductor(ABC):
         if len(self.contacts.active) == 2:
             _logger.info("Overwrite voltage for current-controlled mode")
             for contact_idx, contact in enumerate(self.contacts.active):
-                self.contacts[contact.name].voltage = float(contact_idx)
+                if self.contacts[contact.name].current < 0:
+                    # negative contact is ground
+                    contact_voltage = 0
+                else:
+                    contact_voltage = float(contact_idx) + 1
+                self.contacts[contact.name].voltage = contact_voltage
         else:
             if len(self.contacts.active) != 1:
                 raise ValueError(

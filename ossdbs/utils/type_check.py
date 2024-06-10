@@ -1,11 +1,12 @@
 # Copyright 2023, 2024 Konstantin Butenko, Johannes Reding, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
+from typing import ClassVar
 
 
 class TypeChecker:
     """Check types of input dictionary."""
 
-    TYPES = {
+    TYPES: ClassVar[dict] = {
         "DielectricModel": {
             "Type": str,
         },
@@ -94,7 +95,7 @@ class TypeChecker:
         },
     }
 
-    ELECTRODE_SETTING = {
+    ELECTRODE_SETTING: ClassVar[dict] = {
         "Name": str,
         "Rotation[Degrees]": (int, float),
         "Direction": {
@@ -110,7 +111,7 @@ class TypeChecker:
         "Contacts": list,
     }
 
-    CONTACT_SETTING = {
+    CONTACT_SETTING: ClassVar[dict] = {
         "Contact_ID": int,
         "Active": bool,
         "Current[A]": (int, float),

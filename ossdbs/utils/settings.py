@@ -2,13 +2,15 @@
 # Copyright 2023, 2024 Johannes Reding, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from typing import ClassVar
+
 from .materials import MATERIALS
 
 
 class Settings:
     """Default settings of OSS-DBS."""
 
-    CUSTOM_SETTING = {
+    CUSTOM_SETTING: ClassVar[dict] = {
         "BrainRegion": {
             "Center": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 0},
             "Dimension": {"x[mm]": 40, "y[mm]": 40, "z[mm]": 40},
@@ -16,7 +18,7 @@ class Settings:
         }
     }
 
-    ELECTRODE_SETTING = {
+    ELECTRODE_SETTING: ClassVar[dict] = {
         "Name": "BostonScientificVerciseDirected",
         "Rotation[Degrees]": 0.0,
         "Direction": {"x[mm]": 0.0, "y[mm]": 0.0, "z[mm]": 1.0},
@@ -25,7 +27,7 @@ class Settings:
         "EncapsulationLayer": {},
     }
 
-    CONTACT_SETTING = {
+    CONTACT_SETTING: ClassVar[dict] = {
         "Contact_ID": 0,
         "Active": False,
         "Current[A]": 0.0,
@@ -36,7 +38,7 @@ class Settings:
         "MaxMeshSizeEdge": 1e6,
     }
 
-    ENCAPSULATION_SETTING = {
+    ENCAPSULATION_SETTING: ClassVar[dict] = {
         "Thickness[mm]": 0.0,
         "Material": "Gray matter",
         "DielectricModel": "ColeCole4",
@@ -44,7 +46,7 @@ class Settings:
         "MaxMeshSize": 1e6,
     }
 
-    SETTING = {
+    SETTING: ClassVar[dict] = {
         "Electrodes": [],
         "Surfaces": [],
         "MaterialDistribution": {
