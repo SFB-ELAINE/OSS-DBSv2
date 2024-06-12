@@ -1,10 +1,7 @@
 from ossdbs.electrodes import AbbottStJudeActiveTip6142_6145
-from .geometry_converter import GeometryConverter
 import pytest
 import netgen
 import ngsolve
-import json
-import os
 import numpy as np
 
 
@@ -24,7 +21,8 @@ class TestAbbottStJudeActiveTip6142_6145():
          ((0.0, (1, -2, 3), (0, 0, 0)), FILE_PREFIX + '_1.json'),
          ((30.0, (1, -2, 3), (0, 0, 0)), FILE_PREFIX + '_1.json'),
          ((0.0, (1, -2, 3), (2.0, 0, 1.0)), FILE_PREFIX + '_2.json'),
-         ((0.0, (1, -2, 3), (2.0 / 3.0, 0, 1.0 / 3.0)), FILE_PREFIX + '_2.json'),
+         ((0.0, (1, -2, 3), (2.0 / 3.0, 0, 1.0 / 3.0)), FILE_PREFIX +
+         '_2.json'),
          ]
 
     def load_geometry_data(self, path: str) -> dict:
@@ -71,7 +69,7 @@ class TestAbbottStJudeActiveTip6142_6145():
                        'Contact_4'])
         assert desired == set(mesh.GetBoundaries())
 
-    # Test number and names of contacts
+    # Test the number and names of contacts
     def test_contacts(self, AbbottStJudeActiveTip6142_6145_electrode):
         electrode = AbbottStJudeActiveTip6142_6145_electrode
         geometry = electrode.geometry
@@ -79,10 +77,10 @@ class TestAbbottStJudeActiveTip6142_6145():
         with ngsolve.TaskManager():
             mesh = ngsolve.Mesh(netgen_geometry.GenerateMesh())
         desired = set(['Body',
-                    'Contact_1',
-                    'Contact_2',
-                    'Contact_3',
-                    'Contact_4'])
+                       'Contact_1',
+                       'Contact_2',
+                       'Contact_3',
+                       'Contact_4'])
         assert desired == set(mesh.GetBoundaries())
 
     # Test volume of the entire electrode

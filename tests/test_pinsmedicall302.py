@@ -1,10 +1,8 @@
 from ossdbs.electrodes import PINSMedicalL302
-from .geometry_converter import GeometryConverter
 import pytest
 import netgen
 import ngsolve
-import json
-import os
+import numpy as np
 
 
 class TestPINSMedicalL302():
@@ -49,8 +47,13 @@ class TestPINSMedicalL302():
         assert desired == GeometryConverter(geometry).to_dictionary()
     """
 
-    def test_rename_boundaries(self):
-        electrode = PINSMedicalL302()
+    @pytest.fixture
+    def PINSMedicalL302_electrode(self):
+        return PINSMedicalL302()
+
+    # Test whether set_contact_names() works
+    def test_rename_boundaries(self, PINSMedicalL302_electrode):
+        electrode = PINSMedicalL302_electrode
         electrode.set_contact_names({'Body': 'RenamedBody',
                                      'Contact_1': 'RenamedContact_1',
                                      'NonExistingPart': 'NonExistingPart'})
@@ -64,6 +67,49 @@ class TestPINSMedicalL302():
                        'Contact_3',
                        'Contact_4'])
         assert desired == set(mesh.GetBoundaries())
+
+    # Test the number and names of contacts
+    def test_contacts(self, PINSMedicalL302_electrode):
+        electrode = PINSMedicalL302_electrode
+        geometry = electrode.geometry
+        netgen_geometry = netgen.occ.OCCGeometry(geometry)
+        with ngsolve.TaskManager():
+            mesh = ngsolve.Mesh(netgen_geometry.GenerateMesh())
+        desired = set(['Body',
+                       'Contact_1',
+                       'Contact_2',
+                       'Contact_3',
+                       'Contact_4',
+                       ])
+        assert desired == set(mesh.GetBoundaries())
+
+    # Test volume of the entire electrode
+    def test_electrode_volume(self, PINSMedicalL302_electrode):
+        electrode = PINSMedicalL302_electrode
+
+        total_length = electrode._parameters.total_length
+        tip_length = electrode._parameters.tip_length
+        radius = electrode._parameters.lead_diameter * 0.5
+        height = total_length - tip_length
+
+        desired = (np.pi * radius ** 2 * height) + (4 / 3 * np.pi * radius ** 3 * 0.5)
+        actual = electrode.geometry.mass
+        tolerance = 1e-5
+
+        np.testing.assert_allclose(actual, desired, atol=tolerance)
+
+    # Test volume of all the contacts
+    def test_contacts_volume(self, PINSMedicalL302_electrode):
+        electrode = PINSMedicalL302_electrode
+        contact_length = electrode._parameters.contact_length
+        radius = electrode._parameters.lead_diameter * 0.5
+        n_contacts = electrode._n_contacts
+
+        desired = (contact_length * radius ** 2 * np.pi) * n_contacts
+        actual = electrode._contacts().mass
+        tolerance = 1e-5
+
+        np.testing.assert_allclose(actual, desired, atol=tolerance)
 
 
 """

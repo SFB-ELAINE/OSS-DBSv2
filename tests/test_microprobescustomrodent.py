@@ -1,10 +1,8 @@
 from ossdbs.electrodes import MicroProbesRodentElectrode
-from .geometry_converter import GeometryConverter
 import pytest
 import netgen
 import ngsolve
-import json
-import os
+import numpy as np
 
 
 class TestMicroProbesCustomRodent():
@@ -49,8 +47,13 @@ class TestMicroProbesCustomRodent():
         assert desired == GeometryConverter(geometry).to_dictionary()
     """
 
-    def test_rename_boundaries(self):
-        electrode = MicroProbesRodentElectrode()
+    @pytest.fixture
+    def MicroProbesRodentElectrode_electrode(self):
+        return MicroProbesRodentElectrode()
+
+    # Test whether set_contact_names() works
+    def test_rename_boundaries(self, MicroProbesRodentElectrode_electrode):
+        electrode = MicroProbesRodentElectrode_electrode
         electrode.set_contact_names({'Body': 'RenamedBody',
                                      'Contact_1': 'RenamedContact_1',
                                      'NonExistingPart': 'NonExistingPart'})
@@ -62,6 +65,46 @@ class TestMicroProbesCustomRodent():
                        'RenamedContact_1',
                        ])
         assert desired == set(mesh.GetBoundaries())
+
+    # Test the number and names of contacts
+    def test_contacts(self, MicroProbesRodentElectrode_electrode):
+        electrode = MicroProbesRodentElectrode_electrode
+        geometry = electrode.geometry
+        netgen_geometry = netgen.occ.OCCGeometry(geometry)
+        with ngsolve.TaskManager():
+            mesh = ngsolve.Mesh(netgen_geometry.GenerateMesh())
+        desired = set(['Body',
+                       'Contact_1',
+                       ])
+        assert desired == set(mesh.GetBoundaries())
+
+    # Test volume of the entire electrode
+    def test_electrode_volume(self, MicroProbesRodentElectrode_electrode):
+        electrode = MicroProbesRodentElectrode_electrode
+
+        total_length = electrode._parameters.total_length
+        lead_radius = electrode._parameters.lead_radius
+        height = total_length - lead_radius
+
+        desired = (height * lead_radius ** 2 * np.pi) + (4 / 3 * np.pi * lead_radius ** 3 * 0.5)
+        actual = electrode.geometry.mass
+        tolerance = 1e-3
+
+        np.testing.assert_allclose(actual, desired, atol=tolerance)
+
+    # Test volume of all the contacts
+    def test_contacts_volume(self, MicroProbesRodentElectrode_electrode):
+        electrode = MicroProbesRodentElectrode_electrode
+
+        lead_radius = electrode._parameters.lead_radius
+        contact_radius = electrode._parameters.contact_radius
+        height = contact_radius - lead_radius
+
+        desired = (height * lead_radius ** 2 * np.pi) + (4 / 3 * np.pi * lead_radius ** 3 * 0.5)
+        actual = electrode._contacts().mass
+        tolerance = 1e-3
+
+        np.testing.assert_allclose(actual, desired, atol=tolerance)
 
 
 """
