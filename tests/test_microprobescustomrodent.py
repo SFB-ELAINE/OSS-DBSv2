@@ -1,11 +1,12 @@
-from ossdbs.electrodes import MicroProbesRodentElectrode
-import pytest
 import netgen
 import ngsolve
 import numpy as np
+import pytest
+
+from ossdbs.electrodes import MicroProbesRodentElectrode
 
 
-class TestMicroProbesCustomRodent():
+class TestMicroProbesCustomRodent:
 
     """
     FILE_PREFIX = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -51,58 +52,65 @@ class TestMicroProbesCustomRodent():
     def MicroProbesRodentElectrode_electrode(self):
         return MicroProbesRodentElectrode()
 
-    # Test whether set_contact_names() works
     def test_rename_boundaries(self, MicroProbesRodentElectrode_electrode):
+        """Test whether set_contact_names() works."""
         electrode = MicroProbesRodentElectrode_electrode
-        electrode.set_contact_names({'Body': 'RenamedBody',
-                                     'Contact_1': 'RenamedContact_1',
-                                     'NonExistingPart': 'NonExistingPart'})
+        electrode.set_contact_names(
+            {
+                "Body": "RenamedBody",
+                "Contact_1": "RenamedContact_1",
+                "NonExistingPart": "NonExistingPart",
+            }
+        )
         geometry = electrode.geometry
         netgen_geometry = netgen.occ.OCCGeometry(geometry)
         with ngsolve.TaskManager():
             mesh = ngsolve.Mesh(netgen_geometry.GenerateMesh())
-        desired = set(['RenamedBody',
-                       'RenamedContact_1',
-                       ])
+        desired = {
+            "RenamedBody",
+            "RenamedContact_1",
+        }
         assert desired == set(mesh.GetBoundaries())
 
-    # Test the number and names of contacts
     def test_contacts(self, MicroProbesRodentElectrode_electrode):
+        """Test the number and names of contacts."""
         electrode = MicroProbesRodentElectrode_electrode
         geometry = electrode.geometry
         netgen_geometry = netgen.occ.OCCGeometry(geometry)
         with ngsolve.TaskManager():
             mesh = ngsolve.Mesh(netgen_geometry.GenerateMesh())
-        desired = set(['Body',
-                       'Contact_1',
-                       ])
+        desired = {
+            "Body",
+            "Contact_1",
+        }
         assert desired == set(mesh.GetBoundaries())
 
-    # Test volume of the entire electrode
     def test_electrode_volume(self, MicroProbesRodentElectrode_electrode):
+        """Test volume of the entire electrode."""
         electrode = MicroProbesRodentElectrode_electrode
 
         total_length = electrode._parameters.total_length
         lead_radius = electrode._parameters.lead_radius
-        height = total_length - lead_radius
+        contact_radius = electrode._parameters.contact_radius
+        height = total_length - contact_radius
 
-        desired = (height * lead_radius ** 2 * np.pi) + (4 / 3 * np.pi * lead_radius ** 3 * 0.5)
+        desired = (height * lead_radius**2 * np.pi) + (
+            4 / 3 * np.pi * contact_radius**3 * 0.5
+        )
         actual = electrode.geometry.mass
-        tolerance = 1e-3
+        tolerance = 1e-5
 
         np.testing.assert_allclose(actual, desired, atol=tolerance)
 
-    # Test volume of all the contacts
     def test_contacts_volume(self, MicroProbesRodentElectrode_electrode):
+        """Test volume of all the contacts."""
         electrode = MicroProbesRodentElectrode_electrode
 
-        lead_radius = electrode._parameters.lead_radius
         contact_radius = electrode._parameters.contact_radius
-        height = contact_radius - lead_radius
 
-        desired = (height * lead_radius ** 2 * np.pi) + (4 / 3 * np.pi * lead_radius ** 3 * 0.5)
+        desired = 4 / 3 * np.pi * contact_radius**3 * 0.5
         actual = electrode._contacts().mass
-        tolerance = 1e-3
+        tolerance = 1e-5
 
         np.testing.assert_allclose(actual, desired, atol=tolerance)
 
