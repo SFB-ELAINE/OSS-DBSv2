@@ -1,5 +1,3 @@
-import netgen
-import ngsolve
 import numpy as np
 import pytest
 
@@ -22,9 +20,7 @@ class TestBostonScientificVercise:
             }
         )
         geometry = electrode.geometry
-        netgen_geometry = netgen.occ.OCCGeometry(geometry)
-        with ngsolve.TaskManager():
-            mesh = ngsolve.Mesh(netgen_geometry.GenerateMesh())
+        faces = [face.name for face in geometry.faces]
         desired = {
             "RenamedBody",
             "RenamedContact_1",
@@ -36,15 +32,13 @@ class TestBostonScientificVercise:
             "Contact_7",
             "Contact_8",
         }
-        assert desired == set(mesh.GetBoundaries())
+        assert desired == set(faces)
 
     def test_contacts(self, BostonScientificVercise_electrode):
         """Test the number and names of contacts."""
         electrode = BostonScientificVercise_electrode
         geometry = electrode.geometry
-        netgen_geometry = netgen.occ.OCCGeometry(geometry)
-        with ngsolve.TaskManager():
-            mesh = ngsolve.Mesh(netgen_geometry.GenerateMesh())
+        faces = [face.name for face in geometry.faces]
         desired = {
             "Body",
             "Contact_1",
@@ -56,7 +50,7 @@ class TestBostonScientificVercise:
             "Contact_7",
             "Contact_8",
         }
-        assert desired == set(mesh.GetBoundaries())
+        assert desired == set(faces)
 
     def test_electrode_volume(self, BostonScientificVercise_electrode):
         """Test volume of the entire electrode."""
