@@ -7,47 +7,6 @@ from ossdbs.electrodes import Medtronic3389
 
 
 class TestMedtronic3389:
-
-    """
-    FILE_PREFIX = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                               'test_data',
-                               'Medtronic',
-                               'Medtronic3389')
-
-    TESTDATA = [
-        # electrode_parameters (Rotation, Position, Direction), file_path
-        ((0.0, (0, 0, 0), (0, 0, 1)), FILE_PREFIX + '_0.json'),
-        ((0.0, (0, 0, 0), (0, 0, 0)), FILE_PREFIX + '_0.json'),
-        ((30.0, (0, 0, 0), (0, 0, 1)), FILE_PREFIX + '_0.json'),
-        ((0.0, (1, -2, 3), (0, 0, 1)), FILE_PREFIX + '_1.json'),
-        ((0.0, (1, -2, 3), (0, 0, 0)), FILE_PREFIX + '_1.json'),
-        ((30.0, (1, -2, 3), (0, 0, 0)), FILE_PREFIX + '_1.json'),
-        ((0.0, (1, -2, 3), (2.0, 0, 1.0)), FILE_PREFIX+'_2.json'),
-        ((0.0, (1, -2, 3), (2.0/3.0, 0, 1.0/3.0)), FILE_PREFIX+'_2.json'),
-        ]
-
-    def load_geometry_data(self, path: str) -> dict:
-        with open(path, "r") as file:
-            geometry_data = json.load(file)
-        return geometry_data
-
-    @pytest.mark.parametrize('electrode_parameters, path', TESTDATA)
-    def test_geometry(self, electrode_parameters, path) -> None:
-        rotation, position, direction = electrode_parameters
-        electrode = Medtronic3389(rotation=rotation,
-                                                   direction=direction,
-                                                   position=position)
-        geometry = electrode.geometry
-        desired = self.load_geometry_data(path=path)
-        assert desired == GeometryConverter(geometry).to_dictionary()
-
-    def test_geometry_default(self):
-        electrode = Medtronic3389()
-        geometry = electrode.geometry
-        desired = self.load_geometry_data(path=self.FILE_PREFIX+'_0.json')
-        assert desired == GeometryConverter(geometry).to_dictionary()
-    """
-
     @pytest.fixture
     def Medtronic3389_electrode(self):
         return Medtronic3389()
@@ -119,35 +78,3 @@ class TestMedtronic3389:
         tolerance = 1e-5
 
         np.testing.assert_allclose(actual, desired, atol=tolerance)
-
-
-"""
-class TestMedtronic3389_Capsule():
-
-    FILE_PREFIX = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                               'test_data',
-                               'Medtronic',
-                               'Medtronic3389_Capsule')
-
-    TESTDATA = [
-        # electrode_parameters (Thickness, Position, Direction), file_path
-        ((1.0, (0, 0, 0), (0, 0, 1)), FILE_PREFIX + '_0.json'),
-        ((2.0, (0, 0, 0), (0, 0, 1)), FILE_PREFIX + '_1.json'),
-        ((1.0, (1, -2, 3), (0, 0, 1)), FILE_PREFIX + '_2.json'),
-        ]
-
-    def load_geometry_data(self, path: str) -> dict:
-        with open(path, "r") as file:
-            geometry_data = json.load(file)
-        return geometry_data
-
-    @pytest.mark.parametrize('electrode_parameters, path', TESTDATA)
-    def test_encapsulation_geometry(self, electrode_parameters, path) -> None:
-        thickness, position, direction = electrode_parameters
-        electrode = Medtronic3389(rotation=0.0,
-                                                   direction=direction,
-                                                   position=position)
-        geometry = electrode.encapsulation_geometry(thickness=thickness)
-        desired = self.load_geometry_data(path=path)
-        assert desired == GeometryConverter(geometry).to_dictionary()
-"""
