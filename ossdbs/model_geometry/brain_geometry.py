@@ -161,5 +161,5 @@ class BrainGeometry:
         self._geometry.mat("Brain")
         # TODO test naming
         for face in self._geometry.faces:
-            if face.name == "":
+            if face.name is None:
                 face.name = "BrainSurface"

@@ -2,22 +2,15 @@
     "BrainRegion": {
         "Center": {"x[mm]": 17.0, "y[mm]": 8.0, "z[mm]": 6.0 },
         "Dimension": {"x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0 },
-        "Shape": "Ellipsoid"
+        "Shape": "Sphere"
     },
     "Electrodes":
     [
         {
-        "Name": "BostonScientificVerciseCustom",
-        "CustomParameters": {
-            "tip_length": 1.3,
-            "contact_length": 1.5,
-            "contact_spacing": 0.5,
-            "lead_diameter": 1.3,
-            "total_length": 50.0
-      },
-      "Rotation[Degrees]": 0.0,
-      "Direction": { "x[mm]": 0.0, "y[mm]": 0.0, "z[mm]": 1.0 },
-      "TipPosition": { "x[mm]": 17.0, "y[mm]": 8.0, "z[mm]": 6.0 },
+        "Name": "AbbottStJudeActiveTip6142_6145",
+        "Rotation[Degrees]": 0.0,
+        "Direction": { "x[mm]": 0.0, "y[mm]": 0.0, "z[mm]": 1.0 },
+        "TipPosition": { "x[mm]": 17.0, "y[mm]": 8.0, "z[mm]": 6.0 },
 
       "Contacts": [
         {
@@ -47,22 +40,6 @@
      }
     }
   ],
-  "MaterialDistribution": {
-    "MRIPath": "../input_files/Butenko_segmask.nii.gz",
-    "MRIMapping": {
-      "Unknown": 0,
-      "CSF": 1,
-      "White matter": 2,
-      "Gray matter": 3,
-      "Blood": 4      
-    },
-    "DiffusionTensorActive": false,
-    "DTIPath": ""
-  },
-
-  "DielectricModel": {
-    "Type": "ColeCole4"
-  },
 
   "Mesh": {
     "LoadMesh": false,
@@ -78,48 +55,10 @@
     },
     "SaveMesh": false
   },
-    
-  "FEMOrder": 2,
-  "EQSMode": false, 
 
-  "StimulationSignal": {
-    "CurrentControlled": false,
-    "Type": "Multisine",
-    "ListOfFrequencies": [130.0]
-  },
-    
-    "Solver": 
-    {
-        "Type": "CG", 
-        "Preconditioner": "bddc",
-        "PreconditionerKwargs": {},
-        "PrintRates": false,
-        "MaximumSteps": 10000,
-        "Precision": 1e-12
-    },
-    "PointModel": {
-        "Pathway": {
-            "Active": false, 
-            "FileName": ""
-        },
-        "Lattice": {
-            "Active": false,
-            "Center": {"x[mm]": 22.95, "y[mm]": 11.47, "z[mm]": 8.1},
-            "Shape": {"x": 10, "y": 10, "z": 10},
-            "Direction": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 1},
-            "PointDistance[mm]": 0.1
-        },
-        "VoxelLattice": {
-            "Active": false,
-            "Shape": {"x": 10, "y": 10, "z": 10}
-            }
-    },
-
-  "OutputPath": "Results/",
   "ComputeImpedance": true,
   "TemplateSpace": false,
   "ActivationThresholdVTA": 0.2,
-  "ExportVTK": true,
   "ExportElectrode": true,
   "OutOfCore": false,
   "AdaptiveMeshRefinement": false

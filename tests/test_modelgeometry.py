@@ -1,4 +1,5 @@
 import json
+import os
 
 import numpy as np
 import pytest
@@ -12,7 +13,10 @@ class TestModelGeometry:
 
     @pytest.fixture
     def modelGeometry(self):
-        with open("test_modelgeometry.json") as json_file:
+        FILE_PATH = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), "test_modelgeometry.json"
+        )
+        with open(FILE_PATH) as json_file:
             input_settings = json.load(json_file)
         settings = Settings(input_settings).complete_settings()
 
