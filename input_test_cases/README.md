@@ -66,4 +66,4 @@ Using a DBS electrode from Medtronic (`Medtronic3387`) placed in the STN, the el
 Case 9: StimSets
 ----------------
 
-WIP
+Run simulation at multiple contacts. Detailed documentation will follow.

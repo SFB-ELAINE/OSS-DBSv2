@@ -12,12 +12,6 @@
     },
     "Shape": "Ellipsoid"
   },
-    "Surfaces": [
-    {
-      "Name": "BrainSurface",
-      "Active": true,
-      "Current[A]": -1.0
-    }],
   "Electrodes": [
     {
       "Name": "Medtronic3387",
@@ -32,6 +26,22 @@
         "y[mm]": 11.605,
         "z[mm]": 4.676
       },
+      "Contacts": [
+        {
+          "Contact_ID": 1,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 1.0,
+          "Floating": false
+        },
+        {
+          "Contact_ID": 2,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
+          "Floating": false
+        }
+      ],
       "EncapsulationLayer": {
         "Thickness[mm]": 0.0,
         "Material": "Blood",
@@ -56,7 +66,7 @@
     "Type": "ColeCole4"
   },
   "StimulationSignal": {
-    "CurrentControlled": true,
+    "CurrentControlled": false,
     "Type": "Rectangle",
     "SpectrumMode": "OctaveBand",
     "Frequency[Hz]": 130.0,
@@ -84,7 +94,7 @@
     "Preconditioner": "bddc",
     "PreconditionerKwargs": {},
     "PrintRates": true,
-    "MaximumSteps": 500,
+    "MaximumSteps": 200,
     "Precision": 1e-8
   },
   "PointModel": {
@@ -114,9 +124,9 @@
   },
   "EQSMode": false,
   "FEMOrder": 2,
-  "OutputPath": "./Results_PAM",
+  "OutputPath": "./Results_PAM_adaptive",
   "ComputeImpedance": true,
-  "StimSets": {"Active": true,
-	       "StimSetsFile": "Current_protocol.csv" 
-  }
+  "ExportVTK": true,
+  "ExportElectrode": true,
+  "AdaptiveMeshRefinement": true
 }
