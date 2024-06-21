@@ -12,7 +12,7 @@ class TestBrainGeometry:
 
     region_parameters: ClassVar[Dict[str, Dict[str, float]]] = {
         "Center": {"x[mm]": 0.0, "y[mm]": 0.0, "z[mm]": 0.0},
-        "Dimension": {"x[mm]": 20.0, "y[mm]": 20.0, "z[mm]": 20.0},
+        "Dimension": {"x[mm]": 10.0, "y[mm]": 20.0, "z[mm]": 30.0},
     }
 
     TESTDATA: ClassVar[List[Tuple[Dict[str, Dict[str, float]], str]]] = [
@@ -28,11 +28,16 @@ class TestBrainGeometry:
         geometry = ossdbs.BrainGeometry(shape, brain_region)
 
         actual = geometry.geometry.mass
-        tolerance = 1e-1
-        if geometry._shape == "Sphere" or geometry._shape == "Ellipsoid":
-            desired = (
-                4 / 3 * np.pi * (region_parameters["Dimension"]["x[mm]"] * 0.5) ** 3
-            )
+        tolerance = 1e-3
+        if geometry._shape == "Sphere":
+            x, y, z = np.subtract(geometry._bbox.end, geometry._bbox.start) / 2
+            radius = np.min([x, y, z])
+            desired = 4 / 3 * np.pi * radius**3
+
+            np.testing.assert_allclose(actual, desired, atol=tolerance)
+        elif geometry._shape == "Ellipsoid":
+            x, y, z = np.subtract(geometry._bbox.end, geometry._bbox.start) / 2
+            desired = 4 / 3 * np.pi * x * y * z
 
             np.testing.assert_allclose(actual, desired, atol=tolerance)
         elif geometry._shape == "Box":
