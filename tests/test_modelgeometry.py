@@ -69,6 +69,7 @@ class TestModelGeometry:
         shape = settings["BrainRegion"]["Shape"]
         brain = ossdbs.BrainGeometry(shape, brain_region)
         geometry = ossdbs.ModelGeometry(brain, electrodes)
+        ossdbs.set_contact_and_encapsulation_layer_properties(settings, geometry)
 
         return geometry, settings, brain_region, electrodes
 
