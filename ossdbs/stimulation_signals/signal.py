@@ -101,27 +101,6 @@ class TimeDomainSignal(ABC):
         """Set frequency of signal."""
         self._frequency = value
 
-    @abstractmethod
-    def get_fourier_coefficients(frequencies: float) -> np.ndarray:
-        """Obtain Fourier coefficients of signal."""
-        pass
-
-    def get_frequencies_and_fourier_coefficients(
-        self, cutoff_frequency: float
-    ) -> np.ndarray:
-        """Get frequencies and Fourier coefficients up to cutoff frequency.
-
-        Parameters
-        ----------
-        cutoff_frequency: float
-            Highest considered frequency.
-        """
-        max_harmonic = int(cutoff_frequency / self.frequency)
-        harmonics = np.arange(0, max_harmonic + 1)
-        frequencies = harmonics * self.frequency
-        coefficients = self.get_fourier_coefficients(frequencies)
-        return frequencies, coefficients
-
     def get_fft_spectrum(self, cutoff_frequency: float) -> np.ndarray:
         """FFT spectrum of time-domain signal.
 

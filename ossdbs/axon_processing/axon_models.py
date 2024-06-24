@@ -947,7 +947,7 @@ class AxonModels:
         streamlines = convert_fibers_to_streamlines(fiber_array)
 
         # resample streamlines to nodes of Ranvier
-        streamlines_resampled, excluded_streamlines_idx = resample_fibers_to_Ranviers(
+        streamlines_resampled, _ = resample_fibers_to_Ranviers(
             streamlines, axon_morphology.node_step, axon_morphology.n_Ranvier
         )
 

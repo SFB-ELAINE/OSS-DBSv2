@@ -1,8 +1,6 @@
 # Copyright 2023, 2024 Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import numpy as np
-
 from .signal import TimeDomainSignal
 
 
@@ -21,6 +19,8 @@ class TrapezoidSignal(TimeDomainSignal):
         Relative width of counter pulse of one period.
     inter_pulse_width: float
         Relative width between pulse and counter pulse of one period.
+
+    TODO implement it
     """
 
     def __init__(
@@ -33,10 +33,3 @@ class TrapezoidSignal(TimeDomainSignal):
     ) -> None:
         self._top_width = top_width
         super().__init__(frequency, pulse_width, inter_pulse_width, counter_pulse_width)
-
-    def get_fourier_coefficients(frequencies: float) -> np.ndarray:
-        """Obtain Fourier coefficients of signal."""
-        raise NotImplementedError(
-            """Fourier coefficients for
-                                     trapezoidal signal not yet implemented."""
-        )
