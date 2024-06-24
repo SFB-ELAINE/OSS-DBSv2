@@ -24,15 +24,48 @@ class TestModelGeometry:
         brain_region = ossdbs.create_bounding_box(settings["BrainRegion"])
         shape = settings["BrainRegion"]["Shape"]
         brain = ossdbs.BrainGeometry(shape, brain_region)
+        geometry = ossdbs.ModelGeometry(brain, electrodes)
 
-        return ossdbs.ModelGeometry(brain, electrodes)
+        return geometry, settings, brain_region, electrodes
+
+    def test_geometry(self, modelGeometry):
+        """Test geometry()."""
+        settings = modelGeometry[1]
+        brain_region = modelGeometry[2]
+        dimension = settings["BrainRegion"]["Dimension"]
+        brain_shape = settings["BrainRegion"]["Shape"]
+        shape = (dimension["x[mm]"], dimension["y[mm]"], dimension["z[mm]"])
+        x, y, z = np.subtract(brain_region.end, brain_region.start) / 2
+
+        brain_vol = None
+        if brain_shape == "Box":
+            brain_vol = shape[0] * shape[1] * shape[2]
+        elif brain_shape == "Sphere":
+            radius = np.min([x, y, z])
+            brain_vol = 4 / 3 * np.pi * radius**3
+        elif brain_shape == "Ellipsoid":
+            brain_vol = 4 / 3 * np.pi * x * y * z
+
+        electrode = modelGeometry[3][0]
+        lead_radius = electrode._parameters.lead_diameter * 0.5
+        total_length = np.max([x, y, z])
+        height = total_length - lead_radius
+        electrode_vol = (np.pi * lead_radius**2 * height) + (
+            4 / 3 * np.pi * lead_radius**3 * 0.5
+        )
+
+        desired = brain_vol - electrode_vol
+        actual = modelGeometry[0].geometry.shape.mass
+        tolerance = 1e-5
+        np.testing.assert_allclose(actual, desired, atol=tolerance)
 
     def test_get_contact_index(self, modelGeometry):
         """Test get_contact_index()."""
-        contact_name = {contact.name for contact in modelGeometry.contacts}
+        geometry = modelGeometry[0]
+        contact_name = {contact.name for contact in geometry.contacts}
 
-        actual = {modelGeometry.get_contact_index(contact) for contact in contact_name}
-        desired = set(range(len(modelGeometry.contacts)))
+        actual = {geometry.get_contact_index(contact) for contact in contact_name}
+        desired = set(range(len(geometry.contacts)))
 
         np.testing.assert_equal(actual, desired)
 
@@ -45,26 +78,26 @@ class TestModelGeometry:
             "Voltage[V]": 4.0,
             "SurfaceImpedance[Ohmm]": {"real": 1, "imag": 1},
         }
-        modelGeometry.update_contact(0, new_properties)
+        geometry = modelGeometry[0]
+        geometry.update_contact(0, new_properties)
 
         desired = {True, 2.0, False, 4.0, (1 + 1j)}
         actual = set()
-        actual.add(modelGeometry.contacts[0].active)
-        actual.add(modelGeometry.contacts[0].current)
-        actual.add(modelGeometry.contacts[0].floating)
-        actual.add(modelGeometry.contacts[0].voltage)
-        actual.add(modelGeometry.contacts[0].surface_impedance)
+        actual.add(geometry.contacts[0].active)
+        actual.add(geometry.contacts[0].current)
+        actual.add(geometry.contacts[0].floating)
+        actual.add(geometry.contacts[0].voltage)
+        actual.add(geometry.contacts[0].surface_impedance)
 
         assert actual == desired
 
     def test_get_encapsulation_layer_index(self, modelGeometry):
         """Test encapsulation_layer_index()."""
-        layer_name = {layer.name for layer in modelGeometry.encapsulation_layers}
+        geometry = modelGeometry[0]
+        layer_name = {layer.name for layer in geometry.encapsulation_layers}
 
-        actual = {
-            modelGeometry.get_encapsulation_layer_index(layer) for layer in layer_name
-        }
-        desired = set(range(len(modelGeometry.encapsulation_layers)))
+        actual = {geometry.get_encapsulation_layer_index(layer) for layer in layer_name}
+        desired = set(range(len(geometry.encapsulation_layers)))
 
         np.testing.assert_equal(actual, desired)
 
@@ -75,34 +108,36 @@ class TestModelGeometry:
             "DielectricModel": "ColeCole3",
             "MaxMeshSize": 0.8,
         }
-        modelGeometry.update_encapsulation_layer(0, new_properties)
+        geometry = modelGeometry[0]
+        geometry.update_encapsulation_layer(0, new_properties)
 
         desired = set(new_properties.values())
         actual = set()
-        actual.add(modelGeometry.encapsulation_layers[0].material)
-        actual.add(modelGeometry.encapsulation_layers[0].dielectric_model)
-        actual.add(modelGeometry.encapsulation_layers[0].max_h)
+        actual.add(geometry.encapsulation_layers[0].material)
+        actual.add(geometry.encapsulation_layers[0].dielectric_model)
+        actual.add(geometry.encapsulation_layers[0].max_h)
 
         assert actual == desired
 
     def test_set_edge_mesh_sizes(self, modelGeometry):
         """Test set_edge_mesh_sizes()."""
+        geometry = modelGeometry[0]
         test_val = 0.002
         test_edge = next(
             edge.name
-            for edge in modelGeometry._geometry.shape.edges
+            for edge in geometry._geometry.shape.edges
             if edge.name is not None
         )
-        modelGeometry.set_edge_mesh_sizes({test_edge: test_val})
+        geometry.set_edge_mesh_sizes({test_edge: test_val})
 
         count = sum(
-            1 for edge in modelGeometry._geometry.shape.edges if edge.name == test_edge
+            1 for edge in geometry._geometry.shape.edges if edge.name == test_edge
         )
         desired = {test_val for i in range(count)}
         actual = set()
         actual.update(
             edge.maxh
-            for edge in modelGeometry._geometry.shape.edges
+            for edge in geometry._geometry.shape.edges
             if edge.name == test_edge
         )
 
@@ -110,22 +145,23 @@ class TestModelGeometry:
 
     def test_set_face_mesh_sizes(self, modelGeometry):
         """Test set_face_mesh_sizes()."""
+        geometry = modelGeometry[0]
         test_val = 0.2
         test_face = next(
             face.name
-            for face in modelGeometry._geometry.shape.faces
+            for face in geometry._geometry.shape.faces
             if face.name is not None
         )
-        modelGeometry.set_face_mesh_sizes({test_face: test_val})
+        geometry.set_face_mesh_sizes({test_face: test_val})
 
         count = sum(
-            1 for face in modelGeometry._geometry.shape.faces if face.name == test_face
+            1 for face in geometry._geometry.shape.faces if face.name == test_face
         )
         desired = {test_val for i in range(count)}
         actual = set()
         actual.update(
             face.maxh
-            for face in modelGeometry._geometry.shape.faces
+            for face in geometry._geometry.shape.faces
             if face.name == test_face
         )
 
@@ -133,24 +169,24 @@ class TestModelGeometry:
 
     def test_set_volume_mesh_sizes(self, modelGeometry):
         """Test set_volume_mesh_sizes()."""
+        geometry = modelGeometry[0]
         test_val = 1.2
         test_volume = next(
             solid.name
-            for solid in modelGeometry._geometry.shape.solids
+            for solid in geometry._geometry.shape.solids
             if solid.name is not None
         )
-        modelGeometry.set_volume_mesh_sizes({test_volume: test_val})
+
+        geometry.set_volume_mesh_sizes({test_volume: test_val})
 
         count = sum(
-            1
-            for solid in modelGeometry._geometry.shape.solids
-            if solid.name == test_volume
+            1 for solid in geometry._geometry.shape.solids if solid.name == test_volume
         )
         desired = {test_val for i in range(count)}
         actual = set()
         actual.update(
             solid.maxh
-            for solid in modelGeometry._geometry.shape.solids
+            for solid in geometry._geometry.shape.solids
             if solid.name == test_volume
         )
 

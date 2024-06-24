@@ -2,7 +2,7 @@
     "BrainRegion": {
         "Center": {"x[mm]": 17.0, "y[mm]": 8.0, "z[mm]": 6.0 },
         "Dimension": {"x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0 },
-        "Shape": "Sphere"
+        "Shape": "Box"
     },
     "Electrodes":
     [
