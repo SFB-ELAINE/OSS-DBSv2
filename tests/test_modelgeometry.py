@@ -1,6 +1,3 @@
-import json
-import os
-
 import numpy as np
 import pytest
 
@@ -13,11 +10,58 @@ class TestModelGeometry:
 
     @pytest.fixture
     def modelGeometry(self):
-        FILE_PATH = os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), "test_modelgeometry.json"
-        )
-        with open(FILE_PATH) as json_file:
-            input_settings = json.load(json_file)
+        input_settings = {
+            "BrainRegion": {
+                "Center": {"x[mm]": 17.0, "y[mm]": 8.0, "z[mm]": 6.0},
+                "Dimension": {"x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0},
+                "Shape": "Box",
+            },
+            "Electrodes": [
+                {
+                    "Name": "AbbottStJudeActiveTip6142_6145",
+                    "Rotation[Degrees]": 0.0,
+                    "Direction": {"x[mm]": 0.0, "y[mm]": 0.0, "z[mm]": 1.0},
+                    "TipPosition": {"x[mm]": 17.0, "y[mm]": 8.0, "z[mm]": 6.0},
+                    "Contacts": [
+                        {
+                            "Contact_ID": 1,
+                            "Active": True,
+                            "Current[A]": 0.0,
+                            "Voltage[V]": 1.0,
+                            "Floating": False,
+                            "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
+                            "MaxMeshSizeEdge": 0.01,
+                        },
+                        {
+                            "Contact_ID": 2,
+                            "Active": True,
+                            "Current[A]": 0.0,
+                            "Voltage[V]": 0.0,
+                            "Floating": False,
+                            "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
+                            "MaxMeshSizeEdge": 0.01,
+                        },
+                    ],
+                    "EncapsulationLayer": {
+                        "Thickness[mm]": 0.1,
+                        "Material": "Blood",
+                        "DielectricModel": "ColeCole4",
+                        "MaxMeshSize": 0.5,
+                    },
+                }
+            ],
+            "Mesh": {
+                "LoadMesh": False,
+                "MeshElementOrder": 2,
+                "MeshingHypothesis": {"Type": "Default", "MaxMeshSize": 10.0},
+                "MeshSize": {
+                    "Edges": {},
+                    "Faces": {"E1C1": 0.1},
+                    "Volumes": {"Brain": 0.5},
+                },
+            },
+        }
+
         settings = Settings(input_settings).complete_settings()
 
         electrodes = ossdbs.generate_electrodes(settings)
@@ -123,6 +167,7 @@ class TestModelGeometry:
         """Test set_edge_mesh_sizes()."""
         geometry = modelGeometry[0]
         test_val = 0.002
+        # First edge whose name is not None
         test_edge = next(
             edge.name
             for edge in geometry._geometry.shape.edges
@@ -133,12 +178,13 @@ class TestModelGeometry:
         count = sum(
             1 for edge in geometry._geometry.shape.edges if edge.name == test_edge
         )
-        desired = {test_val for i in range(count)}
-        actual = set()
-        actual.update(
-            edge.maxh
-            for edge in geometry._geometry.shape.edges
-            if edge.name == test_edge
+        desired = np.array([test_val for i in range(count)])
+        actual = np.array(
+            [
+                edge.maxh
+                for edge in geometry._geometry.shape.edges
+                if edge.name == test_edge
+            ]
         )
 
         return np.testing.assert_equal(actual, desired)
@@ -157,12 +203,13 @@ class TestModelGeometry:
         count = sum(
             1 for face in geometry._geometry.shape.faces if face.name == test_face
         )
-        desired = {test_val for i in range(count)}
-        actual = set()
-        actual.update(
-            face.maxh
-            for face in geometry._geometry.shape.faces
-            if face.name == test_face
+        desired = np.array([test_val for i in range(count)])
+        actual = np.array(
+            [
+                face.maxh
+                for face in geometry._geometry.shape.faces
+                if face.name == test_face
+            ]
         )
 
         return np.testing.assert_equal(actual, desired)
@@ -176,18 +223,18 @@ class TestModelGeometry:
             for solid in geometry._geometry.shape.solids
             if solid.name is not None
         )
-
         geometry.set_volume_mesh_sizes({test_volume: test_val})
 
         count = sum(
             1 for solid in geometry._geometry.shape.solids if solid.name == test_volume
         )
-        desired = {test_val for i in range(count)}
-        actual = set()
-        actual.update(
-            solid.maxh
-            for solid in geometry._geometry.shape.solids
-            if solid.name == test_volume
+        desired = np.array([test_val for i in range(count)])
+        actual = np.array(
+            [
+                solid.maxh
+                for solid in geometry._geometry.shape.solids
+                if solid.name == test_volume
+            ]
         )
 
         return np.testing.assert_equal(actual, desired)
