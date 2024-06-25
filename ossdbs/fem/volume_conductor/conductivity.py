@@ -91,7 +91,7 @@ class ConductivityCF:
         # Creates a boolean mask for the indices that material is present in
         for material in self.materials:
             material_idx = self.materials[material]
-            self._masks[material_idx] = self._material_distribution == material_idx
+            self._masks[material_idx] = np.isclose(self._material_distribution, material_idx)
 
     @property
     def is_complex(self) -> bool:

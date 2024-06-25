@@ -86,9 +86,9 @@ class ModelGeometry:
             else:
                 brain_geo = brain_geo - electrode.geometry
 
-            brain_surfaces = brain.get_surface_names()
-            for surface in brain_surfaces:
-                self._contacts.append(Contact(name=surface))
+        brain_surfaces = brain.get_surface_names()
+        for surface in brain_surfaces:
+            self._contacts.append(Contact(name=surface))
         try:
             return netgen.occ.OCCGeometry(brain_geo)
         except netgen.occ.OCCException:
