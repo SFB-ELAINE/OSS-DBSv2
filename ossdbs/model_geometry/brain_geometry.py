@@ -159,7 +159,6 @@ class BrainGeometry:
         bbox = self._geometry.bounding_box
         self._bbox = BoundingBox(bbox[0], bbox[1])
         self._geometry.mat("Brain")
-        # TODO test naming
         for face in self._geometry.faces:
-            if face.name == "":
+            if face.name is None:
                 face.name = "BrainSurface"
