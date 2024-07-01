@@ -194,8 +194,10 @@ class LeadSettings:
             "OutOfCore": bool(self.get_out_of_core()),
             "StimSets": {
                 "Active": bool(self.get_stim_set_mode()),
-                "StimSetsFile": os.path.join(output_path,'Current_protocols_' + str(hemis_idx)) + '.csv'
-            }
+                "StimSetsFile": os.path.join(
+                    output_path, f"Current_protocols_{hemis_idx}.csv"
+                ),
+            },
         }
 
         # use actual signal parameters for PAM
@@ -423,7 +425,7 @@ class LeadSettings:
     def get_conectome_path(self):
         """Connectome path."""
         return self._get_str("connectomePath")
-        
+
     def get_pathway_params_path(self):
         """Path to the pathway parameters file."""
         return self._get_str("pathwayParameterFile")

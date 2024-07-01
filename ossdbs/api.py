@@ -599,10 +599,13 @@ def run_PAM(settings):
 
             neuron_model.superimpose_unit_solutions(scaling_vector)
             # when using optimizer, scaling_index is not used
-            if settings["CurrentVector"] is not None and settings["StimSets"]["StimSetsFile"] is None:
+            if (
+                settings["CurrentVector"] is not None
+                and settings["StimSets"]["StimSetsFile"] is None
+            ):
                 neuron_model.process_pathways(
                     scaling=settings["Scaling"], scaling_index=None
-                )            
+                )
             else:
                 neuron_model.process_pathways(
                     scaling=settings["Scaling"], scaling_index=protocol_i
