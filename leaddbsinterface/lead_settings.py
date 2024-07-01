@@ -192,6 +192,10 @@ class LeadSettings:
             # 2nd order enough for stim volumes
             "FEMOrder": 2 + int(self.get_calc_axon_act()),
             "OutOfCore": bool(self.get_out_of_core()),
+            "StimSets": {
+                "Active": bool(self.get_stim_set_mode()),
+                "StimSetsFile": os.path.join(output_path,'Current_protocols_' + str(hemis_idx)) + '.csv'
+            }
         }
 
         # use actual signal parameters for PAM
