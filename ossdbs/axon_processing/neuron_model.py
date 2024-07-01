@@ -29,11 +29,12 @@ else:
 _logger = logging.getLogger(__name__)
 
 
+NEURON_DIR = "neuron_model"
+
+
 class NeuronSimulator(ABC):
     """Interface to NEURON simulator."""
 
-    # directory, where all NEURON simulations will be conducted
-    _neuron_workdir = "neuron_model"
     # by default we don't assume a downsampled model
     _downsampled = False
     # needs to be implemented
@@ -53,22 +54,25 @@ class NeuronSimulator(ABC):
         output_path: str,
         scaling_vector: Optional[list] = None,
     ):
-        # create local directory if it does not exist
-        if not os.path.isdir(self._neuron_workdir):
-            os.mkdir(self._neuron_workdir)
-
         self._neuron_executable = "nrnivmodl"
         # executable named different on Windows
         if sys.platform == "win32":
             self._neuron_executable = "mknrndll"
         self._pathways_dict = pathways_dict
-        self._output_path = output_path
         self._scaling_vector = None
 
+        self._output_path = output_path
         # create output path if it does not exist
         if not os.path.isdir(output_path):
             _logger.info(f"Created directory {output_path}")
             os.mkdir(self.output_path)
+
+        # directory, where all NEURON simulations will be conducted
+        self._neuron_workdir = os.path.join(self._output_path, NEURON_DIR)
+        # create local directory if it does not exist
+        if not os.path.isdir(self._neuron_workdir):
+            os.mkdir(self._neuron_workdir)
+
         # copy NEURON files and compile them
         _logger.info("Copy and compile NEURON files")
         self.copy_neuron_files()
@@ -158,10 +162,8 @@ class NeuronSimulator(ABC):
         path_to_neuron_files = path_to_ossdbs.joinpath(
             "axon_processing", "neuron_templates", self.resources_path
         )
-        pwd = os.getcwd()
-        local_neuron_path = os.path.join(pwd, self._neuron_workdir)
         # Directory can already exist
-        shutil.copytree(path_to_neuron_files, local_neuron_path, dirs_exist_ok=True)
+        shutil.copytree(path_to_neuron_files, self._neuron_workdir, dirs_exist_ok=True)
 
     @property
     def pathways_dict(self):
@@ -188,10 +190,8 @@ class NeuronSimulator(ABC):
         _logger.info("Compile NEURON executable")
         subprocess.run(
             self.neuron_executable,
-            # TODO pipe output
-            # stdout=subprocess.STDOUT,
-            # stdout=subprocess.DEVNULL,
-            # stderr=subprocess.STDOUT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT,
             cwd=os.path.abspath(self._neuron_workdir),
         )
         # load mechanisms into environment
