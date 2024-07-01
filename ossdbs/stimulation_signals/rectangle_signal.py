@@ -22,7 +22,15 @@ class RectangleSignal(TimeDomainSignal):
     """
 
     def get_time_domain_signal(self, dt: float, timesteps: int) -> np.ndarray:
-        """Build time domain signal."""
+        """Build time domain signal.
+
+        Parameters
+        ----------
+        dt : float
+            Time difference of the signal.
+        timesteps : int
+            Number of steps in the signal.
+        """
         if np.isclose(dt, 0.0):
             signal = np.array([0])
         elif np.isclose(self._pulse_width, 0.0):

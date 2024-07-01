@@ -1,6 +1,8 @@
 # Copyright 2023, 2024 Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from typing import Optional
+
 import numpy as np
 
 from .signal import TimeDomainSignal
@@ -29,10 +31,10 @@ class TrapezoidSignal(TimeDomainSignal):
         self,
         frequency: float,
         pulse_width: float,
-        top_width: float,
-        counter_pulse_width: float,
         inter_pulse_width: float,
-        counter_pulse_amplitude: float,
+        top_width: float,
+        counter_pulse_width: Optional[float] = None,
+        counter_pulse_amplitude: Optional[float] = 1.0,
     ) -> None:
         self._top_width = top_width
         super().__init__(
@@ -44,7 +46,15 @@ class TrapezoidSignal(TimeDomainSignal):
         )
 
     def get_time_domain_signal(self, dt: float, timesteps: int) -> np.ndarray:
-        """Build time domain signal."""
+        """Build time domain signal.
+
+        Parameters
+        ----------
+        dt : float
+            Time difference of the signal.
+        timesteps : int
+            Number of steps in the signal.
+        """
         if np.isclose(dt, 0.0):
             return np.array([0])
         if np.isclose(self._top_width, 0.0):
