@@ -23,8 +23,6 @@ class TrapezoidSignal(TimeDomainSignal):
         Relative width of counter pulse of one period.
     inter_pulse_width: float
         Relative width between pulse and counter pulse of one period.
-
-    TODO implement it
     """
 
     def __init__(
@@ -56,9 +54,7 @@ class TrapezoidSignal(TimeDomainSignal):
             Number of steps in the signal.
         """
         if np.isclose(dt, 0.0):
-            return np.array([0])
-        if np.isclose(self._top_width, 0.0):
-            return np.zeros(timesteps)
+            raise ValueError("Choose a timestep dt larger than zero.")
 
         signal = np.zeros(timesteps)
         period = 1.0 / self.frequency

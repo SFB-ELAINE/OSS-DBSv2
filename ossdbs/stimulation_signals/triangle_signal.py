@@ -32,9 +32,7 @@ class TriangleSignal(TimeDomainSignal):
             Number of steps in the signal.
         """
         if np.isclose(dt, 0.0):
-            return np.array([0])
-        if np.isclose(self._pulse_width, 0.0):
-            return np.zeros(timesteps)
+            raise ValueError("Choose a timestep dt larger than zero.")
 
         signal = np.zeros(timesteps)
         period = 1.0 / self.frequency

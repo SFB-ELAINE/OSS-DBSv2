@@ -48,9 +48,7 @@ positive_frequencies = fft_frequencies[positive_indices]
 positive_fft_signal = np.abs(fft_signal[positive_indices])
 
 # Plot frequency domain signals
-plt.stem(
-    positive_frequencies, positive_fft_signal, markerfmt=" ", use_line_collection=True
-)
+plt.stem(positive_frequencies, positive_fft_signal, markerfmt=" ")
 plt.xlabel("Frequency [Hz]")
 plt.ylabel("Amplitude")
 plt.xscale("log")
@@ -62,8 +60,9 @@ plt.show()
 timesteps_retrived, retrived_signal = signal.retrieve_time_domain_signal(
     fft_signal, cutoff_frequency
 )
-plt.plot(timesteps_retrived, retrived_signal, label="Retrieved signal")
 plt.plot(dt * np.arange(timesteps), time_domain_signal, label="Original signal")
+plt.plot(timesteps_retrived, retrived_signal, "--", label="Retrieved signal")
+plt.xlim(left=0, right=3.0 * pulse_width + counter_pulse_width)
 plt.xlabel("Time [ms]")
 plt.ylabel("Amplitude")
 plt.legend()

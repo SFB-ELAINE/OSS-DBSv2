@@ -20,16 +20,15 @@ class TestRectangleStimulationSignal:
         np.testing.assert_equal(actual, desired)
 
     def test_generate_no_samples(self):
-        signal = RectangleSignal(
-            frequency=1,
-            pulse_width=0.3,
-            counter_pulse_width=0.5,
-            inter_pulse_width=0.1,
-            counter_pulse_amplitude=0.5,
-        )
-        actual = signal.get_time_domain_signal(dt=0, timesteps=12)
-        desired = [0]
-        np.testing.assert_equal(actual, desired)
+        with pytest.raises(ValueError):
+            signal = RectangleSignal(
+                frequency=1,
+                pulse_width=0.3,
+                counter_pulse_width=0.5,
+                inter_pulse_width=0.1,
+                counter_pulse_amplitude=0.5,
+            )
+            signal.get_time_domain_signal(dt=0, timesteps=12)
 
     def test_generate_no_pulse_width(self):
         signal = RectangleSignal(
@@ -40,7 +39,7 @@ class TestRectangleStimulationSignal:
             counter_pulse_amplitude=0.5,
         )
         actual = signal.get_time_domain_signal(dt=0.1, timesteps=12)
-        desired = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        desired = [0, -0.5, -0.5, -0.5, -0.5, -0.5, 0, 0, 0, 0, 0, 0]
         np.testing.assert_equal(actual, desired)
 
     def test_generate_no_counter_pulse_width(self):
@@ -92,16 +91,15 @@ class TestTriangleStimulationSignal:
         np.testing.assert_allclose(actual, desired, atol=tolerance)
 
     def test_generate_no_samples(self):
-        signal = TriangleSignal(
-            frequency=1,
-            pulse_width=0.3,
-            counter_pulse_width=0.6,
-            inter_pulse_width=0.1,
-            counter_pulse_amplitude=0.5,
-        )
-        actual = signal.get_time_domain_signal(dt=0, timesteps=11)
-        desired = [0]
-        np.testing.assert_equal(actual, desired)
+        with pytest.raises(ValueError):
+            signal = TriangleSignal(
+                frequency=1,
+                pulse_width=0.3,
+                counter_pulse_width=0.6,
+                inter_pulse_width=0.1,
+                counter_pulse_amplitude=0.5,
+            )
+            signal.get_time_domain_signal(dt=0, timesteps=11)
 
     def test_generate_no_pulse_width(self):
         signal = TriangleSignal(
@@ -166,17 +164,16 @@ class TestTrapezoidStimulationSignal:
         np.testing.assert_equal(actual, desired)
 
     def test_generate_no_samples(self):
-        signal = TrapezoidSignal(
-            frequency=1,
-            pulse_width=0.3,
-            top_width=0.1,
-            counter_pulse_width=0.6,
-            inter_pulse_width=0.1,
-            counter_pulse_amplitude=0.5,
-        )
-        actual = signal.get_time_domain_signal(dt=0, timesteps=13)
-        desired = [0]
-        np.testing.assert_equal(actual, desired)
+        with pytest.raises(ValueError):
+            signal = TrapezoidSignal(
+                frequency=1,
+                pulse_width=0.3,
+                top_width=0.1,
+                counter_pulse_width=0.6,
+                inter_pulse_width=0.1,
+                counter_pulse_amplitude=0.5,
+            )
+            signal.get_time_domain_signal(dt=0, timesteps=13)
 
     def test_generate_no_pulse_top_width(self):
         signal = TrapezoidSignal(
