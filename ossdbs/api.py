@@ -278,7 +278,10 @@ def generate_point_models(settings: dict):
 
 
 def generate_meshsize_file_from_neuron_grid():
-    """Use point grid to specify mesh sizes."""
+    """Use point grid to specify mesh sizes.
+
+    TODO implement
+    """
     raise NotImplementedError("Not yet supported")
 
 
