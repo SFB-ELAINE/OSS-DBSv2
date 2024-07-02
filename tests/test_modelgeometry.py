@@ -12,7 +12,7 @@ class TestModelGeometry:
     def modelGeometry(self):
         input_settings = {
             "BrainRegion": {
-                "Center": {"x[mm]": 17.0, "y[mm]": 8.0, "z[mm]": 6.0},
+                "Center": {"x[mm]": 5.0, "y[mm]": 0.0, "z[mm]": 0.0},
                 "Dimension": {"x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0},
                 "Shape": "Box",
             },
@@ -21,7 +21,7 @@ class TestModelGeometry:
                     "Name": "AbbottStJudeActiveTip6142_6145",
                     "Rotation[Degrees]": 0.0,
                     "Direction": {"x[mm]": 0.0, "y[mm]": 0.0, "z[mm]": 1.0},
-                    "TipPosition": {"x[mm]": 17.0, "y[mm]": 8.0, "z[mm]": 6.0},
+                    "TipPosition": {"x[mm]": 0.0, "y[mm]": 0.0, "z[mm]": 0.0},
                     "Contacts": [
                         {
                             "Contact_ID": 1,
@@ -48,7 +48,15 @@ class TestModelGeometry:
                         "DielectricModel": "ColeCole4",
                         "MaxMeshSize": 0.5,
                     },
-                }
+
+                },
+                {
+                    "Name": "AbbottStJudeActiveTip6142_6145",
+                    "Rotation[Degrees]": 0,
+                    "Direction": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 1},
+                    "TipPosition": {"x[mm]": 10.0, "y[mm]": 0.0, "z[mm]": 0.0},
+                    "EncapsulationLayer": {"Thickness[mm]": 0.1},
+                },
             ],
             "Mesh": {
                 "LoadMesh": False,
@@ -69,6 +77,7 @@ class TestModelGeometry:
         shape = settings["BrainRegion"]["Shape"]
         brain = ossdbs.BrainGeometry(shape, brain_region)
         geometry = ossdbs.ModelGeometry(brain, electrodes)
+        ossdbs.set_contact_and_encapsulation_layer_properties(settings, geometry)
 
         return geometry, settings, brain_region, electrodes
 
@@ -90,13 +99,16 @@ class TestModelGeometry:
         elif brain_shape == "Ellipsoid":
             brain_vol = 4 / 3 * np.pi * x * y * z
 
-        electrode = modelGeometry[3][0]
-        lead_radius = electrode._parameters.lead_diameter * 0.5
-        total_length = np.max([x, y, z])
-        height = total_length - lead_radius
-        electrode_vol = (np.pi * lead_radius**2 * height) + (
-            4 / 3 * np.pi * lead_radius**3 * 0.5
-        )
+
+        electrode_vol = 0
+        electrodes = modelGeometry[3]
+        for electrode in electrodes:
+            lead_radius = electrode._parameters.lead_diameter * 0.5
+            total_length = np.max([x, y, z])
+            height = total_length - lead_radius
+            electrode_vol += (np.pi * lead_radius**2 * height) + (
+                4 / 3 * np.pi * lead_radius**3 * 0.5
+            )
 
         desired = brain_vol - electrode_vol
         actual = modelGeometry[0].geometry.shape.mass

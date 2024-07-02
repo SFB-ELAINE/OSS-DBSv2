@@ -601,10 +601,18 @@ def run_PAM(settings):
             scaling_vector = [0 if np.isnan(x) else 1e-3 * x for x in scaling_vector]
 
             neuron_model.superimpose_unit_solutions(scaling_vector)
-            # when using optimizer, scaling_index should be provided externally
-            neuron_model.process_pathways(
-                scaling=settings["Scaling"], scaling_index=protocol_i
-            )
+            # when using optimizer, scaling_index is not used
+            if (
+                settings["CurrentVector"] is not None
+                and settings["StimSets"]["StimSetsFile"] is None
+            ):
+                neuron_model.process_pathways(
+                    scaling=settings["Scaling"], scaling_index=None
+                )
+            else:
+                neuron_model.process_pathways(
+                    scaling=settings["Scaling"], scaling_index=protocol_i
+                )
     else:
         neuron_model.load_solution(time_domain_solution)
         neuron_model.process_pathways(
