@@ -3,6 +3,8 @@ from typing import ClassVar, List
 import numpy as np
 
 
+# TODO is there a nicer way to not need to copy-paste
+# the tests into each electrode file?
 class TestElectrode:
     """Class for testing electrodes."""
 

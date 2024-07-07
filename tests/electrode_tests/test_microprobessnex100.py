@@ -1,6 +1,6 @@
 import pytest
 
-from ossdbs.electrodes import MicroProbesSNEX100
+from ossdbs.electrodes import ELECTRODE_MODELS, MicroProbesSNEX100
 
 from .test_electrodes import TestElectrode
 
@@ -29,3 +29,7 @@ class TestMicroProbesSNEX100(TestElectrode):
     def test_contacts_volume(self, electrode, electrode_name):
         """Test volume of all the contacts."""
         self.check_contacts_volume(electrode, electrode_name)
+
+    def test_custom_exists(self, electrode_name):
+        customname = electrode_name + "Custom"
+        assert customname in ELECTRODE_MODELS.keys()
