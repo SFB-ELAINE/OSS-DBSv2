@@ -230,7 +230,9 @@ class NeuronSimulator(ABC):
             current scaling across contacts
         """
         # very dumb way to get self._td_solution initialized
-        self._td_solution = h5py.File("combined_solution.h5", mode="w")
+        self._td_solution = h5py.File(
+            os.path.join(self.output_path, "combined_solution.h5"), mode="w"
+        )
         for obj in self._td_unit_solutions[0].keys():
             self._td_unit_solutions[0].copy(obj, self._td_solution)
 
