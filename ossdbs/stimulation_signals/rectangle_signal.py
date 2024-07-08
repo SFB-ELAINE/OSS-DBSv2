@@ -38,8 +38,7 @@ class RectangleSignal(TimeDomainSignal):
         # use offset for visualization
         offset = round(self._pulse_width / dt)
         while offset < timesteps:
-            pulse_idx = offset + round(self._pulse_width / dt)
-            signal[offset:pulse_idx] = self.amplitude
+            signal[offset : offset + round(self._pulse_width / dt)] = self.amplitude
             if not np.isclose(self._counter_pulse_width, 0.0):
                 counter_pulse_start_idx = offset + round(
                     self._pulse_width / dt + self._inter_pulse_width / dt

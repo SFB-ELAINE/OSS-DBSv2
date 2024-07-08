@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from ossdbs.stimulation_signals import RectangleSignal, TrapezoidSignal, TriangleSignal
+from ossdbs.stimulation_signals.utilities import adjust_cutoff_frequency
 
 settings = {
     "StimulationSignal": {
@@ -23,6 +24,7 @@ inter_pulse_width = settings["StimulationSignal"]["InterPulseWidth[us]"]
 cutoff_frequency = settings["StimulationSignal"]["CutoffFrequency"]
 top_width = settings["StimulationSignal"]["TopWidth[us]"]
 
+cutoff_frequency = adjust_cutoff_frequency(2.0 * cutoff_frequency, frequency)
 dt = 1.0 / cutoff_frequency
 timesteps = int(cutoff_frequency / frequency)
 
