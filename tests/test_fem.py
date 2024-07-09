@@ -2,9 +2,9 @@ import json
 import os
 
 import pytest
-from ngsolve import Mesh, TaskManager
 
 import ossdbs
+from ossdbs.fem.mesh import Mesh
 from ossdbs.fem.preconditioner import (
     AMGPreconditioner,
     BDDCPreconditioner,
@@ -83,12 +83,11 @@ def geometry_fixture(settings_fixture):
 
 
 class TestMesh:
-    def test_mesh(self, geometry_fixture):
+    def test_mesh(self, geometry_fixture, settings_fixture):
         try:
-            occgeo = geometry_fixture[2].geometry
+            geometry = geometry_fixture[2].geometry
 
-            with TaskManager():
-                mesh = Mesh(occgeo.GenerateMesh())
+            mesh = Mesh(geometry, settings_fixture["FEMOrder"])
             assert mesh is not None
         except Exception:
             pytest.fail("Cannot be instantiated.")
