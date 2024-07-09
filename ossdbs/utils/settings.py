@@ -110,6 +110,7 @@ class Settings:
         "ModelSide": 0,
         "CalcAxonActivation": False,
         "ActivationThresholdVTA": None,
+        "DielectricAccuracy": 0.01,
         "FailFlag": "oss",
         "OutOfCore": False,
         "PathwayFile": None,

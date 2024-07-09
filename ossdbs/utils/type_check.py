@@ -22,6 +22,7 @@ class TypeChecker:
         "AdaptiveMeshRefinement": bool,
         "PathwayFile": (type(None), str),
         "ActivationThresholdVTA": (type(None), float),
+        "DielectricAccuracy": float,
         "Contacts": {"MaxMeshSize": float, "MaxMeshSizeEdge": float},
         "EncapsulationLayer": {
             "Thickness[mm]": (int, float),

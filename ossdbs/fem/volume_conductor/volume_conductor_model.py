@@ -23,6 +23,7 @@ from ossdbs.stimulation_signals import (
     get_timesteps,
     reconstruct_time_signals,
 )
+from ossdbs.utils import have_dielectric_properties_changed
 from ossdbs.utils.vtk_export import FieldSolution
 
 from .conductivity import ConductivityCF
@@ -119,6 +120,7 @@ class VolumeConductor(ABC):
         export_vtk: bool = False,
         point_models: Optional[List[PointModel]] = None,
         activation_threshold: Optional[float] = None,
+        dielectric_threshold: float = 0.01,
         out_of_core: bool = False,
         export_frequency: Optional[float] = None,
         adaptive_mesh_refinement: bool = False,
@@ -135,6 +137,8 @@ class VolumeConductor(ABC):
             List of PointModel to extract solution for VTA / PAM
         activation_threshold: float
             If VTA is estimated by threshold, provide it here.
+        dielectric_threshold: float
+            Threshold for accuracy of dielectric properties
         out_of_core: bool
             Indicate whether point model shall be done out-of-core
         export_frequency: float
@@ -236,7 +240,9 @@ class VolumeConductor(ABC):
                 band_indices = [freq_idx]
 
             # check if conductivity has changed
-            sigma_has_changed = self._has_sigma_changed(freq_idx)
+            sigma_has_changed = self._has_sigma_changed(
+                computing_idx, frequency_indices, threshold=dielectric_threshold
+            )
             if sigma_has_changed:
                 self.compute_solution(frequency)
                 if compute_impedance:
@@ -870,43 +876,23 @@ class VolumeConductor(ABC):
                 freq_idx, scale_factor * potentials, scale_factor * fields
             )
 
-    def _has_sigma_changed(self, freq_idx, threshold=0.01) -> bool:
+    def _has_sigma_changed(
+        self, freq_idx: int, frequency_indices: np.ndarray, threshold: float = 0.01
+    ) -> bool:
         """Check if conductivity has changed."""
         if self._sigma is None:
             return True
         else:
-            max_error = 0.0
-            for _material, model in self._conductivity_cf.dielectric_properties.items():
-                if self.is_complex:
-                    old_value = model.complex_conductivity(
-                        (freq_idx - 1) * self.signal.base_frequency
-                    )
-                    new_value = model.complex_conductivity(
-                        freq_idx * self.signal.base_frequency
-                    )
-                    error_real = np.abs(old_value.real - new_value.real)
-                    # to catch zero-case
-                    if not np.isclose(old_value.real, 0.0):
-                        error_real /= old_value.real
-                    error_imag = np.abs(old_value.imag - new_value.imag)
-                    # to catch zero-case
-                    if not np.isclose(old_value.imag, 0.0):
-                        error_imag /= old_value.imag
-
-                    error = np.maximum(error_real, error_imag)
-                else:
-                    old_value = model.conductivity(
-                        (freq_idx - 1) * self.signal.base_frequency
-                    )
-                    new_value = model.conductivity(
-                        freq_idx * self.signal.base_frequency
-                    )
-                    error = np.abs((old_value - new_value) / old_value)
-                if error > max_error:
-                    max_error = error
-            if max_error > threshold:
-                return True
-            return False
+            dielectric_properties = self._conductivity_cf.dielectric_properties
+            old_frequency = frequency_indices[freq_idx - 1] * self.signal.base_frequency
+            new_frequency = frequency_indices[freq_idx] * self.signal.base_frequency
+            return have_dielectric_properties_changed(
+                dielectric_properties,
+                self.is_complex,
+                old_frequency,
+                new_frequency,
+                threshold,
+            )
 
     def _add_surface_impedance(self) -> bool:
         """Decide if surface impedance should be added to active contacts."""

@@ -85,13 +85,28 @@ class ConductivityCF:
             self._material_distribution.shape, dtype=self._get_datatype()
         )
 
+        # remove materials that are not in MRI
+        materials_to_delete = []
+        for material in materials:
+            material_idx = materials[material]
+            if material_idx not in self._material_distribution:
+                materials_to_delete.append(material)
+                continue
+        for material in materials_to_delete:
+            del self._dielectric_properties[material]
+            del materials[material]
+
         self._materials = materials
+
+        # Creates a boolean mask for the indices that material is present in
         self._masks = [None] * len(self.materials)
         self._trafo_cf = mri_image.trafo_cf
-        # Creates a boolean mask for the indices that material is present in
+        materials_to_delete = []
         for material in self.materials:
             material_idx = self.materials[material]
-            self._masks[material_idx] = np.isclose(self._material_distribution, material_idx)
+            self._masks[material_idx] = np.isclose(
+                self._material_distribution, material_idx
+            )
 
     @property
     def is_complex(self) -> bool:

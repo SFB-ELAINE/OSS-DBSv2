@@ -404,13 +404,13 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
 
 
 def run_volume_conductor_model(settings, volume_conductor, frequency_domain_signal):
-    """TODO document.
-
+    """Run volume conductor model at multiple frequencies.
 
     Notes
     -----
     Run at all frequencies.
     If the mode is multisine, a provided list of frequencies is used.
+    TODO document further.
     """
     _logger.info("Run volume conductor model")
     volume_conductor.output_path = settings["OutputPath"]
@@ -441,6 +441,7 @@ def run_volume_conductor_model(settings, volume_conductor, frequency_domain_sign
         export_vtk,
         point_models=point_models,
         activation_threshold=settings["ActivationThresholdVTA"],
+        dielectric_threshold=settings["DielectricAccuracy"],
         out_of_core=out_of_core,
         export_frequency=export_frequency,
         adaptive_mesh_refinement=settings["AdaptiveMeshRefinement"],
