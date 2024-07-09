@@ -768,7 +768,8 @@ class VolumeConductor(ABC):
         -----
         In voltage-controlled mode,
         only the amplitude of the Fourier coefficient is used.
-        In current-controlled mode, TODO
+        In current-controlled mode without using floating conductors,
+        the impedance is also considered.
         """
         scale_factor = 1.0
         if self.current_controlled:
