@@ -11,14 +11,16 @@ from ossdbs.stimulation_signals.utilities import adjust_cutoff_frequency
 
 class TestFFT:
     TESTDATA: ClassVar[List[Tuple[str, float, float, float, float, float]]] = [
-        # signal_type, frequency, pulse_width, counter_pulse_width, inter_pulse_width, cutoff_frequency
+        # signal_type, frequency, pulse_width, counter_pulse_width,
+        # inter_pulse_width, cutoff_frequency
         ("Rectangle", 130.0, 60e-6, 120e-6, 120e-6, 1e5),
         ("Triangle", 130.0, 60e-6, 120e-6, 120e-6, 1e5),
         ("Trapezoid", 130.0, 60e-6, 120e-6, 120e-6, 1e5),
     ]
 
     @pytest.mark.parametrize(
-        "signal_type, frequency, pulse_width, counter_pulse_width, inter_pulse_width, cutoff_frequency",
+        "signal_type, frequency, pulse_width, counter_pulse_width,\
+        inter_pulse_width, cutoff_frequency",
         TESTDATA,
     )
     def test_time_domain_signal(
