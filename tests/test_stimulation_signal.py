@@ -1,9 +1,66 @@
+from typing import ClassVar, List, Tuple
+
 import numpy as np
 import pytest
 
 from ossdbs.stimulation_signals.rectangle_signal import RectangleSignal
 from ossdbs.stimulation_signals.trapezoid_signal import TrapezoidSignal
 from ossdbs.stimulation_signals.triangle_signal import TriangleSignal
+from ossdbs.stimulation_signals.utilities import adjust_cutoff_frequency
+
+
+class TestFFT:
+    TESTDATA: ClassVar[List[Tuple[str, float, float, float, float, float]]] = [
+        # signal_type, frequency, pulse_width, counter_pulse_width, inter_pulse_width, cutoff_frequency
+        ("Rectangle", 130.0, 60e-6, 120e-6, 120e-6, 1e5),
+        ("Triangle", 130.0, 60e-6, 120e-6, 120e-6, 1e5),
+        ("Trapezoid", 130.0, 60e-6, 120e-6, 120e-6, 1e5),
+    ]
+
+    @pytest.mark.parametrize(
+        "signal_type, frequency, pulse_width, counter_pulse_width, inter_pulse_width, cutoff_frequency",
+        TESTDATA,
+    )
+    def test_time_domain_signal(
+        self,
+        signal_type,
+        frequency,
+        pulse_width,
+        counter_pulse_width,
+        inter_pulse_width,
+        cutoff_frequency,
+    ):
+        adj_cutoff_frequency = adjust_cutoff_frequency(
+            2.0 * cutoff_frequency, frequency
+        )
+        dt = 1.0 / adj_cutoff_frequency
+        timesteps = int(adj_cutoff_frequency / frequency)
+
+        if signal_type == "Rectangle":
+            signal = RectangleSignal(
+                frequency, pulse_width, inter_pulse_width, counter_pulse_width
+            )
+        elif signal_type == "Triangle":
+            signal = TriangleSignal(
+                frequency, pulse_width, inter_pulse_width, counter_pulse_width
+            )
+        elif signal_type == "Trapezoid":
+            top_width = 30e-6
+            signal = TrapezoidSignal(
+                frequency,
+                pulse_width,
+                inter_pulse_width,
+                top_width,
+                counter_pulse_width,
+            )
+
+        original_signal = signal.get_time_domain_signal(dt, timesteps)
+        fft_frequencies, fft_signal = signal.get_fft_spectrum(cutoff_frequency)
+        timesteps_retrieved, retrieved_signal = signal.retrieve_time_domain_signal(
+            fft_signal, cutoff_frequency
+        )
+        tolerance = 1e-5
+        np.testing.assert_allclose(original_signal, retrieved_signal, atol=tolerance)
 
 
 class TestRectangleStimulationSignal:

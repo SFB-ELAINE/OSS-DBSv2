@@ -24,9 +24,9 @@ inter_pulse_width = settings["StimulationSignal"]["InterPulseWidth[us]"]
 cutoff_frequency = settings["StimulationSignal"]["CutoffFrequency"]
 top_width = settings["StimulationSignal"]["TopWidth[us]"]
 
-cutoff_frequency = adjust_cutoff_frequency(2.0 * cutoff_frequency, frequency)
-dt = 1.0 / cutoff_frequency
-timesteps = int(cutoff_frequency / frequency)
+adj_cutoff_frequency = adjust_cutoff_frequency(2.0 * cutoff_frequency, frequency)
+dt = 1.0 / adj_cutoff_frequency
+timesteps = int(adj_cutoff_frequency / frequency)
 
 if signal_type == "Rectangle":
     signal = RectangleSignal(
@@ -59,11 +59,11 @@ plt.savefig("spectrum.png")
 plt.show()
 
 # Plot time domain signals (original and retrieved ones)
-timesteps_retrived, retrived_signal = signal.retrieve_time_domain_signal(
+timesteps_retrieved, retrieved_signal = signal.retrieve_time_domain_signal(
     fft_signal, cutoff_frequency
 )
 plt.plot(dt * np.arange(timesteps), time_domain_signal, label="Original signal")
-plt.plot(timesteps_retrived, retrived_signal, "--", label="Retrieved signal")
+plt.plot(timesteps_retrieved, retrieved_signal, "--", label="Retrieved signal")
 plt.xlim(left=0, right=3.0 * pulse_width + counter_pulse_width)
 plt.xlabel("Time [ms]")
 plt.ylabel("Amplitude")
