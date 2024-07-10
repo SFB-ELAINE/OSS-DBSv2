@@ -233,7 +233,7 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
             else:
                 # Label all the named contacts appropriately
                 for edge in contact.edges:
-                    if edge.name is not None:
+                    if edge.name == "Rename":
                         edge.name = name
         return netgen.occ.Fuse(contacts)
 
@@ -268,20 +268,20 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
             if edge.center.y > max_y_val:
                 max_y_val = edge.center.y
                 max_y_edge = edge
-        max_x_edge.name = "max x"
-        max_y_edge.name = "max y"
+        max_x_edge.name = "Rename"
+        max_y_edge.name = "Rename"
         # Label only the outer edges of the contact with min z and max z values
         for edge in contact.edges:
             if np.isclose(edge.center.z, max_z_val) and not (
                 np.isclose(edge.center.x, radius / 2)
                 or np.isclose(edge.center.y, radius / 2)
             ):
-                edge.name = "max z"
+                edge.name = "Rename"
             elif np.isclose(edge.center.z, min_z_val) and not (
                 np.isclose(edge.center.x, radius / 2)
                 or np.isclose(edge.center.y, radius / 2)
             ):
-                edge.name = "min z"
+                edge.name = "Rename"
         contact = contact.Rotate(axis, -angle)
         # TODO check that the starting axis of the contacts
         # are correct according to the documentation

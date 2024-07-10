@@ -220,7 +220,7 @@ class MedtronicSenSightModel(ElectrodeModel):
             else:
                 # Label all the named contacts appropriately
                 for edge in contact.edges:
-                    if edge.name is not None:
+                    if edge.name == "Rename":
                         edge.name = name
         return netgen.occ.Fuse(contacts)
 
@@ -254,8 +254,9 @@ class MedtronicSenSightModel(ElectrodeModel):
             if edge.center.y > max_y_val:
                 max_y_val = edge.center.y
                 max_y_edge = edge
-        max_x_edge.name = "max x"
-        max_y_edge.name = "max y"
+        # keep track of edges for renaming later
+        max_x_edge.name = "Rename"
+        max_y_edge.name = "Rename"
         # Label only the outer edges of the contact with min z and max z values
         for edge in contact.edges:
             cond_z_max = np.isclose(edge.center.z, max_z_val)
@@ -263,9 +264,9 @@ class MedtronicSenSightModel(ElectrodeModel):
             cond_x = np.isclose(edge.center.x, radius / 2)
             cond_y = np.isclose(edge.center.y, radius / 2)
             if cond_z_max and not (cond_x or cond_y):
-                edge.name = "max z"
+                edge.name = "Rename"
             elif cond_z_min and not (cond_x or cond_y):
-                edge.name = "min z"
+                edge.name = "Rename"
         # Reseting position so that 0 deg lies in the middle of contact
         contact = contact.Rotate(axis, -angle)
         # TODO check that the starting axis of the contacts
