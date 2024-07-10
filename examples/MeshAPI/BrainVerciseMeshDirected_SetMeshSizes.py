@@ -14,7 +14,7 @@ import ossdbs
 settings = {
     "Electrodes": [
         {
-            "Name": "BostonScientificVercise",
+            "Name": "BostonScientificVerciseDirected",
             "Rotation[Degrees]": 0,
             "Direction": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 1},
             "TipPosition": {"x[mm]": 0, "y[mm]": 15, "z[mm]": -3},
@@ -29,11 +29,11 @@ settings = {
                     "Voltage[V]": 1.0,
                     "Floating": False,
                     "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
-                    "MaxMeshSizeEdge": 0.1,
+                    "MaxMeshSizeEdge": 0.05,
                 },
                 {
                     "Contact_ID": 2,
-                    "MaxMeshSizeEdge": 0.1,
+                    "MaxMeshSizeEdge": 0.05,
                 },
                 {
                     "Contact_ID": 3,
@@ -46,7 +46,7 @@ settings = {
                 },
                 {
                     "Contact_ID": 4,
-                    "MaxMeshSizeEdge": 0.1,
+                    "MaxMeshSizeEdge": 0.05,
                 },
                 {
                     "Contact_ID": 5,
@@ -55,19 +55,19 @@ settings = {
                     "Voltage[V]": 0.0,
                     "Floating": False,
                     "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
-                    "MaxMeshSize": 0.1,
+                    "MaxMeshSize": 0.25,
                 },
                 {
                     "Contact_ID": 6,
-                    "MaxMeshSizeEdge": 0.1,
+                    "MaxMeshSizeEdge": 0.05,
                 },
                 {
                     "Contact_ID": 7,
-                    "MaxMeshSizeEdge": 0.1,
+                    "MaxMeshSizeEdge": 0.05,
                 },
                 {
                     "Contact_ID": 8,
-                    "MaxMeshSizeEdge": 0.1,
+                    "MaxMeshSizeEdge": 0.05,
                 },
             ],
         }
