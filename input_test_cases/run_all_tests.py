@@ -1,11 +1,15 @@
+import json
 import os
-import subprocess
 
 import nibabel as nib
 import numpy as np
 import pandas as pd
 
+import ossdbs
 
+
+# TODO I would actually have one function like
+# def run_test(...) and then define, which checks (impedance and/or VTA)
 def test_impedance(input_dir: str, input_json: str, output_dir: str, desired_dir: str):
     """
     Tests impedance by comparing the actual output with the desired output.
@@ -21,13 +25,22 @@ def test_impedance(input_dir: str, input_json: str, output_dir: str, desired_dir
     desired_dir : str
         Directory where the desired output files are located.
     """
-    os.chdir(input_dir)
-    subprocess.run(["ossdbs", input_json], check=True)
-    os.chdir(output_dir)
+    with open(os.path.join(input_dir, input_json)) as json_file:
+        input_settings = json.load(json_file)
+
+    # add the stimulation folder
+    input_settings["StimulationFolder"] = os.path.dirname(input_dir)
+    # update folder with MRI
+    input_settings["MaterialDistribution"]["MRIPath"] = input_settings[
+        "MaterialDistribution"
+    ]["MRIPath"].replace("../..", "..")
+    ossdbs.main_run(input_settings)
+
+    # TODO use path from dictionary
+    # os.chdir(output_dir)
     actual = pd.read_csv("impedance.csv").to_numpy()
-    os.chdir(desired_dir)
+    # TODO add path to reference dir
     desired = pd.read_csv("impedance.csv").to_numpy()
-    os.chdir("../../..")
     np.testing.assert_allclose(actual, desired, atol=1e-5)
 
 
@@ -103,7 +116,7 @@ def _compute_dice_coefficient(set1, set2) -> float:
     return (2 * intersection_size) / (size1 + size2)
 
 
-# input_case1
+print("Running input_case1")
 test_impedance(
     input_dir="input_case1",
     input_json="input_homogeneous.json",
@@ -118,6 +131,7 @@ test_impedance(
     desired_dir="../../desired_output/input_case1/Results_inhomogeneous",
 )
 
+# TODO add more prints
 # input_case2
 test_impedance(
     input_dir="input_case2",
