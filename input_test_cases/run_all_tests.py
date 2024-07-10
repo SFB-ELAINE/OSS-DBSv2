@@ -85,21 +85,21 @@ def _readNIfTI(filename: str) -> set:
     return set(vta_points)
 
 
-def _compute_dice_coefficient(points1, points2) -> float:
+def _compute_dice_coefficient(set1, set2) -> float:
     """
     Computes the Dice coefficient.
 
     Parameters
     ----------
-    points1 : set
+    set1 : set
         First set of points.
-    points2 : set
+    set2 : set
         Second set of points.
     """
-    intersection = points1.intersection(points2)
+    intersection = set1.intersection(set2)
     intersection_size = len(intersection)
-    size1 = len(points1)
-    size2 = len(points2)
+    size1 = len(set1)
+    size2 = len(set2)
     return (2 * intersection_size) / (size1 + size2)
 
 
@@ -108,14 +108,14 @@ test_impedance(
     input_dir="input_case1",
     input_json="input_homogeneous.json",
     output_dir="Results_homogeneous",
-    desired_dir="../../desired_impedance/input_case1/Results_homogeneous",
+    desired_dir="../../desired_output/input_case1/Results_homogeneous",
 )
 
 test_impedance(
     input_dir="input_case1",
     input_json="input_inhomogeneous.json",
     output_dir="Results_inhomogeneous",
-    desired_dir="../../desired_impedance/input_case1/Results_inhomogeneous",
+    desired_dir="../../desired_output/input_case1/Results_inhomogeneous",
 )
 
 # input_case2
@@ -123,14 +123,14 @@ test_impedance(
     input_dir="input_case2",
     input_json="input_custom_electrode.json",
     output_dir="Results_electrode",
-    desired_dir="../../desired_impedance/input_case2/Results_electrode",
+    desired_dir="../../desired_output/input_case2/Results_electrode",
 )
 
 test_impedance(
     input_dir="input_case2",
     input_json="input_custom_material.json",
     output_dir="Results_material",
-    desired_dir="../../desired_impedance/input_case2/Results_material",
+    desired_dir="../../desired_output/input_case2/Results_material",
 )
 
 # input_case3
@@ -138,14 +138,14 @@ test_impedance(
     input_dir="input_case3",
     input_json="input_case_grounding.json",
     output_dir="Results_case_grounding",
-    desired_dir="../../desired_impedance/input_case3/Results_case_grounding",
+    desired_dir="../../desired_output/input_case3/Results_case_grounding",
 )
 
 test_impedance(
     input_dir="input_case3",
     input_json="input_case_grounding_EQS.json",
     output_dir="Results_case_grounding_EQS",
-    desired_dir="../../desired_impedance/input_case3/Results_case_grounding_EQS",
+    desired_dir="../../desired_output/input_case3/Results_case_grounding_EQS",
 )
 
 # input_case4
@@ -153,7 +153,7 @@ test_impedance(
     input_dir="input_case4",
     input_json="input_current_controlled.json",
     output_dir="Results_current_controlled",
-    desired_dir="../../desired_impedance/input_case4/Results_current_controlled",
+    desired_dir="../../desired_output/input_case4/Results_current_controlled",
 )
 
 # input_case5
@@ -161,7 +161,7 @@ test_impedance(
     input_dir="input_case5",
     input_json="input_stimulation_signal.json",
     output_dir="Results_signal",
-    desired_dir="../../desired_impedance/input_case5/Results_signal",
+    desired_dir="../../desired_output/input_case5/Results_signal",
 )
 
 # input_case6
@@ -169,7 +169,7 @@ test_impedance(
     input_dir="input_case6",
     input_json="input_floating.json",
     output_dir="Results_floating",
-    desired_dir="../../desired_impedance/input_case6/Results_floating",
+    desired_dir="../../desired_output/input_case6/Results_floating",
 )
 
 # input_case7
@@ -177,27 +177,27 @@ test_impedance(
     input_dir="input_case7",
     input_json="input_vta.json",
     output_dir="Results_VTA",
-    desired_dir="../../desired_impedance/input_case7/Results_VTA",
+    desired_dir="../../desired_output/input_case7/Results_VTA",
 )
 
 test_impedance(
     input_dir="input_case7",
     input_json="input_vta_out_of_core.json",
     output_dir="Results_VTA_OOC",
-    desired_dir="../../desired_impedance/input_case7/Results_VTA_OOC",
+    desired_dir="../../desired_output/input_case7/Results_VTA_OOC",
 )
 
 test_VTA(
     output_dir="input_case7/Results_VTA",
     output_nii="VTA_solution_Lattice.nii",
-    desired_dir="../../desired_impedance/input_case7/Results_VTA",
+    desired_dir="../../desired_output/input_case7/Results_VTA",
     desired_nii="VTA_solution_Lattice.nii",
 )
 
 test_VTA(
     output_dir="input_case7/Results_VTA_OOC",
     output_nii="VTA_solution_Lattice.nii",
-    desired_dir="../../desired_impedance/input_case7/Results_VTA_OOC",
+    desired_dir="../../desired_output/input_case7/Results_VTA_OOC",
     desired_nii="VTA_solution_Lattice.nii",
 )
 
@@ -206,12 +206,12 @@ test_impedance(
     input_dir="input_case8",
     input_json="input_pathway_out_of_core.json",
     output_dir="Results_PAM_OOC",
-    desired_dir="../../desired_impedance/input_case8/Results_PAM_OOC",
+    desired_dir="../../desired_output/input_case8/Results_PAM_OOC",
 )
 
 test_impedance(
     input_dir="input_case8",
     input_json="input_pathway.json",
     output_dir="Results_PAM",
-    desired_dir="../../desired_impedance/input_case8/Results_PAM",
+    desired_dir="../../desired_output/input_case8/Results_PAM",
 )
