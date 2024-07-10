@@ -17,6 +17,7 @@ recursive-include input_files *.json
 recursive-include input_test_cases *.json
 recursive-include input_test_cases *.md
 recursive-include input_test_cases *.sh
+recursive-include input_test_cases *.py
 recursive-include ossdbs *.py
 recursive-include ossdbs *.hoc
 recursive-include ossdbs *.html
