@@ -114,7 +114,7 @@ ELECTRODE_MODELS = {
     "DixiSEEG10Custom": DixiSEEGModel,
     "DixiSEEG12Custom": DixiSEEGModel,
     "DixiSEEG15Custom": DixiSEEGModel,
-    "DixiSEEG158ustom": DixiSEEGModel,
+    "DixiSEEG18Custom": DixiSEEGModel,
     "Medtronic3387Custom": MedtronicModel,
     "Medtronic3389Custom": MedtronicModel,
     "Medtronic3391Custom": MedtronicModel,

@@ -1,6 +1,6 @@
 import pytest
 
-from ossdbs.electrodes import AbbottStJudeActiveTip6146_6149
+from ossdbs.electrodes import ELECTRODE_MODELS, AbbottStJudeActiveTip6146_6149
 
 from .test_electrodes import TestElectrode
 
@@ -29,3 +29,7 @@ class TestAbbottStJudeActiveTip6146_6149(TestElectrode):
     def test_contacts_volume(self, electrode, electrode_name):
         """Test volume of all the contacts."""
         self.check_contacts_volume(electrode, electrode_name)
+
+    def test_custom_exists(self, electrode_name):
+        customname = electrode_name + "Custom"
+        assert customname in ELECTRODE_MODELS.keys()
