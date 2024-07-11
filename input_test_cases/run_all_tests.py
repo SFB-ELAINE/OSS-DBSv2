@@ -7,12 +7,173 @@ import pandas as pd
 
 import ossdbs
 
+INPUT_DATA = [
+    {
+        "input_dir": "input_case1",
+        "input_json": "input_case1/input_homogeneous.json",
+        "output_csv": "input_case1/Results_homogeneous/impedance.csv",
+        "desired_csv": "desired_output/input_case1/Results_homogeneous/impedance.csv",
+    },
+    {
+        "input_dir": "input_case1",
+        "input_json": "input_case1/input_inhomogeneous.json",
+        "output_csv": "input_case1/Results_inhomogeneous/impedance.csv",
+        "desired_csv": "desired_output/input_case1/Results_inhomogeneous/impedance.csv",
+    },
+    {
+        "input_dir": "input_case3",
+        "input_json": "input_case3/input_case_grounding.json",
+        "output_csv": "input_case3/Results_case_grounding/impedance.csv",
+        "desired_csv": "desired_output/input_case3/Results_case_grounding/\
+            impedance.csv",
+    },
+    {
+        "input_dir": "input_case3",
+        "input_json": "input_case3/input_case_grounding_EQS.json",
+        "output_csv": "input_case3/Results_case_grounding_EQS/impedance.csv",
+        "desired_csv": "desired_output/input_case3/Results_case_grounding_EQS/\
+            impedance.csv",
+    },
+    {
+        "input_dir": "input_case4",
+        "input_json": "input_case4/input_current_controlled.json",
+        "output_csv": "input_case4/Results_current_controlled/impedance.csv",
+        "desired_csv": "desired_output/input_case4/Results_current_controlled/\
+            impedance.csv",
+    },
+    {
+        "input_dir": "input_case5",
+        "input_json": "input_case5/input_stimulation_signal.json",
+        "output_csv": "input_case5/Results_signal/impedance.csv",
+        "desired_csv": "desired_output/input_case5/Results_signal/impedance.csv",
+    },
+    {
+        "input_dir": "input_case6",
+        "input_json": "input_case6/input_floating.json",
+        "output_csv": "input_case6/Results_floating/impedance.csv",
+        "desired_csv": "desired_output/input_case6/Results_floating/impedance.csv",
+    },
+    {
+        "input_dir": "input_case7",
+        "input_json": "input_case7/input_vta.json",
+        "output_csv": "input_case7/Results_VTA/impedance.csv",
+        "desired_csv": "desired_output/input_case7/Results_VTA/impedance.csv",
+        "output_nii": "input_case7/Results_VTA/VTA_solution_Lattice.nii",
+        "desired_nii": "desired_output/input_case7/Results_VTA/\
+            VTA_solution_Lattice.nii",
+    },
+    {
+        "input_dir": "input_case7",
+        "input_json": "input_case7/input_vta_out_of_core.json",
+        "output_csv": "input_case7/Results_VTA_OOC/impedance.csv",
+        "desired_csv": "desired_output/input_case7/Results_VTA_OOC/impedance.csv",
+        "output_nii": "input_case7/Results_VTA_OOC/VTA_solution_Lattice.nii",
+        "desired_nii": "desired_output/input_case7/Results_VTA_OOC/\
+            VTA_solution_Lattice.nii",
+    },
+    {
+        "input_dir": "input_case8",
+        "input_json": "input_case8/input_pathway_out_of_core.json",
+        "output_csv": "input_case8/Results_PAM_OOC/impedance.csv",
+        "desired_csv": "desired_output/input_case8/Results_PAM_OOC/impedance.csv",
+    },
+    {
+        "input_dir": "input_case8",
+        "input_json": "input_case8/input_pathway.json",
+        "output_csv": "input_case8/Results_PAM/impedance.csv",
+        "desired_csv": "desired_output/input_case8/Results_PAM/impedance.csv",
+    },
+    {
+        "input_dir": "input_case2",
+        "input_json": "input_case2/input_custom_electrode.json",
+        "output_csv": "input_case2/Results_electrode/impedance.csv",
+        "desired_csv": "desired_output/input_case2/Results_electrode/impedance.csv",
+    },
+    {
+        "input_dir": "input_case2",
+        "input_json": "input_case2/input_custom_material.json",
+        "output_csv": "input_case2/Results_material/impedance.csv",
+        "desired_csv": "desired_output/input_case2/Results_material/impedance.csv",
+    },
+]
 
-# TODO I would actually have one function like
-# def run_test(...) and then define, which checks (impedance and/or VTA)
-def test_impedance(input_dir: str, input_json: str, output_dir: str, desired_dir: str):
+
+def run_test(check_impedance: bool, check_VTA: bool) -> tuple:
     """
-    Tests impedance by comparing the actual output with the desired output.
+    Runs JSON files in input_test_cases.
+
+    Parameters
+    ----------
+    check_impedance : bool
+        Check impedance if True.
+    check_VTA : bool
+        Check VTA if True.
+    """
+    impedance_test_passed = True
+    VTA_test_passed = True
+    test_results = []
+
+    for data in INPUT_DATA:
+        print("Running " + data["input_json"])
+        _run_simulation(data["input_dir"], data["input_json"])
+
+    if check_impedance:
+        for data in INPUT_DATA:
+            print("Testing impedance of " + data["input_json"])
+            result = _test_impedance(data["output_csv"], data["desired_csv"])
+            if result is False:
+                impedance_test_passed = False
+            test_results.append(
+                {
+                    "input_file": data["input_json"],
+                    "impedance_test": "Passed" if result else "Failed",
+                    "VTA_test": "-",
+                }
+            )
+
+    if check_VTA:
+        NIfTI_DATA = [
+            data
+            for data in INPUT_DATA
+            if data.get("output_nii") and data.get("desired_nii")
+        ]
+        for data in NIfTI_DATA:
+            print("Testing VTA of " + data["input_json"])
+            result = _test_VTA(data["output_nii"], data["desired_nii"])
+            if result is False:
+                impedance_test_passed = False
+
+            # If impedance already checked, update VTA_test.
+            # Otherwise, append a new result.
+            impedance_checked = next(
+                (
+                    result
+                    for result in test_results
+                    if result["input_file"] == data["input_json"]
+                ),
+                None,
+            )
+            if impedance_checked:
+                impedance_checked["VTA_test"] = "Passed" if result else "Failed"
+            else:
+                test_results.append(
+                    {
+                        "input file": data["input_json"],
+                        "impedance_test": "-",
+                        "VTA_test": "Passed" if result else "Failed",
+                    }
+                )
+
+    df = pd.DataFrame(test_results)
+    output_csv_file = "test_input_cases_results.csv"
+    df.to_csv(output_csv_file, index=False)
+
+    return impedance_test_passed, VTA_test_passed
+
+
+def _run_simulation(input_dir: str, input_json: str):
+    """
+    Runs a simulation with a given JSON file.
 
     Parameters
     ----------
@@ -20,52 +181,64 @@ def test_impedance(input_dir: str, input_json: str, output_dir: str, desired_dir
         Directory where the input files are located.
     input_json : str
         JSON file with input parameters.
-    output_dir : str
-        Directory where the output files are generated.
-    desired_dir : str
-        Directory where the desired output files are located.
     """
-    with open(os.path.join(input_dir, input_json)) as json_file:
+    with open(input_json) as json_file:
         input_settings = json.load(json_file)
 
     # add the stimulation folder
     input_settings["StimulationFolder"] = os.path.dirname(input_dir)
+
     # update folder with MRI
     input_settings["MaterialDistribution"]["MRIPath"] = input_settings[
         "MaterialDistribution"
     ]["MRIPath"].replace("../..", "..")
+
+    # update OutputPath
+    input_settings["OutputPath"] = input_settings["OutputPath"].replace(".", input_dir)
+
+    # update Pathway FileName
+    if input_settings["PointModel"]["Pathway"]["FileName"]:
+        input_settings["PointModel"]["Pathway"]["FileName"] = input_settings[
+            "PointModel"
+        ]["Pathway"]["FileName"].replace("../..", "..")
+
     ossdbs.main_run(input_settings)
 
-    # TODO use path from dictionary
-    # os.chdir(output_dir)
-    actual = pd.read_csv("impedance.csv").to_numpy()
-    # TODO add path to reference dir
-    desired = pd.read_csv("impedance.csv").to_numpy()
-    np.testing.assert_allclose(actual, desired, atol=1e-5)
+
+def _test_impedance(output_csv: str, desired_csv: str):
+    """
+    Tests impedance by comparing the actual output with the desired output.
+
+    Parameters
+    ----------
+    output_csv : str
+        CSV file with actual output values.
+    desired_csv : str
+        CSV file with desired output values.
+    """
+    with open(output_csv) as csv_file:
+        actual = pd.read_csv(csv_file).to_numpy()
+
+    with open(desired_csv) as csv_file:
+        desired = pd.read_csv(csv_file).to_numpy()
+    return np.allclose(actual, desired, atol=1e-5)
 
 
-def test_VTA(output_dir: str, output_nii: str, desired_dir: str, desired_nii: str):
+def _test_VTA(output_nii: str, desired_nii: str):
     """
     Tests VTA by comparing the actual output with the desired output
     using the Dice coefficient.
 
     Parameters
     ----------
-    output_dir : str
-        Directory where the output files are located.
     output_nii : str
         NIfTI file with the output data.
-    desired_dir : str
-        Directory where the desired output files are located.
     desired_nii : str
         NIfTI file with the desired data.
     """
-    os.chdir(output_dir)
     actual = _readNIfTI(output_nii)
-    os.chdir(desired_dir)
     desired = _readNIfTI(desired_nii)
-    os.chdir("../../..")
-    assert _compute_dice_coefficient(actual, desired) == 1
+    return _compute_dice_coefficient(actual, desired) == 1
 
 
 def _readNIfTI(filename: str) -> set:
@@ -116,116 +289,4 @@ def _compute_dice_coefficient(set1, set2) -> float:
     return (2 * intersection_size) / (size1 + size2)
 
 
-print("Running input_case1")
-test_impedance(
-    input_dir="input_case1",
-    input_json="input_homogeneous.json",
-    output_dir="Results_homogeneous",
-    desired_dir="../../desired_output/input_case1/Results_homogeneous",
-)
-
-test_impedance(
-    input_dir="input_case1",
-    input_json="input_inhomogeneous.json",
-    output_dir="Results_inhomogeneous",
-    desired_dir="../../desired_output/input_case1/Results_inhomogeneous",
-)
-
-# TODO add more prints
-# input_case2
-test_impedance(
-    input_dir="input_case2",
-    input_json="input_custom_electrode.json",
-    output_dir="Results_electrode",
-    desired_dir="../../desired_output/input_case2/Results_electrode",
-)
-
-test_impedance(
-    input_dir="input_case2",
-    input_json="input_custom_material.json",
-    output_dir="Results_material",
-    desired_dir="../../desired_output/input_case2/Results_material",
-)
-
-# input_case3
-test_impedance(
-    input_dir="input_case3",
-    input_json="input_case_grounding.json",
-    output_dir="Results_case_grounding",
-    desired_dir="../../desired_output/input_case3/Results_case_grounding",
-)
-
-test_impedance(
-    input_dir="input_case3",
-    input_json="input_case_grounding_EQS.json",
-    output_dir="Results_case_grounding_EQS",
-    desired_dir="../../desired_output/input_case3/Results_case_grounding_EQS",
-)
-
-# input_case4
-test_impedance(
-    input_dir="input_case4",
-    input_json="input_current_controlled.json",
-    output_dir="Results_current_controlled",
-    desired_dir="../../desired_output/input_case4/Results_current_controlled",
-)
-
-# input_case5
-test_impedance(
-    input_dir="input_case5",
-    input_json="input_stimulation_signal.json",
-    output_dir="Results_signal",
-    desired_dir="../../desired_output/input_case5/Results_signal",
-)
-
-# input_case6
-test_impedance(
-    input_dir="input_case6",
-    input_json="input_floating.json",
-    output_dir="Results_floating",
-    desired_dir="../../desired_output/input_case6/Results_floating",
-)
-
-# input_case7
-test_impedance(
-    input_dir="input_case7",
-    input_json="input_vta.json",
-    output_dir="Results_VTA",
-    desired_dir="../../desired_output/input_case7/Results_VTA",
-)
-
-test_impedance(
-    input_dir="input_case7",
-    input_json="input_vta_out_of_core.json",
-    output_dir="Results_VTA_OOC",
-    desired_dir="../../desired_output/input_case7/Results_VTA_OOC",
-)
-
-test_VTA(
-    output_dir="input_case7/Results_VTA",
-    output_nii="VTA_solution_Lattice.nii",
-    desired_dir="../../desired_output/input_case7/Results_VTA",
-    desired_nii="VTA_solution_Lattice.nii",
-)
-
-test_VTA(
-    output_dir="input_case7/Results_VTA_OOC",
-    output_nii="VTA_solution_Lattice.nii",
-    desired_dir="../../desired_output/input_case7/Results_VTA_OOC",
-    desired_nii="VTA_solution_Lattice.nii",
-)
-
-# input_case8
-test_impedance(
-    input_dir="input_case8",
-    input_json="input_pathway_out_of_core.json",
-    output_dir="Results_PAM_OOC",
-    desired_dir="../../desired_output/input_case8/Results_PAM_OOC",
-)
-
-test_impedance(
-    input_dir="input_case8",
-    input_json="input_pathway.json",
-    output_dir="Results_PAM",
-    desired_dir="../../desired_output/input_case8/Results_PAM",
-)
+run_test(True, True)
