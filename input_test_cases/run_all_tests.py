@@ -25,21 +25,21 @@ INPUT_DATA = [
         "input_json": "input_case3/input_case_grounding.json",
         "output_csv": "input_case3/Results_case_grounding/impedance.csv",
         "desired_csv": "desired_output/input_case3/Results_case_grounding/\
-            impedance.csv",
+impedance.csv",
     },
     {
         "input_dir": "input_case3",
         "input_json": "input_case3/input_case_grounding_EQS.json",
         "output_csv": "input_case3/Results_case_grounding_EQS/impedance.csv",
         "desired_csv": "desired_output/input_case3/Results_case_grounding_EQS/\
-            impedance.csv",
+impedance.csv",
     },
     {
         "input_dir": "input_case4",
         "input_json": "input_case4/input_current_controlled.json",
         "output_csv": "input_case4/Results_current_controlled/impedance.csv",
         "desired_csv": "desired_output/input_case4/Results_current_controlled/\
-            impedance.csv",
+impedance.csv",
     },
     {
         "input_dir": "input_case5",
@@ -60,7 +60,7 @@ INPUT_DATA = [
         "desired_csv": "desired_output/input_case7/Results_VTA/impedance.csv",
         "output_nii": "input_case7/Results_VTA/VTA_solution_Lattice.nii",
         "desired_nii": "desired_output/input_case7/Results_VTA/\
-            VTA_solution_Lattice.nii",
+VTA_solution_Lattice.nii",
     },
     {
         "input_dir": "input_case7",
@@ -69,7 +69,7 @@ INPUT_DATA = [
         "desired_csv": "desired_output/input_case7/Results_VTA_OOC/impedance.csv",
         "output_nii": "input_case7/Results_VTA_OOC/VTA_solution_Lattice.nii",
         "desired_nii": "desired_output/input_case7/Results_VTA_OOC/\
-            VTA_solution_Lattice.nii",
+VTA_solution_Lattice.nii",
     },
     {
         "input_dir": "input_case8",
