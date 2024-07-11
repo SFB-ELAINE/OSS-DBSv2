@@ -229,8 +229,9 @@ class NeuronSimulator(ABC):
         scaling_vector: list
             current scaling across contacts
         """
+
         # very dumb way to get self._td_solution initialized
-        self._td_solution = h5py.File("combined_solution.h5", mode="w")
+        self._td_solution = h5py.File(os.path.join(self._output_path, "combined_solution.h5"), mode="w")
         for obj in self._td_unit_solutions[0].keys():
             self._td_unit_solutions[0].copy(obj, self._td_solution)
 
@@ -558,19 +559,20 @@ class NeuronSimulator(ABC):
                 # the status was already assigned
                 continue
 
-        create_leaddbs_outputs(
-            self.output_path,
-            Axon_Lead_DBS,
-            self.connectome_name,
-            scaling_index=scaling_index,
-            pathway_name=pathway_name,
-        )
-        create_paraview_outputs(
-            self.output_path,
-            Axon_Lead_DBS,
-            scaling_index=scaling_index,
-            pathway_name=pathway_name,
-        )
+        if scaling_index is None:
+            create_leaddbs_outputs(
+                self.output_path,
+                Axon_Lead_DBS,
+                self.connectome_name,
+                scaling_index=scaling_index,
+                pathway_name=pathway_name,
+            )
+            create_paraview_outputs(
+                self.output_path,
+                Axon_Lead_DBS,
+                scaling_index=scaling_index,
+                pathway_name=pathway_name,
+            )
 
         percent_activated = np.round(
             100.0 * Activated_models / float(orig_N_neurons), 2

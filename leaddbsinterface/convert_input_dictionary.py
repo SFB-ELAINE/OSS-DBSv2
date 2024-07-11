@@ -3,6 +3,7 @@
 
 import argparse
 import json
+import os
 
 from ossdbs.utils.settings import Settings
 
@@ -58,8 +59,10 @@ def main():
     partial_settings = Settings(settings)
     complete_settings = partial_settings.complete_settings()
 
-    # replace ending in input dictionaries
+    # save input dictionary to json in the OSS simulation folder
     new_input = args.leaddbs_dictionary.replace(".mat", ".json")
+    input_file = os.path.basename(new_input).split('/')[-1]
+    new_input = os.path.join(args.output_path, input_file)
 
     # export json dict
     json_settings = json.dumps(complete_settings, indent=2)
