@@ -559,14 +559,15 @@ class NeuronSimulator(ABC):
                 # the status was already assigned
                 continue
 
-        if scaling_index is None:
-            create_leaddbs_outputs(
-                self.output_path,
-                Axon_Lead_DBS,
-                self.connectome_name,
-                scaling_index=scaling_index,
-                pathway_name=pathway_name,
-            )
+        create_leaddbs_outputs(
+            self.output_path,
+            Axon_Lead_DBS,
+            self.connectome_name,
+            scaling_index=scaling_index,
+            pathway_name=pathway_name,
+        )
+            
+        if scaling_index is None:            
             create_paraview_outputs(
                 self.output_path,
                 Axon_Lead_DBS,
