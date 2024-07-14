@@ -61,7 +61,7 @@ def main():
 
     # save input dictionary to json in the OSS simulation folder
     new_input = args.leaddbs_dictionary.replace(".mat", ".json")
-    input_file = os.path.basename(new_input).split('/')[-1]
+    input_file = os.path.basename(new_input).split(os.sep)[-1]
     new_input = os.path.join(args.output_path, input_file)
 
     # export json dict
