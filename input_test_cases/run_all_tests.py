@@ -1,5 +1,6 @@
 import json
 import os
+from pprint import pprint
 
 import nibabel as nib
 import numpy as np
@@ -98,7 +99,7 @@ VTA_solution_Lattice.nii",
 ]
 
 
-def run_test(check_impedance: bool, check_VTA: bool) -> tuple:
+def run_test() -> None:
     """
     Runs JSON files in input_test_cases.
 
@@ -113,54 +114,49 @@ def run_test(check_impedance: bool, check_VTA: bool) -> tuple:
     VTA_test_passed = True
     test_results = []
 
+    # run all simulations
     for data in INPUT_DATA:
-        print("Running " + data["input_json"])
+        pprint("Running " + data["input_json"])
+        pprint("####################")
         _run_simulation(data["input_dir"], data["input_json"])
 
-    if check_impedance:
-        for data in INPUT_DATA:
-            print("Testing impedance of " + data["input_json"])
-            result = _test_impedance(data["output_csv"], data["desired_csv"])
-            if result is False:
-                impedance_test_passed = False
+    for data in INPUT_DATA:
+        tests_appended = False
+        # check impedances
+        if "desired_csv" in data:
+            pprint("Testing impedance of " + data["input_json"])
+            pprint("####################")
+            impedance_test_passed = _test_impedance(
+                data["output_csv"], data["desired_csv"]
+            )
             test_results.append(
                 {
                     "input_file": data["input_json"],
-                    "impedance_test": "Passed" if result else "Failed",
+                    "impedance_test": "Passed" if impedance_test_passed else "Failed",
                     "VTA_test": "-",
                 }
             )
+            pprint(test_results)
+            pprint("####################")
+            tests_appended = True
 
-    if check_VTA:
-        NIfTI_DATA = [
-            data
-            for data in INPUT_DATA
-            if data.get("output_nii") and data.get("desired_nii")
-        ]
-        for data in NIfTI_DATA:
-            print("Testing VTA of " + data["input_json"])
-            result = _test_VTA(data["output_nii"], data["desired_nii"])
-            if result is False:
-                impedance_test_passed = False
+        if "desired_nii" in data:
+            pprint("Testing VTA of " + data["input_json"])
+            pprint("####################")
+            vta_test_passed = _test_VTA(data["output_nii"], data["desired_nii"])
 
-            # If impedance already checked, update VTA_test.
-            # Otherwise, append a new result.
-            impedance_checked = next(
-                (
-                    result
-                    for result in test_results
-                    if result["input_file"] == data["input_json"]
-                ),
-                None,
-            )
-            if impedance_checked:
-                impedance_checked["VTA_test"] = "Passed" if result else "Failed"
+            if tests_appended:
+                pprint(test_results)
+                pprint("####################")
+                pprint(test_results[-1])
+                pprint("####################")
+                test_results[-1]["VTA_test"] = "Passed" if vta_test_passed else "Failed"
             else:
                 test_results.append(
                     {
                         "input file": data["input_json"],
                         "impedance_test": "-",
-                        "VTA_test": "Passed" if result else "Failed",
+                        "VTA_test": "Passed" if vta_test_passed else "Failed",
                     }
                 )
 
@@ -238,7 +234,7 @@ def _test_VTA(output_nii: str, desired_nii: str):
     """
     actual = _readNIfTI(output_nii)
     desired = _readNIfTI(desired_nii)
-    return _compute_dice_coefficient(actual, desired) == 1
+    return np.isclose(_compute_dice_coefficient(actual, desired), 1)
 
 
 def _readNIfTI(filename: str) -> set:
@@ -289,4 +285,5 @@ def _compute_dice_coefficient(set1, set2) -> float:
     return (2 * intersection_size) / (size1 + size2)
 
 
-run_test(True, True)
+if __name__ == "__main__":
+    run_test()
