@@ -114,7 +114,7 @@
   },
   "EQSMode": true,
   "FEMOrder": 2,
-  "OutputPath": "./Results_case_grounding_EQS",
+  "OutputPath": "Results_case_grounding_EQS",
   "ComputeImpedance": true,
   "ExportVTK": true
 }

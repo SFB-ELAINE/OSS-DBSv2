@@ -190,7 +190,7 @@ def _run_simulation(input_dir: str, input_json: str):
     ]["MRIPath"].replace("../..", "..")
 
     # update OutputPath
-    input_settings["OutputPath"] = input_settings["OutputPath"].replace(".", input_dir)
+    input_settings["OutputPath"] = os.path.join(input_dir, input_settings["OutputPath"])
 
     # update Pathway FileName
     if input_settings["PointModel"]["Pathway"]["FileName"]:
