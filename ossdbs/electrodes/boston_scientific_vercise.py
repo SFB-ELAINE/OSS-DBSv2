@@ -149,6 +149,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
                         edge.name = name
         return netgen.occ.Fuse(contacts)
 
+    # ruff: noqa: C901
     def _contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         point = (0, 0, 0)
         radius = self._parameters.lead_diameter * 0.5
@@ -181,6 +182,13 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
                 max_y_edge = edge
         max_x_edge.name = "Rename"
         max_y_edge.name = "Rename"
+        # to prevent not labelling all edges
+        for edge in contact.edges:
+            if np.isclose(edge.center.x, max_x_val):
+                edge.name = "Rename"
+            if np.isclose(edge.center.y, max_y_val):
+                edge.name = "Rename"
+
         # Label only the outer edges of the contact with min z and max z values
         for edge in contact.edges:
             if np.isclose(edge.center.z, max_z_val) and not (
