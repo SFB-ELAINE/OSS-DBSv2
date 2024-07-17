@@ -111,7 +111,7 @@ def run_test() -> None:
         Check VTA if True.
     """
     impedance_test_passed = True
-    VTA_test_passed = True
+    vta_test_passed = True
     test_results = []
 
     # run all simulations
@@ -120,6 +120,7 @@ def run_test() -> None:
         pprint("####################")
         _run_simulation(data["input_dir"], data["input_json"])
 
+    # test everything
     for data in INPUT_DATA:
         tests_appended = False
         # check impedances
@@ -163,8 +164,7 @@ def run_test() -> None:
     df = pd.DataFrame(test_results)
     output_csv_file = "test_input_cases_results.csv"
     df.to_csv(output_csv_file, index=False)
-
-    return impedance_test_passed, VTA_test_passed
+    return df
 
 
 def _run_simulation(input_dir: str, input_json: str):
@@ -285,5 +285,20 @@ def _compute_dice_coefficient(set1, set2) -> float:
     return (2 * intersection_size) / (size1 + size2)
 
 
+def check_tests(df):
+    """Check if all tests were succesful."""
+    all_tests_passed = True
+    for _, df_row in df.iterrows():
+        if "Failed" in [df_row["impedance_test"], df_row["VTA_test"]]:
+            print(f"Test {df_row['input_file']} failed")
+            print(f"Impedance test: {df_row['impedance_test']}")
+            print(f"VTA test: {df_row['VTA_test']}")
+            all_tests_passed = False
+    return all_tests_passed
+
+
 if __name__ == "__main__":
-    run_test()
+    tests_df = run_test()
+    all_tests_passed = check_tests(tests_df)
+    if not all_tests_passed:
+        open("fail_oss.txt", "w").close()
