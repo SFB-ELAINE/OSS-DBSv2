@@ -18,6 +18,8 @@ recursive-include input_test_cases *.json
 recursive-include input_test_cases *.md
 recursive-include input_test_cases *.sh
 recursive-include input_test_cases *.py
+recursive-include input_test_cases *.csv
+recursive-include input_test_cases *.nii
 recursive-include ossdbs *.py
 recursive-include ossdbs *.hoc
 recursive-include ossdbs *.html
