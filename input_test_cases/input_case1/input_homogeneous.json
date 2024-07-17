@@ -108,7 +108,7 @@
   },
   "EQSMode": false,
   "FEMOrder": 2,
-  "OutputPath": "./Results_homogeneous",
+  "OutputPath": "Results_homogeneous",
   "ComputeImpedance": true,
   "ExportVTK": true,
   "ExportElectrode": true

@@ -128,7 +128,7 @@
   },
   "EQSMode": false,
   "FEMOrder": 2,
-  "OutputPath": "./Results_electrode",
+  "OutputPath": "Results_electrode",
   "ComputeImpedance": true,
   "ExportVTK": true,
   "ExportElectrode": true
