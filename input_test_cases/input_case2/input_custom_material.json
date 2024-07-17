@@ -140,7 +140,7 @@
   },
   "EQSMode": false,
   "FEMOrder": 2,
-  "OutputPath": "./Results_material/",
+  "OutputPath": "Results_material",
   "ComputeImpedance": true,
   "ExportVTK": true,
   "ExportElectrode": true

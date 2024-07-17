@@ -515,6 +515,11 @@ class AxonModels:
         if hemis_idx not in [0, 1]:
             raise ValueError("hemis_idx has to be either 0 or 1")
 
+        if hemis_idx == 0:
+            self.oss_sim_folder = 'OSS_sim_files_rh'
+        else:
+            self.oss_sim_folder = 'OSS_sim_files_lh'
+
         # defaults, they will be overwritten
         # TODO wrap them in @property ?
         self.pathway_mat_file = None
@@ -664,7 +669,7 @@ class AxonModels:
         if stimSets:
             _logger.info("Use stimSets")
             stim_protocols = np.genfromtxt(
-                os.path.join(self.stim_dir, f"Current_protocols_{hemis_idx}.csv"),
+                os.path.join(self.stim_dir, self.oss_sim_folder, f"Current_protocols_{hemis_idx}.csv"),
                 dtype=float,
                 delimiter=",",
                 names=True,
@@ -692,7 +697,7 @@ class AxonModels:
                 self.centering_coordinates.append(b[:, i])
 
         # hardcoded name for axons pre-filtered by Lead-DBS
-        self.combined_h5_file = os.path.join(self.stim_dir, "Allocated_axons.h5")
+        self.combined_h5_file = os.path.join(self.stim_dir, self.oss_sim_folder, "Allocated_axons.h5")
         self.output_directory = os.path.dirname(self.combined_h5_file)
 
         # morphology set in Lead-DBS
@@ -947,7 +952,7 @@ class AxonModels:
         streamlines = convert_fibers_to_streamlines(fiber_array)
 
         # resample streamlines to nodes of Ranvier
-        streamlines_resampled, _ = resample_fibers_to_Ranviers(
+        streamlines_resampled, excluded_streamlines_idx = resample_fibers_to_Ranviers(
             streamlines, axon_morphology.node_step, axon_morphology.n_Ranvier
         )
 

@@ -12,6 +12,7 @@ class TypeChecker:
         },
         "Electrodes": list,
         "FailFlag": str,
+        "StimulationFolder": str,
         "ModelSide": int,
         "CalcAxonActivation": bool,
         "OutOfCore": bool,
