@@ -2,6 +2,7 @@
 # Copyright 2023, 2024 Johannes Reding, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import os
 from typing import ClassVar
 
 from .materials import MATERIALS
@@ -118,6 +119,7 @@ class Settings:
             "StimSetsFile": None,
         },
         "AdaptiveMeshRefinement": False,
+        "StimulationFolder": os.getcwd(),
     }
 
     def __init__(self, partial_settings: dict) -> None:

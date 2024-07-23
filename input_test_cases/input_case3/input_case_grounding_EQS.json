@@ -112,9 +112,9 @@
       "PointDistance[mm]": 1
     }
   },
-  "EQSMode": false,
+  "EQSMode": true,
   "FEMOrder": 2,
-  "OutputPath": "Results_case_grounding",
+  "OutputPath": "Results_case_grounding_EQS",
   "ComputeImpedance": true,
   "ExportVTK": true
 }

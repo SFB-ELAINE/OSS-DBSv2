@@ -121,7 +121,7 @@
   },
   "EQSMode": false,
   "FEMOrder": 2,
-  "OutputPath": "./Results_inhomogeneous",
+  "OutputPath": "Results_inhomogeneous",
   "ComputeImpedance": true,
   "ExportVTK": true,
   "ExportElectrode": true

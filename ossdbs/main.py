@@ -11,7 +11,6 @@ import time
 
 import ngsolve
 
-from ossdbs import set_logger
 from ossdbs.api import (
     create_bounding_box,
     generate_electrodes,
@@ -32,37 +31,39 @@ from ossdbs.utils.type_check import TypeChecker
 _logger = logging.getLogger(__name__)
 
 
-def main() -> None:
-    """Main function to run OSS-DBS in CLI mode."""
-    parser = argparse.ArgumentParser(
-        prog="OSS-DBS",
-        description="Welcome to OSS-DBS v2.",
-        epilog="Please report bugs and errors on GitHub",
-    )
-    parser.add_argument(
-        "--loglevel", type=int, help="specify verbosity of logger", default=logging.INFO
-    )
-    parser.add_argument(
-        "input_dictionary", type=str, help="input dictionary in JSON format"
-    )
-    args = parser.parse_args()
+def set_logger(level=logging.INFO):
+    """Set log level."""
+    _logger.setLevel(level)
+    if level == logging.DEBUG:
+        ngsolve.ngsglobals.msg_level = 10
+    # to avoid multiple output in Jupyter notebooks
+    if len(_logger.handlers) == 1:
+        ch = logging.StreamHandler()
+        ch.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+        ch.setLevel(level)
+        _logger.addHandler(ch)
+    else:
+        for handler in _logger.handlers:
+            if isinstance(handler, logging.StreamHandler):
+                handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+                handler.setLevel(level)
 
+
+def main_run(input_settings: dict):
+    """Run OSS-DBS from input dictionary.
+
+    Parameters
+    ----------
+    input_settings: dict
+        Input dictionary
+    run_path: str
+        Path where to run OSS-DBS
+    """
     timings = {}
     time_0 = time.time()
-    set_logger(level=args.loglevel)
-
-    _logger.info("Loading settings from input file")
-    _logger.debug(f"Input file: {args.input_dictionary}")
-    with open(args.input_dictionary) as json_file:
-        input_settings = json.load(json_file)
 
     settings = Settings(input_settings).complete_settings()
     TypeChecker.check(settings)
-
-    # add the stimulation folder (where input dict.json is stored, needed for Lead-DBS)
-    settings["StimulationFolder"] = os.path.dirname(
-        os.path.abspath(args.input_dictionary)
-    )
 
     _logger.debug(f"Final settings:\\ {settings}")
 
@@ -221,6 +222,35 @@ def main() -> None:
         )
     )
     _logger.info("Process Completed")
+
+
+def main() -> None:
+    """Main function to run OSS-DBS in CLI mode."""
+    parser = argparse.ArgumentParser(
+        prog="OSS-DBS",
+        description="Welcome to OSS-DBS v2.",
+        epilog="Please report bugs and errors on GitHub",
+    )
+    parser.add_argument(
+        "--loglevel", type=int, help="specify verbosity of logger", default=logging.INFO
+    )
+    parser.add_argument(
+        "input_dictionary", type=str, help="input dictionary in JSON format"
+    )
+    args = parser.parse_args()
+
+    set_logger(level=args.loglevel)
+    _logger.info("Loading settings from input file")
+    _logger.debug(f"Input file: {args.input_dictionary}")
+    with open(args.input_dictionary) as json_file:
+        input_settings = json.load(json_file)
+
+    # add the stimulation folder (where input dict.json is stored, needed for Lead-DBS)
+    input_settings["StimulationFolder"] = os.path.dirname(
+        os.path.abspath(args.input_dictionary)
+    )
+
+    main_run(input_settings)
 
 
 if __name__ == "__main__":
