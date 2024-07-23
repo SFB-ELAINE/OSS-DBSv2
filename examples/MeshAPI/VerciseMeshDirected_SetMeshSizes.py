@@ -1,13 +1,28 @@
-"""
-Example of a full model geometry
-with one Vercise electrode without
-encapsulation layer.
-The mesh is generated and
-local mesh refinements are taken
-into account during the meshing
-process.
-"""
+import ngsolve
+
 import ossdbs
+from ossdbs.utils.vtk_export import FieldSolution
+
+
+def save(cf, filename: str) -> None:
+    """Save solution in VTK format."""
+    names = [f"{cf.label}_real"]
+    if cf.is_complex:
+        names.append(f"{cf.label}_imag")
+
+    coefficients = [cf.solution.real]
+    if cf.is_complex:
+        coefficients.append(cf.solution.imag)
+
+    vtk = ngsolve.VTKOutput(
+        ma=cf.mesh,
+        coefs=coefficients,
+        names=names,
+        filename=filename,
+        subdivision=0,
+    )
+    vtk.Do(vb=ngsolve.BND)
+
 
 settings = {
     "Electrodes": [
@@ -31,7 +46,7 @@ settings = {
                 },
                 {
                     "Contact_ID": 2,
-                    "MaxMeshSizeEdge": 0.05,
+                    "MaxMeshSizeEdge": 0.01,
                 },
                 {
                     "Contact_ID": 3,
@@ -75,20 +90,26 @@ settings = {
         "Dimension": {"x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0},
         "Shape": "Ellipsoid",
     },
+    "Mesh": {"LoadMesh": False, "SaveMesh": False},
     "ExportElectrode": False,
 }
 
-electrodes = ossdbs.generate_electrodes(settings)
-vercise = electrodes[0]
-electrode_settings = settings["Electrodes"][0]
-# set edge mesh sizes
-for edge in vercise.geometry.edges:
-    if edge.name is not None:
-        contact_number = int(edge.name.replace("Contact_", ""))
-        contact_setting = electrode_settings["Contacts"][contact_number - 1]
-        if "MaxMeshSizeEdge" in contact_setting:
-            edge.maxh = contact_setting["MaxMeshSizeEdge"]
+# generate mesh with brain
+mesh = ossdbs.generate_mesh(settings)
 
-vercise.export_electrode(
-    output_path=".", brain_dict=settings["BrainRegion"], n_electrode=0
+print(mesh.boundaries)
+print(mesh.materials)
+
+bnd_dict = {}
+for idx in range(1, 9):
+    bnd_dict[f"E1C{idx}"] = idx
+
+ngsolve.Draw(mesh.boundary_coefficients(bnd_dict), mesh.ngsolvemesh, "bnd")
+
+cf = FieldSolution(
+    solution=mesh.boundary_coefficients(bnd_dict),
+    label="bnd",
+    mesh=mesh.ngsolvemesh,
+    is_complex=False,
 )
+save(cf, "electrode_in_brain")
