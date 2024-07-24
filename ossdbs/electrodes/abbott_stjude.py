@@ -252,36 +252,10 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
         # Centering contact to label edges
         contact = contact.Rotate(axis, angle)
+        # label all edges
+        for edge in contact.edges:
+            edge.name = "Rename"
 
-        # TODO refactor / wrap in function
-        # Find  max z, min z, max x, and max y values and label min x and min y edge
-        max_z_val = max_y_val = max_x_val = float("-inf")
-        min_z_val = float("inf")
-        for edge in contact.edges:
-            if edge.center.z > max_z_val:
-                max_z_val = edge.center.z
-            if edge.center.z < min_z_val:
-                min_z_val = edge.center.z
-            if edge.center.x > max_x_val:
-                max_x_val = edge.center.x
-                max_x_edge = edge
-            if edge.center.y > max_y_val:
-                max_y_val = edge.center.y
-                max_y_edge = edge
-        max_x_edge.name = "Rename"
-        max_y_edge.name = "Rename"
-        # Label only the outer edges of the contact with min z and max z values
-        for edge in contact.edges:
-            if np.isclose(edge.center.z, max_z_val) and not (
-                np.isclose(edge.center.x, radius / 2)
-                or np.isclose(edge.center.y, radius / 2)
-            ):
-                edge.name = "Rename"
-            elif np.isclose(edge.center.z, min_z_val) and not (
-                np.isclose(edge.center.x, radius / 2)
-                or np.isclose(edge.center.y, radius / 2)
-            ):
-                edge.name = "Rename"
         contact = contact.Rotate(axis, -angle)
         # TODO check that the starting axis of the contacts
         # are correct according to the documentation
