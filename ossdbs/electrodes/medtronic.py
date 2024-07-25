@@ -248,11 +248,9 @@ class MedtronicSenSightModel(ElectrodeModel):
             if np.allclose(np.cross(edge_center, self._direction), 0):
                 continue
 
-            direction = self._direction / np.linalg.norm(self._direction)
-            projection_vector = (
-                np.dot(self._direction - edge_center, direction) * direction
+            new_center = np.dot(edge_center, self._direction) * np.array(
+                self._direction
             )
-            new_center = self._direction - projection_vector
 
             # Mark only outer edges
             if not np.isclose(np.linalg.norm(edge_center - new_center), radius / 2):
