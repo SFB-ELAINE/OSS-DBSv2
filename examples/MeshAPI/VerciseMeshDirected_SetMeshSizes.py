@@ -1,3 +1,12 @@
+"""
+Example of a full model geometry
+with one Vercise electrode without
+encapsulation layer.
+The mesh is generated and
+local mesh refinements are taken
+into account during the meshing
+process.
+"""
 import ngsolve
 
 import ossdbs
@@ -37,11 +46,6 @@ settings = {
             "Contacts": [
                 {
                     "Contact_ID": 1,
-                    "Active": True,
-                    "Current[A]": 0.0,
-                    "Voltage[V]": 1.0,
-                    "Floating": False,
-                    "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
                     "MaxMeshSizeEdge": 0.05,
                 },
                 {
@@ -50,11 +54,6 @@ settings = {
                 },
                 {
                     "Contact_ID": 3,
-                    "Active": True,
-                    "Current[A]": 0.0,
-                    "Voltage[V]": 0.0,
-                    "Floating": False,
-                    "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
                     "MaxMeshSizeEdge": 0.05,
                 },
                 {
@@ -63,11 +62,6 @@ settings = {
                 },
                 {
                     "Contact_ID": 5,
-                    "Active": False,
-                    "Current[A]": 0.0,
-                    "Voltage[V]": 0.0,
-                    "Floating": False,
-                    "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
                     "MaxMeshSizeEdge": 0.05,
                 },
                 {

@@ -239,13 +239,26 @@ class MedtronicSenSightModel(ElectrodeModel):
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
         # Centering contact to label edges
         contact = contact.Rotate(axis, angle)
-        # label all edges
+
+        # Label all outer edges
         for edge in contact.edges:
-            edge.name = "Rename"
+            edge_center = np.array([edge.center.x, edge.center.y, edge.center.z])
+
+            # Skip center edge
+            if np.allclose(np.cross(edge_center, self._direction), 0):
+                continue
+
+            direction = self._direction / np.linalg.norm(self._direction)
+            projection_vector = (
+                np.dot(self._direction - edge_center, direction) * direction
+            )
+            new_center = self._direction - projection_vector
+
+            # Mark only outer edges
+            if not np.isclose(np.linalg.norm(edge_center - new_center), radius / 2):
+                edge.name = "Rename"
 
         # Reseting position so that 0 deg lies in the middle of contact
         contact = contact.Rotate(axis, -angle)
-        # TODO check that the starting axis of the contacts
-        # are correct according to the documentation
 
         return contact
