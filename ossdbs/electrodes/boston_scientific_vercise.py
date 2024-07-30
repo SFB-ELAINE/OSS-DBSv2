@@ -96,7 +96,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self._parameters.lead_diameter * 0.5
-        direction = self._direction
+        direction = direction = (0, 0, 1)
         center = tuple(np.array(direction) * radius)
         # define half space at tip_center
         # to construct a hemisphere as part of the contact tip
@@ -109,15 +109,15 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         vectors = []
         distance = self._parameters.tip_length + self._parameters.contact_spacing
         for _ in range(0, 3):
-            vectors.append(tuple(np.array(self._direction) * distance))
+            vectors.append(tuple(np.array(direction) * distance))
             distance += (
                 self._parameters.contact_length + self._parameters.contact_spacing
             )
 
         point = (0, 0, 0)
         height = self._parameters.contact_length
-        axis = occ.Axis(p=point, d=self._direction)
-        contact_8 = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
+        axis = occ.Axis(p=point, d=direction)
+        contact_8 = occ.Cylinder(p=point, d=direction, r=radius, h=height)
         contact_directed = self._contact_directed()
 
         contacts = [
@@ -147,20 +147,32 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
                 for edge in contact.edges:
                     if edge.name == "Rename":
                         edge.name = name
-        return netgen.occ.Fuse(contacts)
+
+        if np.allclose(self._direction, direction):
+            return netgen.occ.Fuse(contacts)
+        else:
+            rotation = tuple(
+                np.cross(direction, self._direction)
+                / np.linalg.norm(np.cross(direction, self._direction))
+            )
+            angle = np.degrees(np.arccos(self._direction[2]))
+            return netgen.occ.Fuse(contacts).Rotate(
+                occ.Axis(p=point, d=rotation), angle
+            )
 
     # ruff: noqa: C901
     def _contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         point = (0, 0, 0)
+        direction = (0, 0, 1)
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
-        body = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
+        body = occ.Cylinder(p=point, d=direction, r=radius, h=height)
         # tilted y-vector marker is in YZ-plane and orthogonal to _direction
-        new_direction = (0, self._direction[2], -self._direction[1])
+        new_direction = (0, direction[2], -direction[1])
         eraser = occ.HalfSpace(p=point, n=new_direction)
         delta = 15
         angle = 30 + delta
-        axis = occ.Axis(p=point, d=self._direction)
+        axis = occ.Axis(p=point, d=direction)
 
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
         # Centering contact to label edges
@@ -171,12 +183,10 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
             edge_center = np.array([edge.center.x, edge.center.y, edge.center.z])
 
             # Skip center edge
-            if np.allclose(np.cross(edge_center, self._direction), 0):
+            if np.allclose(np.cross(edge_center, direction), 0):
                 continue
 
-            new_center = np.dot(edge_center, self._direction) * np.array(
-                self._direction
-            )
+            new_center = np.dot(edge_center, direction) * np.array(direction)
 
             # Mark only outer edges
             if not np.isclose(np.linalg.norm(edge_center - new_center), radius / 2):
