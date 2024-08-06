@@ -10,6 +10,7 @@ This is an overview about the electrode models used for simulation.
    electrode_files/Abbott_StJude_Directed
    electrode_files/Boston_Scientific_Vercise_Directed
    electrode_files/Boston_Scientific_Vercise
+   electrode_files/Boston_Scientific_Cartesia
    electrode_files/Dixi_Microtechniques
    electrode_files/Medtronic_DBS
    electrode_files/Medtronic_SenSight
