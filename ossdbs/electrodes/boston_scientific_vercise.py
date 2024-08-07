@@ -96,7 +96,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self._parameters.lead_diameter * 0.5
-        direction = direction = (0, 0, 1)
+        direction = (0, 0, 1)
         center = tuple(np.array(direction) * radius)
         # define half space at tip_center
         # to construct a hemisphere as part of the contact tip
@@ -151,19 +151,25 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         if np.allclose(self._direction, direction):
             return netgen.occ.Fuse(contacts)
         else:
+            # rotate electrode to match orientation
+            # e.g. from z-axis to y-axis
             rotation = tuple(
                 np.cross(direction, self._direction)
                 / np.linalg.norm(np.cross(direction, self._direction))
             )
             angle = np.degrees(np.arccos(self._direction[2]))
+            # TODO might need readjustment here?
             return netgen.occ.Fuse(contacts).Rotate(
                 occ.Axis(p=point, d=rotation), angle
             )
 
     # ruff: noqa: C901
     def _contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        # unit system
         point = (0, 0, 0)
         direction = (0, 0, 1)
+        axis = occ.Axis(p=point, d=direction)
+        # electrode parameters
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
         body = occ.Cylinder(p=point, d=direction, r=radius, h=height)
@@ -172,7 +178,6 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         eraser = occ.HalfSpace(p=point, n=new_direction)
         delta = 15
         angle = 30 + delta
-        axis = occ.Axis(p=point, d=direction)
 
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
         # Centering contact to label edges
@@ -191,8 +196,6 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
             # Mark only outer edges
             if not np.isclose(np.linalg.norm(edge_center - new_center), radius / 2):
                 edge.name = "Rename"
-
-        contact = contact.Rotate(axis, -angle)
 
         return contact
 
