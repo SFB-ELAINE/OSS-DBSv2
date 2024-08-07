@@ -28,7 +28,7 @@ from ossdbs.model_geometry import BoundingBox, BrainGeometry, ModelGeometry
 from ossdbs.utils.settings import Settings
 from ossdbs.utils.type_check import TypeChecker
 
-_logger = logging.getLogger(__name__)
+_logger = logging.getLogger("ossdbs")
 
 
 def set_logger(level=logging.INFO):
