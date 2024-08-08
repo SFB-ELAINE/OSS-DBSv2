@@ -173,14 +173,15 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
         body = occ.Cylinder(p=point, d=direction, r=radius, h=height)
-        # tilted y-vector marker is in YZ-plane and orthogonal to _direction
-        new_direction = (0, direction[2], -direction[1])
+        # eraser points in y-direction
+        new_direction = (0, 1, 0)
         eraser = occ.HalfSpace(p=point, n=new_direction)
         delta = 15
         angle = 30 + delta
 
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
         # Centering contact to label edges
+        # TODO needed?
         contact = contact.Rotate(axis, angle)
 
         # Label all outer edges
