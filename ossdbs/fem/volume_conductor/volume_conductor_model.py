@@ -263,6 +263,8 @@ class VolumeConductor(ABC):
                         new_impedance = self.compute_impedance()
                         error = 100 * abs(impedance - new_impedance) / abs(impedance)
                         refinements += 1
+                        impedance = new_impedance
+                    self._impedances[band_indices] = impedance
 
                     _logger.info(
                         "Number of elements after refinement:"
