@@ -182,7 +182,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
         # Centering contact to label edges
         # TODO needed?
-        contact = contact.Rotate(axis, angle)
+        # contact = contact.Rotate(axis, angle)
 
         # Label all outer edges
         for edge in contact.edges:
