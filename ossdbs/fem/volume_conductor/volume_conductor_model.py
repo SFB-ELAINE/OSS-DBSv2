@@ -253,16 +253,22 @@ class VolumeConductor(ABC):
                         "Number of elements before refinement:"
                         f"{self.mesh.ngsolvemesh.ne}"
                     )
+                    # TODO write a meaningful algo
+                    # currently: refine until impedance doesn't change by more than 0.1%
                     error = 100
                     refinements = 0
-                    # TODO write a meaningful algo
                     while error > 0.1 and refinements < 10:
                         self.adaptive_mesh_refinement()
                         # solve on refined mesh
                         self.compute_solution(frequency)
                         new_impedance = self.compute_impedance()
+                        # error in percent
                         error = 100 * abs(impedance - new_impedance) / abs(impedance)
+                        # update variables for loop
                         refinements += 1
+                        impedance = new_impedance
+                    # overwrite impedance values
+                    self._impedances[band_indices] = impedance
 
                     _logger.info(
                         "Number of elements after refinement:"
