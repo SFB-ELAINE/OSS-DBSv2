@@ -29,3 +29,6 @@ impedance.csv
 *.nii
 success_*.txt
 fail_*.txt
+
+examples/Approximations/*.pdf
+examples/StimulationSignalAPI/*.pdf
