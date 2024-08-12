@@ -114,10 +114,10 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
                 self._parameters.contact_length + self._parameters.contact_spacing
             )
 
-        point = (0, 0, 0)
+        origin = (0, 0, 0)
         height = self._parameters.contact_length
-        axis = occ.Axis(p=point, d=direction)
-        contact_8 = occ.Cylinder(p=point, d=direction, r=radius, h=height)
+        axis = occ.Axis(p=origin, d=direction)
+        contact_8 = occ.Cylinder(p=origin, d=direction, r=radius, h=height)
         contact_directed = self._contact_directed()
 
         contacts = [
@@ -158,31 +158,37 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
                 / np.linalg.norm(np.cross(direction, self._direction))
             )
             angle = np.degrees(np.arccos(self._direction[2]))
-            # TODO might need readjustment here?
-            return netgen.occ.Fuse(contacts).Rotate(
-                occ.Axis(p=point, d=rotation), angle
+            rotated_geo = netgen.occ.Fuse(contacts).Rotate(
+                occ.Axis(p=origin, d=rotation), angle
+            )
+            # adjust contact angle
+            # tilted y-vector marker is in YZ-plane and orthogonal to _direction
+            # note that this comes from Lead-DBS
+            desired_direction = (0, self._direction[2], -self._direction[1])
+            current_direction = (0, rotation[2], -rotation[1])
+            rotation_angle = np.degrees(
+                np.arccos(np.dot(current_direction, desired_direction))
+            )
+            return rotated_geo.Rotate(
+                occ.Axis(p=(0, 0, 0), d=self._direction), rotation_angle
             )
 
     # ruff: noqa: C901
     def _contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         # unit system
-        point = (0, 0, 0)
+        origin = (0, 0, 0)
         direction = (0, 0, 1)
-        axis = occ.Axis(p=point, d=direction)
+        axis = occ.Axis(p=origin, d=direction)
         # electrode parameters
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
-        body = occ.Cylinder(p=point, d=direction, r=radius, h=height)
-        # eraser points in y-direction
+        body = occ.Cylinder(p=origin, d=direction, r=radius, h=height)
+        # eraser origins in y-direction
         new_direction = (0, 1, 0)
-        eraser = occ.HalfSpace(p=point, n=new_direction)
-        delta = 15
-        angle = 30 + delta
+        eraser = occ.HalfSpace(p=origin, n=new_direction)
+        angle = 45
 
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
-        # Centering contact to label edges
-        # TODO needed?
-        # contact = contact.Rotate(axis, angle)
 
         # Label all outer edges
         for edge in contact.edges:
@@ -278,10 +284,10 @@ class BostonScientificVerciseModel(ElectrodeModel):
         return body
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        point = (0, 0, 0)
+        origin = (0, 0, 0)
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
-        contact = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
+        contact = occ.Cylinder(p=origin, d=self._direction, r=radius, h=height)
         contacts = []
         distance = self._parameters.tip_length
         for count in range(self._n_contacts):
