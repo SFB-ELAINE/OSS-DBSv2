@@ -65,6 +65,7 @@ class Settings:
                 "MaxMeshSize": 1e6,
             },
             "HPRefinement": {"Active": False, "Order": 1},
+            "AdaptiveMeshRefinement": {"Active": False, "MaxIterations": 10},
             "MeshSize": {"Edges": {}, "Faces": {}, "Volumes": {}},
             "SaveMesh": False,
             "SavePath": "mesh",
@@ -122,7 +123,6 @@ class Settings:
             "Active": False,
             "StimSetsFile": None,
         },
-        "AdaptiveMeshRefinement": False,
         "StimulationFolder": os.getcwd(),
     }
 

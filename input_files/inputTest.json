@@ -83,10 +83,6 @@
       "Type": "Fine",
       "MaxMeshSize": 100
     },
-    "HPRefinement": {
-        "Active": true,
-        "Order": 1
-    },
     "MeshSize": {
       "Edges": {},
       "Faces": {},

@@ -121,7 +121,7 @@ class VolumeConductor(ABC):
         activation_threshold: Optional[float] = None,
         out_of_core: bool = False,
         export_frequency: Optional[float] = None,
-        adaptive_mesh_refinement: bool = False,
+        adaptive_mesh_refinement: Optional[dict] = None,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -142,7 +142,7 @@ class VolumeConductor(ABC):
             Otherwise, median frequency is used.
         frequency_domain_signal: FrequencyDomainSignal
             Frequency-domain representation of stimulation signal
-        adaptive_mesh_refinement: bool
+        adaptive_mesh_refinement: dict
             Perform adaptive mesh refinement (only at first frequency)
 
         Notes
@@ -244,7 +244,10 @@ class VolumeConductor(ABC):
                     self._impedances[band_indices] = impedance
 
                 # refine only at first frequency
-                if freq_idx == frequency_indices[0] and adaptive_mesh_refinement:
+                if (
+                    freq_idx == frequency_indices[0]
+                    and adaptive_mesh_refinement["Active"]
+                ):
                     if not compute_impedance:
                         impedance = self.compute_impedance()
                     else:
@@ -256,7 +259,10 @@ class VolumeConductor(ABC):
                     error = 100
                     refinements = 0
                     # TODO write a meaningful algo
-                    while error > 0.1 and refinements < 10:
+                    while (
+                        error > 0.1
+                        and refinements < adaptive_mesh_refinement["MaxIterations"]
+                    ):
                         self.adaptive_mesh_refinement()
                         # solve on refined mesh
                         self.compute_solution(frequency)
