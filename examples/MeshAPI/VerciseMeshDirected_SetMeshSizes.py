@@ -38,7 +38,7 @@ settings = {
         {
             "Name": "BostonScientificVerciseDirected",
             "Rotation[Degrees]": 0,
-            "Direction": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 1},
+            "Direction": {"x[mm]": 0, "y[mm]": 1, "z[mm]": -1},
             "TipPosition": {"x[mm]": 0, "y[mm]": 15, "z[mm]": -3},
             "EncapsulationLayer": {
                 "Thickness[mm]": 0.0,  # indicates that no encapsulation is modelled
