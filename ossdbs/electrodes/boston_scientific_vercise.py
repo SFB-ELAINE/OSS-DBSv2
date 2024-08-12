@@ -161,17 +161,23 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
             rotated_geo = netgen.occ.Fuse(contacts).Rotate(
                 occ.Axis(p=origin, d=rotation), angle
             )
+            return rotated_geo
             # adjust contact angle
             # tilted y-vector marker is in YZ-plane and orthogonal to _direction
             # note that this comes from Lead-DBS
+            """
             desired_direction = (0, self._direction[2], -self._direction[1])
-            current_direction = (0, rotation[2], -rotation[1])
+            rotate_vector = Rotation.from_rotvec(np.radians(angle) * np.array(rotation))
+            current_direction = rotate_vector.apply((0, 1, 0))
+            print(current_direction)
             rotation_angle = np.degrees(
                 np.arccos(np.dot(current_direction, desired_direction))
             )
+            print(rotation_angle)
             return rotated_geo.Rotate(
                 occ.Axis(p=(0, 0, 0), d=self._direction), rotation_angle
             )
+            """
 
     # ruff: noqa: C901
     def _contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
