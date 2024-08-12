@@ -148,10 +148,10 @@ for material in material_modelCC4.keys():
     )
 
 plt.xscale("log")
-plt.xlabel("Frequency / Hz")
 ax1.set_ylabel(r"Real part of conductivity / S m$^{-1}$")
 ax2.set_ylabel("Rel. permittivity")
 ax1.legend(loc="upper center")
+ax1.set_xlabel("Frequency / Hz")
 plt.tight_layout()
 plt.savefig("CC3_dielectric_properties.pdf")
 if show:
@@ -188,10 +188,10 @@ for material in material_modelCC4.keys():
 
 plt.yscale("log")
 plt.xscale("log")
-plt.xlabel("Frequency / Hz")
 ax1.set_ylabel(r"Real part of conductivity / S m$^{-1}$")
 ax2.set_ylabel("Rel. permittivity")
 ax1.legend(loc="upper center")
+ax1.set_xlabel("Frequency / Hz")
 plt.tight_layout()
 plt.savefig("CC4_dielectric_properties.pdf")
 if show:
