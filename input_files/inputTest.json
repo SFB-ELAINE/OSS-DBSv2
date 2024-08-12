@@ -14,7 +14,7 @@
   },
   "Electrodes": [
     {
-      "Name": "BostonScientificVercise",
+      "Name": "BostonScientificVerciseDirected",
       "PathToCustomParameters": "",
       "Rotation[Degrees]": 0.0,
       "Direction": {
@@ -38,7 +38,7 @@
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.5
+          "MaxMeshSizeEdge": 10000
         },
         {
           "Contact_ID": 2,
@@ -50,7 +50,7 @@
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.5
+          "MaxMeshSizeEdge": 10000
         }
       ],
       "EncapsulationLayer": {
@@ -80,8 +80,11 @@
     "LoadMesh": false,
     "MeshElementOrder": 2,
     "MeshingHypothesis": {
-      "Type": "Fine",
-      "MaxMeshSize": 100
+      "Type": "Default"
+    },
+    "HPRefinement": {
+        "Active": true,
+        "Order": 1
     },
     "MeshSize": {
       "Edges": {},
@@ -104,8 +107,8 @@
     "Preconditioner": "bddc",
     "PreconditionerKwargs": {},
     "PrintRates": true,
-    "MaximumSteps": 200,
-    "Precision": 1e-8
+    "MaximumSteps": 10000,
+    "Precision": 1e-9
   },
   "PointModel": {
     "Pathway": {

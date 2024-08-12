@@ -60,7 +60,11 @@ class Settings:
         "Mesh": {
             "LoadMesh": False,
             "LoadPath": "",
-            "MeshingHypothesis": {"Type": "Default", "MaxMeshSize": 1e6},
+            "MeshingHypothesis": {
+                "Type": "Default",
+                "MaxMeshSize": 1e6,
+            },
+            "HPRefinement": {"Active": False, "Order": 1},
             "MeshSize": {"Edges": {}, "Faces": {}, "Volumes": {}},
             "SaveMesh": False,
             "SavePath": "mesh",

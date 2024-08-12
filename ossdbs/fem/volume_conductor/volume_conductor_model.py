@@ -81,7 +81,7 @@ class VolumeConductor(ABC):
         if meshing_parameters["LoadMesh"]:
             self.mesh.load_mesh(meshing_parameters["LoadPath"])
         else:
-            self.mesh.generate_mesh(meshing_parameters["MeshingHypothesis"])
+            self.mesh.generate_mesh(meshing_parameters)
 
         if meshing_parameters["SaveMesh"]:
             self.mesh.save(meshing_parameters["SavePath"])

@@ -1,6 +1,7 @@
 # Copyright 2023, 2024 Johannes Reding, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import logging
 import os
 from typing import List
 
@@ -8,6 +9,8 @@ import netgen.meshing
 import netgen.occ
 import ngsolve
 import numpy as np
+
+_logger = logging.getLogger(__name__)
 
 
 class Mesh:
@@ -31,8 +34,11 @@ class Mesh:
 
     def generate_mesh(self, meshing_parameters: dict) -> None:
         """Generate NGSolve mesh."""
-        netgen_mp = self._meshing_parameters(meshing_parameters)
+        netgen_mp = self._meshing_parameters(meshing_parameters["MeshingHypothesis"])
         self._mesh = ngsolve.Mesh(self.geometry.GenerateMesh(mp=netgen_mp))
+        if meshing_parameters["HPRefinement"]["Active"]:
+            _logger.info("Applying HP Refinement")
+            self._mesh.RefineHP(2)
         self._mesh.Curve(order=self.order)
 
     def load_mesh(self, filename: str) -> None:

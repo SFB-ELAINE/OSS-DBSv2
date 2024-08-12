@@ -15,6 +15,7 @@ from ossdbs.dielectric_model import (
     dielectric_models,
 )
 from ossdbs.electrodes import ELECTRODE_MODELS, ELECTRODE_PARAMETERS, ELECTRODES
+from ossdbs.electrodes.electrode_model_template import ElectrodeModel
 from ossdbs.fem import (
     PRECONDITIONERS,
     SOLVERS,
@@ -93,6 +94,18 @@ def generate_electrodes(settings: dict):
                 position=position,
                 rotation=rotation,
             )
+
+        hp_settings = settings["Mesh"]["HPRefinement"]
+        for electrode_parameter in electrode_parameters:
+            if "Contacts" in electrode_parameter:
+                for contact_info in electrode_parameters["Contacts"]:
+                    if contact_info["Active"] and hp_settings["Active"]:
+                        contact_idx = contact_info["Contact_ID"]
+                        levels = hp_settings["Order"]
+                        _set_edge_hp_flag(electrode, {f"Contact_{contact_idx}": levels})
+                        _set_vertex_hp_flag(
+                            electrode, {f"Contact_{contact_idx}": levels}
+                        )
 
         if "EncapsulationLayer" in electrode_parameters:
             electrode.encapsulation_thickness = electrode_parameters[
@@ -209,11 +222,9 @@ def generate_mesh(settings):
         mesh.load_mesh(mesh_settings["LoadPath"])
         return mesh
 
-    if "MeshingHypothesis" in mesh_settings:
-        mesh_hypothesis = mesh_settings["MeshingHypothesis"]
-    else:
-        mesh_hypothesis = {"Type": "Default"}
-    mesh.generate_mesh(mesh_hypothesis)
+    if "MeshingHypothesis" not in mesh_settings:
+        mesh_settings["MeshingHypothesis"] = {"Type": "Default"}
+    mesh.generate_mesh(mesh_settings)
     if mesh_settings["SaveMesh"]:
         mesh.save(mesh_settings["SavePath"])
     return mesh
@@ -619,3 +630,17 @@ def run_PAM(settings):
             scaling=settings["Scaling"],
             scaling_index=settings["ScalingIndex"],
         )
+
+
+def _set_edge_hp_flag(electrode: ElectrodeModel, edge_sizes: dict) -> None:
+    """Set flag on edges."""
+    for edge in electrode.geometry.edges:
+        if edge.name in edge_sizes:
+            edge.hpref = edge_sizes[edge.name]
+
+
+def _set_vertex_hp_flag(electrode: ElectrodeModel, vertex_sizes) -> None:
+    """Set flag on vertices."""
+    for vertex in electrode.geometry.vertices:
+        if vertex.name in vertex_sizes:
+            vertex.hpref = vertex_sizes[vertex.name]
