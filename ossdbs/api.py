@@ -95,17 +95,15 @@ def generate_electrodes(settings: dict):
                 rotation=rotation,
             )
 
+        # Apply hp-refinement only on active contacts
         hp_settings = settings["Mesh"]["HPRefinement"]
-        for electrode_parameter in electrode_parameters:
-            if "Contacts" in electrode_parameter:
-                for contact_info in electrode_parameters["Contacts"]:
-                    if contact_info["Active"] and hp_settings["Active"]:
-                        contact_idx = contact_info["Contact_ID"]
-                        levels = hp_settings["Order"]
-                        _set_edge_hp_flag(electrode, {f"Contact_{contact_idx}": levels})
-                        _set_vertex_hp_flag(
-                            electrode, {f"Contact_{contact_idx}": levels}
-                        )
+        if hp_settings["Active"] and "Contacts" in electrode_parameters:
+            for contact_info in electrode_parameters["Contacts"]:
+                if contact_info["Active"]:
+                    contact_idx = contact_info["Contact_ID"]
+                    order = hp_settings["Order"]
+                    _set_edge_hp_flag(electrode, {f"Contact_{contact_idx}": order})
+                    _set_vertex_hp_flag(electrode, {f"Contact_{contact_idx}": order})
 
         if "EncapsulationLayer" in electrode_parameters:
             electrode.encapsulation_thickness = electrode_parameters[
