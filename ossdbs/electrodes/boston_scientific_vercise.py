@@ -9,6 +9,7 @@ from dataclasses import dataclass
 import netgen
 import netgen.occ as occ
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 from .electrode_model_template import ElectrodeModel
 from .utilities import get_highest_edge, get_lowest_edge
@@ -161,23 +162,26 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
             rotated_geo = netgen.occ.Fuse(contacts).Rotate(
                 occ.Axis(p=origin, d=rotation), angle
             )
-            return rotated_geo
             # adjust contact angle
             # tilted y-vector marker is in YZ-plane and orthogonal to _direction
             # note that this comes from Lead-DBS
-            """
             desired_direction = (0, self._direction[2], -self._direction[1])
             rotate_vector = Rotation.from_rotvec(np.radians(angle) * np.array(rotation))
             current_direction = rotate_vector.apply((0, 1, 0))
+            print(desired_direction)
             print(current_direction)
+            print(np.linalg.norm(desired_direction))
+            print(np.linalg.norm(current_direction))
             rotation_angle = np.degrees(
-                np.arccos(np.dot(current_direction, desired_direction))
+                np.arccos(np.dot(desired_direction, current_direction))
             )
             print(rotation_angle)
+            if np.isclose(rotation_angle, 0):
+                return rotated_geo
+            print("Return rotated geo")
             return rotated_geo.Rotate(
-                occ.Axis(p=(0, 0, 0), d=self._direction), rotation_angle
+                occ.Axis(p=(0, 0, 0), d=self._direction), -rotation_angle
             )
-            """
 
     # ruff: noqa: C901
     def _contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
