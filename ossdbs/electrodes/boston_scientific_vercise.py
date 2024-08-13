@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Boston Scientific (Marlborough, Massachusetts, USA) vercise
+import logging
 from dataclasses import dataclass
 
 import netgen
@@ -12,7 +13,9 @@ import numpy as np
 from scipy.spatial.transform import Rotation
 
 from .electrode_model_template import ElectrodeModel
-from .utilities import get_highest_edge, get_lowest_edge
+from .utilities import get_highest_edge, get_lowest_edge, get_signed_angle
+
+_logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -168,19 +171,22 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
             desired_direction = (0, self._direction[2], -self._direction[1])
             rotate_vector = Rotation.from_rotvec(np.radians(angle) * np.array(rotation))
             current_direction = rotate_vector.apply((0, 1, 0))
-            print(desired_direction)
-            print(current_direction)
-            print(np.linalg.norm(desired_direction))
-            print(np.linalg.norm(current_direction))
-            rotation_angle = np.degrees(
-                np.arccos(np.dot(desired_direction, current_direction))
+            # get angle between current and desired direction
+            # current direction is normal
+            rotation_angle = get_signed_angle(
+                current_direction, desired_direction, current_direction
             )
-            print(rotation_angle)
+            if rotation_angle is None:
+                _logger.warning(
+                    "Could not determine rotation angle for "
+                    "correct spin as per Lead-DBS convention."
+                )
+                # to return unrotated geo
+                rotation_angle = 0.0
             if np.isclose(rotation_angle, 0):
                 return rotated_geo
-            print("Return rotated geo")
             return rotated_geo.Rotate(
-                occ.Axis(p=(0, 0, 0), d=self._direction), -rotation_angle
+                occ.Axis(p=(0, 0, 0), d=self._direction), rotation_angle
             )
 
     # ruff: noqa: C901
