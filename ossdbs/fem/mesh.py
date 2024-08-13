@@ -36,7 +36,10 @@ class Mesh:
         """Generate NGSolve mesh."""
         netgen_mp = self._meshing_parameters(meshing_parameters["MeshingHypothesis"])
         self._mesh = ngsolve.Mesh(self.geometry.GenerateMesh(mp=netgen_mp))
-        if meshing_parameters["HPRefinement"]["Active"]:
+        if (
+            "HPRefinement" in meshing_parameters
+            and meshing_parameters["HPRefinement"]["Active"]
+        ):
             _logger.info("Applying HP Refinement")
             self._mesh.RefineHP(2)
         self._mesh.Curve(order=self.order)
