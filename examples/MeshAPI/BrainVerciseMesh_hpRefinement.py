@@ -10,40 +10,46 @@ from ngsolve import Draw
 import ossdbs
 
 settings = {
+    "BrainRegion": {
+        "Center": {"x[mm]": -9.48, "y[mm]": 11.61, "z[mm]": 4.68},
+        "Dimension": {"x[mm]": 40.0, "y[mm]": 40.0, "z[mm]": 40.0},
+        "Shape": "Ellipsoid",
+    },
     "Electrodes": [
         {
             "Name": "BostonScientificVercise",
             "Rotation[Degrees]": 0,
             "Direction": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 1},
-            "TipPosition": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 0},
-            "EncapsulationLayer": {
-                "Thickness[mm]": 0.0,  # indicates that no encapsulation is modelled
-            },
+            "TipPosition": {"x[mm]": -9.48, "y[mm]": 11.61, "z[mm]": 4.68},
+            "EncapsulationLayer": {"Thickness[mm]": 0.0},
             "Contacts": [
                 {
                     "Contact_ID": 1,
                     "Active": True,
+                    "Voltage[V]": 1.0,
                 },
-                {"Contact_ID": 2, "Active": True},
+                {
+                    "Contact_ID": 3,
+                    "Active": True,
+                    "Voltage[V]": 0.0,
+                },
             ],
         },
     ],
-    "MaterialDistribution": {"MRIPath": "../BrainGeometryAPI/segmask.nii.gz"},
-    "BrainRegion": {
-        "Center": {"x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5},
-        "Dimension": {"x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0},
-        "Shape": "Ellipsoid",
-    },
     "Mesh": {
         "LoadMesh": False,
         "SaveMesh": False,
+        "AdaptiveMeshRefinement": {"Active": False, "MaxIterations": 1},
         "HPRefinement": {"Active": True, "Order": 1},
     },
     "ExportElectrode": False,
 }
 
+hp_mesh = ossdbs.generate_mesh(settings)
+
+settings["Mesh"]["HPRefinement"]["Active"] = False
 mesh = ossdbs.generate_mesh(settings)
-print(mesh.boundaries)
-print(mesh.materials)
-print(mesh.ngsolvemesh.ne)
-Draw(mesh.ngsolvemesh)
+
+print("Number of elements before refinement:", mesh.ngsolvemesh.ne)
+print("Number of elements after refinement:", hp_mesh.ngsolvemesh.ne)
+Draw(hp_mesh.ngsolvemesh)

@@ -8,7 +8,7 @@ refinement is used.
 import logging
 
 import ngsolve
-from ngsolve import Draw, Redraw
+from ngsolve import Draw
 
 import ossdbs
 from ossdbs.api import (
@@ -104,8 +104,5 @@ with ngsolve.TaskManager():
     run_volume_conductor_model(settings, volume_conductor, frequency_domain_signal)
 
 print("Number of elements before refinement:", mesh.ngsolvemesh.ne)
-Draw(mesh.ngsolvemesh)
-input("Hit enter to see refinement")
 print("Number of elements after refinement:", volume_conductor.mesh.ngsolvemesh.ne)
-mesh = volume_conductor.mesh
-Redraw()
+Draw(volume_conductor.mesh.ngsolvemesh)
