@@ -11,7 +11,7 @@ import time
 
 import ngsolve
 
-from ossdbs import set_logger
+from ossdbs import log_to_file, set_logger
 from ossdbs.api import (
     create_bounding_box,
     generate_electrodes,
@@ -69,6 +69,10 @@ def main() -> None:
     # create output path
     if not os.path.isdir(settings["OutputPath"]):
         os.mkdir(settings["OutputPath"])
+    log_to_file(
+        output_file=os.path.join(settings["OutputPath"], "ossdbs.log"),
+        level=args.loglevel,
+    )
     # create fail flag
     open(
         os.path.join(

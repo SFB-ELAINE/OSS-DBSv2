@@ -29,6 +29,15 @@ _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
 
 
+def log_to_file(output_file: str, level=logging.INFO):
+    """Write logging output also to file."""
+    # overwrite the previous log
+    fh = logging.FileHandler(output_file, mode="w")
+    fh.setLevel(level)
+    fh.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
+    _logger.addHandler(fh)
+
+
 def set_logger(level=logging.INFO):
     """Set log level."""
     _logger.setLevel(level)
