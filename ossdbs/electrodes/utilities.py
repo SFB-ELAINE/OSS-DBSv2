@@ -48,12 +48,13 @@ def get_signed_angle(
     """
     len_v1 = np.linalg.norm(v1)
     len_v2 = np.linalg.norm(v2)
+    len_vn = np.linalg.norm(vn)
     # catch zero-length
     if np.isclose(len_v1, 0.0) or np.isclose(len_v2, 0.0):
         return None
 
     rotation_angle = np.degrees(np.arccos(np.dot(v1 / len_v1, v2 / len_v2)))
     cross = np.cross(v1, v2)
-    if np.dot(vn, cross) < 0:
+    if np.dot(vn / len_vn, cross) < 0:
         return -rotation_angle
     return rotation_angle

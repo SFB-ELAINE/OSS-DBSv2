@@ -38,7 +38,10 @@ settings = {
         {
             "Name": "BostonScientificVerciseDirected",
             "Rotation[Degrees]": 0,
-            "Direction": {"x[mm]": 0, "y[mm]": 1, "z[mm]": -1},
+            "Direction": {"x[mm]": -0.5775, "y[mm]": -0.5775, "z[mm]": -0.5775},
+            # could not be built?
+            # "Direction": {"x[mm]": 0.7075, "y[mm]": 0., "z[mm]": 0.7075},
+            # "Direction": {"x[mm]": 1, "y[mm]": 1, "z[mm]": 1},
             # "Direction": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 1},
             "TipPosition": {"x[mm]": 0, "y[mm]": 15, "z[mm]": -3},
             "EncapsulationLayer": {
