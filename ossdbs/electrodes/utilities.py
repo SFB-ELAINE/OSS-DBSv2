@@ -5,6 +5,7 @@ from typing import Union
 
 import netgen.occ as occ
 import numpy as np
+from scipy.spatial.transform import Rotation
 
 
 def get_lowest_edge(contact: occ.Face) -> occ.Edge:
@@ -28,33 +29,47 @@ def get_highest_edge(contact: occ.Face) -> occ.Edge:
 
 
 def get_signed_angle(
-    v1: np.ndarray, v2: np.ndarray, vn: np.ndarray
+    v_in: np.ndarray, v_out: np.ndarray, rotation_axis: np.ndarray
 ) -> Union[None, float]:
     """Get signed angle between two vectors.
 
     Parameters
     ----------
-    v1: np.ndarray
-        First vector
-    v2: np.ndarray
-        Second vector
-    vn: np.ndarray
-        Normal vector in common plane
-
-    Notes
-    -----
-    See more details on StackOverflow:
-    https://stackoverflow.com/questions/5188561/signed-angle-between-two-3d-vectors-with-same-origin-within-the-same-plane
+    v_in: np.ndarray
+        First vector which needs rotation
+    v_out: np.ndarray
+        Second vector, which should be matched
+    rotation_axis: np.ndarray
+        Axis around which the vectors will be rotated
     """
-    len_v1 = np.linalg.norm(v1)
-    len_v2 = np.linalg.norm(v2)
-    len_vn = np.linalg.norm(vn)
+    len_v_in = np.linalg.norm(v_in)
+    len_v_out = np.linalg.norm(v_out)
+    len_r_axis = np.linalg.norm(rotation_axis)
     # catch zero-length
-    if np.isclose(len_v1, 0.0) or np.isclose(len_v2, 0.0):
+    if np.isclose(len_v_in, 0.0) or np.isclose(len_v_out, 0.0):
         return None
+    if np.isclose(len_r_axis, 0.0):
+        raise ValueError("Rotation axis has length zero")
 
-    rotation_angle = np.degrees(np.arccos(np.dot(v1 / len_v1, v2 / len_v2)))
-    cross = np.cross(v1, v2)
-    if np.dot(vn / len_vn, cross) < 0:
-        return -rotation_angle
+    # determine rotation angle
+    rotation_angle = np.degrees(np.arccos(np.dot(v_in / len_v_in, v_out / len_v_out)))
+    # apply rotation to input vector
+    rotation = Rotation.from_rotvec(
+        np.radians(rotation_angle) * rotation_axis / len_r_axis
+    )
+    corrected_direction = rotation.apply(v_in / len_v_in)
+    # if the correction does not match, flip the sign
+    if not np.all(np.isclose(corrected_direction, v_out / len_v_out, atol=1e-5)):
+        rotation_angle = -rotation_angle
+        rotation = Rotation.from_rotvec(
+            np.radians(rotation_angle) * rotation_axis / len_r_axis
+        )
+        corrected_direction = rotation.apply(v_in / len_v_in)
+
+        if not np.all(np.isclose(corrected_direction, v_out / len_v_out, atol=1e-5)):
+            raise RuntimeError(
+                "Could not determine signed angle between vectors. "
+                "Possible reasons: numerical accuracy or wrong geometry "
+                "information."
+            )
     return rotation_angle

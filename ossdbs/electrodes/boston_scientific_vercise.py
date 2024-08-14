@@ -168,13 +168,13 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
             # adjust contact angle
             # tilted y-vector marker is in YZ-plane and orthogonal to _direction
             # note that this comes from Lead-DBS
-            desired_direction = (0, self._direction[2], -self._direction[1])
+            desired_direction = np.array([0, self._direction[2], -self._direction[1]])
             rotate_vector = Rotation.from_rotvec(np.radians(angle) * np.array(rotation))
             current_direction = rotate_vector.apply((0, 1, 0))
             # get angle between current and desired direction
             # current direction is normal
             rotation_angle = get_signed_angle(
-                current_direction, desired_direction, current_direction
+                current_direction, desired_direction, np.array(self._direction)
             )
             if rotation_angle is None:
                 _logger.warning(
