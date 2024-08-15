@@ -39,17 +39,26 @@ settings = {
     "Mesh": {
         "LoadMesh": False,
         "SaveMesh": False,
-        "AdaptiveMeshRefinement": {"Active": False, "MaxIterations": 1},
-        "HPRefinement": {"Active": True, "Order": 1},
+        "AdaptiveMeshRefinement": {
+            "Active": False,
+            "MaxIterations": 2,
+            "ErrorTolerance": 0.1,
+        },
+        "HPRefinement": {
+            "Active": True,
+            "Levels": 2,
+            "Factor": 0.125,
+            "Order": 1,
+        },
     },
     "ExportElectrode": False,
 }
 
 hp_mesh = ossdbs.generate_mesh(settings)
+Draw(hp_mesh.ngsolvemesh)
 
 settings["Mesh"]["HPRefinement"]["Active"] = False
 mesh = ossdbs.generate_mesh(settings)
 
 print("Number of elements before refinement:", mesh.ngsolvemesh.ne)
 print("Number of elements after refinement:", hp_mesh.ngsolvemesh.ne)
-Draw(hp_mesh.ngsolvemesh)

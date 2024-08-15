@@ -62,7 +62,12 @@ input_settings = {
             "MaxIterations": 2,
             "ErrorTolerance": 0.1,
         },
-        "HPRefinement": {"Active": False, "Order": 1},
+        "HPRefinement": {
+            "Active": True,
+            "Levels": 2,
+            "Factor": 0.125,
+            "Order": 1,
+        },
     },
     "StimulationSignal": {
         "Type": "Multisine",

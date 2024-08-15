@@ -41,7 +41,10 @@ class Mesh:
             and meshing_parameters["HPRefinement"]["Active"]
         ):
             _logger.info("Applying HP Refinement")
-            self._mesh.RefineHP(2)
+            self._mesh.RefineHP(
+                levels=meshing_parameters["HPRefinement"]["Levels"],
+                factor=meshing_parameters["HPRefinement"]["Factor"],
+            )
         self._mesh.Curve(order=self.order)
 
     def load_mesh(self, filename: str) -> None:

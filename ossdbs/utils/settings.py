@@ -64,7 +64,12 @@ class Settings:
                 "Type": "Default",
                 "MaxMeshSize": 1e6,
             },
-            "HPRefinement": {"Active": False, "Order": 1},
+            "HPRefinement": {
+                "Active": False,
+                "Levels": 2,
+                "Factor": 0.125,
+                "Order": 1,
+            },
             "AdaptiveMeshRefinement": {
                 "Active": False,
                 "MaxIterations": 10,
