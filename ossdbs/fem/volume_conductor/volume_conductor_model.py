@@ -260,11 +260,10 @@ class VolumeConductor(ABC):
                     # currently: refine until impedance doesn't change by more than 0.1%
                     error = 100
                     refinements = 0
+                    tolerance = adaptive_mesh_refinement["ErrorTolerance"]
+                    max_iterations = adaptive_mesh_refinement["MaxIterations"]
                     # TODO write a meaningful algo
-                    while (
-                        error > 0.1
-                        and refinements < adaptive_mesh_refinement["MaxIterations"]
-                    ):
+                    while error > tolerance and refinements < max_iterations:
                         self.adaptive_mesh_refinement()
                         # solve on refined mesh
                         self.compute_solution(frequency)

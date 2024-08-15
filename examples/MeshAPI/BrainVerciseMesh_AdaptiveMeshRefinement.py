@@ -57,7 +57,11 @@ input_settings = {
     ],
     "MaterialDistribution": {"MRIPath": "../../input_files/Butenko_segmask.nii.gz"},
     "Mesh": {
-        "AdaptiveMeshRefinement": {"Active": True, "MaxIterations": 2},
+        "AdaptiveMeshRefinement": {
+            "Active": True,
+            "MaxIterations": 2,
+            "ErrorTolerance": 0.1,
+        },
         "HPRefinement": {"Active": False, "Order": 1},
     },
     "StimulationSignal": {

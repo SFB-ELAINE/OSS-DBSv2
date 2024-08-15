@@ -15,7 +15,6 @@ from ossdbs.dielectric_model import (
     dielectric_models,
 )
 from ossdbs.electrodes import ELECTRODE_MODELS, ELECTRODE_PARAMETERS, ELECTRODES
-from ossdbs.electrodes.electrode_model_template import ElectrodeModel
 from ossdbs.fem import (
     PRECONDITIONERS,
     SOLVERS,
@@ -60,6 +59,10 @@ def create_bounding_box(box_parameters: dict) -> BoundingBox:
 def generate_electrodes(settings: dict):
     """Generate an OCC electrode model from the settings dict."""
     _logger.info("Generate electrode geometries")
+
+    hp_refinement = False
+    if "HPRefinement" in settings["Mesh"]:
+        hp_refinement = settings["Mesh"]["HPRefinement"]["Active"]
     electrodes = []
     for electrode_parameters in settings["Electrodes"]:
         name = electrode_parameters["Name"]
@@ -95,18 +98,11 @@ def generate_electrodes(settings: dict):
                 rotation=rotation,
             )
 
-        # Apply hp-refinement only on active contacts
-        if "HPRefinement" in settings["Mesh"]:
-            hp_settings = settings["Mesh"]["HPRefinement"]
-            if hp_settings["Active"] and "Contacts" in electrode_parameters:
-                for contact_info in electrode_parameters["Contacts"]:
-                    if contact_info["Active"]:
-                        contact_idx = contact_info["Contact_ID"]
-                        order = hp_settings["Order"]
-                        _set_edge_hp_flag(electrode, {f"Contact_{contact_idx}": order})
-                        _set_vertex_hp_flag(
-                            electrode, {f"Contact_{contact_idx}": order}
-                        )
+        if hp_refinement:
+            electrode.set_hp_flag(
+                electrode_parameters=electrode_parameters,
+                hp_parameters=settings["Mesh"]["HPRefinement"],
+            )
 
         if "EncapsulationLayer" in electrode_parameters:
             electrode.encapsulation_thickness = electrode_parameters[
@@ -631,17 +627,3 @@ def run_PAM(settings):
             scaling=settings["Scaling"],
             scaling_index=settings["ScalingIndex"],
         )
-
-
-def _set_edge_hp_flag(electrode: ElectrodeModel, edge_sizes: dict) -> None:
-    """Set flag on edges."""
-    for edge in electrode.geometry.edges:
-        if edge.name in edge_sizes:
-            edge.hpref = edge_sizes[edge.name]
-
-
-def _set_vertex_hp_flag(electrode: ElectrodeModel, vertex_sizes) -> None:
-    """Set flag on vertices."""
-    for vertex in electrode.geometry.vertices:
-        if vertex.name in vertex_sizes:
-            vertex.hpref = vertex_sizes[vertex.name]
