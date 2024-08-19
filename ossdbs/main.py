@@ -163,8 +163,10 @@ def main() -> None:
     # save Mesh for StimSets
     if settings["StimSets"]["Active"]:
         settings["Mesh"]["SaveMesh"] = True
-        settings["Mesh"]["SavePath"] = "tmp_mesh"
-        settings["Mesh"]["LoadPath"] = "tmp_mesh.vol.gz"
+        settings["Mesh"]["SavePath"] = os.path.join(settings["OutputPath"], "tmp_mesh")
+        settings["Mesh"]["LoadPath"] = os.path.join(
+            settings["OutputPath"], "tmp_mesh.vol.gz"
+        )
         settings["Mesh"]["LoadMesh"] = False
         # because of floating
         settings["Solver"]["PreconditionerKwargs"] = {"coarsetype": "local"}
