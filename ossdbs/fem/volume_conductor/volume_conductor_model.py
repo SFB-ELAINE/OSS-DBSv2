@@ -45,6 +45,8 @@ class VolumeConductor(ABC):
         Order of solver and mesh (curved elements)
     meshing_parameters: dict
         Dictionary with setting for meshing
+    output_path: str
+        Path to store solution
     """
 
     def __init__(
@@ -54,6 +56,7 @@ class VolumeConductor(ABC):
         solver: Solver,
         order: int,
         meshing_parameters: dict,
+        output_path: str = "Results",
     ) -> None:
         self._solver = solver
         self._order = order
@@ -76,6 +79,9 @@ class VolumeConductor(ABC):
         self._stimulation_variable = None
         self._floatings_potentials = None
 
+        # set output path
+        self.output_path = output_path
+
         # generate the mesh
         self._mesh = Mesh(self._model_geometry.geometry, self._order)
         if meshing_parameters["LoadMesh"]:
@@ -89,9 +95,6 @@ class VolumeConductor(ABC):
         # to save previous solution and do post-processing
         self._frequency = None
         self._sigma = None
-
-        # to write results
-        self._output_path = None
 
         # frequency at which VTK shall be exported
         self._export_frequency = None
