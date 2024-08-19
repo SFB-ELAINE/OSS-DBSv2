@@ -77,7 +77,7 @@ default_electrode_parameters = {
         total_length=400.0,
     ),
     "BostonScientificVercise": BostonScientificVerciseParameters(
-        tip_length=1.3,
+        tip_length=1.1,
         contact_length=1.5,
         contact_spacing=0.5,
         lead_diameter=1.3,
@@ -91,7 +91,7 @@ default_electrode_parameters = {
         total_length=450.0,
     ),
     "BostonScientificCartesiaX": BostonScientificCartesiaParameters(
-        tip_length=1.0,
+        tip_length=1.1,
         contact_length=1.5,
         contact_spacing=0.5,
         lead_diameter=1.3,
@@ -99,7 +99,7 @@ default_electrode_parameters = {
         contacts_skipped=5.0,
     ),
     "BostonScientificCartesiaHX": BostonScientificCartesiaParameters(
-        tip_length=1.0,
+        tip_length=1.1,
         contact_length=1.5,
         contact_spacing=0.5,
         lead_diameter=1.3,
