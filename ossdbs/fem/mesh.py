@@ -31,8 +31,11 @@ class Mesh:
 
     def generate_mesh(self, meshing_parameters: dict) -> None:
         """Generate NGSolve mesh."""
-        netgen_mp = self._meshing_parameters(meshing_parameters)
-        self._mesh = ngsolve.Mesh(self.geometry.GenerateMesh(mp=netgen_mp))
+        netgen_hypothesis = self.get_mesh_hypothesis(meshing_parameters)
+        netgen_mp = self.get_meshing_parameters(meshing_parameters)
+        self._mesh = ngsolve.Mesh(
+            self.geometry.GenerateMesh(netgen_hypothesis, **netgen_mp)
+        )
         self._mesh.Curve(order=self.order)
 
     def load_mesh(self, filename: str) -> None:
@@ -46,8 +49,8 @@ class Mesh:
         self._mesh.ngmesh.SetGeometry(self._geometry)
         self._mesh.Curve(order=self.order)
 
-    def _meshing_parameters(self, mesh_parameters: dict):
-        """Prepare NGSolve meshing parameters."""
+    def get_mesh_hypothesis(self, mesh_parameters: dict):
+        """Get meshing hypothesis from Netgen/NGSolve."""
         mesh_type = mesh_parameters["Type"]
 
         if mesh_type == "Custom":
@@ -70,6 +73,17 @@ class Mesh:
             "VeryFine": netgen.meshing.meshsize.very_fine,
             "Default": netgen.meshing.MeshingParameters(),
         }[mesh_type]
+
+    def get_meshing_parameters(self, mesh_parameters: dict):
+        """Prepare NGSolve meshing parameters deviating from default."""
+        meshing_hypothesis = {}
+        if "MaxMeshSize" in mesh_parameters:
+            meshing_hypothesis["maxh"] = mesh_parameters["MaxMeshSize"]
+        if "CurvatureSafety" in mesh_parameters:
+            meshing_hypothesis["curvaturesafety"] = mesh_parameters["CurvatureSafety"]
+        if "Grading" in mesh_parameters:
+            meshing_hypothesis["grading"] = mesh_parameters["Grading"]
+        return meshing_hypothesis
 
     @property
     def order(self) -> int:
