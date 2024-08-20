@@ -25,7 +25,7 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent"
 ]
-dependencies = ["h5py==3.8.0",
+dependencies = ["h5py==3.11.0",
                 "ngsolve==6.2.2404.post51",
                 "nibabel==5.2.1",
                 "pandas",
