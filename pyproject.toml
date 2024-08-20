@@ -28,8 +28,8 @@ classifiers = [
 dependencies = ["h5py==3.8.0",
                 "ngsolve==6.2.2404.post51",
                 "nibabel==5.2.1",
-                "pandas==1.5.3",
-                "scipy==1.10.1",
+                "pandas",
+                "scipy",
 		"matplotlib",
 		# always install NEURON under Linux
 		"neuron==8.2.4; platform_system=='Linux'", 
