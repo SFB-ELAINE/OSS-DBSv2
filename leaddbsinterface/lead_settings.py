@@ -77,7 +77,7 @@ class LeadSettings:
         ]
 
         # folders for the output
-        HEMIS_OUTPUT_PATHS = ["Results_rh", "Results_lh"]
+        HEMIS_OUTPUT_PATH = "Results"
         SIDES = ["rh", "lh"]
         side = SIDES[hemis_idx]
 
@@ -185,7 +185,7 @@ class LeadSettings:
             "StimulationSignal": {"CurrentControlled": current_controlled},
             "CalcAxonActivation": bool(self.get_calc_axon_act()),
             "ActivationThresholdVTA": float(self.get_act_thresh_vta()[hemis_idx]),
-            "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATHS[hemis_idx]),
+            "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATH),
             "FailFlag": side,
             "TemplateSpace": self.get_est_in_temp(),
             "Solver": {},
@@ -204,7 +204,7 @@ class LeadSettings:
         if self.get_calc_axon_act():
             partial_dict = self.add_stimsignal_params(partial_dict, hemis_idx)
             # add path to the pathway parameter file
-            partial_dict["PathwayFile"] = self.get_pathway_params_path()
+            partial_dict["PathwayFile"] = os.path.join(output_path, self.get_pathway_params_file())
 
         # do not use h1amg as coarsetype preconditioner
         # if floating potentials are involved
@@ -214,6 +214,9 @@ class LeadSettings:
                 floating = True
         if floating:
             partial_dict["Solver"]["PreconditionerKwargs"] = {"coarsetype": "local"}
+            # increase number of iterations for FFEM
+            if partial_dict["CalcAxonActivation"]:
+                partial_dict["Solver"]["MaximumSteps"] = 2000
 
         return partial_dict
 
@@ -426,8 +429,8 @@ class LeadSettings:
         """Connectome path."""
         return self._get_str("connectomePath")
 
-    def get_pathway_params_path(self):
-        """Path to the pathway parameters file."""
+    def get_pathway_params_file(self):
+        """File with the pathway parameters file."""
         return self._get_str("pathwayParameterFile")
 
     def get_connectome_tract_names(self):
