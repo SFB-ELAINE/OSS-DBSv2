@@ -34,11 +34,11 @@ dependencies = ["h5py==3.11.0",
 		# always install NEURON under Linux
 		"neuron==8.2.6; platform_system=='Linux'", 
 		# on Mac, Python > 3.9 is required, Windows has no automated installer
-		"neuron==8.2.4; python_version>'3.8' and platform_system=='Darwin'", 
+		"neuron==8.2.6; python_version>'3.8' and platform_system=='Darwin'", 
 		# if Neuron cannot be installed from Pypi
 		# pin the numpy version to < 2
 		"numpy<2; platform_system=='Windows'",
-		"dipy==1.9.0",
+		"dipy>=1.8.0",
 		"importlib_resources; python_version=='3.8'"
                 ]
 
