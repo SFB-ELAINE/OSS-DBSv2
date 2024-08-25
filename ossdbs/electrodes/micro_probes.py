@@ -377,7 +377,8 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         # TODO check if this is a good idea to find this edge
         # TODO maybe define new object instead of passing added shapes
         max_CoreE = get_highest_edge(part_1 + part_0)
-        max_CoreE.name = "fillet"
+        # TODO why is naming the edge important?
+        # max_CoreE.name = "fillet"
 
         # Constructing core tubing
         distance_2 = self._parameters.core_electrode_length
@@ -390,8 +391,8 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         # and max Z value for edge between outer tubing and outer electrode
         min_CoreTubeE = get_lowest_edge(part_2)
         max_CoreTubeE = get_highest_edge(part_2)
-        min_CoreTubeE.name = "fillet_edge"
-        max_CoreTubeE.name = "fillet_edge"
+        # min_CoreTubeE.name = "fillet_edge"
+        # max_CoreTubeE.name = "fillet_edge"
 
         # Constructing Outer Electrode
         distance_3 = distance_2 + self._parameters.core_tubing_length
@@ -403,8 +404,8 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         min_OuterE = get_lowest_edge(part_3)
         max_OuterE = get_highest_edge(part_3)
 
-        min_OuterE.name = "fillet_edge"
-        max_OuterE.name = "fillet_edge"
+        # min_OuterE.name = "fillet_edge"
+        # max_OuterE.name = "fillet_edge"
 
         # Constructing Outer tubing
         distance_4 = distance_3 + self._parameters.outer_electrode_length
@@ -415,7 +416,7 @@ class MicroProbesSNEX100Model(ElectrodeModel):
 
         # Find min Z value for for edge between outer tubing rim
         min_OuterTubeE = get_lowest_edge(part_4)
-        min_OuterTubeE.name = "fillet_edge"
+        # min_OuterTubeE.name = "fillet_edge"
 
         encapsulation = part_0 + part_1 + part_2 + part_3 + part_4
         # Run MakeFillet on edges - command is very sensitive to input parameters
