@@ -373,32 +373,22 @@ def prepare_volume_conductor_model(
 
     mesh_parameters = settings["Mesh"]
     floating_mode = model_geometry.get_floating_mode()
+    output_path = settings["OutputPath"]
+    _logger.info(f"Output path set to: {output_path}")
     if floating_mode == "Floating":
         _logger.debug("Floating mode selected")
         return VolumeConductorFloating(
-            model_geometry,
-            conductivity,
-            solver,
-            order,
-            mesh_parameters,
+            model_geometry, conductivity, solver, order, mesh_parameters, output_path
         )
 
     elif floating_mode == "FloatingImpedance":
         _logger.debug("FloatingImpedance mode selected")
         return VolumeConductorFloatingImpedance(
-            model_geometry,
-            conductivity,
-            solver,
-            order,
-            mesh_parameters,
+            model_geometry, conductivity, solver, order, mesh_parameters, output_path
         )
     _logger.debug("Non floating mode selected")
     return VolumeConductorNonFloating(
-        model_geometry,
-        conductivity,
-        solver,
-        order,
-        mesh_parameters,
+        model_geometry, conductivity, solver, order, mesh_parameters, output_path
     )
 
 
@@ -460,8 +450,6 @@ def run_volume_conductor_model(settings, volume_conductor, frequency_domain_sign
     If the mode is multisine, a provided list of frequencies is used.
     """
     _logger.info("Run volume conductor model")
-    volume_conductor.output_path = settings["OutputPath"]
-    _logger.info(f"Output path set to: {volume_conductor.output_path}")
 
     out_of_core = settings["OutOfCore"]
     compute_impedance = False
