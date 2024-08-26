@@ -30,12 +30,14 @@
         {
           "Contact_ID": 1,
           "Active": true,
-          "Current[A]": 0.001
+          "Current[A]": 0.001,
+	  "Voltage[V]": 1.0
         },
         {
           "Contact_ID": 2,
           "Active": true,
-          "Current[A]": -0.001
+          "Current[A]": -0.001,
+	  "Voltage[V]": 0.0
         }
       ],
       "EncapsulationLayer": {
@@ -117,7 +119,7 @@
   },
   "EQSMode": false,
   "FEMOrder": 2,
-  "OutputPath": "./Results_current_controlled",
+  "OutputPath": "Results_current_controlled",
   "ComputeImpedance": true,
   "ExportVTK": true,
   "ExportElectrode": true
