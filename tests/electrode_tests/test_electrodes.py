@@ -47,10 +47,10 @@ class TestElectrode:
 
         desired = {"RenamedBody", "RenamedContact_1"}
 
-        if electrode_name == "MicroElectrode":
-            desired.add("fillet")
-        else:
-            desired.update({f"Contact_{i+2}" for i in range(n_contacts - 1)})
+        # if electrode_name == "MicroElectrode":
+        #     desired.add("fillet")
+        # else:
+        desired.update({f"Contact_{i+2}" for i in range(n_contacts - 1)})
 
         assert desired == set(faces)
 
@@ -63,8 +63,8 @@ class TestElectrode:
         desired = {"Body"}
         desired.update({f"Contact_{i+1}" for i in range(n_contacts)})
 
-        if electrode_name == "MicroElectrode":
-            desired.add("fillet")
+        # if electrode_name == "MicroElectrode":
+        #     desired.add("fillet")
 
         assert desired == set(faces)
 

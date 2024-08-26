@@ -130,7 +130,7 @@
   },
   "EQSMode": false,
   "FEMOrder": 2,
-  "OutputPath": "./Results_multi_cc",
+  "OutputPath": "Results_multi_cc",
   "ComputeImpedance": false,
   "ExportVTK": true,
   "ExportElectrode": true

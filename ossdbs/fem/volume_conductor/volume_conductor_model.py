@@ -46,6 +46,8 @@ class VolumeConductor(ABC):
         Order of solver and mesh (curved elements)
     meshing_parameters: dict
         Dictionary with setting for meshing
+    output_path: str
+        Path to store solution
     """
 
     def __init__(
@@ -55,6 +57,7 @@ class VolumeConductor(ABC):
         solver: Solver,
         order: int,
         meshing_parameters: dict,
+        output_path: str = "Results",
     ) -> None:
         self._solver = solver
         self._order = order
@@ -77,6 +80,9 @@ class VolumeConductor(ABC):
         self._stimulation_variable = None
         self._floatings_potentials = None
 
+        # set output path
+        self.output_path = output_path
+
         # generate the mesh
         self._mesh = Mesh(self._model_geometry.geometry, self._order)
         if meshing_parameters["LoadMesh"]:
@@ -90,9 +96,6 @@ class VolumeConductor(ABC):
         # to save previous solution and do post-processing
         self._frequency = None
         self._sigma = None
-
-        # to write results
-        self._output_path = None
 
         # frequency at which VTK shall be exported
         self._export_frequency = None
@@ -175,8 +178,8 @@ class VolumeConductor(ABC):
         # always compute impedance for CC with 2 contacts
         if self.current_controlled and len(self.contacts.active) == 2:
             _logger.info(
-                """Set compute_impedance to True.
-                   Impedance calculation is required for 2 contacts."""
+                "Set compute_impedance to True."
+                "Impedance calculation is required for 2 contacts."
             )
             compute_impedance = True
 
@@ -259,16 +262,22 @@ class VolumeConductor(ABC):
                         "Number of elements before refinement:"
                         f"{self.mesh.ngsolvemesh.ne}"
                     )
+                    # TODO write a meaningful algo
+                    # currently: refine until impedance doesn't change by more than 0.1%
                     error = 100
                     refinements = 0
-                    # TODO write a meaningful algo
                     while error > 0.1 and refinements < 10:
                         self.adaptive_mesh_refinement()
                         # solve on refined mesh
                         self.compute_solution(frequency)
                         new_impedance = self.compute_impedance()
+                        # error in percent
                         error = 100 * abs(impedance - new_impedance) / abs(impedance)
+                        # update variables for loop
                         refinements += 1
+                        impedance = new_impedance
+                    # overwrite impedance values
+                    self._impedances[band_indices] = impedance
 
                     _logger.info(
                         "Number of elements after refinement:"
@@ -455,8 +464,8 @@ class VolumeConductor(ABC):
                 all_active_contacts_grounded = np.all(np.isclose(voltages_active, 0.0))
                 if not all_active_contacts_grounded:
                     raise ValueError(
-                        """In multipolar current-controlled mode,
-                           all active contacts have to be grounded!"""
+                        "In multipolar current-controlled mode, "
+                        "only one active contact has to be grounded!"
                     )
                 sum_currents += contact.current
             if not np.isclose(sum_currents, 0):
@@ -792,25 +801,30 @@ class VolumeConductor(ABC):
         """Check contacts and assign voltages if needed."""
         if len(self.contacts.active) == 2:
             _logger.info("Overwrite voltage for current-controlled mode")
+            ground_assigned = False
             for contact_idx, contact in enumerate(self.contacts.active):
-                if self.contacts[contact.name].current < 0:
-                    # negative contact is ground
-                    contact_voltage = 0
+                if np.isclose(self.contacts[contact.name].voltage, 0):
+                    if ground_assigned:
+                        raise ValueError(
+                            "All active contacts have been grounded (voltage = 0V)."
+                            "Choose only one ground."
+                        )
+                    ground_assigned = True
                 else:
                     contact_voltage = float(contact_idx) + 1
-                self.contacts[contact.name].voltage = contact_voltage
+                    self.contacts[contact.name].voltage = contact_voltage
         else:
             if len(self.contacts.active) != 1:
                 raise ValueError(
-                    """In multicontact current-controlled mode,
-                       currently only one active contact with fixed voltage can be used.
-                       Its voltage has to be 0V (ground)."""
+                    "In multicontact current-controlled mode,"
+                    "currently only one active contact with fixed voltage can be used."
+                    "Its voltage has to be 0V (ground)."
                 )
             for contact in self.contacts.active:
                 if not np.isclose(contact.voltage, 0):
                     raise ValueError(
-                        """In multicontact current-controlled mode,
-                           only ground voltage (0V) can be set on active contacts!"""
+                        "In multicontact current-controlled mode,"
+                        "only ground voltage (0V) can be set on active contacts!"
                     )
 
     def setup_timings_dict(

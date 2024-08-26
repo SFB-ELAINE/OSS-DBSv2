@@ -5,6 +5,7 @@
 import json
 import logging
 import os
+from typing import Optional
 
 import numpy as np
 
@@ -132,12 +133,14 @@ def prepare_dielectric_properties(settings: dict) -> dict:
     return dielectric_properties
 
 
-def generate_brain_model(settings):
+def generate_brain_model(settings, rotate_initial_geo: bool = False):
     """Generate OCC brain model."""
     brain_region_parameters = settings["BrainRegion"]
     brain_shape = brain_region_parameters["Shape"]
     brain_region = create_bounding_box(brain_region_parameters)
-    brain_model = BrainGeometry(brain_shape, brain_region)
+    brain_model = BrainGeometry(
+        brain_shape, brain_region, rotate_initial_geo=rotate_initial_geo
+    )
     return brain_model
 
 
@@ -145,8 +148,49 @@ def generate_model_geometry(settings):
     """Generate a full geometry comprising brain and electrodes."""
     brain = generate_brain_model(settings)
     electrodes = generate_electrodes(settings)
-    model_geometry = ModelGeometry(brain, electrodes)
+    try:
+        model_geometry = ModelGeometry(brain, electrodes)
+    except RuntimeError:
+        _logger.warning(
+            "Could not build geometry, trying again after "
+            "rotation of initial geometry"
+        )
+        brain = generate_brain_model(settings, rotate_initial_geo=True)
+        model_geometry = ModelGeometry(brain, electrodes)
     return model_geometry
+
+
+def build_brain_model(
+    settings,
+    mri_image: Optional[MagneticResonanceImage] = None,
+    rotate_initial_geo: bool = False,
+) -> BrainGeometry:
+    """Build geometry model of brain."""
+    # MRI image is default choice for brain construction
+    if "BrainRegion" in settings:
+        _logger.debug("Generating model geometry for fixed brain region")
+        region_parameters = settings["BrainRegion"]
+        brain_region = create_bounding_box(region_parameters)
+        shape = settings["BrainRegion"]["Shape"]
+        return BrainGeometry(shape, brain_region, rotate_initial_geo=rotate_initial_geo)
+    else:
+        _logger.debug("Generating model geometry from MRI image")
+        if mri_image is None:
+            raise ValueError("Need to provide MRI image to build geo.")
+        # attention: bounding box is given in voxel space!
+        brain_region = mri_image.bounding_box
+        shape = "Ellipsoid"
+        # transformation to real space in geometry creation
+        _logger.debug(
+            "Generate OCC model, passing transformation matrix from MRI image"
+        )
+        return BrainGeometry(
+            shape,
+            brain_region,
+            trafo_matrix=mri_image.trafo_matrix,
+            translation=mri_image.translation,
+            rotate_intial_geo=rotate_initial_geo,
+        )
 
 
 def set_contact_and_encapsulation_layer_properties(settings, model_geometry):
@@ -329,32 +373,22 @@ def prepare_volume_conductor_model(
 
     mesh_parameters = settings["Mesh"]
     floating_mode = model_geometry.get_floating_mode()
+    output_path = settings["OutputPath"]
+    _logger.info(f"Output path set to: {output_path}")
     if floating_mode == "Floating":
         _logger.debug("Floating mode selected")
         return VolumeConductorFloating(
-            model_geometry,
-            conductivity,
-            solver,
-            order,
-            mesh_parameters,
+            model_geometry, conductivity, solver, order, mesh_parameters, output_path
         )
 
     elif floating_mode == "FloatingImpedance":
         _logger.debug("FloatingImpedance mode selected")
         return VolumeConductorFloatingImpedance(
-            model_geometry,
-            conductivity,
-            solver,
-            order,
-            mesh_parameters,
+            model_geometry, conductivity, solver, order, mesh_parameters, output_path
         )
     _logger.debug("Non floating mode selected")
     return VolumeConductorNonFloating(
-        model_geometry,
-        conductivity,
-        solver,
-        order,
-        mesh_parameters,
+        model_geometry, conductivity, solver, order, mesh_parameters, output_path
     )
 
 
@@ -416,8 +450,6 @@ def run_volume_conductor_model(settings, volume_conductor, frequency_domain_sign
     TODO document further.
     """
     _logger.info("Run volume conductor model")
-    volume_conductor.output_path = settings["OutputPath"]
-    _logger.info(f"Output path set to: {volume_conductor.output_path}")
 
     out_of_core = settings["OutOfCore"]
     compute_impedance = False

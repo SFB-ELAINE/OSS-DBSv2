@@ -182,9 +182,10 @@ class MedtronicSenSightModel(ElectrodeModel):
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         vectors = []
+        direction = (0, 0, 1)
         distance = self._parameters.tip_length
         for _ in range(0, 4):
-            vectors.append(tuple(np.array(self._direction) * distance))
+            vectors.append(tuple(np.array(direction) * distance))
             distance += (
                 self._parameters.contact_length + self._parameters.contact_spacing
             )
@@ -192,8 +193,8 @@ class MedtronicSenSightModel(ElectrodeModel):
         point = (0, 0, 0)
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
-        contact = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
-        axis = occ.Axis(p=point, d=self._direction)
+        contact = occ.Cylinder(p=point, d=direction, r=radius, h=height)
+        axis = occ.Axis(p=point, d=direction)
 
         contact_directed = self._contact_directed()
         contacts = [
@@ -222,54 +223,51 @@ class MedtronicSenSightModel(ElectrodeModel):
                 for edge in contact.edges:
                     if edge.name == "Rename":
                         edge.name = name
-        return netgen.occ.Fuse(contacts)
+
+        if np.allclose(self._direction, direction):
+            return netgen.occ.Fuse(contacts)
+        else:
+            rotation = tuple(
+                np.cross(direction, self._direction)
+                / np.linalg.norm(np.cross(direction, self._direction))
+            )
+            angle = np.degrees(np.arccos(self._direction[2]))
+            return netgen.occ.Fuse(contacts).Rotate(
+                occ.Axis(p=point, d=rotation), angle
+            )
 
     def _contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         point = (0, 0, 0)
+        direction = (0, 0, 1)
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
-        body = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
+        body = occ.Cylinder(p=point, d=direction, r=radius, h=height)
         # tilted y-vector marker is in YZ-plane and orthogonal to _direction
-        new_direction = (0, self._direction[2], -self._direction[1])
+        new_direction = (0, direction[2], -direction[1])
         eraser = occ.HalfSpace(p=point, n=new_direction)
         delta = 15
         angle = 30 + delta
-        axis = occ.Axis(p=point, d=self._direction)
+        axis = occ.Axis(p=point, d=direction)
 
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
         # Centering contact to label edges
         contact = contact.Rotate(axis, angle)
-        # TODO refactor / wrap in function
-        # Find  max z, min z, max x, and max y values and label min x and min y edge
-        max_z_val = max_y_val = max_x_val = float("-inf")
-        min_z_val = float("inf")
+
+        # Label all outer edges
         for edge in contact.edges:
-            if edge.center.z > max_z_val:
-                max_z_val = edge.center.z
-            if edge.center.z < min_z_val:
-                min_z_val = edge.center.z
-            if edge.center.x > max_x_val:
-                max_x_val = edge.center.x
-                max_x_edge = edge
-            if edge.center.y > max_y_val:
-                max_y_val = edge.center.y
-                max_y_edge = edge
-        # keep track of edges for renaming later
-        max_x_edge.name = "Rename"
-        max_y_edge.name = "Rename"
-        # Label only the outer edges of the contact with min z and max z values
-        for edge in contact.edges:
-            cond_z_max = np.isclose(edge.center.z, max_z_val)
-            cond_z_min = np.isclose(edge.center.z, min_z_val)
-            cond_x = np.isclose(edge.center.x, radius / 2)
-            cond_y = np.isclose(edge.center.y, radius / 2)
-            if cond_z_max and not (cond_x or cond_y):
+            edge_center = np.array([edge.center.x, edge.center.y, edge.center.z])
+
+            # Skip center edge
+            if np.allclose(np.cross(edge_center, direction), 0):
+                continue
+
+            new_center = np.dot(edge_center, direction) * np.array(direction)
+
+            # Mark only outer edges
+            if not np.isclose(np.linalg.norm(edge_center - new_center), radius / 2):
                 edge.name = "Rename"
-            elif cond_z_min and not (cond_x or cond_y):
-                edge.name = "Rename"
+
         # Reseting position so that 0 deg lies in the middle of contact
         contact = contact.Rotate(axis, -angle)
-        # TODO check that the starting axis of the contacts
-        # are correct according to the documentation
 
         return contact

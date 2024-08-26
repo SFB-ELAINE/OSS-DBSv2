@@ -29,6 +29,9 @@ impedance.csv
 *.nii
 success_*.txt
 fail_*.txt
-
 examples/Approximations/*.pdf
 examples/StimulationSignalAPI/*.pdf
+test_input_cases_results.csv
+*.stp
+ngmesh.ini
+x86_64/

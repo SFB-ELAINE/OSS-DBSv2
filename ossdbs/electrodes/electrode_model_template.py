@@ -58,6 +58,7 @@ class ElectrodeModel(ABC):
         self.parameter_check()
 
         self._geometry = self._construct_geometry()
+        self.check_initial_geometry()
         self._encapsulation_geometry = None
         self._encapsulation_thickness = 0.0
         self._index = 0
@@ -225,3 +226,30 @@ class ElectrodeModel(ABC):
             filename=f"{output_path}/electrode_{n_electrode}",
             subdivision=0,
         ).Do(vb=BND)
+
+    def check_initial_geometry(self):
+        """Check proper naming of electrode parts."""
+        expected_names = [f"Contact_{i}" for i in range(1, self.n_contacts + 1)]
+        # check faces
+        face_names = []
+        for face in self.geometry.faces:
+            if face.name is None:
+                continue
+            if face.name not in face_names:
+                face_names.append(face.name)
+        # check edges
+        edge_names = []
+        for edge in self.geometry.edges:
+            if edge.name is None:
+                continue
+            if edge.name not in edge_names:
+                edge_names.append(edge.name)
+        if not set(expected_names) == set(edge_names):
+            print(expected_names)
+            print(edge_names)
+            raise RuntimeError("Edges have not been named correctly")
+        expected_names.append("Body")
+        if not set(expected_names) == set(face_names):
+            print(expected_names)
+            print(face_names)
+            raise RuntimeError("Faces have not been named correctly")
