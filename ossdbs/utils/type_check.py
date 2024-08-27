@@ -77,7 +77,7 @@ class TypeChecker:
             "CutoffFrequency": float,
         },
         "PointModel": {
-            "Pathway": {"Active": bool, "FileName": str},
+            "Pathway": {"Active": bool, "FileName": str, "ExportField": bool},
             "Lattice": {
                 "Center": {
                     "x[mm]": (int, float),
@@ -92,6 +92,13 @@ class TypeChecker:
                 "CollapseVTA": bool,
                 "PointDistance[mm]": (int, float),
                 "Shape": {"x": int, "y": int, "z": int},
+                "ExportField": bool,
+            },
+            "VoxelLattice": {
+                "Active": bool,
+                "Shape": {"x": int, "y": int, "z": int},
+                "TimeDomain": bool,
+                "ExportField": bool,
             },
         },
     }

@@ -287,7 +287,8 @@ def generate_point_models(settings: dict):
     if settings["PointModel"]["Pathway"]["Active"]:
         file_name = settings["PointModel"]["Pathway"]["FileName"]
         _logger.info(f"Import neuron geometries stored in {file_name}")
-        point_models.append(Pathway(file_name))
+        export_field = settings["PointModel"]["Pathway"]["ExportField"]
+        point_models.append(Pathway(file_name, export_field=export_field))
     if settings["PointModel"]["Lattice"]["Active"]:
         shape_par = settings["PointModel"]["Lattice"]["Shape"]
         shape = shape_par["x"], shape_par["y"], shape_par["z"]
@@ -297,6 +298,7 @@ def generate_point_models(settings: dict):
         direction = dir_par["x[mm]"], dir_par["y[mm]"], dir_par["z[mm]"]
         distance = settings["PointModel"]["Lattice"]["PointDistance[mm]"]
         collapse_vta = settings["PointModel"]["Lattice"]["CollapseVTA"]
+        export_field = settings["PointModel"]["Lattice"]["ExportField"]
 
         point_models.append(
             Lattice(
@@ -305,6 +307,7 @@ def generate_point_models(settings: dict):
                 distance=distance,
                 direction=direction,
                 collapse_vta=collapse_vta,
+                export_field=export_field,
             )
         )
 
@@ -317,7 +320,10 @@ def generate_point_models(settings: dict):
         header = mri_image.header
         shape_par = settings["PointModel"]["VoxelLattice"]["Shape"]
         shape = np.array([shape_par["x"], shape_par["y"], shape_par["z"]])
-        point_models.append(VoxelLattice(center, affine, shape, header))
+        export_field = settings["PointModel"]["VoxelLattice"]["ExportField"]
+        point_models.append(
+            VoxelLattice(center, affine, shape, header, export_field=export_field)
+        )
     return point_models
 
 

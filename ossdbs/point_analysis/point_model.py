@@ -29,6 +29,11 @@ class PointModel(ABC):
         return self._name
 
     @property
+    def export_field(self) -> str:
+        """Export electric field in time domain."""
+        return self._export_field
+
+    @property
     def collapse_VTA(self) -> bool:
         """Remove electrode from VTA."""
         return self._collapse_VTA

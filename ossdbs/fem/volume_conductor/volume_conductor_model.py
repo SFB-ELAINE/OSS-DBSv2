@@ -355,7 +355,7 @@ class VolumeConductor(ABC):
                     Ey_in_time,
                     Ez_in_time,
                 ) = point_model.compute_solutions_in_time_domain(
-                    self.signal.signal_length
+                    self.signal.signal_length, convert_field=point_model.export_field
                 )
                 point_model.create_time_result(
                     timesteps, potential_in_time, Ex_in_time, Ey_in_time, Ez_in_time
@@ -391,12 +391,12 @@ class VolumeConductor(ABC):
         free_stimulation_variable_at_contact = {}
         free_stimulation_variable_at_contact["time"] = timesteps
         for contact_idx, contact in enumerate(self.contacts.active):
-            free_stimulation_variable_at_contact[
-                contact.name + "_free"
-            ] = free_stimulation_variable_in_time[:, contact_idx]
-            free_stimulation_variable_at_contact[
-                contact.name
-            ] = stimulation_variable_in_time[:, contact_idx]
+            free_stimulation_variable_at_contact[contact.name + "_free"] = (
+                free_stimulation_variable_in_time[:, contact_idx]
+            )
+            free_stimulation_variable_at_contact[contact.name] = (
+                stimulation_variable_in_time[:, contact_idx]
+            )
 
         df = pd.DataFrame(free_stimulation_variable_at_contact)
         df.to_csv(
