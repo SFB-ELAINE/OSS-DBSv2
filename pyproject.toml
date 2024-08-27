@@ -47,7 +47,6 @@ dependencies = ["h5py==3.11.0",
 test = ["pytest", "pytest-cov"]
 
 dev = [
-    "black",
     "ruff",
     "pre-commit",
 ]
