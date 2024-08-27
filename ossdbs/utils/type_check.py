@@ -30,6 +30,7 @@ class TypeChecker:
             "Material": str,
             "MaxMeshSize": (int, float),
         },
+        "InterfaceImpedance": {"Model": (type(None), str), "Parameters": dict},
         "EQSMode": bool,
         "FEMOrder": int,
         "MaterialDistribution": {
@@ -119,7 +120,7 @@ class TypeChecker:
         "Current[A]": (int, float),
         "Voltage[V]": (int, float),
         "Floating": bool,
-        "SurfaceImpedance[Ohmm]": {"real": (int, float), "imag": (int, float)},
+        "SurfaceImpedance": {"Model": (type(None), str), "Parameters": dict},
     }
 
     @classmethod

@@ -34,7 +34,7 @@ class Settings:
         "Current[A]": 0.0,
         "Voltage[V]": 0.0,
         "Floating": False,
-        "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
+        "SurfaceImpedance": {"Model": None, "Parameters": {}},
         "MaxMeshSize": 1e6,
         "MaxMeshSizeEdge": 1e6,
     }
@@ -115,6 +115,7 @@ class Settings:
         "FailFlag": "oss",
         "OutOfCore": False,
         "PathwayFile": None,
+        "InterfaceImpedance": {"Model": None, "Parameters": {}},
         "StimSets": {
             "Active": False,
             "StimSetsFile": None,
