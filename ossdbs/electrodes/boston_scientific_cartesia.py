@@ -220,8 +220,6 @@ class BostonScientificCartesiaXModel(ElectrodeModel):
 
         # TODO check that the starting axis of the contacts
         # are correct according to the documentation
-        # contact = contact.Rotate(axis, -angle)
-
         return contact
 
 

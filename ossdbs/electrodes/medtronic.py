@@ -249,15 +249,12 @@ class MedtronicSenSightModel(ElectrodeModel):
         height = self._parameters.contact_length
         body = occ.Cylinder(p=point, d=direction, r=radius, h=height)
         # tilted y-vector marker is in YZ-plane and orthogonal to _direction
-        new_direction = (0, direction[2], -direction[1])
+        new_direction = (0, 1, 0)
         eraser = occ.HalfSpace(p=point, n=new_direction)
-        delta = 15
-        angle = 30 + delta
+        angle = 45
         axis = occ.Axis(p=point, d=direction)
 
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
-        # Centering contact to label edges
-        contact = contact.Rotate(axis, angle)
 
         # Label all outer edges
         for edge in contact.edges:
@@ -272,8 +269,5 @@ class MedtronicSenSightModel(ElectrodeModel):
             # Mark only outer edges
             if not np.isclose(np.linalg.norm(edge_center - new_center), radius / 2):
                 edge.name = "Rename"
-
-        # Reseting position so that 0 deg lies in the middle of contact
-        contact = contact.Rotate(axis, -angle)
 
         return contact

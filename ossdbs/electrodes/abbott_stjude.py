@@ -76,9 +76,9 @@ class AbbottStJudeActiveTipModel(ElectrodeModel):
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self._parameters.lead_diameter * 0.5
-        point = tuple(np.array(self._direction) * radius)
+        center = tuple(np.array(self._direction) * radius)
         height = self._parameters.total_length - self._parameters.tip_length
-        body = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
+        body = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         body.bc(self._boundaries["Body"])
         return body
 
@@ -168,6 +168,17 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
     def _construct_encapsulation_geometry(
         self, thickness: float
     ) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        """Generate geometry of encapsulation layer around electrode.
+
+        Parameters
+        ----------
+        thickness : float
+            Thickness of encapsulation layer.
+
+        Returns
+        -------
+        geometry : netgen.libngpy._NgOCC.TopoDS_Shape
+        """
         center = tuple(np.array(self._direction) * self._parameters.lead_diameter * 0.5)
         radius = self._parameters.lead_diameter * 0.5 + thickness
         height = self._parameters.total_length - self._parameters.tip_length
@@ -265,15 +276,12 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
         height = self._parameters.contact_length
         body = occ.Cylinder(p=point, d=direction, r=radius, h=height)
         # tilted y-vector marker is in YZ-plane and orthogonal to _direction
-        new_direction = (0, direction[2], -direction[1])
+        new_direction = (0, 1, 0)
         eraser = occ.HalfSpace(p=point, n=new_direction)
-        delta = 15
-        angle = 30 + delta
+        angle = 45
         axis = occ.Axis(p=point, d=direction)
 
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
-        # Centering contact to label edges
-        contact = contact.Rotate(axis, angle)
 
         # Label all outer edges
         for edge in contact.edges:
@@ -288,7 +296,5 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
             # Mark only outer edges
             if not np.isclose(np.linalg.norm(edge_center - new_center), radius / 2):
                 edge.name = "Rename"
-
-        contact = contact.Rotate(axis, -angle)
 
         return contact

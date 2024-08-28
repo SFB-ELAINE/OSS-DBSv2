@@ -107,6 +107,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         contact_tip = occ.Sphere(c=center, r=radius) * half_space
         h_pt2 = self._parameters.tip_length - radius
         contact_pt2 = occ.Cylinder(p=center, d=direction, r=radius, h=h_pt2)
+        # defining first contact
         contact_1 = contact_tip + contact_pt2
 
         vectors = []
