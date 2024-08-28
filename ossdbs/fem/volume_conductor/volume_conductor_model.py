@@ -455,8 +455,8 @@ class VolumeConductor(ABC):
                 sum_currents += contact.current
                 voltages_active[idx] = contact.voltage
             for contact in self.contacts.floating:
-                all_active_contacts_grounded = np.all(np.isclose(voltages_active, 0.0))
-                if not all_active_contacts_grounded:
+                active_contacts_grounded = np.isclose(voltages_active, 0.0)
+                if len(np.where(active_contacts_grounded)[0]) != 1:
                     raise ValueError(
                         "In multipolar current-controlled mode, "
                         "only one active contact has to be grounded!"

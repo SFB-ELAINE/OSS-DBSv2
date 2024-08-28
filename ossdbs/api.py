@@ -506,11 +506,11 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             ", thus the setting was switched on"
         )
     # no vtk export
-    export_vtk = False
+    export_vtk = True
     # no intermediate exports
     export_frequency = None
     # no VTA analysis
-    activation_threshold = None
+    activation_threshold = settings["ActivationThresholdVTA"]
     # prepare point model
     point_models = generate_point_models(settings)
 
@@ -537,14 +537,16 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             active = False
             floating = True
             current = 0.0
+            voltage = False
             if contact.name == upd_contact.name:
                 active = True
                 floating = False
                 current = 1.0
+                voltage = 1.0
             # write new contact settings
             geometry.update_contact(
                 contact_idx,
-                {"Floating": floating, "Active": active, "Current[A]": current},
+                {"Floating": floating, "Active": active, "Current[A]": current, "Voltage[V]": voltage},
             )
         volume_conductor = prepare_volume_conductor_model(
             settings, geometry, conductivity, solver
