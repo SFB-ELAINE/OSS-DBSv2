@@ -10,7 +10,7 @@ import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
-from .utilities import get_highest_edge, get_lowest_edge
+from .utilities import get_electrode_spin_angle, get_highest_edge, get_lowest_edge
 
 
 @dataclass
@@ -232,8 +232,14 @@ class MedtronicSenSightModel(ElectrodeModel):
                 / np.linalg.norm(np.cross(direction, self._direction))
             )
             angle = np.degrees(np.arccos(self._direction[2]))
-            return netgen.occ.Fuse(contacts).Rotate(
+            rotated_geo = netgen.occ.Fuse(contacts).Rotate(
                 occ.Axis(p=point, d=rotation), angle
+            )
+            rotation_angle = get_electrode_spin_angle(rotation, angle, self._direction)
+            if np.isclose(rotation_angle, 0):
+                return rotated_geo
+            return rotated_geo.Rotate(
+                occ.Axis(p=(0, 0, 0), d=self._direction), rotation_angle
             )
 
     def _contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:

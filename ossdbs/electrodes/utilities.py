@@ -1,11 +1,14 @@
 # Copyright 2023, 2024 Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import logging
 from typing import Union
 
 import netgen.occ as occ
 import numpy as np
 from scipy.spatial.transform import Rotation
+
+_logger = logging.getLogger(__name__)
 
 
 def get_lowest_edge(contact: occ.Face) -> occ.Edge:
@@ -72,4 +75,30 @@ def get_signed_angle(
                 "Possible reasons: numerical accuracy or wrong geometry "
                 "information."
             )
+    return rotation_angle
+
+
+def get_electrode_spin_angle(
+    rotation: tuple, angle: float, direction: np.ndarray
+) -> float:
+    """Determine angle that directed electrode needs to be spinned."""
+    # adjust contact angle
+    # tilted y-vector marker is in YZ-plane and orthogonal to _direction
+    # note that this comes from Lead-DBS
+    desired_direction = np.array([0, direction[2], -direction[1]])
+    rotate_vector = Rotation.from_rotvec(np.radians(angle) * np.array(rotation))
+    current_direction = rotate_vector.apply((0, 1, 0))
+    # get angle between current and desired direction
+    # current direction is normal
+    rotation_angle = get_signed_angle(
+        current_direction, desired_direction, np.array(direction)
+    )
+    if rotation_angle is None:
+        _logger.warning(
+            "Could not determine rotation angle for "
+            "correct spin as per Lead-DBS convention."
+            "Returning angle of zero."
+        )
+        # to return unrotated geo
+        rotation_angle = 0.0
     return rotation_angle
