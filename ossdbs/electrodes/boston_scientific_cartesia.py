@@ -242,7 +242,6 @@ class BostonScientificCartesiaHXModel(BostonScientificCartesiaXModel):
     """
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        print("Working on the HX")
         radius = self._parameters.lead_diameter * 0.5
         direction = (0, 0, 1)
         origin = (0, 0, 0)

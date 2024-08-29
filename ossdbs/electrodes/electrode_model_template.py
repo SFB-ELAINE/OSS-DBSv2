@@ -188,8 +188,8 @@ class ElectrodeModel(ABC):
         return self._parameters.lead_diameter / ratio
 
     def export_electrode(self, output_path, brain_dict, n_electrode) -> None:
-        """Export electrode as VTK file."""
-        _logger.info("Export electrode as VTK file")
+        """Export electrode as Netgen and VTK file."""
+        _logger.info("Export electrode as Netgen and VTK file")
         height = (
             np.amax(
                 [
@@ -219,6 +219,10 @@ class ElectrodeModel(ABC):
             bnd_dict[contact] = idx
         boundary_cf = mesh_electrode.BoundaryCF(bnd_dict, default=-1)
 
+        # export Netgen mesh
+        mesh_electrode.ngmesh.Save(f"{output_path}/electrode_{n_electrode}.vol.gz")
+
+        # export ParaView file
         VTKOutput(
             ma=mesh_electrode,
             coefs=[boundary_cf],
