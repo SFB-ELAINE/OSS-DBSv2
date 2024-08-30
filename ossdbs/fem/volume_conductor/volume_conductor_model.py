@@ -121,7 +121,7 @@ class VolumeConductor(ABC):
         activation_threshold: Optional[float] = None,
         out_of_core: bool = False,
         export_frequency: Optional[float] = None,
-        adaptive_mesh_refinement: Optional[dict] = None,
+        adaptive_mesh_refinement_settings: Optional[dict] = None,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -142,7 +142,7 @@ class VolumeConductor(ABC):
             Otherwise, median frequency is used.
         frequency_domain_signal: FrequencyDomainSignal
             Frequency-domain representation of stimulation signal
-        adaptive_mesh_refinement: dict
+        adaptive_mesh_refinement_settings: dict
             Perform adaptive mesh refinement (only at first frequency)
 
         Notes
@@ -165,6 +165,13 @@ class VolumeConductor(ABC):
         dtype = float
         if self.is_complex:
             dtype = complex
+
+        _do_AMR = False
+        if adaptive_mesh_refinement_settings is not None:
+            self._check_AMR_settings(adaptive_mesh_refinement_settings)
+            if "Active" in adaptive_mesh_refinement_settings:
+                if adaptive_mesh_refinement_settings["Active"]:
+                    _do_AMR = True
 
         multisine_mode = np.all(np.isclose(self.signal.amplitudes, 1.0))
 
@@ -244,43 +251,37 @@ class VolumeConductor(ABC):
                     self._impedances[band_indices] = impedance
 
                 # refine only at first frequency
-                if "Active" in adaptive_mesh_refinement:
-                    if (
-                        freq_idx == frequency_indices[0]
-                        and adaptive_mesh_refinement["Active"]
-                    ):
-                        if not compute_impedance:
-                            impedance = self.compute_impedance()
-                        else:
-                            impedance = self._impedances[band_indices]
-                        _logger.info(
-                            "Number of elements before refinement:"
-                            f"{self.mesh.ngsolvemesh.ne}"
-                        )
-                        error = 100
-                        refinements = 0
-                        tolerance = adaptive_mesh_refinement["ErrorTolerance"]
-                        max_iterations = adaptive_mesh_refinement["MaxIterations"]
-                        # TODO write a meaningful algo
-                        while error > tolerance and refinements < max_iterations:
-                            self.adaptive_mesh_refinement()
-                            # solve on refined mesh
-                            self.compute_solution(frequency)
-                            new_impedance = self.compute_impedance()
-                            # error in percent
-                            error = (
-                                100 * abs(impedance - new_impedance) / abs(impedance)
-                            )
-                            # update variables for loop
-                            refinements += 1
-                            impedance = new_impedance
-                        # overwrite impedance values
-                        self._impedances[band_indices] = impedance
+                if freq_idx == frequency_indices[0] and _do_AMR:
+                    if not compute_impedance:
+                        impedance = self.compute_impedance()
+                    else:
+                        impedance = self._impedances[band_indices]
+                    _logger.info(
+                        "Number of elements before refinement:"
+                        f"{self.mesh.ngsolvemesh.ne}"
+                    )
+                    error = 100
+                    refinements = 0
+                    tolerance = adaptive_mesh_refinement_settings["ErrorTolerance"]
+                    max_iterations = adaptive_mesh_refinement_settings["MaxIterations"]
+                    # TODO write a meaningful algo
+                    while error > tolerance and refinements < max_iterations:
+                        self.adaptive_mesh_refinement()
+                        # solve on refined mesh
+                        self.compute_solution(frequency)
+                        new_impedance = self.compute_impedance()
+                        # error in percent
+                        error = 100 * abs(impedance - new_impedance) / abs(impedance)
+                        # update variables for loop
+                        refinements += 1
+                        impedance = new_impedance
+                    # overwrite impedance values
+                    self._impedances[band_indices] = impedance
 
-                        _logger.info(
-                            "Number of elements after refinement:"
-                            f"{self.mesh.ngsolvemesh.ne}"
-                        )
+                    _logger.info(
+                        "Number of elements after refinement:"
+                        f"{self.mesh.ngsolvemesh.ne}"
+                    )
             else:
                 _logger.info(f"Skipped computation at {frequency} Hz")
                 if compute_impedance:
@@ -972,3 +973,12 @@ class VolumeConductor(ABC):
         error = difference * ngsolve.Conj(difference)
         self.mesh.refine_by_error_cf(error)
         self.update_space()
+
+    def _check_AMR_settings(self, adaptive_mesh_refinement_settings: dict) -> None:
+        if not {"ErrorTolerance", "MaxIterations"}.issubset(
+            adaptive_mesh_refinement_settings.keys()
+        ):
+            raise ValueError(
+                "Need to specify ErrorTolerance and "
+                "MaxIterations for adaptive mesh refinement"
+            )
