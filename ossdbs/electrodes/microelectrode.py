@@ -99,4 +99,6 @@ class MicroElectrodeModel(ElectrodeModel):
         min_edge.name = "Contact_1"
         contact = contact.MakeFillet(contact.edges["Contact_1"], 0.05)
         max_edge.name = "Contact_1"
+        for face in contact.faces:
+            face.name = "Contact_1"
         return contact
