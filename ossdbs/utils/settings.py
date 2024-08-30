@@ -60,7 +60,20 @@ class Settings:
         "Mesh": {
             "LoadMesh": False,
             "LoadPath": "",
-            "MeshingHypothesis": {"Type": "Default", "MaxMeshSize": 1e6},
+            "MeshingHypothesis": {
+                "Type": "Default",
+                "MaxMeshSize": 1e6,
+            },
+            "HPRefinement": {
+                "Active": False,
+                "Levels": 2,
+                "Factor": 0.125,
+            },
+            "AdaptiveMeshRefinement": {
+                "Active": False,
+                "MaxIterations": 10,
+                "ErrorTolerance": 0.1,
+            },
             "MeshSize": {"Edges": {}, "Faces": {}, "Volumes": {}},
             "SaveMesh": False,
             "SavePath": "mesh",
@@ -118,7 +131,6 @@ class Settings:
             "Active": False,
             "StimSetsFile": None,
         },
-        "AdaptiveMeshRefinement": False,
         "StimulationFolder": os.getcwd(),
     }
 

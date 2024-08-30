@@ -59,6 +59,10 @@ def create_bounding_box(box_parameters: dict) -> BoundingBox:
 def generate_electrodes(settings: dict):
     """Generate an OCC electrode model from the settings dict."""
     _logger.info("Generate electrode geometries")
+
+    hp_refinement = False
+    if "HPRefinement" in settings["Mesh"]:
+        hp_refinement = settings["Mesh"]["HPRefinement"]["Active"]
     electrodes = []
     for electrode_parameters in settings["Electrodes"]:
         name = electrode_parameters["Name"]
@@ -93,6 +97,9 @@ def generate_electrodes(settings: dict):
                 position=position,
                 rotation=rotation,
             )
+
+        if hp_refinement:
+            electrode.set_hp_flag(electrode_parameters=electrode_parameters)
 
         if "EncapsulationLayer" in electrode_parameters:
             electrode.encapsulation_thickness = electrode_parameters[
@@ -209,11 +216,9 @@ def generate_mesh(settings):
         mesh.load_mesh(mesh_settings["LoadPath"])
         return mesh
 
-    if "MeshingHypothesis" in mesh_settings:
-        mesh_hypothesis = mesh_settings["MeshingHypothesis"]
-    else:
-        mesh_hypothesis = {"Type": "Default"}
-    mesh.generate_mesh(mesh_hypothesis)
+    if "MeshingHypothesis" not in mesh_settings:
+        mesh_settings["MeshingHypothesis"] = {"Type": "Default"}
+    mesh.generate_mesh(mesh_settings)
     if mesh_settings["SaveMesh"]:
         mesh.save(mesh_settings["SavePath"])
     return mesh
@@ -446,7 +451,7 @@ def run_volume_conductor_model(settings, volume_conductor, frequency_domain_sign
         activation_threshold=settings["ActivationThresholdVTA"],
         out_of_core=out_of_core,
         export_frequency=export_frequency,
-        adaptive_mesh_refinement=settings["AdaptiveMeshRefinement"],
+        adaptive_mesh_refinement_settings=settings["Mesh"]["AdaptiveMeshRefinement"],
     )
     return vcm_timings
 
