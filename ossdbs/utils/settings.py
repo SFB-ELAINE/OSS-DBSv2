@@ -68,7 +68,6 @@ class Settings:
                 "Active": False,
                 "Levels": 2,
                 "Factor": 0.125,
-                "Order": 1,
             },
             "AdaptiveMeshRefinement": {
                 "Active": False,

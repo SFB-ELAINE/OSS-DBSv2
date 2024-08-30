@@ -226,15 +226,14 @@ class ElectrodeModel(ABC):
             subdivision=0,
         ).Do(vb=BND)
 
-    def set_hp_flag(self, electrode_parameters: dict, hp_parameters: dict):
+    def set_hp_flag(self, electrode_parameters: dict):
         """Set hp-flags only on active contacts."""
         if "Contacts" in electrode_parameters:
             for contact_info in electrode_parameters["Contacts"]:
                 if contact_info["Active"]:
                     contact_idx = contact_info["Contact_ID"]
-                    order = hp_parameters["Order"]
-                    self._set_edge_hp_flag({f"Contact_{contact_idx}": order})
-                    self._set_vertex_hp_flag({f"Contact_{contact_idx}": order})
+                    self._set_edge_hp_flag({f"Contact_{contact_idx}": 1})
+                    self._set_vertex_hp_flag({f"Contact_{contact_idx}": 1})
 
     def _set_edge_hp_flag(self, edge_sizes: dict) -> None:
         """Set flags on edges."""

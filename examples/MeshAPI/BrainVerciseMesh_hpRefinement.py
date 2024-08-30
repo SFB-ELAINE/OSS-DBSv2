@@ -48,7 +48,6 @@ settings = {
             "Active": True,
             "Levels": 2,
             "Factor": 0.125,
-            "Order": 1,
         },
     },
     "ExportElectrode": False,

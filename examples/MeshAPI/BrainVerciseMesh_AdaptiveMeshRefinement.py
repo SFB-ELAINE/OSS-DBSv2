@@ -63,10 +63,9 @@ input_settings = {
             "ErrorTolerance": 0.1,
         },
         "HPRefinement": {
-            "Active": True,
+            "Active": False,
             "Levels": 2,
             "Factor": 0.125,
-            "Order": 1,
         },
     },
     "StimulationSignal": {
@@ -114,4 +113,5 @@ with ngsolve.TaskManager():
 
 print("Number of elements before refinement:", mesh.ngsolvemesh.ne)
 print("Number of elements after refinement:", volume_conductor.mesh.ngsolvemesh.ne)
+print("Number degrees of freedom:", ngsolve.H1(volume_conductor.mesh.ngsolvemesh).ndof)
 Draw(volume_conductor.mesh.ngsolvemesh)

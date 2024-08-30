@@ -99,10 +99,7 @@ def generate_electrodes(settings: dict):
             )
 
         if hp_refinement:
-            electrode.set_hp_flag(
-                electrode_parameters=electrode_parameters,
-                hp_parameters=settings["Mesh"]["HPRefinement"],
-            )
+            electrode.set_hp_flag(electrode_parameters=electrode_parameters)
 
         if "EncapsulationLayer" in electrode_parameters:
             electrode.encapsulation_thickness = electrode_parameters[
