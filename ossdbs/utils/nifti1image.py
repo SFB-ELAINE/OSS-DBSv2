@@ -179,6 +179,11 @@ class Nifti1Image:
             self._trafo_cf.Compile()
         return self._trafo_cf
 
+    @property
+    def voxel_sizes(self) -> np.ndarray:
+        """Return the voxel size in xyz-direction."""
+        return nibabel.affines.voxel_sizes(self.affine)
+
 
 class MagneticResonanceImage(Nifti1Image):
     """MRI image."""
