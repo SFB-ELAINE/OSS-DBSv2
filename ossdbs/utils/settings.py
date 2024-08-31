@@ -60,7 +60,20 @@ class Settings:
         "Mesh": {
             "LoadMesh": False,
             "LoadPath": "",
-            "MeshingHypothesis": {"Type": "Default", "MaxMeshSize": 1e6},
+            "MeshingHypothesis": {
+                "Type": "Default",
+                "MaxMeshSize": 1e6,
+            },
+            "HPRefinement": {
+                "Active": False,
+                "Levels": 2,
+                "Factor": 0.125,
+            },
+            "AdaptiveMeshRefinement": {
+                "Active": False,
+                "MaxIterations": 10,
+                "ErrorTolerance": 0.1,
+            },
             "MeshSize": {"Edges": {}, "Faces": {}, "Volumes": {}},
             "SaveMesh": False,
             "SavePath": "mesh",
@@ -88,7 +101,7 @@ class Settings:
             "Precision": 1e-12,
         },
         "PointModel": {
-            "Pathway": {"Active": False, "FileName": ""},
+            "Pathway": {"Active": False, "FileName": "", "ExportField": False},
             "Lattice": {
                 "Active": False,
                 "Center": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 0},
@@ -96,11 +109,13 @@ class Settings:
                 "Direction": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 1},
                 "PointDistance[mm]": 0.1,
                 "CollapseVTA": False,
+                "ExportField": False,
             },
             "VoxelLattice": {
                 "Active": False,
                 "Shape": {"x": 10, "y": 10, "z": 10},
                 "TimeDomain": False,
+                "ExportField": False,
             },
         },
         "OutputPath": "Results",
@@ -120,7 +135,6 @@ class Settings:
             "Active": False,
             "StimSetsFile": None,
         },
-        "AdaptiveMeshRefinement": False,
         "StimulationFolder": os.getcwd(),
     }
 

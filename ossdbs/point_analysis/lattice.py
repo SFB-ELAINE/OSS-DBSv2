@@ -34,6 +34,7 @@ class Lattice(PointModel):
         distance: float,
         direction: tuple,
         collapse_vta: bool = False,
+        export_field: bool = False,
     ) -> None:
         if distance < 0:
             raise ValueError("The spacing between points must be positive.")
@@ -42,6 +43,7 @@ class Lattice(PointModel):
             raise ValueError("Pass a 3-valued tuple as the lattice shape.")
         self._shape = shape
         self.collapse_VTA = collapse_vta
+        self._export_field = export_field
         self._center = center
         norm = np.linalg.norm(direction)
         # TODO why can norm be not be there?

@@ -59,9 +59,10 @@ class Pathway(PointModel):
         name: str
         axons: List["Pathway.Axon"]
 
-    def __init__(self, input_path: str) -> None:
+    def __init__(self, input_path: str, export_field: bool = False) -> None:
         # identifiers
         self._name = "PAM"
+        self._export_field = export_field
 
         # path from where to read model
         self._path = input_path

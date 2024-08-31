@@ -1,6 +1,32 @@
+import os
 from typing import ClassVar, List
 
+import ngsolve
 import numpy as np
+
+from ossdbs import generate_model_geometry
+
+from .reference_directed_electrodes.tested_directions import (
+    base_settings,
+    directions,
+    get_direction_dict,
+)
+
+
+def get_reference_and_model_geo(electrode_name, idx):
+    direction = directions[idx]
+    settings = base_settings.copy()
+    settings["Electrodes"][0]["Name"] = electrode_name
+    settings["Electrodes"][0]["Direction"] = get_direction_dict(direction)
+    model_geo = generate_model_geometry(settings)
+    mesh = ngsolve.Mesh(
+        os.path.join(
+            "reference_directed_electrodes",
+            f"mesh_{electrode_name}_direction_{idx}.vol.gz",
+        )
+    )
+    ref_geo = mesh.ngmesh.GetGeometry().shape
+    return ref_geo, model_geo
 
 
 # TODO is there a nicer way to not need to copy-paste

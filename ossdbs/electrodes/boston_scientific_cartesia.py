@@ -12,7 +12,7 @@ import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
-from .utilities import get_highest_edge, get_lowest_edge
+from .utilities import get_electrode_spin_angle, get_highest_edge, get_lowest_edge
 
 _logger = logging.getLogger(__name__)
 
@@ -118,23 +118,22 @@ class BostonScientificCartesiaXModel(ElectrodeModel):
         return body
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        print("Working on the X")
         radius = self._parameters.lead_diameter * 0.5
-
+        direction = (0, 0, 1)
         # add distances
         vectors = []
         # TODO adjust to start at right height
         distance = self._parameters.tip_length + self._parameters.contact_spacing
         for _ in range(0, 6):
-            vectors.append(tuple(np.array(self._direction) * distance))
+            vectors.append(tuple(np.array(direction) * distance))
             distance += (
                 self._parameters.contact_length + self._parameters.contact_spacing
             )
 
-        point = (0, 0, 0)
+        origin = (0, 0, 0)
         height = self._parameters.contact_length
-        axis = occ.Axis(p=point, d=self._direction)
-        contact_16 = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
+        axis = occ.Axis(p=origin, d=self._direction)
+        contact_16 = occ.Cylinder(p=origin, d=direction, r=radius, h=height)
         contact_directed = self._contact_directed()
 
         contacts = [
@@ -170,57 +169,57 @@ class BostonScientificCartesiaXModel(ElectrodeModel):
                 for edge in contact.edges:
                     if edge.name == "Rename":
                         edge.name = name
-        return netgen.occ.Fuse(contacts)
+        if np.allclose(self._direction, direction):
+            return netgen.occ.Fuse(contacts)
+        else:
+            # rotate electrode to match orientation
+            # e.g. from z-axis to y-axis
+            rotation = tuple(
+                np.cross(direction, self._direction)
+                / np.linalg.norm(np.cross(direction, self._direction))
+            )
+            angle = np.degrees(np.arccos(self._direction[2]))
+            rotated_geo = netgen.occ.Fuse(contacts).Rotate(
+                occ.Axis(p=origin, d=rotation), angle
+            )
+            rotation_angle = get_electrode_spin_angle(rotation, angle, self._direction)
+            if np.isclose(rotation_angle, 0):
+                return rotated_geo
+            return rotated_geo.Rotate(
+                occ.Axis(p=(0, 0, 0), d=self._direction), rotation_angle
+            )
 
     def _contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        point = (0, 0, 0)
+        origin = (0, 0, 0)
+        direction = (0, 0, 1)
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
-        body = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
+        body = occ.Cylinder(p=origin, d=direction, r=radius, h=height)
         # tilted y-vector marker is in YZ-plane and orthogonal to _direction
-        new_direction = (0, self._direction[2], -self._direction[1])
-        eraser = occ.HalfSpace(p=point, n=new_direction)
-
+        new_direction = (0, 1, 0)
+        eraser = occ.HalfSpace(p=origin, n=new_direction)
         angle = 45
-        axis = occ.Axis(p=point, d=self._direction)
+
+        axis = occ.Axis(p=origin, d=direction)
 
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
-        # Centering contact to label edges
-        contact = contact.Rotate(axis, angle)
-        # TODO refactor / wrap in function
-        # Find  max z, min z, max x, and max y values and label min x and min y edge
-        max_z_val = max_y_val = max_x_val = float("-inf")
-        min_z_val = float("inf")
+
+        # Label all outer edges
         for edge in contact.edges:
-            if edge.center.z > max_z_val:
-                max_z_val = edge.center.z
-            if edge.center.z < min_z_val:
-                min_z_val = edge.center.z
-            if edge.center.x > max_x_val:
-                max_x_val = edge.center.x
-                max_x_edge = edge
-            if edge.center.y > max_y_val:
-                max_y_val = edge.center.y
-                max_y_edge = edge
-        max_x_edge.name = "Rename"
-        max_y_edge.name = "Rename"
-        # Label only the outer edges of the contact with min z and max z values
-        for edge in contact.edges:
-            if np.isclose(edge.center.z, max_z_val) and not (
-                np.isclose(edge.center.x, radius / 2)
-                or np.isclose(edge.center.y, radius / 2)
-            ):
-                edge.name = "Rename"
-            elif np.isclose(edge.center.z, min_z_val) and not (
-                np.isclose(edge.center.x, radius / 2)
-                or np.isclose(edge.center.y, radius / 2)
-            ):
+            edge_center = np.array([edge.center.x, edge.center.y, edge.center.z])
+
+            # Skip center edge
+            if np.allclose(np.cross(edge_center, direction), 0):
+                continue
+
+            new_center = np.dot(edge_center, direction) * np.array(direction)
+
+            # Mark only outer edges
+            if not np.isclose(np.linalg.norm(edge_center - new_center), radius / 2):
                 edge.name = "Rename"
 
         # TODO check that the starting axis of the contacts
         # are correct according to the documentation
-        contact = contact.Rotate(axis, -angle)
-
         return contact
 
 
@@ -243,23 +242,22 @@ class BostonScientificCartesiaHXModel(BostonScientificCartesiaXModel):
     """
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        print("Working on the HX")
         radius = self._parameters.lead_diameter * 0.5
-
+        direction = (0, 0, 1)
+        origin = (0, 0, 0)
         # add distances
         vectors = []
         # TODO adjust to start at right height
         distance = self._parameters.tip_length + self._parameters.contact_spacing
         for _ in range(0, 8):
-            vectors.append(tuple(np.array(self._direction) * distance))
+            vectors.append(tuple(np.array(direction) * distance))
             distance += (
                 self._parameters.contact_length + self._parameters.contact_spacing
             )
 
-        point = (0, 0, 0)
         height = self._parameters.contact_length
-        axis = occ.Axis(p=point, d=self._direction)
-        contact_16 = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
+        axis = occ.Axis(p=origin, d=direction)
+        contact_16 = occ.Cylinder(p=origin, d=direction, r=radius, h=height)
         contact_directed = self._contact_directed()
 
         contacts = [
@@ -293,6 +291,25 @@ class BostonScientificCartesiaHXModel(BostonScientificCartesiaXModel):
             else:
                 # Label all the named contacts appropriately
                 for edge in contact.edges:
-                    if edge.name is not None:
+                    if edge.name == "Rename":
                         edge.name = name
-        return netgen.occ.Fuse(contacts)
+
+        if np.allclose(self._direction, direction):
+            return netgen.occ.Fuse(contacts)
+        else:
+            # rotate electrode to match orientation
+            # e.g. from z-axis to y-axis
+            rotation = tuple(
+                np.cross(direction, self._direction)
+                / np.linalg.norm(np.cross(direction, self._direction))
+            )
+            angle = np.degrees(np.arccos(self._direction[2]))
+            rotated_geo = netgen.occ.Fuse(contacts).Rotate(
+                occ.Axis(p=origin, d=rotation), angle
+            )
+            rotation_angle = get_electrode_spin_angle(rotation, angle, self._direction)
+            if np.isclose(rotation_angle, 0):
+                return rotated_geo
+            return rotated_geo.Rotate(
+                occ.Axis(p=(0, 0, 0), d=self._direction), rotation_angle
+            )

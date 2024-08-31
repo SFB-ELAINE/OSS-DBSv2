@@ -10,10 +10,9 @@ from dataclasses import dataclass
 import netgen
 import netgen.occ as occ
 import numpy as np
-from scipy.spatial.transform import Rotation
 
 from .electrode_model_template import ElectrodeModel
-from .utilities import get_highest_edge, get_lowest_edge, get_signed_angle
+from .utilities import get_electrode_spin_angle, get_highest_edge, get_lowest_edge
 
 _logger = logging.getLogger(__name__)
 
@@ -108,6 +107,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
         contact_tip = occ.Sphere(c=center, r=radius) * half_space
         h_pt2 = self._parameters.tip_length - radius
         contact_pt2 = occ.Cylinder(p=center, d=direction, r=radius, h=h_pt2)
+        # defining first contact
         contact_1 = contact_tip + contact_pt2
 
         vectors = []
@@ -165,24 +165,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
             rotated_geo = netgen.occ.Fuse(contacts).Rotate(
                 occ.Axis(p=origin, d=rotation), angle
             )
-            # adjust contact angle
-            # tilted y-vector marker is in YZ-plane and orthogonal to _direction
-            # note that this comes from Lead-DBS
-            desired_direction = np.array([0, self._direction[2], -self._direction[1]])
-            rotate_vector = Rotation.from_rotvec(np.radians(angle) * np.array(rotation))
-            current_direction = rotate_vector.apply((0, 1, 0))
-            # get angle between current and desired direction
-            # current direction is normal
-            rotation_angle = get_signed_angle(
-                current_direction, desired_direction, np.array(self._direction)
-            )
-            if rotation_angle is None:
-                _logger.warning(
-                    "Could not determine rotation angle for "
-                    "correct spin as per Lead-DBS convention."
-                )
-                # to return unrotated geo
-                rotation_angle = 0.0
+            rotation_angle = get_electrode_spin_angle(rotation, angle, self._direction)
             if np.isclose(rotation_angle, 0):
                 return rotated_geo
             return rotated_geo.Rotate(

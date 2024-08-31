@@ -88,7 +88,7 @@ class VolumeConductor(ABC):
         if meshing_parameters["LoadMesh"]:
             self.mesh.load_mesh(meshing_parameters["LoadPath"])
         else:
-            self.mesh.generate_mesh(meshing_parameters["MeshingHypothesis"])
+            self.mesh.generate_mesh(meshing_parameters)
 
         if meshing_parameters["SaveMesh"]:
             self.mesh.save(meshing_parameters["SavePath"])
@@ -126,7 +126,7 @@ class VolumeConductor(ABC):
         dielectric_threshold: float = 0.01,
         out_of_core: bool = False,
         export_frequency: Optional[float] = None,
-        adaptive_mesh_refinement: bool = False,
+        adaptive_mesh_refinement_settings: Optional[dict] = None,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -149,7 +149,7 @@ class VolumeConductor(ABC):
             Otherwise, median frequency is used.
         frequency_domain_signal: FrequencyDomainSignal
             Frequency-domain representation of stimulation signal
-        adaptive_mesh_refinement: bool
+        adaptive_mesh_refinement_settings: dict
             Perform adaptive mesh refinement (only at first frequency)
 
         Notes
@@ -172,6 +172,13 @@ class VolumeConductor(ABC):
         dtype = float
         if self.is_complex:
             dtype = complex
+
+        _do_AMR = False
+        if adaptive_mesh_refinement_settings is not None:
+            self._check_AMR_settings(adaptive_mesh_refinement_settings)
+            if "Active" in adaptive_mesh_refinement_settings:
+                if adaptive_mesh_refinement_settings["Active"]:
+                    _do_AMR = True
 
         multisine_mode = np.all(np.isclose(self.signal.amplitudes, 1.0))
 
@@ -253,7 +260,7 @@ class VolumeConductor(ABC):
                     self._impedances[band_indices] = impedance
 
                 # refine only at first frequency
-                if freq_idx == frequency_indices[0] and adaptive_mesh_refinement:
+                if freq_idx == frequency_indices[0] and _do_AMR:
                     if not compute_impedance:
                         impedance = self.compute_impedance()
                     else:
@@ -262,11 +269,12 @@ class VolumeConductor(ABC):
                         "Number of elements before refinement:"
                         f"{self.mesh.ngsolvemesh.ne}"
                     )
-                    # TODO write a meaningful algo
-                    # currently: refine until impedance doesn't change by more than 0.1%
                     error = 100
                     refinements = 0
-                    while error > 0.1 and refinements < 10:
+                    tolerance = adaptive_mesh_refinement_settings["ErrorTolerance"]
+                    max_iterations = adaptive_mesh_refinement_settings["MaxIterations"]
+                    # TODO write a meaningful algo
+                    while error > tolerance and refinements < max_iterations:
                         self.adaptive_mesh_refinement()
                         # solve on refined mesh
                         self.compute_solution(frequency)
@@ -282,6 +290,11 @@ class VolumeConductor(ABC):
                     _logger.info(
                         "Number of elements after refinement:"
                         f"{self.mesh.ngsolvemesh.ne}"
+                    )
+                    _logger.info(
+                        "Adaptive mesh refinement converged after "
+                        f"{refinements} refinement steps with an "
+                        f"error in the impedance of {error}"
                     )
             else:
                 _logger.info(f"Skipped computation at {frequency} Hz")
@@ -361,7 +374,7 @@ class VolumeConductor(ABC):
                     Ey_in_time,
                     Ez_in_time,
                 ) = point_model.compute_solutions_in_time_domain(
-                    self.signal.signal_length
+                    self.signal.signal_length, convert_field=point_model.export_field
                 )
                 point_model.create_time_result(
                     timesteps, potential_in_time, Ex_in_time, Ey_in_time, Ez_in_time
@@ -397,12 +410,12 @@ class VolumeConductor(ABC):
         free_stimulation_variable_at_contact = {}
         free_stimulation_variable_at_contact["time"] = timesteps
         for contact_idx, contact in enumerate(self.contacts.active):
-            free_stimulation_variable_at_contact[
-                contact.name + "_free"
-            ] = free_stimulation_variable_in_time[:, contact_idx]
-            free_stimulation_variable_at_contact[
-                contact.name
-            ] = stimulation_variable_in_time[:, contact_idx]
+            free_stimulation_variable_at_contact[contact.name + "_free"] = (
+                free_stimulation_variable_in_time[:, contact_idx]
+            )
+            free_stimulation_variable_at_contact[contact.name] = (
+                stimulation_variable_in_time[:, contact_idx]
+            )
 
         df = pd.DataFrame(free_stimulation_variable_at_contact)
         df.to_csv(
@@ -461,8 +474,8 @@ class VolumeConductor(ABC):
                 sum_currents += contact.current
                 voltages_active[idx] = contact.voltage
             for contact in self.contacts.floating:
-                all_active_contacts_grounded = np.all(np.isclose(voltages_active, 0.0))
-                if not all_active_contacts_grounded:
+                active_contacts_grounded = np.isclose(voltages_active, 0.0)
+                if len(np.where(active_contacts_grounded)[0]) != 1:
                     raise ValueError(
                         "In multipolar current-controlled mode, "
                         "only one active contact has to be grounded!"
@@ -960,3 +973,12 @@ class VolumeConductor(ABC):
         error = difference * ngsolve.Conj(difference)
         self.mesh.refine_by_error_cf(error)
         self.update_space()
+
+    def _check_AMR_settings(self, adaptive_mesh_refinement_settings: dict) -> None:
+        if not {"ErrorTolerance", "MaxIterations"}.issubset(
+            adaptive_mesh_refinement_settings.keys()
+        ):
+            raise ValueError(
+                "Need to specify ErrorTolerance and "
+                "MaxIterations for adaptive mesh refinement"
+            )

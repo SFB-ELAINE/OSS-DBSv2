@@ -49,7 +49,6 @@ impedance = ["impedancefitter"]
 test = ["pytest", "pytest-cov"]
 
 dev = [
-    "black",
     "ruff",
     "pre-commit",
 ]

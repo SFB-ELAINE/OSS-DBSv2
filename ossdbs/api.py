@@ -60,6 +60,10 @@ def create_bounding_box(box_parameters: dict) -> BoundingBox:
 def generate_electrodes(settings: dict):
     """Generate an OCC electrode model from the settings dict."""
     _logger.info("Generate electrode geometries")
+
+    hp_refinement = False
+    if "HPRefinement" in settings["Mesh"]:
+        hp_refinement = settings["Mesh"]["HPRefinement"]["Active"]
     electrodes = []
     for electrode_parameters in settings["Electrodes"]:
         name = electrode_parameters["Name"]
@@ -94,6 +98,9 @@ def generate_electrodes(settings: dict):
                 position=position,
                 rotation=rotation,
             )
+
+        if hp_refinement:
+            electrode.set_hp_flag(electrode_parameters=electrode_parameters)
 
         if "EncapsulationLayer" in electrode_parameters:
             electrode.encapsulation_thickness = electrode_parameters[
@@ -253,11 +260,9 @@ def generate_mesh(settings):
         mesh.load_mesh(mesh_settings["LoadPath"])
         return mesh
 
-    if "MeshingHypothesis" in mesh_settings:
-        mesh_hypothesis = mesh_settings["MeshingHypothesis"]
-    else:
-        mesh_hypothesis = {"Type": "Default"}
-    mesh.generate_mesh(mesh_hypothesis)
+    if "MeshingHypothesis" not in mesh_settings:
+        mesh_settings["MeshingHypothesis"] = {"Type": "Default"}
+    mesh.generate_mesh(mesh_settings)
     if mesh_settings["SaveMesh"]:
         mesh.save(mesh_settings["SavePath"])
     return mesh
@@ -287,7 +292,8 @@ def generate_point_models(settings: dict):
     if settings["PointModel"]["Pathway"]["Active"]:
         file_name = settings["PointModel"]["Pathway"]["FileName"]
         _logger.info(f"Import neuron geometries stored in {file_name}")
-        point_models.append(Pathway(file_name))
+        export_field = settings["PointModel"]["Pathway"]["ExportField"]
+        point_models.append(Pathway(file_name, export_field=export_field))
     if settings["PointModel"]["Lattice"]["Active"]:
         shape_par = settings["PointModel"]["Lattice"]["Shape"]
         shape = shape_par["x"], shape_par["y"], shape_par["z"]
@@ -297,6 +303,7 @@ def generate_point_models(settings: dict):
         direction = dir_par["x[mm]"], dir_par["y[mm]"], dir_par["z[mm]"]
         distance = settings["PointModel"]["Lattice"]["PointDistance[mm]"]
         collapse_vta = settings["PointModel"]["Lattice"]["CollapseVTA"]
+        export_field = settings["PointModel"]["Lattice"]["ExportField"]
 
         point_models.append(
             Lattice(
@@ -305,6 +312,7 @@ def generate_point_models(settings: dict):
                 distance=distance,
                 direction=direction,
                 collapse_vta=collapse_vta,
+                export_field=export_field,
             )
         )
 
@@ -317,7 +325,10 @@ def generate_point_models(settings: dict):
         header = mri_image.header
         shape_par = settings["PointModel"]["VoxelLattice"]["Shape"]
         shape = np.array([shape_par["x"], shape_par["y"], shape_par["z"]])
-        point_models.append(VoxelLattice(center, affine, shape, header))
+        export_field = settings["PointModel"]["VoxelLattice"]["ExportField"]
+        point_models.append(
+            VoxelLattice(center, affine, shape, header, export_field=export_field)
+        )
     return point_models
 
 
@@ -479,7 +490,7 @@ def run_volume_conductor_model(settings, volume_conductor, frequency_domain_sign
         dielectric_threshold=settings["DielectricAccuracy"],
         out_of_core=out_of_core,
         export_frequency=export_frequency,
-        adaptive_mesh_refinement=settings["AdaptiveMeshRefinement"],
+        adaptive_mesh_refinement_settings=settings["Mesh"]["AdaptiveMeshRefinement"],
     )
     return vcm_timings
 
@@ -501,11 +512,11 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             ", thus the setting was switched on"
         )
     # no vtk export
-    export_vtk = False
+    export_vtk = settings["ExportVTK"]
     # no intermediate exports
     export_frequency = None
     # no VTA analysis
-    activation_threshold = None
+    activation_threshold = settings["ActivationThresholdVTA"]
     # prepare point model
     point_models = generate_point_models(settings)
 
@@ -532,14 +543,21 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             active = False
             floating = True
             current = 0.0
+            voltage = False
             if contact.name == upd_contact.name:
                 active = True
                 floating = False
                 current = 1.0
+                voltage = 1.0
             # write new contact settings
             geometry.update_contact(
                 contact_idx,
-                {"Floating": floating, "Active": active, "Current[A]": current},
+                {
+                    "Floating": floating,
+                    "Active": active,
+                    "Current[A]": current,
+                    "Voltage[V]": voltage,
+                },
             )
         volume_conductor = prepare_volume_conductor_model(
             settings, geometry, conductivity, solver
