@@ -285,6 +285,11 @@ class VolumeConductor(ABC):
                         "Number of elements after refinement:"
                         f"{self.mesh.ngsolvemesh.ne}"
                     )
+                    _logger.info(
+                        "Adaptive mesh refinement converged after "
+                        f"{refinements} refinement steps with an "
+                        f"error in the impedance of {error}"
+                    )
             else:
                 _logger.info(f"Skipped computation at {frequency} Hz")
                 if compute_impedance:
