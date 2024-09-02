@@ -5,6 +5,7 @@
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
+from typing import Optional
 
 import netgen
 import netgen.occ as occ
@@ -97,12 +98,13 @@ class ElectrodeModel(ABC):
 
     @encapsulation_thickness.setter
     def encapsulation_thickness(self, thickness: float) -> None:
-        self._encapsulation_geometry = self._construct_encapsulation_geometry(thickness)
+        if np.greater(thickness, 1e-3):
+            self._encapsulation_geometry = self._construct_encapsulation_geometry(
+                thickness
+            )
         self._encapsulation_thickness = thickness
 
-    def encapsulation_geometry(
-        self, thickness: float
-    ) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def encapsulation_geometry(self, thickness: float) -> Optional[netgen.occ.Solid]:
         """Generate geometry of encapsulation layer around electrode.
 
         Parameters
