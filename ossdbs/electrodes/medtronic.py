@@ -94,10 +94,11 @@ class MedtronicModel(ElectrodeModel):
         return body
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        point = (0, 0, 0)
+        origin = (0, 0, 0)
+        direction = (0, 0, 1)
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
-        contact = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
+        contact = occ.Cylinder(p=origin, d=direction, r=radius, h=height)
         distance = self._parameters.tip_length
         contacts = []
         for count in range(self._n_contacts):
@@ -109,13 +110,21 @@ class MedtronicModel(ElectrodeModel):
             # (edge between the non-contact and contact surface)
             min_edge.name = name
             max_edge.name = name
-            vector = tuple(np.array(self._direction) * distance)
+            vector = tuple(np.array(direction) * distance)
             contacts.append(contact.Move(vector))
             distance += (
                 self._parameters.contact_length + self._parameters.contact_spacing
             )
-
-        return netgen.occ.Glue(contacts)
+        if np.allclose(self._direction, direction):
+            return netgen.occ.Fuse(contacts)
+        # rotate electrode to match orientation
+        # e.g. from z-axis to y-axis
+        rotation = tuple(
+            np.cross(direction, self._direction)
+            / np.linalg.norm(np.cross(direction, self._direction))
+        )
+        angle = np.degrees(np.arccos(self._direction[2]))
+        return netgen.occ.Fuse(contacts).Rotate(occ.Axis(p=origin, d=rotation), angle)
 
 
 class MedtronicSenSightModel(ElectrodeModel):
@@ -190,11 +199,11 @@ class MedtronicSenSightModel(ElectrodeModel):
                 self._parameters.contact_length + self._parameters.contact_spacing
             )
 
-        point = (0, 0, 0)
+        origin = (0, 0, 0)
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
-        contact = occ.Cylinder(p=point, d=direction, r=radius, h=height)
-        axis = occ.Axis(p=point, d=direction)
+        contact = occ.Cylinder(p=origin, d=direction, r=radius, h=height)
+        axis = occ.Axis(p=origin, d=direction)
 
         contact_directed = self._contact_directed()
         contacts = [
@@ -233,7 +242,7 @@ class MedtronicSenSightModel(ElectrodeModel):
             )
             angle = np.degrees(np.arccos(self._direction[2]))
             rotated_geo = netgen.occ.Fuse(contacts).Rotate(
-                occ.Axis(p=point, d=rotation), angle
+                occ.Axis(p=origin, d=rotation), angle
             )
             rotation_angle = get_electrode_spin_angle(rotation, angle, self._direction)
             if np.isclose(rotation_angle, 0):
@@ -243,16 +252,16 @@ class MedtronicSenSightModel(ElectrodeModel):
             )
 
     def _contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        point = (0, 0, 0)
+        origin = (0, 0, 0)
         direction = (0, 0, 1)
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
-        body = occ.Cylinder(p=point, d=direction, r=radius, h=height)
+        body = occ.Cylinder(p=origin, d=direction, r=radius, h=height)
         # tilted y-vector marker is in YZ-plane and orthogonal to _direction
         new_direction = (0, 1, 0)
-        eraser = occ.HalfSpace(p=point, n=new_direction)
+        eraser = occ.HalfSpace(p=origin, n=new_direction)
         angle = 45
-        axis = occ.Axis(p=point, d=direction)
+        axis = occ.Axis(p=origin, d=direction)
 
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
 
