@@ -32,6 +32,11 @@ class MicroProbesRodentElectrodeParameters:
         """Returns distance between first level contact and fourth level contact."""
         return -1.0
 
+    @property
+    def lead_diameter(self) -> float:
+        """Lead diameter."""
+        return 2.0 * self.lead_radius
+
 
 class MicroProbesRodentElectrodeModel(ElectrodeModel):
     """MicroProbes Custom Rodent electrode.
@@ -290,6 +295,11 @@ class MicroProbesSNEX100Parameters:
     def get_distance_l1_l4(self) -> float:
         """Returns distance between first level contact and fourth level contact."""
         return -1.0
+
+    @property
+    def lead_diameter(self) -> float:
+        """Lead diameter, used outermost point of SNEX."""
+        return self.outer_tubing_diameter
 
 
 class MicroProbesSNEX100Model(ElectrodeModel):

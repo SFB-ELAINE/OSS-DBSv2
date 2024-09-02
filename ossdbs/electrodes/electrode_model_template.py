@@ -200,10 +200,8 @@ class ElectrodeModel(ABC):
             )
             / 2
         )
-        try:
-            radius = self._parameters.lead_diameter / 2
-        except AttributeError:
-            radius = 1  # Set larger radius in case lead_diameter is not defined
+
+        radius = self._parameters.lead_diameter
 
         cylinder = netgen.occ.Cylinder(
             p=self._position,
@@ -213,6 +211,7 @@ class ElectrodeModel(ABC):
         )
 
         occgeo = occ.OCCGeometry(cylinder * self.geometry)
+        _logger.debug("Generating mesh")
         mesh_electrode = Mesh(occgeo.GenerateMesh())
         bnd_dict = {}
         for idx, contact in enumerate(self.boundaries):
