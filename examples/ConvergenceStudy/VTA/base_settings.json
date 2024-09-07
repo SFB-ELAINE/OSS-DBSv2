@@ -117,7 +117,7 @@
       "PointDistance[mm]": 0.5 
     }
   },
-  "ActivationThresholdVTA": 200.0,
+  "ActivationThresholdVTA[V-per-m]": 200.0,
   "CollapseVTA": false,
   "EQSMode": false,
   "FEMOrder": 2,
