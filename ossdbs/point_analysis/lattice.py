@@ -141,6 +141,8 @@ class Lattice(PointModel):
 
         nifti_output = np.zeros(nifti_grid.shape, float)
         if binarize:
+            if activation_threshold is None:
+                raise ValueError("Provide an activation threshold.")
             nifti_output[nifti_grid >= activation_threshold] = 1
             nifti_output[nifti_grid < activation_threshold] = 0
         else:
