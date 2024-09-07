@@ -15,7 +15,7 @@ import pandas as pd
 from ossdbs.fem.mesh import Mesh
 from ossdbs.fem.solver import Solver
 from ossdbs.model_geometry import Contacts, ModelGeometry
-from ossdbs.point_analysis import PointModel
+from ossdbs.point_analysis import Lattice, PointModel
 from ossdbs.stimulation_signals import (
     FrequencyDomainSignal,
     get_indices_in_octave_band,
@@ -138,6 +138,7 @@ class VolumeConductor(ABC):
             List of PointModel to extract solution for VTA / PAM
         activation_threshold: float
             If VTA is estimated by threshold, provide it here.
+            Its unit must be V/m!
         out_of_core: bool
             Indicate whether point model shall be done out-of-core
         export_frequency: float
@@ -381,8 +382,15 @@ class VolumeConductor(ABC):
                 time_0 = time_1
 
         # close output-file
+        # and write point model reports
         for point_model in point_models:
             point_model.close_output_file()
+            try:
+                point_model.export_point_model_information(
+                    os.path.join(point_model.output_path, point_model.name + ".json")
+                )
+            except NotImplementedError:
+                pass
 
         if len(self.signal.frequencies) > 1 and not multisine_mode:
             self.export_solution_at_contacts()
@@ -897,6 +905,20 @@ class VolumeConductor(ABC):
                 freq_idx, scale_factor * potentials, scale_factor * fields
             )
 
+    def threshold_frequency_domain_Efield(
+        self, scale_factor: float, activation_threshold: float
+    ) -> float:
+        """Determine volume of E-field above threshold at current frequency."""
+        field = scale_factor * self.electric_field
+        # convert to V/m
+        field_magnitude = 1000.0 * ngsolve.sqrt(ngsolve.InnerProduct(field, field))
+        # subtract threshold from electric field,
+        # all positive values are 1, negative values 0
+        threshold_cf = ngsolve.IfPos(field_magnitude - activation_threshold, 1, 0)
+        mesh = self.mesh.ngsolvemesh
+        # Integrate to get volume
+        return ngsolve.Integrate(threshold_cf, mesh=mesh)
+
     def _has_sigma_changed(self, freq_idx, threshold=0.01) -> bool:
         """Check if conductivity has changed."""
         if self._sigma is None:
@@ -962,11 +984,19 @@ class VolumeConductor(ABC):
                 electrode=self.model_geometry.electrodes[0],
                 activation_threshold=activation_threshold,
             )
+            if isinstance(point_model, Lattice):
+                scale_factor = (
+                    self._scale_factor * self.signal.amplitudes[export_frequency_index]
+                )
+                point_model.VTA_volume = self.threshold_frequency_domain_Efield(
+                    scale_factor, activation_threshold
+                )
+                _logger.info(f"VTA volume is: {point_model.VTA_volume}")
 
     def _process_frequency_domain_solution(
         self, band_indices: Union[List, np.ndarray], point_models: PointModel
     ):
-        """Copy results a points."""
+        """Copy results to points."""
         for point_model in point_models:
             potentials = self.evaluate_potential_at_points(point_model.lattice)
             fields = self.evaluate_field_at_points(point_model.lattice)

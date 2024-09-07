@@ -538,6 +538,7 @@ class PointModel(ABC):
 
         # nifti exports
         field_mags_full = np.zeros(self.lattice_mask.shape[0])
+        # convert to V/m
         field_mags_full[self.lattice_mask[:, 0]] = field_mags * 1000.0
 
         self.save_as_nifti(
@@ -638,3 +639,9 @@ class PointModel(ABC):
             Ey_in_time = ifft(self.tmp_Ey_freq_domain, axis=1, workers=-1).real
             Ez_in_time = ifft(self.tmp_Ez_freq_domain, axis=1, workers=-1).real
         return potential_in_time, Ex_in_time, Ey_in_time, Ez_in_time
+
+    def export_point_model_information(self, filename: str) -> None:
+        """Export all relevant information about the model to JSON."""
+        raise NotImplementedError(
+            "Point model information export " "has not yet been implemented."
+        )
