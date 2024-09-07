@@ -486,7 +486,7 @@ def run_volume_conductor_model(settings, volume_conductor, frequency_domain_sign
         compute_impedance,
         export_vtk,
         point_models=point_models,
-        activation_threshold=settings["ActivationThresholdVTA"],
+        activation_threshold=settings["ActivationThresholdVTA[V-per-m]"],
         out_of_core=out_of_core,
         export_frequency=export_frequency,
         adaptive_mesh_refinement_settings=settings["Mesh"]["AdaptiveMeshRefinement"],
@@ -515,7 +515,7 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
     # no intermediate exports
     export_frequency = None
     # no VTA analysis
-    activation_threshold = settings["ActivationThresholdVTA"]
+    activation_threshold = settings["ActivationThresholdVTA[V-per-m]"]
     # prepare point model
     point_models = generate_point_models(settings)
 

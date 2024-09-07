@@ -125,7 +125,7 @@ class Settings:
         "ExportElectrode": False,
         "ModelSide": 0,
         "CalcAxonActivation": False,
-        "ActivationThresholdVTA": None,
+        "ActivationThresholdVTA[V-per-m]": None,
         "FailFlag": "oss",
         "OutOfCore": False,
         "PathwayFile": None,

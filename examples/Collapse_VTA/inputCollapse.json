@@ -136,6 +136,6 @@
   },
   "OutputPath": "Results",
   "SaveImpedance": true,
-  "ActivationThresholdVTA": 0.2,
+  "ActivationThresholdVTA[V-per-m]": 0.2,
   "ExportVTK": true
 }

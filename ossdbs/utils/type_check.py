@@ -22,7 +22,7 @@ class TypeChecker:
         },
         "AdaptiveMeshRefinement": bool,
         "PathwayFile": (type(None), str),
-        "ActivationThresholdVTA": (type(None), float),
+        "ActivationThresholdVTA[V-per-m]": (type(None), float),
         "Contacts": {"MaxMeshSize": float, "MaxMeshSizeEdge": float},
         "EncapsulationLayer": {
             "Thickness[mm]": (int, float),
