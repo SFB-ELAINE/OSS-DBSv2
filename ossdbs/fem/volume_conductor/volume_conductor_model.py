@@ -288,7 +288,7 @@ class VolumeConductor(ABC):
                     _logger.info(
                         "Adaptive mesh refinement converged after "
                         f"{refinements} refinement steps with an "
-                        f"error in the impedance of {error}"
+                        f"error in the impedance of {error:.3f}%"
                     )
             else:
                 _logger.info(f"Skipped computation at {frequency} Hz")
