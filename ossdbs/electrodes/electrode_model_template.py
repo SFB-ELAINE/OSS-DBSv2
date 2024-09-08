@@ -164,6 +164,11 @@ class ElectrodeModel(ABC):
         _logger.info("Boundary names updated")
 
     @property
+    def parameters(self) -> dataclass:
+        """Electrode geometry parameters."""
+        return self._parameters
+
+    @property
     def index(self) -> int:
         """Index of electrode, relevant if multiple electrodes used."""
         return self._index
