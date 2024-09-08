@@ -8,6 +8,7 @@ import time
 from abc import ABC, abstractmethod
 from typing import List, Optional, Union
 
+import netgen
 import ngsolve
 import numpy as np
 import pandas as pd
@@ -562,7 +563,12 @@ class VolumeConductor(ABC):
         """
         mesh = self.mesh.ngsolvemesh
         x, y, z = lattice.T
-        pots = self.potential(mesh(x, y, z))
+        try:
+            pots = self.potential(mesh(x, y, z))
+        except netgen.libngpy._meshing.NgException:
+            print("There are points in the lattice outside the mesh.")
+            print("Choose a smaller lattice.")
+            raise
         return pots
 
     def evaluate_field_at_points(self, lattice: np.ndarray) -> np.ndarray:
@@ -580,7 +586,12 @@ class VolumeConductor(ABC):
         """
         mesh = self.mesh.ngsolvemesh
         x, y, z = lattice.T
-        fields = self.electric_field(mesh(x, y, z))
+        try:
+            fields = self.electric_field(mesh(x, y, z))
+        except netgen.libngpy._meshing.NgException:
+            print("There are points in the lattice outside the mesh.")
+            print("Choose a smaller lattice.")
+            raise
         return fields
 
     @property
