@@ -565,10 +565,11 @@ class VolumeConductor(ABC):
         x, y, z = lattice.T
         try:
             pots = self.potential(mesh(x, y, z))
-        except netgen.libngpy._meshing.NgException:
-            print("There are points in the lattice outside the mesh.")
-            print("Choose a smaller lattice.")
-            raise
+        except netgen.libngpy._meshing.NgException as exc:
+            raise ValueError(
+                "There are points in the lattice outside the mesh. "
+                "Choose a smaller lattice."
+            ) from exc
         return pots
 
     def evaluate_field_at_points(self, lattice: np.ndarray) -> np.ndarray:
@@ -588,10 +589,11 @@ class VolumeConductor(ABC):
         x, y, z = lattice.T
         try:
             fields = self.electric_field(mesh(x, y, z))
-        except netgen.libngpy._meshing.NgException:
-            print("There are points in the lattice outside the mesh.")
-            print("Choose a smaller lattice.")
-            raise
+        except netgen.libngpy._meshing.NgException as exc:
+            raise ValueError(
+                "There are points in the lattice outside the mesh. "
+                "Choose a smaller lattice."
+            ) from exc
         return fields
 
     @property
