@@ -8,7 +8,6 @@ import time
 from abc import ABC, abstractmethod
 from typing import List, Optional, Union
 
-import netgen
 import ngsolve
 import numpy as np
 import pandas as pd
@@ -258,7 +257,11 @@ class VolumeConductor(ABC):
                 # refine only at first frequency
                 if freq_idx == frequency_indices[0] and _do_AMR:
                     if not compute_impedance:
-                        impedance = self.compute_impedance()
+                        try:
+                            impedance = self.compute_impedance()
+                        except NotImplementedError:
+                            _logger.info("Using power instead of impedance in AMR")
+                            impedance = self.compute_power()
                     else:
                         impedance = self._impedances[band_indices]
                     _logger.info(
@@ -274,7 +277,10 @@ class VolumeConductor(ABC):
                         self.adaptive_mesh_refinement()
                         # solve on refined mesh
                         self.compute_solution(frequency)
-                        new_impedance = self.compute_impedance()
+                        try:
+                            new_impedance = self.compute_impedance()
+                        except NotImplementedError:
+                            new_impedance = self.compute_power()
                         # error in percent
                         error = 100 * abs(impedance - new_impedance) / abs(impedance)
                         # update variables for loop
@@ -563,13 +569,7 @@ class VolumeConductor(ABC):
         """
         mesh = self.mesh.ngsolvemesh
         x, y, z = lattice.T
-        try:
-            pots = self.potential(mesh(x, y, z))
-        except netgen.libngpy._meshing.NgException as exc:
-            raise ValueError(
-                "There are points in the lattice outside the mesh. "
-                "Choose a smaller lattice."
-            ) from exc
+        pots = self.potential(mesh(x, y, z))
         return pots
 
     def evaluate_field_at_points(self, lattice: np.ndarray) -> np.ndarray:
@@ -587,13 +587,7 @@ class VolumeConductor(ABC):
         """
         mesh = self.mesh.ngsolvemesh
         x, y, z = lattice.T
-        try:
-            fields = self.electric_field(mesh(x, y, z))
-        except netgen.libngpy._meshing.NgException as exc:
-            raise ValueError(
-                "There are points in the lattice outside the mesh. "
-                "Choose a smaller lattice."
-            ) from exc
+        fields = self.electric_field(mesh(x, y, z))
         return fields
 
     @property
@@ -606,6 +600,15 @@ class VolumeConductor(ABC):
     def electric_field(self) -> ngsolve.GridFunction:
         """Compute electric field from potential."""
         return -ngsolve.grad(self.potential)
+
+    def compute_power(self) -> complex:
+        """Compute power in domain."""
+        mesh = self.mesh.ngsolvemesh
+        # do not need to account for mm because of integration
+        power = ngsolve.Integrate(
+            ngsolve.Conj(self.electric_field) * self.current_density, mesh
+        )
+        return power
 
     def compute_impedance(self) -> complex:
         """Compute impedance at most recent solution.
@@ -630,11 +633,7 @@ class VolumeConductor(ABC):
 
         """
         if len(self.contacts.active) == 2:
-            mesh = self.mesh.ngsolvemesh
-            # do not need to account for mm because of integration
-            power = ngsolve.Integrate(
-                ngsolve.Conj(self.electric_field) * self.current_density, mesh
-            )
+            power = self.compute_power()
             # TODO integrate surface impedance by thin layer
             voltage = 0
             for idx, contact in enumerate(self.contacts.active):
