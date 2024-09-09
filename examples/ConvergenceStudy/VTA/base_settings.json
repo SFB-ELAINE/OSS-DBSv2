@@ -26,22 +26,7 @@
         "y[mm]": 11.605,
         "z[mm]": 4.676
       },
-      "Contacts": [
-        {
-          "Contact_ID": 1,
-          "Active": true,
-          "Current[A]": 0.0,
-          "Voltage[V]": 1.0,
-          "Floating": false
-        },
-        {
-          "Contact_ID": 2,
-          "Active": true,
-          "Current[A]": 0.0,
-          "Voltage[V]": 0.0,
-          "Floating": false
-        }
-      ],
+      "Contacts": [],
       "EncapsulationLayer": {
         "Thickness[mm]": 0.0,
         "Material": "Blood",
@@ -105,16 +90,16 @@
         "z[mm]": 4.676
       },
       "Shape": {
-        "x": 20,
-        "y": 20,
-        "z": 20
+        "x": 40,
+        "y": 40,
+        "z": 40
       },
       "Direction": {
         "x[mm]": 0,
         "y[mm]": 0,
         "z[mm]": 1
       },
-      "PointDistance[mm]": 0.5 
+      "PointDistance[mm]": 0.25
     }
   },
   "ActivationThresholdVTA[V-per-m]": 200.0,
