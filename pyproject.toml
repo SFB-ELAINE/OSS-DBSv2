@@ -129,4 +129,5 @@ ignore = [
     ".ruff_cache/**/*",
     "setup.py",
     "tests/**/*",
+    "examples/ConvergenceStudy/**/*"
 ]
