@@ -221,13 +221,6 @@ class VolumeConductor(ABC):
                 shape=(len(self.signal.frequencies)), dtype=dtype
             )
 
-        for point_model in point_models:
-            point_model.output_path = self.output_path
-            point_model.prepare_VCM_specific_evaluation(self.mesh, self.conductivity_cf)
-            point_model.prepare_frequency_domain_data_structure(
-                self.signal.signal_length, out_of_core
-            )
-
         for computing_idx, freq_idx in enumerate(frequency_indices):
             frequency = self.signal.frequencies[freq_idx]
             _logger.info(f"Computing at frequency: {frequency}")
@@ -255,7 +248,7 @@ class VolumeConductor(ABC):
                     self._impedances[band_indices] = impedance
 
                 # refine only at first frequency
-                if freq_idx == frequency_indices[0] and _do_AMR:
+                if computing_idx == 0 and _do_AMR:
                     if not compute_impedance:
                         try:
                             impedance = self.compute_impedance()
@@ -321,6 +314,18 @@ class VolumeConductor(ABC):
             time_0 = time_1
 
             _logger.info("Copy solution to point models")
+            # initialise point models only after possible mesh change
+            # AMR can change points in mesh
+            if computing_idx == 0:
+                for point_model in point_models:
+                    point_model.output_path = self.output_path
+                    point_model.prepare_VCM_specific_evaluation(
+                        self.mesh, self.conductivity_cf
+                    )
+                    point_model.prepare_frequency_domain_data_structure(
+                        self.signal.signal_length, out_of_core
+                    )
+
             # copy solution to point models
             self._process_frequency_domain_solution(band_indices, point_models)
             time_1 = time.time()
