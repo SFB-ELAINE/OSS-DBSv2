@@ -74,6 +74,7 @@ class Settings:
                 "MaxIterations": 10,
                 "ErrorTolerance": 0.1,
             },
+            "MaterialRefinementSteps": 0,
             "MeshSize": {"Edges": {}, "Faces": {}, "Volumes": {}},
             "SaveMesh": False,
             "SavePath": "mesh",

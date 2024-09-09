@@ -275,3 +275,40 @@ class Mesh:
             elementwise_error.NumPy() > 0.25 * max_error
         )
         self.refine()
+
+    def refine_by_material_cf(self, material_cf: ngsolve.GridFunction) -> List:
+        """Refine the mesh by checking the material cf.
+        Each element-wise integral divided by area should yield an integer value.
+        If not, it needs to be refined.
+
+        Parameters
+        ----------
+        material_cf : ngsolve.GridFunction
+            CF with material indices (need to be integers)
+        """
+        element_idx = ngsolve.Integrate(
+            cf=material_cf, mesh=self._mesh, VOL_or_BND=ngsolve.VOL, element_wise=True
+        )
+        element_area = ngsolve.Integrate(
+            cf=ngsolve.CF(1.0),
+            mesh=self._mesh,
+            VOL_or_BND=ngsolve.VOL,
+            element_wise=True,
+        )
+
+        # get the average element index per element
+        element_idx = element_idx.NumPy() / element_area.NumPy()
+
+        # check the modulo to get integers
+        element_mods = np.mod(element_idx, 1)
+        # modulos of integers are either close to 0
+        # or to 1 (actually 0.9999...) due to rounding errors
+        # if it is not integer, both are False
+        to_refine = np.equal(
+            np.isclose(element_mods, 0.0, atol=1e-4),
+            np.isclose(element_mods, 1.0, atol=1e-4),
+        )
+        # label elements
+        self._mesh.ngmesh.Elements3D().NumPy()["refine"] = to_refine
+        # refine
+        self.refine()

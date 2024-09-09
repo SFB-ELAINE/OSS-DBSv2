@@ -21,6 +21,7 @@ class TypeChecker:
             "StimSetsFile": (type(None), str),
         },
         "AdaptiveMeshRefinement": bool,
+        # TODO add more tests
         "PathwayFile": (type(None), str),
         "ActivationThresholdVTA[V-per-m]": (type(None), float),
         "Contacts": {"MaxMeshSize": float, "MaxMeshSizeEdge": float},

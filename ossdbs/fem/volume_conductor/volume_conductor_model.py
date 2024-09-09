@@ -125,6 +125,7 @@ class VolumeConductor(ABC):
         out_of_core: bool = False,
         export_frequency: Optional[float] = None,
         adaptive_mesh_refinement_settings: Optional[dict] = None,
+        material_mesh_refinement_steps: int = 0,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -148,6 +149,8 @@ class VolumeConductor(ABC):
             Frequency-domain representation of stimulation signal
         adaptive_mesh_refinement_settings: dict
             Perform adaptive mesh refinement (only at first frequency)
+        material_mesh_refinement_steps: int
+            How often should elements with more than one material be refined
 
         Notes
         -----
@@ -219,6 +222,19 @@ class VolumeConductor(ABC):
         if compute_impedance:
             self._impedances = np.ndarray(
                 shape=(len(self.signal.frequencies)), dtype=dtype
+            )
+
+        for _ in range(material_mesh_refinement_steps):
+            _logger.info(
+                "Number of elements before material refinement:"
+                f"{self.mesh.ngsolvemesh.ne}"
+            )
+            self.mesh.refine_by_material_cf(
+                self.conductivity_cf.material_distribution(self.mesh)
+            )
+            _logger.info(
+                "Number of elements after material refinement:"
+                f"{self.mesh.ngsolvemesh.ne}"
             )
 
         for computing_idx, freq_idx in enumerate(frequency_indices):
