@@ -272,29 +272,33 @@ class VolumeConductor(ABC):
                             _logger.info("Using power instead of impedance in AMR")
                             impedance = self.compute_power()
                     else:
-                        impedance = self._impedances[band_indices]
+                        impedance = self._impedances[freq_idx]
                     _logger.info(
                         "Number of elements before refinement:"
                         f"{self.mesh.ngsolvemesh.ne}"
                     )
-                    error = 100
+                    error = 100.0
                     refinements = 0
                     tolerance = adaptive_mesh_refinement_settings["ErrorTolerance"]
                     max_iterations = adaptive_mesh_refinement_settings["MaxIterations"]
-                    # TODO write a meaningful algo
                     while error > tolerance and refinements < max_iterations:
                         self.adaptive_mesh_refinement()
                         # solve on refined mesh
                         self.compute_solution(frequency)
+                        # check new impedance
                         try:
                             new_impedance = self.compute_impedance()
                         except NotImplementedError:
                             new_impedance = self.compute_power()
                         # error in percent
-                        error = 100 * abs(impedance - new_impedance) / abs(impedance)
+                        error = 100.0 * abs(impedance - new_impedance) / abs(impedance)
                         # update variables for loop
                         refinements += 1
                         impedance = new_impedance
+                        _logger.info(
+                            f"Adaptive refinement step {refinements}, "
+                            f"error {error:.3f}%."
+                        )
                     # overwrite impedance values
                     self._impedances[band_indices] = impedance
 
