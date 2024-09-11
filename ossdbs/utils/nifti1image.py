@@ -261,6 +261,6 @@ class VTAImage(MagneticResonanceImage):
 
     def get_vta_volume(self) -> float:
         """Compute volume of VTA."""
-        voxel_volume = np.product(self.voxel_sizes)
+        voxel_volume = np.prod(self.voxel_sizes)
         # values are 0 or 1
         return voxel_volume * np.sum(self.data)
