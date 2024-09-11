@@ -195,8 +195,6 @@ class NeuronSimulator(ABC):
             stderr=subprocess.STDOUT,
             cwd=os.path.abspath(self._neuron_workdir),
         )
-        # load mechanisms into environment
-        neuron.load_mechanisms(self._neuron_workdir)
         _logger.info("Load mechanisms into environment")
         # TODO should be written in a safer way
         try:
