@@ -65,7 +65,7 @@
         {"Name": "BrainSurface", "Active": true, "Current[A]": 0.0, "Voltage[V]": 0.0}
     ],
     "MaterialDistribution": {
-        "MRIPath": "segmask.nii",
+        "MRIPath": "segmask.nii.gz",
         "MRIMapping": {
             "Blood": 4,
             "Gray matter": 1,
