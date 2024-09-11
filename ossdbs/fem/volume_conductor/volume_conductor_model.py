@@ -299,8 +299,9 @@ class VolumeConductor(ABC):
                             f"Adaptive refinement step {refinements}, "
                             f"error {error:.3f}%."
                         )
-                    # overwrite impedance values
-                    self._impedances[band_indices] = impedance
+                    if compute_impedance:
+                        # overwrite impedance values
+                        self._impedances[band_indices] = impedance
 
                     _logger.info(
                         "Number of elements after refinement:"
