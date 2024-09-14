@@ -2,6 +2,7 @@
 # Copyright 2023, 2024 Johannes Reding, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import json
 import logging
 import os
 import time
@@ -427,6 +428,7 @@ class VolumeConductor(ABC):
 
         if len(self.signal.frequencies) > 1 and not multisine_mode:
             self.export_solution_at_contacts()
+        self._save_report(timings)
         return timings
 
     def export_solution_at_contacts(self) -> None:
@@ -1029,7 +1031,7 @@ class VolumeConductor(ABC):
                 point_model.VTA_volume = self.threshold_frequency_domain_Efield(
                     scale_factor, activation_threshold
                 )
-                _logger.info(f"VTA volume is: {point_model.VTA_volume}")
+                _logger.info(f"VTA volume is: {point_model.VTA_volume:.3f}")
 
     def _process_frequency_domain_solution(
         self, band_indices: Union[List, np.ndarray], point_models: PointModel
@@ -1063,3 +1065,13 @@ class VolumeConductor(ABC):
                 "Need to specify ErrorTolerance and "
                 "MaxIterations for adaptive mesh refinement"
             )
+
+    def _save_report(self, timings: dict):
+        """Save simulation run report to disk."""
+        report = {}
+        report["DOF"] = self._space.ndof
+        report["Elements"] = self.mesh.n_elements
+        report["Timings"] = timings
+
+        with open(os.path.join(self.output_path, "VCM_report.json"), "w") as fp:
+            json.dump(report, fp)

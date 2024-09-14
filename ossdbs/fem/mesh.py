@@ -312,3 +312,8 @@ class Mesh:
         self._mesh.ngmesh.Elements3D().NumPy()["refine"] = to_refine
         # refine
         self.refine()
+
+    @property
+    def n_elements(self) -> int:
+        """Number of elements."""
+        return self.ngsolvemesh.ne
