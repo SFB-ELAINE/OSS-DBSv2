@@ -29,7 +29,7 @@ result_directories = [
     "Results_VTA_fine_edge_refinement",
     "Results_VTA_edge_voxel_refinement",
     "Results_VTA_material_refinement",
-    "Results_VTA_edge_single_material_refinement"
+    "Results_VTA_edge_single_material_refinement",
     "Results_VTA_edge_double_material_refinement",
 ]
 
