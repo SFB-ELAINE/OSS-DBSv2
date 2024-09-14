@@ -47,6 +47,9 @@ contact_2_dict["Active"] = True
 base_input_dict["Electrodes"][0]["Contacts"].append(contact_1_dict)
 base_input_dict["Electrodes"][0]["Contacts"].append(contact_2_dict)
 
+# update lattice
+base_input_dict["PointModel"]["Lattice"]["Shape"]["z"] = 90
+
 # initially no adaptive refinement
 base_input_dict["Mesh"]["AdaptiveMeshRefinement"] = {}
 base_input_dict["Mesh"]["AdaptiveMeshRefinement"]["Active"] = False
