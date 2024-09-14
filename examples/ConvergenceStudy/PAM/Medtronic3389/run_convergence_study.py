@@ -80,32 +80,32 @@ base_input_dict["Mesh"]["AdaptiveMeshRefinement"]["Active"] = False
 base_input_dict["Mesh"]["MeshingHypothesis"]["Type"] = "Default"
 base_input_dict["Mesh"]["MeshingHypothesis"]["MaxMeshSize"] = 1e6
 base_input_dict["OutputPath"] = "Results_PAM_default"
-save_input_dict(base_input_dict)
 main_run(base_input_dict)
+save_input_dict(base_input_dict)
 ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 
 # second refinement level: fine assumption
 base_input_dict["Mesh"]["MeshingHypothesis"]["Type"] = "Fine"
 base_input_dict["OutputPath"] = "Results_PAM_fine"
-save_input_dict(base_input_dict)
 main_run(base_input_dict)
+save_input_dict(base_input_dict)
 ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 
 # third refinement level: very fine assumption
 base_input_dict["Mesh"]["MeshingHypothesis"]["Type"] = "VeryFine"
 base_input_dict["OutputPath"] = "Results_PAM_very_fine"
-save_input_dict(base_input_dict)
 main_run(base_input_dict)
+save_input_dict(base_input_dict)
 ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 
 # fourth refinement: material refinement
 base_input_dict["Mesh"]["MaterialRefinementSteps"] = 2
 base_input_dict["OutputPath"] = "Results_PAM_material_refinement"
-save_input_dict(base_input_dict)
 main_run(base_input_dict)
+save_input_dict(base_input_dict)
 ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 # reset material refinement
@@ -121,8 +121,8 @@ edge_size = perimeter / 20.0
 base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["OutputPath"] = "Results_PAM_edge_refinement"
-save_input_dict(base_input_dict)
 main_run(base_input_dict)
+save_input_dict(base_input_dict)
 ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 
@@ -136,8 +136,8 @@ edge_size = perimeter / 50.0
 base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["OutputPath"] = "Results_PAM_fine_edge_refinement"
-save_input_dict(base_input_dict)
 main_run(base_input_dict)
+save_input_dict(base_input_dict)
 ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 
@@ -146,8 +146,8 @@ mri_image, _ = ossdbs.load_images(base_input_dict)
 max_mesh_size = 10.0 * min(mri_image.voxel_sizes)
 print(f"Imposing max mesh size of: {max_mesh_size:.2f}")
 base_input_dict["OutputPath"] = "Results_PAM_edge_voxel_refinement"
-save_input_dict(base_input_dict)
 main_run(base_input_dict)
+save_input_dict(base_input_dict)
 ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 
@@ -155,8 +155,8 @@ remove_file_handler(_logger)
 base_input_dict["Mesh"]["MaterialRefinementSteps"] = 2
 base_input_dict["Mesh"]["MeshingHypothesis"]["MaxMeshSize"] = 1e6
 base_input_dict["OutputPath"] = "Results_PAM_edge_material_refinement"
-save_input_dict(base_input_dict)
 main_run(base_input_dict)
+save_input_dict(base_input_dict)
 ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 # reset material refinement
@@ -174,6 +174,6 @@ base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
 # adaptive refinement
 base_input_dict["Mesh"]["AdaptiveMeshRefinement"]["Active"] = True
 base_input_dict["OutputPath"] = "Results_PAM_best"
-save_input_dict(base_input_dict)
 main_run(base_input_dict)
+save_input_dict(base_input_dict)
 ossdbs.api.run_PAM(base_input_dict)
