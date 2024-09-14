@@ -44,10 +44,11 @@ contact_2_dict["Voltage[V]"] = 1.0
 base_input_dict["Electrodes"][0]["Contacts"].append(contact_2_dict)
 
 # case grounding
-base_input_dict["Surfaces"] = {}
-base_input_dict["Surfaces"]["Name"] = "BrainSurface"
-base_input_dict["Surfaces"]["Active"] = True
-base_input_dict["Surfaces"]["Voltage[V]"] = 0.0
+surface_dict = {}
+surface_dict["Name"] = "BrainSurface"
+surface_dict["Active"] = True
+surface_dict["Voltage[V]"] = 0.0
+base_input_dict["Surfaces"] = [surface_dict]
 
 # initially no adaptive refinement
 base_input_dict["Mesh"]["AdaptiveMeshRefinement"] = {}
