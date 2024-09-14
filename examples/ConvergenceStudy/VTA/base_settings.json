@@ -35,7 +35,7 @@
     }
   ],
   "MaterialDistribution": {
-    "MRIPath": "../../../../input_files/Butenko_segmask.nii.gz",
+    "MRIPath": "../../../../../input_files/Butenko_segmask.nii.gz",
     "MRIMapping": {
       "Gray matter": 1,
       "White matter": 2,
