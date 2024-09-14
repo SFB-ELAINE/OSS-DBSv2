@@ -80,7 +80,7 @@
     "Mesh": {
         "LoadMesh": false,
         "LoadPath": "",
-        "MeshingHypothesis": {"Type": "Fine", "MaxMeshSize": 1000000.0},
+        "MeshingHypothesis": {"Type": "Default"},
         "HPRefinement": {"Active": false, "Levels": 2, "Factor": 0.125},
         "AdaptiveMeshRefinement": {
             "Active": false,
@@ -92,7 +92,7 @@
         "SavePath": "mesh"
     },
     "EQSMode": false,
-    "FEMOrder": 3,
+    "FEMOrder": 2,
     "StimulationSignal": {
         "Type": "Rectangle",
         "ListOfFrequencies": [10000],
