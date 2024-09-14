@@ -7,6 +7,7 @@ import os
 from typing import List, Optional
 
 import numpy as np
+import pandas as pd
 from dipy.tracking.metrics import length as dipy_length
 from dipy.tracking.streamline import set_number_of_points
 from nibabel.streamlines import ArraySequence
@@ -14,6 +15,37 @@ from scipy import spatial
 from scipy.io import savemat
 
 _logger = logging.getLogger(__name__)
+
+
+def compare_pathways(pam_df: pd.DataFrame, pam_df_to_compare: pd.DataFrame) -> dict:
+    """Use data loaded from CSV files to compare axon activation."""
+    try:
+        import sklearn.metrics as metrics
+    except ImportError as exc:
+        raise ImportError("Please install scikit-learn to use their metrics.") from exc
+
+    status = pam_df["status"].to_numpy()
+    status_to_compare = pam_df_to_compare["status"].to_numpy()
+    if np.all(np.isclose(status, 0)) and np.all(np.isclose(status_to_compare, 0)):
+        _logger.warning("No axon activation found, returning None")
+        return None
+    if not status.shape == status_to_compare.shape:
+        raise ValueError(
+            "The provided DataFrames do not contain the same number of axons."
+        )
+    confusion_matrix = metrics.confusion_matrix(
+        status, status_to_compare, labels=[-1, 0, 1]
+    )
+    precision, recall, f1, support = metrics.precision_recall_fscore_support(
+        status, status_to_compare
+    )
+    return {
+        "confusion matrix": confusion_matrix,
+        "recall:": recall,
+        "precision": precision,
+        "f1": f1,
+        "support": support,
+    }
 
 
 def find_nearest(array: np.ndarray, value: float):
