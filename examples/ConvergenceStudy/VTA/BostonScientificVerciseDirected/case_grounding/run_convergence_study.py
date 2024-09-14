@@ -53,7 +53,7 @@ base_input_dict["Surfaces"] = [surface_dict]
 # update grid
 base_input_dict["PointModel"]["Lattice"]["Shape"]["x"] = 60
 base_input_dict["PointModel"]["Lattice"]["Shape"]["y"] = 60
-base_input_dict["PointModel"]["Lattice"]["Shape"]["z"] = 120
+base_input_dict["PointModel"]["Lattice"]["Shape"]["z"] = 240
 base_input_dict["PointModel"]["Lattice"]["PointDistance[mm]"] = 0.125
 
 # initially no adaptive refinement
@@ -95,7 +95,6 @@ lead_diameter = ossdbs.electrodes.default_electrode_parameters[
 perimeter = np.pi * lead_diameter
 edge_size = perimeter / 20.0
 base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
-base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["OutputPath"] = "Results_VTA_edge_refinement"
 main_run(base_input_dict)
 remove_file_handler(_logger)
@@ -108,7 +107,6 @@ lead_diameter = ossdbs.electrodes.default_electrode_parameters[
 perimeter = np.pi * lead_diameter
 edge_size = perimeter / 50.0
 base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
-base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["OutputPath"] = "Results_VTA_fine_edge_refinement"
 main_run(base_input_dict)
 remove_file_handler(_logger)
@@ -121,7 +119,6 @@ lead_diameter = ossdbs.electrodes.default_electrode_parameters[
 perimeter = np.pi * lead_diameter
 edge_size = perimeter / 75.0
 base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
-base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["OutputPath"] = "Results_VTA_very_fine_edge_refinement"
 main_run(base_input_dict)
 remove_file_handler(_logger)
@@ -161,7 +158,6 @@ base_input_dict["Mesh"]["MaterialRefinementSteps"] = 1
 # reset edge size
 edge_size = 1e6
 base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
-base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
 # adaptive refinement
 base_input_dict["Mesh"]["AdaptiveMeshRefinement"]["Active"] = True
 

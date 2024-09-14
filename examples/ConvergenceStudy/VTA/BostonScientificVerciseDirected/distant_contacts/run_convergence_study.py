@@ -50,7 +50,7 @@ base_input_dict["Electrodes"][0]["Contacts"].append(contact_8_dict)
 # update grid
 base_input_dict["PointModel"]["Lattice"]["Shape"]["x"] = 60
 base_input_dict["PointModel"]["Lattice"]["Shape"]["y"] = 60
-base_input_dict["PointModel"]["Lattice"]["Shape"]["z"] = 120
+base_input_dict["PointModel"]["Lattice"]["Shape"]["z"] = 160
 base_input_dict["PointModel"]["Lattice"]["PointDistance[mm]"] = 0.125
 
 # initially no adaptive refinement
