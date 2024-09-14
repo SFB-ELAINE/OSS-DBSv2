@@ -37,7 +37,7 @@
                 {
                     "Contact_ID": 2,
                     "Active": false,
-                    "Current[A]": 0.004,
+                    "Current[A]": 0.012,
                     "Voltage[V]": 0.0,
                     "Floating": true,
                     "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0}
@@ -45,7 +45,7 @@
                 {
                     "Contact_ID": 3,
                     "Active": false,
-                    "Current[A]": -0.002,
+                    "Current[A]": -0.004,
                     "Voltage[V]": 0.0,
                     "Floating": true,
                     "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0}
@@ -53,7 +53,7 @@
                 {
                     "Contact_ID": 4,
                     "Active": false,
-                    "Current[A]": -0.002,
+                    "Current[A]": -0.008,
                     "Voltage[V]": 0.0,
                     "Floating": true,
                     "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0}
@@ -110,7 +110,7 @@
         "Type": "CG",
         "Preconditioner": "bddc",
         "PreconditionerKwargs": {"coarsetype": "local"},
-        "MaximumSteps": 500,
+        "MaximumSteps": 1000,
         "Precision": 1e-10
     },
     "PointModel": {
