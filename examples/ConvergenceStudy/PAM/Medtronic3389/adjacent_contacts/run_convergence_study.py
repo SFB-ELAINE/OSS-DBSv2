@@ -25,12 +25,12 @@ def save_input_dict(base_input_dict):
     input_dict = deepcopy(base_input_dict)
     # add one layer to make sure input files get found
     input_dict["MaterialDistribution"]["MRIPath"] = os.path.join(
-        "..", input_dict["MaterialDistribution"]["MRIPath"]
+        "..", "..", input_dict["MaterialDistribution"]["MRIPath"]
     )
     input_dict["PointModel"]["Pathway"]["FileName"] = os.path.join(
-        "..", input_dict["PointModel"]["Pathway"]["FileName"]
+        "..", "..", input_dict["PointModel"]["Pathway"]["FileName"]
     )
-    input_dict["PathwayFile"] = os.path.join("..", input_dict["PathwayFile"])
+    input_dict["PathwayFile"] = os.path.join("..", "..", input_dict["PathwayFile"])
     input_dict["OutputPath"] = "./"
 
     with open(
@@ -52,18 +52,20 @@ _logger = logging.getLogger("ossdbs")
 
 electrode_name = "Medtronic3389"
 
-with open("../oss_dbs_parameters.json") as fp:
+with open("../../oss_dbs_parameters.json") as fp:
     base_input_dict = json.load(fp)
 
 
 # adjust pathes
 base_input_dict["MaterialDistribution"]["MRIPath"] = os.path.join(
-    "..", base_input_dict["MaterialDistribution"]["MRIPath"]
+    "..", "..", base_input_dict["MaterialDistribution"]["MRIPath"]
 )
 base_input_dict["PointModel"]["Pathway"]["FileName"] = os.path.join(
-    "..", base_input_dict["PointModel"]["Pathway"]["FileName"]
+    "..", "..", base_input_dict["PointModel"]["Pathway"]["FileName"]
 )
-base_input_dict["PathwayFile"] = os.path.join("..", base_input_dict["PathwayFile"])
+base_input_dict["PathwayFile"] = os.path.join(
+    "..", "..", base_input_dict["PathwayFile"]
+)
 
 # add electrode
 base_input_dict["Electrodes"][0]["Name"] = electrode_name
