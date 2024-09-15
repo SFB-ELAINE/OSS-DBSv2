@@ -37,20 +37,23 @@ with open("../../base_settings.json") as fp:
 # add electrode
 base_input_dict["Electrodes"][0]["Name"] = electrode_name
 # add contacts
-contact_1_dict = BASE_CONTACT.copy()
-contact_1_dict["Contact_ID"] = 1
-contact_1_dict["Active"] = True
-contact_1_dict["Voltage[V]"] = 1.0
 contact_2_dict = BASE_CONTACT.copy()
 contact_2_dict["Contact_ID"] = 2
 contact_2_dict["Active"] = True
-base_input_dict["Electrodes"][0]["Contacts"].append(contact_1_dict)
+contact_2_dict["Voltage[V]"] = 1.0
 base_input_dict["Electrodes"][0]["Contacts"].append(contact_2_dict)
+
+# case grounding
+surface_dict = {}
+surface_dict["Name"] = "BrainSurface"
+surface_dict["Active"] = True
+surface_dict["Voltage[V]"] = 0.0
+base_input_dict["Surfaces"] = [surface_dict]
 
 # update grid
 base_input_dict["PointModel"]["Lattice"]["Shape"]["x"] = 60
 base_input_dict["PointModel"]["Lattice"]["Shape"]["y"] = 60
-base_input_dict["PointModel"]["Lattice"]["Shape"]["z"] = 120
+base_input_dict["PointModel"]["Lattice"]["Shape"]["z"] = 240
 base_input_dict["PointModel"]["Lattice"]["PointDistance[mm]"] = 0.125
 
 # initially no adaptive refinement
@@ -92,7 +95,6 @@ lead_diameter = ossdbs.electrodes.default_electrode_parameters[
 perimeter = np.pi * lead_diameter
 edge_size = perimeter / 20.0
 base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
-base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["OutputPath"] = "Results_VTA_edge_refinement"
 main_run(base_input_dict)
 remove_file_handler(_logger)
@@ -105,7 +107,6 @@ lead_diameter = ossdbs.electrodes.default_electrode_parameters[
 perimeter = np.pi * lead_diameter
 edge_size = perimeter / 50.0
 base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
-base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["OutputPath"] = "Results_VTA_fine_edge_refinement"
 main_run(base_input_dict)
 remove_file_handler(_logger)
@@ -118,7 +119,6 @@ lead_diameter = ossdbs.electrodes.default_electrode_parameters[
 perimeter = np.pi * lead_diameter
 edge_size = perimeter / 75.0
 base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
-base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["OutputPath"] = "Results_VTA_very_fine_edge_refinement"
 main_run(base_input_dict)
 remove_file_handler(_logger)
@@ -158,7 +158,6 @@ base_input_dict["Mesh"]["MaterialRefinementSteps"] = 1
 # reset edge size
 edge_size = 1e6
 base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
-base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
 # adaptive refinement
 base_input_dict["Mesh"]["AdaptiveMeshRefinement"]["Active"] = True
 

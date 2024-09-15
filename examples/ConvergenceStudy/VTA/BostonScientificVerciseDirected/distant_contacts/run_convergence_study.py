@@ -4,8 +4,6 @@
 
 import json
 import logging
-import os
-from copy import deepcopy
 
 import numpy as np
 
@@ -18,25 +16,6 @@ def remove_file_handler(logger):
     for h in logger.handlers:
         if isinstance(h, logging.FileHandler):
             logger.removeHandler(h)
-
-
-def save_input_dict(base_input_dict):
-    """Save input dictionary for convergence run."""
-    input_dict = deepcopy(base_input_dict)
-    # add one layer to make sure input files get found
-    input_dict["MaterialDistribution"]["MRIPath"] = os.path.join(
-        "..", "..", input_dict["MaterialDistribution"]["MRIPath"]
-    )
-    input_dict["PointModel"]["Pathway"]["FileName"] = os.path.join(
-        "..", "..", input_dict["PointModel"]["Pathway"]["FileName"]
-    )
-    input_dict["PathwayFile"] = os.path.join("..", "..", input_dict["PathwayFile"])
-    input_dict["OutputPath"] = "./"
-
-    with open(
-        os.path.join(base_input_dict["OutputPath"], "input_dict.json"), "w"
-    ) as fp:
-        json.dump(input_dict, fp, indent=2)
 
 
 BASE_CONTACT = {
@@ -52,36 +31,27 @@ _logger = logging.getLogger("ossdbs")
 
 electrode_name = "BostonScientificVerciseDirected"
 
-with open("../../oss_dbs_parameters.json") as fp:
+with open("../../base_settings.json") as fp:
     base_input_dict = json.load(fp)
-
-
-# adjust pathes
-base_input_dict["MaterialDistribution"]["MRIPath"] = os.path.join(
-    "..", "..", base_input_dict["MaterialDistribution"]["MRIPath"]
-)
-base_input_dict["PointModel"]["Pathway"]["FileName"] = os.path.join(
-    "..", "..", base_input_dict["PointModel"]["Pathway"]["FileName"]
-)
-base_input_dict["PathwayFile"] = os.path.join(
-    "..", "..", base_input_dict["PathwayFile"]
-)
 
 # add electrode
 base_input_dict["Electrodes"][0]["Name"] = electrode_name
+# add contacts
+contact_1_dict = BASE_CONTACT.copy()
+contact_1_dict["Contact_ID"] = 1
+contact_1_dict["Active"] = True
+contact_1_dict["Voltage[V]"] = 1.0
+contact_8_dict = BASE_CONTACT.copy()
+contact_8_dict["Contact_ID"] = 8
+contact_8_dict["Active"] = True
+base_input_dict["Electrodes"][0]["Contacts"].append(contact_1_dict)
+base_input_dict["Electrodes"][0]["Contacts"].append(contact_8_dict)
 
-# change contacts
-base_input_dict["Electrodes"][0]["Contacts"][0]["Current[A]"] = 0.012
-base_input_dict["Electrodes"][0]["Contacts"][1]["Contact_ID"] = 2
-base_input_dict["Electrodes"][0]["Contacts"][1]["Current[A]"] = 0.0
-base_input_dict["Electrodes"][0]["Contacts"][2]["Contact_ID"] = 5
-base_input_dict["Electrodes"][0]["Contacts"][2]["Current[A]"] = 0.0
-base_input_dict["Electrodes"][0]["Contacts"][3]["Contact_ID"] = 7
-base_input_dict["Electrodes"][0]["Contacts"][3]["Current[A]"] = -0.012
-
-# for PAM
-base_input_dict["Scaling"] = 1.0
-base_input_dict["ScalingIndex"] = None
+# update grid
+base_input_dict["PointModel"]["Lattice"]["Shape"]["x"] = 60
+base_input_dict["PointModel"]["Lattice"]["Shape"]["y"] = 60
+base_input_dict["PointModel"]["Lattice"]["Shape"]["z"] = 160
+base_input_dict["PointModel"]["Lattice"]["PointDistance[mm]"] = 0.125
 
 # initially no adaptive refinement
 base_input_dict["Mesh"]["AdaptiveMeshRefinement"] = {}
@@ -90,34 +60,26 @@ base_input_dict["Mesh"]["AdaptiveMeshRefinement"]["Active"] = False
 # first refinement level: Default
 base_input_dict["Mesh"]["MeshingHypothesis"]["Type"] = "Default"
 base_input_dict["Mesh"]["MeshingHypothesis"]["MaxMeshSize"] = 1e6
-base_input_dict["OutputPath"] = "Results_PAM_default"
+base_input_dict["OutputPath"] = "Results_VTA_default"
 main_run(base_input_dict)
-save_input_dict(base_input_dict)
-ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 
 # second refinement level: fine assumption
 base_input_dict["Mesh"]["MeshingHypothesis"]["Type"] = "Fine"
-base_input_dict["OutputPath"] = "Results_PAM_fine"
+base_input_dict["OutputPath"] = "Results_VTA_fine"
 main_run(base_input_dict)
-save_input_dict(base_input_dict)
-ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 
 # third refinement level: very fine assumption
 base_input_dict["Mesh"]["MeshingHypothesis"]["Type"] = "VeryFine"
-base_input_dict["OutputPath"] = "Results_PAM_very_fine"
+base_input_dict["OutputPath"] = "Results_VTA_very_fine"
 main_run(base_input_dict)
-save_input_dict(base_input_dict)
-ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 
 # fourth refinement: material refinement
 base_input_dict["Mesh"]["MaterialRefinementSteps"] = 2
-base_input_dict["OutputPath"] = "Results_PAM_material_refinement"
+base_input_dict["OutputPath"] = "Results_VTA_material_refinement"
 main_run(base_input_dict)
-save_input_dict(base_input_dict)
-ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 # reset material refinement
 base_input_dict["Mesh"]["MaterialRefinementSteps"] = 0
@@ -131,10 +93,8 @@ perimeter = np.pi * lead_diameter
 edge_size = perimeter / 20.0
 base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
-base_input_dict["OutputPath"] = "Results_PAM_edge_refinement"
+base_input_dict["OutputPath"] = "Results_VTA_edge_refinement"
 main_run(base_input_dict)
-save_input_dict(base_input_dict)
-ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 
 # sixth refinement: more edge refinement
@@ -146,10 +106,8 @@ perimeter = np.pi * lead_diameter
 edge_size = perimeter / 50.0
 base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
-base_input_dict["OutputPath"] = "Results_PAM_fine_edge_refinement"
+base_input_dict["OutputPath"] = "Results_VTA_fine_edge_refinement"
 main_run(base_input_dict)
-save_input_dict(base_input_dict)
-ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 
 # seventh refinement: very fine edge refinement
@@ -161,10 +119,8 @@ perimeter = np.pi * lead_diameter
 edge_size = perimeter / 75.0
 base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
-base_input_dict["OutputPath"] = "Results_PAM_very_fine_edge_refinement"
+base_input_dict["OutputPath"] = "Results_VTA_very_fine_edge_refinement"
 main_run(base_input_dict)
-save_input_dict(base_input_dict)
-ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 
 # eigth refinement: edge refinement + limit on voxel size
@@ -172,19 +128,15 @@ mri_image, _ = ossdbs.load_images(base_input_dict)
 max_mesh_size = 10.0 * min(mri_image.voxel_sizes)
 print(f"Imposing max mesh size of: {max_mesh_size:.2f}")
 base_input_dict["Mesh"]["MeshingHypothesis"]["MaxMeshSize"] = max_mesh_size
-base_input_dict["OutputPath"] = "Results_PAM_edge_voxel_refinement"
+base_input_dict["OutputPath"] = "Results_VTA_edge_voxel_refinement"
 main_run(base_input_dict)
-save_input_dict(base_input_dict)
-ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 
 # ninth refinement: material refinement + edge refinement
 base_input_dict["Mesh"]["MaterialRefinementSteps"] = 1
 base_input_dict["Mesh"]["MeshingHypothesis"]["MaxMeshSize"] = 1e6
-base_input_dict["OutputPath"] = "Results_PAM_edge_single_material_refinement"
+base_input_dict["OutputPath"] = "Results_VTA_edge_single_material_refinement"
 main_run(base_input_dict)
-save_input_dict(base_input_dict)
-ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 # reset material refinement
 base_input_dict["Mesh"]["MaterialRefinementSteps"] = 0
@@ -192,10 +144,8 @@ base_input_dict["Mesh"]["MaterialRefinementSteps"] = 0
 # tenth refinement: material refinement + edge refinement
 base_input_dict["Mesh"]["MaterialRefinementSteps"] = 2
 base_input_dict["Mesh"]["MeshingHypothesis"]["MaxMeshSize"] = 1e6
-base_input_dict["OutputPath"] = "Results_PAM_edge_double_material_refinement"
+base_input_dict["OutputPath"] = "Results_VTA_edge_double_material_refinement"
 main_run(base_input_dict)
-save_input_dict(base_input_dict)
-ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 # reset material refinement
 base_input_dict["Mesh"]["MaterialRefinementSteps"] = 0
@@ -211,7 +161,6 @@ base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
 # adaptive refinement
 base_input_dict["Mesh"]["AdaptiveMeshRefinement"]["Active"] = True
-base_input_dict["OutputPath"] = "Results_PAM_best"
+
+base_input_dict["OutputPath"] = "Results_VTA_best"
 main_run(base_input_dict)
-save_input_dict(base_input_dict)
-ossdbs.api.run_PAM(base_input_dict)
