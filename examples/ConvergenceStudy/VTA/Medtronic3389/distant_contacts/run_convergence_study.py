@@ -158,6 +158,5 @@ base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
 # adaptive refinement
 base_input_dict["Mesh"]["AdaptiveMeshRefinement"]["Active"] = True
-
 base_input_dict["OutputPath"] = "Results_VTA_best"
 main_run(base_input_dict)

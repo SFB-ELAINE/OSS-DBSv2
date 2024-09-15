@@ -110,7 +110,7 @@
         "Type": "CG",
         "Preconditioner": "bddc",
         "PreconditionerKwargs": {"coarsetype": "local"},
-        "MaximumSteps": 1000,
+        "MaximumSteps": 5000,
         "Precision": 1e-10
     },
     "PointModel": {
