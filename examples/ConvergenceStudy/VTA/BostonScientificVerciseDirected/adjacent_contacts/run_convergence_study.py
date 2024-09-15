@@ -72,9 +72,9 @@ base_input_dict["Electrodes"][0]["Name"] = electrode_name
 
 # change contacts
 base_input_dict["Electrodes"][0]["Contacts"][0]["Current[A]"] = 0.012
-base_input_dict["Electrodes"][0]["Contacts"][1]["Current[A]"] = -0.04
-base_input_dict["Electrodes"][0]["Contacts"][2]["Current[A]"] = -0.04
-base_input_dict["Electrodes"][0]["Contacts"][3]["Current[A]"] = -0.04
+base_input_dict["Electrodes"][0]["Contacts"][1]["Current[A]"] = -0.004
+base_input_dict["Electrodes"][0]["Contacts"][2]["Current[A]"] = -0.004
+base_input_dict["Electrodes"][0]["Contacts"][3]["Current[A]"] = -0.004
 # for PAM
 base_input_dict["Scaling"] = 1.0
 base_input_dict["ScalingIndex"] = None
