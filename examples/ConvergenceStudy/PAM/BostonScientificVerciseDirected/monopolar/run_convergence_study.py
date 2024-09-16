@@ -50,7 +50,7 @@ BASE_CONTACT = {
 ossdbs.set_logger()
 _logger = logging.getLogger("ossdbs")
 
-electrode_name = "Medtronic3389"
+electrode_name = "BostonScientificVerciseDirected"
 
 with open("../../oss_dbs_parameters.json") as fp:
     base_input_dict = json.load(fp)
@@ -71,10 +71,16 @@ base_input_dict["PathwayFile"] = os.path.join(
 base_input_dict["Electrodes"][0]["Name"] = electrode_name
 
 # change contacts
-base_input_dict["Electrodes"][0]["Contacts"][0]["Current[A]"] = 0.012
+base_input_dict["Electrodes"][0]["Contacts"][0]["Current[A]"] = 0.0
+base_input_dict["Electrodes"][0]["Contacts"][1]["Contact_ID"] = 2
 base_input_dict["Electrodes"][0]["Contacts"][1]["Current[A]"] = 0.0
-base_input_dict["Electrodes"][0]["Contacts"][2]["Current[A]"] = 0.0
-base_input_dict["Electrodes"][0]["Contacts"][3]["Current[A]"] = -0.012
+base_input_dict["Electrodes"][0]["Contacts"][2]["Contact_ID"] = 5
+base_input_dict["Electrodes"][0]["Contacts"][2]["Current[A]"] = 0.012
+base_input_dict["Electrodes"][0]["Contacts"][3]["Contact_ID"] = 7
+base_input_dict["Electrodes"][0]["Contacts"][3]["Current[A]"] = 0.0
+
+# counter electrode
+base_input_dict["Surfaces"][0]["Current[A]"] = -0.012
 
 # for PAM
 base_input_dict["Scaling"] = 1.0
