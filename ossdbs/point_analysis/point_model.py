@@ -645,3 +645,32 @@ class PointModel(ABC):
         raise NotImplementedError(
             "Point model information export " "has not yet been implemented."
         )
+
+    def write_netgen_meshsize_file(self, meshsize: float, filename: str) -> None:
+        """Use coordinates of point model to impose local mesh size.
+
+        Notes
+        -----
+        Local mesh size for points is set.
+        The file has the format (according to Netgen documentation):
+          nr_points
+          x1, y1, z1, meshsize
+          x2, y2, z2, meshsize
+          ...
+          xn, yn, zn, meshsize
+
+          nr_edges
+          x11, y11, z11, x12, y12, z12, meshsize
+          ...
+          xn1, yn1, zn1, xn2, yn2, zn2, meshsize
+        """
+        points = self.coordinates
+        with open(filename, "w") as fp:
+            # write points to file
+            fp.write(f"{len(points)}\n")
+            fp.write("\n")
+            for point in points:
+                fp.write(f"{point[0]} {point[1]} {point[2]} {meshsize}\n")
+            # we could also write lines but we do not
+            fp.write("\n")
+            fp.write("0\n")

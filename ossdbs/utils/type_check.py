@@ -41,7 +41,11 @@ class TypeChecker:
             "LoadMesh": bool,
             "LoadPath": str,
             "MeshElementOrder": int,
-            "MeshingHypothesis": {"Type": str},
+            "MeshingHypothesis": {
+                "Type": str,
+                "MaxMeshSize": (int, float),
+                "MeshSizeFilename": str,
+            },
             "SaveMesh": bool,
             "SavePath": str,
         },

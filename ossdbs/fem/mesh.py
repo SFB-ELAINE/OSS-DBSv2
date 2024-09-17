@@ -38,6 +38,7 @@ class Mesh:
             meshing_parameters["MeshingHypothesis"]
         )
         netgen_mp = self.get_meshing_parameters(meshing_parameters["MeshingHypothesis"])
+        _logger.debug(f"Calling GenerateMesh with {netgen_hypothesis} and {netgen_mp}")
         self._mesh = ngsolve.Mesh(
             self.geometry.GenerateMesh(netgen_hypothesis, **netgen_mp)
         )
@@ -97,6 +98,8 @@ class Mesh:
             meshing_hypothesis["curvaturesafety"] = mesh_parameters["CurvatureSafety"]
         if "Grading" in mesh_parameters:
             meshing_hypothesis["grading"] = mesh_parameters["Grading"]
+        if "MeshSizeFilename" in mesh_parameters:
+            meshing_hypothesis["meshsizefilename"] = mesh_parameters["MeshSizeFilename"]
         return meshing_hypothesis
 
     @property

@@ -63,6 +63,7 @@ class Settings:
             "MeshingHypothesis": {
                 "Type": "Default",
                 "MaxMeshSize": 1e6,
+                "MeshSizeFilename": "",
             },
             "HPRefinement": {
                 "Active": False,
