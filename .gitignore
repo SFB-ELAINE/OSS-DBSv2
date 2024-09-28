@@ -34,3 +34,5 @@ test_input_cases_results.csv
 ngmesh.ini
 examples/StimulationSignalAPI/*.pdf
 x86_64/
+
+meshsizes.txt

@@ -84,6 +84,14 @@ base_input_dict["ScalingIndex"] = None
 base_input_dict["Mesh"]["AdaptiveMeshRefinement"] = {}
 base_input_dict["Mesh"]["AdaptiveMeshRefinement"]["Active"] = False
 
+# mri image
+mri_image, _ = ossdbs.load_images(base_input_dict)
+# pathway info
+pw = ossdbs.point_analysis.Pathway(base_input_dict["PointModel"]["Pathway"]["FileName"])
+pw.write_netgen_meshsize_file(
+    meshsize=min(mri_image.voxel_sizes), filename="meshsizes.txt"
+)
+
 # first refinement level: Default
 base_input_dict["Mesh"]["MeshingHypothesis"]["Type"] = "Default"
 base_input_dict["Mesh"]["MeshingHypothesis"]["MaxMeshSize"] = 1e6
@@ -92,6 +100,16 @@ main_run(base_input_dict)
 save_input_dict(base_input_dict)
 ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
+
+# refinement level: default and refinement around pathway
+base_input_dict["Mesh"]["MeshingHypothesis"]["MeshSizeFilename"] = "meshsizes.txt"
+base_input_dict["OutputPath"] = "Results_PAM_default_meshsize"
+main_run(base_input_dict)
+save_input_dict(base_input_dict)
+ossdbs.api.run_PAM(base_input_dict)
+remove_file_handler(_logger)
+# reset mesh size file name
+base_input_dict["Mesh"]["MeshingHypothesis"]["MeshSizeFilename"] = ""
 
 # second refinement level: fine assumption
 base_input_dict["Mesh"]["MeshingHypothesis"]["Type"] = "Fine"
@@ -165,7 +183,6 @@ ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
 
 # eigth refinement: edge refinement + limit on voxel size
-mri_image, _ = ossdbs.load_images(base_input_dict)
 max_mesh_size = 10.0 * min(mri_image.voxel_sizes)
 print(f"Imposing max mesh size of: {max_mesh_size:.2f}")
 base_input_dict["Mesh"]["MeshingHypothesis"]["MaxMeshSize"] = max_mesh_size
@@ -174,6 +191,18 @@ main_run(base_input_dict)
 save_input_dict(base_input_dict)
 ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
+
+# refinement: edge refinement + refinement around pathway
+base_input_dict["Mesh"]["MeshingHypothesis"]["MaxMeshSize"] = 1e6
+base_input_dict["Mesh"]["MeshingHypothesis"]["MeshSizeFilename"] = "meshsizes.txt"
+base_input_dict["OutputPath"] = "Results_PAM_edge_meshsize"
+main_run(base_input_dict)
+save_input_dict(base_input_dict)
+ossdbs.api.run_PAM(base_input_dict)
+remove_file_handler(_logger)
+# reset mesh size file name
+base_input_dict["Mesh"]["MeshingHypothesis"]["MeshSizeFilename"] = ""
+
 
 # ninth refinement: material refinement + edge refinement
 base_input_dict["Mesh"]["MaterialRefinementSteps"] = 1

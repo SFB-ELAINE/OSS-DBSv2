@@ -11,13 +11,17 @@ pam_best_files = glob.glob(os.path.join(best_PAM_result_directory, "Axon_state*.
 
 result_directories = [
     "Results_PAM_default",
+    "Results_PAM_default_meshsize",
     "Results_PAM_fine",
     "Results_PAM_very_fine",
     "Results_PAM_edge_refinement",
     "Results_PAM_fine_edge_refinement",
+    "Results_PAM_very_fine_edge_refinement",
     "Results_PAM_edge_voxel_refinement",
+    "Results_PAM_edge_meshsize",
     "Results_PAM_material_refinement",
-    "Results_PAM_edge_material_refinement",
+    "Results_PAM_edge_single_material_refinement",
+    "Results_PAM_edge_double_material_refinement",
 ]
 
 
