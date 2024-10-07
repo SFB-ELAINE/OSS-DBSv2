@@ -107,19 +107,6 @@ base_input_dict["OutputPath"] = "Results_VTA_fine_edge_refinement"
 main_run(base_input_dict)
 remove_file_handler(_logger)
 
-# seventh refinement: very fine edge refinement
-base_input_dict["Mesh"]["MeshingHypothesis"]["Type"] = "Default"
-lead_diameter = ossdbs.electrodes.default_electrode_parameters[
-    electrode_name
-].lead_diameter
-perimeter = np.pi * lead_diameter
-edge_size = perimeter / 75.0
-base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
-base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
-base_input_dict["OutputPath"] = "Results_VTA_very_fine_edge_refinement"
-main_run(base_input_dict)
-remove_file_handler(_logger)
-
 # eigth refinement: edge refinement + limit on voxel size
 mri_image, _ = ossdbs.load_images(base_input_dict)
 max_mesh_size = 10.0 * min(mri_image.voxel_sizes)
@@ -138,10 +125,41 @@ remove_file_handler(_logger)
 # reset material refinement
 base_input_dict["Mesh"]["MaterialRefinementSteps"] = 0
 
-# tenth refinement: material refinement + edge refinement
+# ninth refinement: material refinement + edge refinement
 base_input_dict["Mesh"]["MaterialRefinementSteps"] = 2
 base_input_dict["Mesh"]["MeshingHypothesis"]["MaxMeshSize"] = 1e6
 base_input_dict["OutputPath"] = "Results_VTA_edge_double_material_refinement"
+main_run(base_input_dict)
+remove_file_handler(_logger)
+# reset material refinement
+base_input_dict["Mesh"]["MaterialRefinementSteps"] = 0
+
+# seventh refinement: very fine edge refinement
+base_input_dict["Mesh"]["MeshingHypothesis"]["Type"] = "Default"
+lead_diameter = ossdbs.electrodes.default_electrode_parameters[
+    electrode_name
+].lead_diameter
+perimeter = np.pi * lead_diameter
+edge_size = perimeter / 75.0
+base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
+base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
+base_input_dict["OutputPath"] = "Results_VTA_very_fine_edge_refinement"
+main_run(base_input_dict)
+remove_file_handler(_logger)
+
+# ninth refinement: material refinement + edge refinement
+base_input_dict["Mesh"]["MaterialRefinementSteps"] = 1
+base_input_dict["Mesh"]["MeshingHypothesis"]["MaxMeshSize"] = 1e6
+base_input_dict["OutputPath"] = "Results_VTA_fine_edge_single_material_refinement"
+main_run(base_input_dict)
+remove_file_handler(_logger)
+# reset material refinement
+base_input_dict["Mesh"]["MaterialRefinementSteps"] = 0
+
+# tenth refinement: material refinement + edge refinement
+base_input_dict["Mesh"]["MaterialRefinementSteps"] = 2
+base_input_dict["Mesh"]["MeshingHypothesis"]["MaxMeshSize"] = 1e6
+base_input_dict["OutputPath"] = "Results_VTA_fine_edge_double_material_refinement"
 main_run(base_input_dict)
 remove_file_handler(_logger)
 # reset material refinement
@@ -158,5 +176,6 @@ base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = edge_size
 base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = edge_size
 # adaptive refinement
 base_input_dict["Mesh"]["AdaptiveMeshRefinement"]["Active"] = True
+
 base_input_dict["OutputPath"] = "Results_VTA_best"
 main_run(base_input_dict)
