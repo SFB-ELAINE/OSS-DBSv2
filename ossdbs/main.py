@@ -134,7 +134,8 @@ def main_run(input_settings: dict):
         )
         settings["Mesh"]["LoadMesh"] = False
         # because of floating
-        settings["Solver"]["PreconditionerKwargs"] = {"coarsetype": "local"}
+        settings["Solver"]["Preconditioner"] = "local"
+        settings["Solver"]["PreconditionerKwargs"] = {}
     # run in parallel
     with ngsolve.TaskManager():
         solver = prepare_solver(settings)
