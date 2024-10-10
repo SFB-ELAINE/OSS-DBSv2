@@ -42,7 +42,7 @@ def save_input_dict(base_input_dict):
 ossdbs.set_logger()
 _logger = logging.getLogger("ossdbs")
 
-electrode_name = "BostonScientificVerciseDirected"
+electrode_name = "Medtronic3389"
 
 with open("../../oss-dbs_parameters.json") as fp:
     base_input_dict = json.load(fp)
@@ -149,6 +149,7 @@ main_run(base_input_dict)
 save_input_dict(base_input_dict)
 ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
+
 # eigth refinement: edge refinement + limit on voxel size
 max_mesh_size = 10.0 * min(mri_image.voxel_sizes)
 print(f"Imposing max mesh size of: {max_mesh_size:.2f}")

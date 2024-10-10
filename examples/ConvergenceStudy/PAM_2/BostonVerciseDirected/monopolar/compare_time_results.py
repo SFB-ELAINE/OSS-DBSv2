@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-pathway = "DRTT_v1"
+pathway = "dDRTT_1_250_smooth_right"
 cutoff = 100
 
 best_pathway_dir = "Results_PAM_best"
