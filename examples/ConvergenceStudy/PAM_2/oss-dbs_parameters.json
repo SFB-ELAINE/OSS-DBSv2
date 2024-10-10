@@ -218,10 +218,8 @@
   },
   "Solver": {
     "Type": "CG",
-    "Preconditioner": "bddc",
-    "PreconditionerKwargs": {
-      "coarsetype": "local"
-    },
+    "Preconditioner": "local",
+    "PreconditionerKwargs": {},
     "MaximumSteps": 2000,
     "Precision": 1e-10
   },
