@@ -119,7 +119,8 @@ class DixiSEEGModel(ElectrodeModel):
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self._parameters.lead_diameter * 0.5
-        direction = self._direction
+        origin = (0, 0, 0)
+        direction = (0, 0, 1)
 
         center = tuple(np.array(direction) * radius)
         # define half space at tip_center
@@ -150,10 +151,19 @@ class DixiSEEGModel(ElectrodeModel):
             else:
                 min_edge = get_lowest_edge(contact)
                 min_edge.name = name
-                vector = tuple(np.array(self._direction) * distance)
+                vector = tuple(np.array(direction) * distance)
                 contacts.append(contact.Move(vector))
                 distance += (
                     self._parameters.contact_length + self._parameters.contact_spacing
                 )
 
-        return occ.Glue(contacts)
+        if np.allclose(self._direction, direction):
+            return netgen.occ.Fuse(contacts)
+        # rotate electrode to match orientation
+        # e.g. from z-axis to y-axis
+        rotation = tuple(
+            np.cross(direction, self._direction)
+            / np.linalg.norm(np.cross(direction, self._direction))
+        )
+        angle = np.degrees(np.arccos(self._direction[2]))
+        return netgen.occ.Fuse(contacts).Rotate(occ.Axis(p=origin, d=rotation), angle)

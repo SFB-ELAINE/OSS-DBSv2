@@ -3,12 +3,12 @@
     "Center": {
       "x[mm]": -9.476,
       "y[mm]": 11.605,
-      "z[mm]": 4.676
+      "z[mm]": 10
     },
     "Dimension": {
       "x[mm]": 40.0,
       "y[mm]": 40.0,
-      "z[mm]": 40.0
+      "z[mm]": 70.0
     },
     "Shape": "Ellipsoid"
   },
@@ -107,19 +107,19 @@
         "z[mm]": 4.7
       },
       "Shape": {
-        "x": 15,
-        "y": 15,
-        "z": 15
+        "x": 40,
+        "y": 40,
+        "z": 160
       },
       "Direction": {
         "x[mm]": 0,
         "y[mm]": 0,
         "z[mm]": 1
       },
-      "PointDistance[mm]": 1
+      "PointDistance[mm]": 0.125 
     }
   },
-  "ActivationThresholdVTA": 0.2,
+  "ActivationThresholdVTA[V-per-m]": 200.0,
   "CollapseVTA": false,
   "EQSMode": false,
   "FEMOrder": 2,

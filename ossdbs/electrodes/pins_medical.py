@@ -94,10 +94,11 @@ class PINSMedicalModel(ElectrodeModel):
         return body
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        point = (0, 0, 0)
+        origin = (0, 0, 0)
+        direction = (0, 0, 1)
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
-        contact = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
+        contact = occ.Cylinder(p=origin, d=direction, r=radius, h=height)
         contacts = []
         distance = self._parameters.tip_length
         for count in range(self._n_contacts):
@@ -109,10 +110,18 @@ class PINSMedicalModel(ElectrodeModel):
             # (represents the edge between the non-contact and contact surface)
             min_edge.name = name
             max_edge.name = name
-            vector = tuple(np.array(self._direction) * distance)
+            vector = tuple(np.array(direction) * distance)
             contacts.append(contact.Move(vector))
             distance += (
                 self._parameters.contact_length + self._parameters.contact_spacing
             )
-
-        return netgen.occ.Glue(contacts)
+        if np.allclose(self._direction, direction):
+            return netgen.occ.Fuse(contacts)
+        # rotate electrode to match orientation
+        # e.g. from z-axis to y-axis
+        rotation = tuple(
+            np.cross(direction, self._direction)
+            / np.linalg.norm(np.cross(direction, self._direction))
+        )
+        angle = np.degrees(np.arccos(self._direction[2]))
+        return netgen.occ.Fuse(contacts).Rotate(occ.Axis(p=origin, d=rotation), angle)
