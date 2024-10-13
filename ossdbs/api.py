@@ -610,6 +610,8 @@ def run_PAM(settings):
         raise NotImplementedError(f"Model {model_type} not yet implemented.")
 
     if settings["StimSets"]["Active"]:
+        if "CurrentVector" not in settings:
+            settings["CurrentVector"] = None
         # files to load individual solutions from
         time_domain_solution_files = []
 
@@ -625,7 +627,7 @@ def run_PAM(settings):
             n_contacts = len(list(stim_protocols[0]))
         else:
             if settings["CurrentVector"] is None:
-                raise ValueError("Provide either a StimSetsFile or " "a CurrentVector")
+                raise ValueError("Provide either a StimSetsFile or a CurrentVector")
             n_stim_protocols = 1
             # load current from input file
             stim_protocols = [settings["CurrentVector"]]
