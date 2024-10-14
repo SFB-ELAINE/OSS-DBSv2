@@ -2,11 +2,11 @@ import fileinput
 import logging
 import multiprocessing as mp
 import os
-import platform
 import shutil
 import subprocess
 import sys
 from abc import ABC, abstractmethod
+from importlib.resources import files
 from typing import Optional
 
 import h5py
@@ -19,12 +19,6 @@ from .utilities import (
     create_paraview_outputs,
     store_axon_statuses,
 )
-
-subversion = platform.python_version_tuple()
-if int(subversion[1]) == 8:
-    from importlib_resources import files
-else:
-    from importlib.resources import files
 
 _logger = logging.getLogger(__name__)
 
