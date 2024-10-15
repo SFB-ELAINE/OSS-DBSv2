@@ -556,27 +556,43 @@ class PointModel(ABC):
         self,
         timesteps: np.ndarray,
         potential_in_time: np.ndarray,
-        Ex_in_time: np.ndarray = None,
-        Ey_in_time: np.ndarray = None,
-        Ez_in_time: np.ndarray = None,
+        Ex_in_time: Optional[np.ndarray] = None,
+        Ey_in_time: Optional[np.ndarray] = None,
+        Ez_in_time: Optional[np.ndarray] = None,
+        truncation_index: Optional[int] = None,
     ) -> TimeResult:
         """Prepare time result and save it to file.
 
-        Notes
-        -----
-        TODO rethink structure for out-of-core processing.
+        Parameters
+        ----------
+        timesteps: np.ndarray
+            Array with timesteps related to solution
+        potential_in_time: np.ndarray
+            Solution array with electric potential
+        Ex_in_time: np.ndarray
+            Solution array with x-component of field
+        Ey_in_time: np.ndarray
+            Solution array with y-component of field
+        Ez_in_time: np.ndarray
+            Solution array with z-component of field
+        truncation_index: int
+            Index to truncate solution
         """
         _logger.info("Create time results")
         field_magnitude = None
         # if all field entries are defined
         if not (Ex_in_time is None and Ey_in_time is None and Ez_in_time is None):
+            # truncate here otherwise they are none
+            Ex_in_time = Ex_in_time[:truncation_index]
+            Ey_in_time = Ey_in_time[:truncation_index]
+            Ez_in_time = Ez_in_time[:truncation_index]
             field_magnitude = compute_field_magnitude_from_components(
                 Ex_in_time, Ey_in_time, Ez_in_time
             )
         time_result = TimeResult(
-            time_steps=timesteps,
+            time_steps=timesteps[:truncation_index],
             points=self.lattice,
-            potential=potential_in_time,
+            potential=potential_in_time[:truncation_index],
             electric_field_vector_x=Ex_in_time,
             electric_field_vector_y=Ey_in_time,
             electric_field_vector_z=Ez_in_time,

@@ -451,7 +451,9 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
     return frequency_domain_signal
 
 
-def run_volume_conductor_model(settings, volume_conductor, frequency_domain_signal):
+def run_volume_conductor_model(
+    settings, volume_conductor, frequency_domain_signal, truncation_time=None
+):
     """TODO document.
 
 
@@ -491,6 +493,7 @@ def run_volume_conductor_model(settings, volume_conductor, frequency_domain_sign
         export_frequency=export_frequency,
         adaptive_mesh_refinement_settings=settings["Mesh"]["AdaptiveMeshRefinement"],
         material_mesh_refinement_steps=settings["Mesh"]["MaterialRefinementSteps"],
+        truncation_time=truncation_time,
     )
     return vcm_timings
 

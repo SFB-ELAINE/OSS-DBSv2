@@ -15,6 +15,7 @@ from ossdbs import log_to_file, set_logger
 from ossdbs.api import (
     build_brain_model,
     generate_electrodes,
+    generate_signal,
     load_images,
     prepare_dielectric_properties,
     prepare_solver,
@@ -125,6 +126,20 @@ def main_run(input_settings: dict):
     timings["ConductivityCF"] = time_1 - time_0
     time_0 = time_1
 
+    # decide on truncation
+    truncation_time = None
+    if "TruncateAfterActivePartRatio" in settings:
+        truncation_ratio = settings["TruncateAfterActivePartRatio"]
+        if truncation_ratio is not None:
+            if not isinstance(truncation_ratio, float):
+                raise ValueError(
+                    "Please provide the ratio to truncate the signal "
+                    "as a floating-point number. "
+                    "Set e.g. to 20 for 20 times pulse + counterpulse width."
+                )
+            time_domain_signal = generate_signal(settings)
+            truncation_time = truncation_ratio * time_domain_signal.get_active_time()
+
     # save Mesh for StimSets
     if settings["StimSets"]["Active"]:
         settings["Mesh"]["SaveMesh"] = True
@@ -145,7 +160,10 @@ def main_run(input_settings: dict):
         frequency_domain_signal = prepare_stimulation_signal(settings)
         if not settings["StimSets"]["Active"]:
             vcm_timings = run_volume_conductor_model(
-                settings, volume_conductor, frequency_domain_signal
+                settings,
+                volume_conductor,
+                frequency_domain_signal,
+                truncation_time=truncation_time,
             )
             _logger.info("Volume conductor timings:\n" f"{pprint.pformat(vcm_timings)}")
         else:

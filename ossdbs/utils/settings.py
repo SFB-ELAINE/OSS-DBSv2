@@ -136,6 +136,7 @@ class Settings:
             "StimSetsFile": None,
         },
         "StimulationFolder": os.getcwd(),
+        "TruncateAfterActivePartRatio": None,
     }
 
     def __init__(self, partial_settings: dict) -> None:

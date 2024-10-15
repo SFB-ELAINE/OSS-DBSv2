@@ -127,6 +127,7 @@ class VolumeConductor(ABC):
         export_frequency: Optional[float] = None,
         adaptive_mesh_refinement_settings: Optional[dict] = None,
         material_mesh_refinement_steps: int = 0,
+        truncation_time: Optional[float] = None,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -152,6 +153,8 @@ class VolumeConductor(ABC):
             Perform adaptive mesh refinement (only at first frequency)
         material_mesh_refinement_steps: int
             How often should elements with more than one material be refined
+        truncation_time: float
+            Time until which result will be written to hard drive
 
         Notes
         -----
@@ -386,16 +389,21 @@ class VolumeConductor(ABC):
         # export time domain solution if a proper signal has been passed
         _logger.info("Launching reconstruction of time domain")
         if len(self.signal.frequencies) > 1 and not multisine_mode:
+            _logger.info("Reconstructing time-domain signal.")
+            timesteps = get_timesteps(
+                self.signal.cutoff_frequency,
+                self.signal.base_frequency,
+                self.signal.signal_length,
+            )
+
+            truncation_index = None
+            if truncation_time is not None:
+                timestep = timesteps[1] - timesteps[0]
+                truncation_index = round(truncation_time / timestep)
             for point_model_idx, point_model in enumerate(point_models):
                 # skip point models that are not considered in time domain
                 if not point_model.time_domain_conversion:
                     continue
-                _logger.info("Reconstructing time-domain signal.")
-                timesteps = get_timesteps(
-                    self.signal.cutoff_frequency,
-                    self.signal.base_frequency,
-                    self.signal.signal_length,
-                )
 
                 (
                     potential_in_time,
@@ -406,7 +414,12 @@ class VolumeConductor(ABC):
                     self.signal.signal_length, convert_field=point_model.export_field
                 )
                 point_model.create_time_result(
-                    timesteps, potential_in_time, Ex_in_time, Ey_in_time, Ez_in_time
+                    timesteps,
+                    potential_in_time,
+                    Ex_in_time,
+                    Ey_in_time,
+                    Ez_in_time,
+                    truncation_index=truncation_index,
                 )
 
                 time_1 = time.time()

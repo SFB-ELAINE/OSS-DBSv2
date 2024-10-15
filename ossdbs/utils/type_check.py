@@ -13,6 +13,7 @@ class TypeChecker:
         "Electrodes": list,
         "FailFlag": str,
         "StimulationFolder": str,
+        "TruncateAfterActivePartRatio": (type(None), float),
         "ModelSide": int,
         "CalcAxonActivation": bool,
         "OutOfCore": bool,
