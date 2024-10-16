@@ -583,16 +583,18 @@ class PointModel(ABC):
         # if all field entries are defined
         if not (Ex_in_time is None and Ey_in_time is None and Ez_in_time is None):
             # truncate here otherwise they are none
-            Ex_in_time = Ex_in_time[:truncation_index]
-            Ey_in_time = Ey_in_time[:truncation_index]
-            Ez_in_time = Ez_in_time[:truncation_index]
+            # first axis is points, second is time
+            Ex_in_time = Ex_in_time[:, :truncation_index]
+            Ey_in_time = Ey_in_time[:, :truncation_index]
+            Ez_in_time = Ez_in_time[:, :truncation_index]
             field_magnitude = compute_field_magnitude_from_components(
                 Ex_in_time, Ey_in_time, Ez_in_time
             )
         time_result = TimeResult(
             time_steps=timesteps[:truncation_index],
             points=self.lattice,
-            potential=potential_in_time[:truncation_index],
+            # first axis is points, second is time
+            potential=potential_in_time[:, :truncation_index],
             electric_field_vector_x=Ex_in_time,
             electric_field_vector_y=Ey_in_time,
             electric_field_vector_z=Ez_in_time,
