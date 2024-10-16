@@ -13,6 +13,7 @@ class TypeChecker:
         "Electrodes": list,
         "FailFlag": str,
         "StimulationFolder": str,
+        "TruncateAfterActivePartRatio": (type(None), float),
         "ModelSide": int,
         "CalcAxonActivation": bool,
         "OutOfCore": bool,
@@ -21,8 +22,9 @@ class TypeChecker:
             "StimSetsFile": (type(None), str),
         },
         "AdaptiveMeshRefinement": bool,
+        # TODO add more tests
         "PathwayFile": (type(None), str),
-        "ActivationThresholdVTA": (type(None), float),
+        "ActivationThresholdVTA[V-per-m]": (type(None), float),
         "Contacts": {"MaxMeshSize": float, "MaxMeshSizeEdge": float},
         "EncapsulationLayer": {
             "Thickness[mm]": (int, float),
@@ -40,7 +42,11 @@ class TypeChecker:
             "LoadMesh": bool,
             "LoadPath": str,
             "MeshElementOrder": int,
-            "MeshingHypothesis": {"Type": str},
+            "MeshingHypothesis": {
+                "Type": str,
+                "MaxMeshSize": (int, float),
+                "MeshSizeFilename": str,
+            },
             "SaveMesh": bool,
             "SavePath": str,
         },
@@ -77,7 +83,7 @@ class TypeChecker:
             "CutoffFrequency": float,
         },
         "PointModel": {
-            "Pathway": {"Active": bool, "FileName": str},
+            "Pathway": {"Active": bool, "FileName": str, "ExportField": bool},
             "Lattice": {
                 "Center": {
                     "x[mm]": (int, float),
@@ -92,6 +98,13 @@ class TypeChecker:
                 "CollapseVTA": bool,
                 "PointDistance[mm]": (int, float),
                 "Shape": {"x": int, "y": int, "z": int},
+                "ExportField": bool,
+            },
+            "VoxelLattice": {
+                "Active": bool,
+                "Shape": {"x": int, "y": int, "z": int},
+                "TimeDomain": bool,
+                "ExportField": bool,
             },
         },
     }

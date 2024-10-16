@@ -6,7 +6,7 @@ import nibabel as nib
 import numpy as np
 import pandas as pd
 
-import ossdbs
+from ossdbs.main import main_run
 
 INPUT_DATA = [
     {
@@ -198,7 +198,7 @@ def _run_simulation(input_dir: str, input_json: str):
             "PointModel"
         ]["Pathway"]["FileName"].replace("../..", "..")
 
-    ossdbs.main_run(input_settings)
+    main_run(input_settings)
 
 
 def _test_impedance(output_csv: str, desired_csv: str):

@@ -5,6 +5,7 @@
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
+from typing import Optional
 
 import netgen
 import netgen.occ as occ
@@ -58,6 +59,7 @@ class ElectrodeModel(ABC):
         self.parameter_check()
 
         self._geometry = self._construct_geometry()
+        self.check_initial_geometry()
         self._encapsulation_geometry = None
         self._encapsulation_thickness = 0.0
         self._index = 0
@@ -96,12 +98,13 @@ class ElectrodeModel(ABC):
 
     @encapsulation_thickness.setter
     def encapsulation_thickness(self, thickness: float) -> None:
-        self._encapsulation_geometry = self._construct_encapsulation_geometry(thickness)
+        if np.greater(thickness, 1e-3):
+            self._encapsulation_geometry = self._construct_encapsulation_geometry(
+                thickness
+            )
         self._encapsulation_thickness = thickness
 
-    def encapsulation_geometry(
-        self, thickness: float
-    ) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def encapsulation_geometry(self, thickness: float) -> Optional[netgen.occ.Solid]:
         """Generate geometry of encapsulation layer around electrode.
 
         Parameters
@@ -161,6 +164,11 @@ class ElectrodeModel(ABC):
         _logger.info("Boundary names updated")
 
     @property
+    def parameters(self) -> dataclass:
+        """Electrode geometry parameters."""
+        return self._parameters
+
+    @property
     def index(self) -> int:
         """Index of electrode, relevant if multiple electrodes used."""
         return self._index
@@ -187,8 +195,8 @@ class ElectrodeModel(ABC):
         return self._parameters.lead_diameter / ratio
 
     def export_electrode(self, output_path, brain_dict, n_electrode) -> None:
-        """Export electrode as VTK file."""
-        _logger.info("Export electrode as VTK file")
+        """Export electrode as Netgen and VTK file."""
+        _logger.info("Export electrode as Netgen and VTK file")
         height = (
             np.amax(
                 [
@@ -199,10 +207,8 @@ class ElectrodeModel(ABC):
             )
             / 2
         )
-        try:
-            radius = self._parameters.lead_diameter / 2
-        except AttributeError:
-            radius = 1  # Set larger radius in case lead_diameter is not defined
+
+        radius = self._parameters.lead_diameter
 
         cylinder = netgen.occ.Cylinder(
             p=self._position,
@@ -212,12 +218,17 @@ class ElectrodeModel(ABC):
         )
 
         occgeo = occ.OCCGeometry(cylinder * self.geometry)
+        _logger.debug("Generating mesh")
         mesh_electrode = Mesh(occgeo.GenerateMesh())
         bnd_dict = {}
         for idx, contact in enumerate(self.boundaries):
             bnd_dict[contact] = idx
         boundary_cf = mesh_electrode.BoundaryCF(bnd_dict, default=-1)
 
+        # export Netgen mesh
+        mesh_electrode.ngmesh.Save(f"{output_path}/electrode_{n_electrode}.vol.gz")
+
+        # export ParaView file
         VTKOutput(
             ma=mesh_electrode,
             coefs=[boundary_cf],
@@ -225,6 +236,29 @@ class ElectrodeModel(ABC):
             filename=f"{output_path}/electrode_{n_electrode}",
             subdivision=0,
         ).Do(vb=BND)
+
+    def check_initial_geometry(self):
+        """Check proper naming of electrode parts."""
+        expected_names = [f"Contact_{i}" for i in range(1, self.n_contacts + 1)]
+        # check faces
+        face_names = []
+        for face in self.geometry.faces:
+            if face.name is None:
+                continue
+            if face.name not in face_names:
+                face_names.append(face.name)
+        # check edges
+        edge_names = []
+        for edge in self.geometry.edges:
+            if edge.name is None:
+                continue
+            if edge.name not in edge_names:
+                edge_names.append(edge.name)
+        if not set(expected_names) == set(edge_names):
+            raise RuntimeError("Edges have not been named correctly")
+        expected_names.append("Body")
+        if not set(expected_names) == set(face_names):
+            raise RuntimeError("Faces have not been named correctly")
 
     def set_hp_flag(self, electrode_parameters: dict):
         """Set hp-flags only on active contacts."""

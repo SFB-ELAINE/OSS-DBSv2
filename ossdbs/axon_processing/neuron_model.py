@@ -2,11 +2,11 @@ import fileinput
 import logging
 import multiprocessing as mp
 import os
-import platform
 import shutil
 import subprocess
 import sys
 from abc import ABC, abstractmethod
+from importlib.resources import files
 from typing import Optional
 
 import h5py
@@ -19,12 +19,6 @@ from .utilities import (
     create_paraview_outputs,
     store_axon_statuses,
 )
-
-subversion = platform.python_version_tuple()
-if int(subversion[1]) == 8:
-    from importlib_resources import files
-else:
-    from importlib.resources import files
 
 _logger = logging.getLogger(__name__)
 
@@ -190,12 +184,22 @@ class NeuronSimulator(ABC):
         _logger.info("Compile NEURON executable")
         subprocess.run(
             self.neuron_executable,
+            # do not change! causes OSError
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
             cwd=os.path.abspath(self._neuron_workdir),
         )
-        # load mechanisms into environment
-        neuron.load_mechanisms(self._neuron_workdir)
+        _logger.info("Load mechanisms into environment")
+        # TODO should be written in a safer way
+        try:
+            neuron.load_mechanisms(self._neuron_workdir)
+        except RuntimeError:
+            _logger.warning(
+                "Mechanism was already loaded, continuing"
+                " with loaded mechanism. "
+                "Run a new Python instance to circumvent this error."
+            )
+            pass
 
     def load_solution(self, time_domain_h5_file: str):
         """Load solution from h5 file.
@@ -229,7 +233,6 @@ class NeuronSimulator(ABC):
         scaling_vector: list
             current scaling across contacts
         """
-
         # very dumb way to get self._td_solution initialized
         self._td_solution = h5py.File(
             os.path.join(self.output_path, "combined_solution.h5"), mode="w"
@@ -256,7 +259,7 @@ class NeuronSimulator(ABC):
                         if solution_i == 0:
                             self._td_solution[pathway_name]["axon" + str(neuron_index)][
                                 "Potential[V]"
-                            ][...] = (neuron_time_sol * scaling_vector[solution_i])
+                            ][...] = neuron_time_sol * scaling_vector[solution_i]
                         else:
                             self._td_solution[pathway_name]["axon" + str(neuron_index)][
                                 "Potential[V]"
@@ -480,28 +483,23 @@ class NeuronSimulator(ABC):
                 # get neuron geometry and field solution
                 neuron = pathway_dataset["axon" + str(neuron_index)]
                 Axon_Lead_DBS[
-                    neuron_index
-                    * n_segments_actual : (neuron_index + 1)
+                    neuron_index * n_segments_actual : (neuron_index + 1)
                     * n_segments_actual,
                     :3,
                 ] = np.array(neuron["Points[mm]"])
 
                 # add index
                 Axon_Lead_DBS[
-                    neuron_index
-                    * n_segments_actual : (neuron_index + 1)
+                    neuron_index * n_segments_actual : (neuron_index + 1)
                     * n_segments_actual,
                     3,
-                ] = (
-                    neuron_index + 1
-                )  # because Lead-DBS numbering starts from 1
+                ] = neuron_index + 1  # because Lead-DBS numbering starts from 1
 
                 # check which neurons were flagged with CSF and electrode intersection
                 # skip probing of those
                 if pre_status[neuron_index] != 0:
                     Axon_Lead_DBS[
-                        neuron_index
-                        * n_segments_actual : (neuron_index + 1)
+                        neuron_index * n_segments_actual : (neuron_index + 1)
                         * n_segments_actual,
                         4,
                     ] = pre_status[neuron_index]
@@ -545,15 +543,13 @@ class NeuronSimulator(ABC):
         for neuron_index in range(N_neurons):
             if neuron_index in List_of_activated:
                 Axon_Lead_DBS[
-                    neuron_index
-                    * n_segments_actual : (neuron_index + 1)
+                    neuron_index * n_segments_actual : (neuron_index + 1)
                     * n_segments_actual,
                     4,
                 ] = 1
             elif neuron_index in List_of_not_activated:
                 Axon_Lead_DBS[
-                    neuron_index
-                    * n_segments_actual : (neuron_index + 1)
+                    neuron_index * n_segments_actual : (neuron_index + 1)
                     * n_segments_actual,
                     4,
                 ] = 0
@@ -568,8 +564,8 @@ class NeuronSimulator(ABC):
             scaling_index=scaling_index,
             pathway_name=pathway_name,
         )
-            
-        if scaling_index is None:            
+
+        if scaling_index is None:
             create_paraview_outputs(
                 self.output_path,
                 Axon_Lead_DBS,

@@ -39,7 +39,6 @@ class ModelGeometry:
         self._contacts = []
         self._encapsulation_layers = []
 
-        # TODO implement test for intersecting electrodes
         self._geometry = self._construct_geometry(self._brain, self._electrodes)
 
     @property
@@ -85,6 +84,9 @@ class ModelGeometry:
                 )
             else:
                 brain_geo = brain_geo - electrode.geometry
+            built_correctly = self.check_brain_geo(brain_geo, electrode)
+            if not built_correctly:
+                raise RuntimeError("Geometry could not be built.")
 
         brain_surfaces = brain.get_surface_names()
         for surface in brain_surfaces:
@@ -98,6 +100,19 @@ class ModelGeometry:
                 "or remove the encapsulation layer."
             )
             raise
+
+    def check_brain_geo(
+        self, brain_geo: netgen.occ.Solid, electrode: ElectrodeModel
+    ) -> bool:
+        """Check if brain geo has all contacts."""
+        face_names = [face.name for face in brain_geo.faces]
+        correct_geo = True
+        for contact_index in range(1, electrode.n_contacts + 1):
+            name = self.get_contact_name(electrode.index, contact_index)
+            if name not in face_names:
+                correct_geo = False
+                _logger.error(f"Face {name} is not in final geometry.")
+        return correct_geo
 
     @property
     def electrodes(self) -> List[ElectrodeModel]:
@@ -133,8 +148,16 @@ class ModelGeometry:
                 return idx
         return -1
 
+    # ruff: noqa: C901
     def update_contact(self, idx: int, settings: dict) -> None:
         """Overwrite contact properties."""
+        if idx >= len(self._contacts):
+            raise ValueError(
+                f"You want to access contact {idx} "
+                "which is not in the geometry. "
+                "The highest possible index is "
+                f"{len(self._contacts) - 1}."
+            )
         contact = self._contacts[idx]
         for setting, value in settings.items():
             if setting == "Active":
@@ -202,10 +225,14 @@ class ModelGeometry:
         """
         new_boundary_names = {}
         for contact_index in range(1, electrode.n_contacts + 1):
-            name = f"E{electrode.index}C{contact_index}"
+            name = self.get_contact_name(electrode.index, contact_index)
             new_boundary_names[f"Contact_{contact_index}"] = name
             self._contacts.append(Contact(name=name))
         electrode.set_contact_names(new_boundary_names)
+
+    def get_contact_name(self, electrode_index: int, contact_index: int) -> str:
+        """Return contact name."""
+        return f"E{electrode_index}C{contact_index}"
 
     def get_floating_mode(self):
         """Check if floating and if yes, which mode."""

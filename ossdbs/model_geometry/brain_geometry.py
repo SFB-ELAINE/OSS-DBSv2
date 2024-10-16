@@ -21,6 +21,11 @@ class BrainGeometry:
         Choose between "Sphere", "Ellipsoid", "Box", and "Custom"
     bounding_box : BoundingBox
         Bounding box of the geometry in voxel space, can be none for custom geometry
+    trafo_matrix: np.ndarray
+        Matrix for affine transformation
+    rotate_initial_geo: bool
+        for spheres and ellipsoids, the initial geometry might have an edge
+        on the surface that causes problems when merging with the electrode
 
     Notes
     -----
@@ -46,10 +51,12 @@ class BrainGeometry:
         bounding_box: BoundingBox = None,
         trafo_matrix: np.ndarray = None,
         translation: np.ndarray = None,
+        rotate_initial_geo: bool = False,
     ) -> None:
         self._bbox = bounding_box
         self._geometry = None
         self._shape = shape
+        self._rotate_initial_geo = rotate_initial_geo
         if trafo_matrix is None:
             self._trafo_matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         else:
@@ -61,6 +68,12 @@ class BrainGeometry:
         self._affine_trafo = netgen.occ.gp_GTrsf(
             mat=self._trafo_matrix.ravel(), vec=self._translation
         )
+
+    @property
+    def brain_region(self):
+        """Return box-shaped region covered by brain."""
+        start, end = self.geometry.bounding_box
+        return BoundingBox(start, end)
 
     def get_surface_names(self):
         """Get names of surfaces in geometry."""
@@ -107,9 +120,14 @@ class BrainGeometry:
     def _create_ellipsoid(self) -> netgen.occ.Solid:
         x, y, z = np.subtract(self._bbox.end, self._bbox.start) / 2
         transformator = netgen.occ.gp_GTrsf(mat=[x, 0, 0, 0, y, 0, 0, 0, z])
-        sphere = netgen.occ.Sphere(c=netgen.occ.Pnt(1, 1, 1), r=1)
-        ellipsoid = transformator(sphere).Move(self._bbox.start)
+        center = netgen.occ.Pnt(1, 1, 1)
+        sphere = netgen.occ.Sphere(c=center, r=1)
+        if self._rotate_initial_geo:
+            _logger.debug("Rotate initial geometry")
+            # we rotate 180 degrees around z, that should usually fix the issue
+            sphere = sphere.Rotate(netgen.occ.Axis(center, (0, 0, 1)), 180)
 
+        ellipsoid = transformator(sphere).Move(self._bbox.start)
         return self._affine_trafo(ellipsoid)
 
     def _create_sphere(self) -> netgen.occ.Solid:
@@ -117,9 +135,19 @@ class BrainGeometry:
         center = np.add(self._bbox.start, (x, y, z))
         radius = np.min([x, y, z])
         sphere = netgen.occ.Sphere(c=netgen.occ.Pnt(center), r=radius)
+        if self._rotate_initial_geo:
+            _logger.debug("Rotate initial geometry")
+            # we rotate 180 degrees around z, that should usually fix the issue
+            sphere = sphere.Rotate(netgen.occ.Axis(center, (0, 0, 1)), 180)
         return self._affine_trafo(sphere)
 
     def _create_box(self) -> netgen.occ.Solid:
+        if self._rotate_initial_geo:
+            _logger.warning(
+                "You chose to rotate the initial geometry."
+                "This option is not available for a box geometry."
+                "The geometry remains unchanged."
+            )
         box = netgen.occ.Box(self._bbox.start, self._bbox.end)
         return self._affine_trafo(box)
 
