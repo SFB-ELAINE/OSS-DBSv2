@@ -94,11 +94,11 @@
     "SaveMesh": false
   },
   "Solver": {
-    "Type": "GMRES",
+    "Type": "CG",
     "Preconditioner": "local",
     "PreconditionerKwargs": {},
     "PrintRates": true,
-    "MaximumSteps": 200,
+    "MaximumSteps": 2000,
     "Precision": 1e-8
   },
   "PointModel": {
@@ -128,7 +128,7 @@
   },
   "EQSMode": false,
   "FEMOrder": 2,
-  "OutputPath": "./Results_floating",
+  "OutputPath": "Results_floating",
   "ComputeImpedance": true,
   "ExportVTK": true,
   "ExportElectrode": true

@@ -102,6 +102,15 @@ class TrapezoidSignal(TimeDomainSignal):
 
         for i in range(pulse_slope_duration):
             if start_index + pulse_slope_duration + top_duration + i < len(signal):
-                signal[
-                    start_index + pulse_slope_duration + top_duration + i
-                ] = amplitude * (1 - (i / pulse_slope_duration))
+                signal[start_index + pulse_slope_duration + top_duration + i] = (
+                    amplitude * (1 - (i / pulse_slope_duration))
+                )
+
+    def get_active_time(self) -> float:
+        """Return time during which the stimulator is active."""
+        return (
+            self._pulse_width
+            + self._inter_pulse_width
+            + self._counter_pulse_width
+            + self._top_width
+        )

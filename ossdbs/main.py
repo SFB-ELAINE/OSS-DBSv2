@@ -11,9 +11,11 @@ import time
 
 import ngsolve
 
+from ossdbs import log_to_file, set_logger
 from ossdbs.api import (
-    create_bounding_box,
+    build_brain_model,
     generate_electrodes,
+    generate_signal,
     load_images,
     prepare_dielectric_properties,
     prepare_solver,
@@ -24,29 +26,11 @@ from ossdbs.api import (
     set_contact_and_encapsulation_layer_properties,
 )
 from ossdbs.fem import ConductivityCF
-from ossdbs.model_geometry import BoundingBox, BrainGeometry, ModelGeometry
+from ossdbs.model_geometry import ModelGeometry
 from ossdbs.utils.settings import Settings
 from ossdbs.utils.type_check import TypeChecker
 
-_logger = logging.getLogger("ossdbs")
-
-
-def set_logger(level=logging.INFO):
-    """Set log level."""
-    _logger.setLevel(level)
-    if level == logging.DEBUG:
-        ngsolve.ngsglobals.msg_level = 10
-    # to avoid multiple output in Jupyter notebooks
-    if len(_logger.handlers) == 1:
-        ch = logging.StreamHandler()
-        ch.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
-        ch.setLevel(level)
-        _logger.addHandler(ch)
-    else:
-        for handler in _logger.handlers:
-            if isinstance(handler, logging.StreamHandler):
-                handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
-                handler.setLevel(level)
+_logger = logging.getLogger(__name__)
 
 
 def main_run(input_settings: dict):
@@ -70,6 +54,10 @@ def main_run(input_settings: dict):
     # create output path
     if not os.path.isdir(settings["OutputPath"]):
         os.mkdir(settings["OutputPath"])
+    log_to_file(
+        output_file=os.path.join(settings["OutputPath"], "ossdbs.log"),
+        level=_logger.getEffectiveLevel(),
+    )
     # create fail flag
     open(
         os.path.join(
@@ -95,35 +83,16 @@ def main_run(input_settings: dict):
     time_0 = time_1
 
     _logger.info("Generate full model geometry")
-    # MRI image is default choice for brain construction
-    if "BrainRegion" in settings:
-        _logger.debug("Generating model geometry for fixed brain region")
-        region_parameters = settings["BrainRegion"]
-        brain_region = create_bounding_box(region_parameters)
-        shape = settings["BrainRegion"]["Shape"]
-        brain_model = BrainGeometry(shape, brain_region)
-    else:
-        _logger.debug("Generating model geometry from MRI image")
-        # attention: bounding box is given in voxel space!
-        brain_region = mri_image.bounding_box
-        shape = "Ellipsoid"
-        # transformation to real space in geometry creation
-        _logger.debug(
-            "Generate OCC model, passing transformation matrix from MRI image"
+    brain_model = build_brain_model(settings, mri_image)
+    try:
+        geometry = ModelGeometry(brain_model, electrodes)
+    except RuntimeError:
+        _logger.warning(
+            "Initial geometry failed, now building with rotated geometry."
+            "If this fails, too, change the shape of the brain geometry."
         )
-        brain_model = BrainGeometry(
-            shape,
-            brain_region,
-            trafo_matrix=mri_image.trafo_matrix,
-            translation=mri_image.translation,
-        )
-        start, end = brain_model.geometry.bounding_box
-        brain_region = BoundingBox(start, end)
-        _logger.debug(
-            f"Bounding box in real space: {brain_region.start}, {brain_region.end}"
-        )
-
-    geometry = ModelGeometry(brain_model, electrodes)
+        brain_model = build_brain_model(settings, mri_image, rotate_initial_geo=True)
+        geometry = ModelGeometry(brain_model, electrodes)
 
     time_1 = time.time()
     timings["ModelGeometry"] = time_1 - time_0
@@ -145,7 +114,7 @@ def main_run(input_settings: dict):
     materials = settings["MaterialDistribution"]["MRIMapping"]
     conductivity = ConductivityCF(
         mri_image,
-        brain_region,
+        brain_model.brain_region,
         dielectric_properties,
         materials,
         geometry.encapsulation_layers,
@@ -157,14 +126,31 @@ def main_run(input_settings: dict):
     timings["ConductivityCF"] = time_1 - time_0
     time_0 = time_1
 
+    # decide on truncation
+    truncation_time = None
+    if "TruncateAfterActivePartRatio" in settings:
+        truncation_ratio = settings["TruncateAfterActivePartRatio"]
+        if truncation_ratio is not None:
+            if not isinstance(truncation_ratio, float):
+                raise ValueError(
+                    "Please provide the ratio to truncate the signal "
+                    "as a floating-point number. "
+                    "Set e.g. to 20 for 20 times pulse + counterpulse width."
+                )
+            time_domain_signal = generate_signal(settings)
+            truncation_time = truncation_ratio * time_domain_signal.get_active_time()
+
     # save Mesh for StimSets
     if settings["StimSets"]["Active"]:
         settings["Mesh"]["SaveMesh"] = True
-        settings["Mesh"]["SavePath"] = "tmp_mesh"
-        settings["Mesh"]["LoadPath"] = "tmp_mesh.vol.gz"
+        settings["Mesh"]["SavePath"] = os.path.join(settings["OutputPath"], "tmp_mesh")
+        settings["Mesh"]["LoadPath"] = os.path.join(
+            settings["OutputPath"], "tmp_mesh.vol.gz"
+        )
         settings["Mesh"]["LoadMesh"] = False
         # because of floating
-        settings["Solver"]["PreconditionerKwargs"] = {"coarsetype": "local"}
+        settings["Solver"]["Preconditioner"] = "local"
+        settings["Solver"]["PreconditionerKwargs"] = {}
     # run in parallel
     with ngsolve.TaskManager():
         solver = prepare_solver(settings)
@@ -174,7 +160,10 @@ def main_run(input_settings: dict):
         frequency_domain_signal = prepare_stimulation_signal(settings)
         if not settings["StimSets"]["Active"]:
             vcm_timings = run_volume_conductor_model(
-                settings, volume_conductor, frequency_domain_signal
+                settings,
+                volume_conductor,
+                frequency_domain_signal,
+                truncation_time=truncation_time,
             )
             _logger.info("Volume conductor timings:\n" f"{pprint.pformat(vcm_timings)}")
         else:

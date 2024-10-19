@@ -38,12 +38,14 @@ class VoxelLattice(PointModel):
         affine: np.ndarray,
         shape: np.ndarray,
         header: nibabel.Nifti1Header,
+        export_field: bool = False,
     ) -> None:
         self._imp_coord = imp_coord
         self._affine = affine
         self._shape = shape
         self._header = header
         self.collapse_VTA = False
+        self._export_field = export_field
 
         # TODO is that correct?
         self._location = None

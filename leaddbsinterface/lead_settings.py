@@ -30,13 +30,12 @@ class LeadSettings:
         try:
             self._file = h5py.File(str(mat_file_path), "r")
             self._h5 = True
-        # TODO what do you want to catch here?
-        except:
+        except ValueError:
             print(
-                """\n Please, save oss-dbs_parameters using
-                        'save(oss-dbs_parameters_path, 'settings', '-v7.3')'"""
+                "\n Please, save oss-dbs_parameters using"
+                "'save(oss-dbs_parameters_path, 'settings', '-v7.3')'"
             )
-            raise SystemExit
+            raise
             # TODO  Fix non-binary .mat import
             self._file = scipy.io.loadmat(mat_file_path)
             self._h5 = False
@@ -105,7 +104,7 @@ class LeadSettings:
             pulses_sign_amplitude = self.get_phi_vec() * 0.001  # switch to A
             pulse_sign_amplitude = pulses_sign_amplitude[hemis_idx, :]
             grounded_current = -1 * np.round(
-                np.sum(pulse_sign_amplitude[~np.isnan(pulse_sign_amplitude)]), 6
+                np.sum(pulse_sign_amplitude[~np.isnan(pulse_sign_amplitude)]), 9
             )  # could be 0
         else:
             # otherwise not relevant, but set to 0.0 if non-active contacts present
@@ -184,7 +183,9 @@ class LeadSettings:
             },
             "StimulationSignal": {"CurrentControlled": current_controlled},
             "CalcAxonActivation": bool(self.get_calc_axon_act()),
-            "ActivationThresholdVTA": float(self.get_act_thresh_vta()[hemis_idx]),
+            "ActivationThresholdVTA[V-per-m]": float(
+                self.get_act_thresh_vta()[hemis_idx]
+            ),
             "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATH),
             "FailFlag": side,
             "TemplateSpace": self.get_est_in_temp(),
@@ -204,7 +205,9 @@ class LeadSettings:
         if self.get_calc_axon_act():
             partial_dict = self.add_stimsignal_params(partial_dict, hemis_idx)
             # add path to the pathway parameter file
-            partial_dict["PathwayFile"] = os.path.join(output_path, self.get_pathway_params_file())
+            partial_dict["PathwayFile"] = os.path.join(
+                output_path, self.get_pathway_params_file()
+            )
 
         # do not use h1amg as coarsetype preconditioner
         # if floating potentials are involved
@@ -213,7 +216,7 @@ class LeadSettings:
             if current_controlled:
                 floating = True
         if floating:
-            partial_dict["Solver"]["PreconditionerKwargs"] = {"coarsetype": "local"}
+            partial_dict["Solver"]["Preconditioner"] = "local"
             # increase number of iterations for FFEM
             if partial_dict["CalcAxonActivation"]:
                 partial_dict["Solver"]["MaximumSteps"] = 2000
@@ -475,9 +478,9 @@ class LeadSettings:
         # hardwired for now
         partial_dict["StimulationSignal"]["Frequency[Hz]"] = 130.0
         partial_dict["StimulationSignal"]["SpectrumMode"] = "OctaveBand"
-        partial_dict["StimulationSignal"][
-            "CutoffFrequency"
-        ] = 250000.0  # 2 us time step
+        partial_dict["StimulationSignal"]["CutoffFrequency"] = (
+            250000.0  # 2 us time step
+        )
         partial_dict["StimulationSignal"]["PulseTopWidth[us]"] = 0.0
         partial_dict["StimulationSignal"]["InterPulseWidth[us]"] = 0.0
 
@@ -753,7 +756,7 @@ class LeadSettings:
                         "Contact_ID": i + 1,
                         "Active": False,
                         "Current[A]": 0.0,
-                        "Voltage[V]": False,
+                        "Voltage[V]": 0.0,
                         "Floating": True,
                     }
                 else:
@@ -764,7 +767,7 @@ class LeadSettings:
                             "Contact_ID": i + 1,
                             "Active": False,
                             "Current[A]": pulse_amp[i],
-                            "Voltage[V]": False,
+                            "Voltage[V]": 0.0,
                             "Floating": True,
                         }
                     else:
@@ -772,7 +775,7 @@ class LeadSettings:
                             # Assuming one-indexed contact ids
                             "Contact_ID": i + 1,
                             "Active": True,
-                            "Current[A]": False,
+                            "Current[A]": 0.0,
                             "Voltage[V]": pulse_amp[i],
                             "Floating": False,
                         }
