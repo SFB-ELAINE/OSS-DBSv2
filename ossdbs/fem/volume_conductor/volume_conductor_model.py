@@ -719,8 +719,23 @@ class VolumeConductor(ABC):
         multisine_mode: bool
             If rectangular pulse is used (multisine_mode = False)
         """
-        ngmesh = self.mesh.ngsolvemesh
+        self.export_solution_to_vtk(freq_idx, multisine_mode)
+        self.export_conductivity_to_vtk()
+        self.export_material_distribution_to_vtk()
 
+    def export_solution_to_vtk(
+        self, freq_idx: int, multisine_mode: bool = False
+    ) -> None:
+        """Export potential and field at frequency to VTK.
+
+        Parameters
+        ----------
+        freq_idx: int
+            Index of frequency
+        multisine_mode: bool
+            If rectangular pulse is used (multisine_mode = False)
+        """
+        ngmesh = self.mesh.ngsolvemesh
         # use standard solution with 1V voltage drop
         # unless we run multisine mode
         scale_factor = 1.0
@@ -734,6 +749,9 @@ class VolumeConductor(ABC):
             scale_factor * self.electric_field, "E_field", ngmesh, self.is_complex
         ).save(os.path.join(self.output_path, "E-field"))
 
+    def export_conductivity_to_vtk(self) -> None:
+        """Write conductivity to VTK file."""
+        ngmesh = self.mesh.ngsolvemesh
         if self.conductivity_cf.is_tensor:
             # Naming convention by ParaView!
             cf_list = (
@@ -767,6 +785,9 @@ class VolumeConductor(ABC):
                 os.path.join(self.output_path, "dti")
             )
 
+    def export_material_distribution_to_vtk(self) -> None:
+        """Write material distribution to VTK file."""
+        ngmesh = self.mesh.ngsolvemesh
         FieldSolution(
             self.conductivity_cf.material_distribution(self.mesh),
             "material",
