@@ -228,18 +228,15 @@ class VolumeConductor(ABC):
                 shape=(len(self.signal.frequencies)), dtype=dtype
             )
 
-        for _ in range(material_mesh_refinement_steps):
-            _logger.info(
-                "Number of elements before material refinement:"
-                f"{self.mesh.ngsolvemesh.ne}"
-            )
-            self.mesh.refine_by_material_cf(
-                self.conductivity_cf.material_distribution(self.mesh)
-            )
-            _logger.info(
-                "Number of elements after material refinement:"
-                f"{self.mesh.ngsolvemesh.ne}"
-            )
+        _logger.info(
+            "Number of elements before material refinement:"
+            f"{self.mesh.ngsolvemesh.ne}"
+        )
+        self.refine_mesh_by_material(material_mesh_refinement_steps)
+        _logger.info(
+            "Number of elements after material refinement:"
+            f"{self.mesh.ngsolvemesh.ne}"
+        )
 
         for computing_idx, freq_idx in enumerate(frequency_indices):
             frequency = self.signal.frequencies[freq_idx]
@@ -1109,3 +1106,10 @@ class VolumeConductor(ABC):
 
         with open(os.path.join(self.output_path, "VCM_report.json"), "w") as fp:
             json.dump(report, fp)
+
+    def refine_mesh_by_material(self, material_mesh_refinement_steps: int) -> None:
+        """Check materials and refine mesh if more than one material per element."""
+        for _ in range(material_mesh_refinement_steps):
+            self.mesh.refine_by_material_cf(
+                self.conductivity_cf.material_distribution(self.mesh)
+            )
