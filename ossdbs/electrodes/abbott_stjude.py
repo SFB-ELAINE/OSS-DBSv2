@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Abbott/St Jude Active Tip 6142-6145
+import logging
 from dataclasses import dataclass
 
 import netgen
@@ -10,7 +11,9 @@ import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
-from .utilities import get_highest_edge, get_lowest_edge
+from .utilities import get_electrode_spin_angle, get_highest_edge, get_lowest_edge
+
+_logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -73,15 +76,17 @@ class AbbottStJudeActiveTipModel(ElectrodeModel):
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self._parameters.lead_diameter * 0.5
-        point = tuple(np.array(self._direction) * radius)
+        center = tuple(np.array(self._direction) * radius)
         height = self._parameters.total_length - self._parameters.tip_length
-        body = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
+        body = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         body.bc(self._boundaries["Body"])
         return body
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self._parameters.lead_diameter * 0.5
-        direction = self._direction
+
+        origin = (0, 0, 0)
+        direction = (0, 0, 1)
 
         center = tuple(np.array(direction) * radius)
         # define half space at tip_center
@@ -113,13 +118,21 @@ class AbbottStJudeActiveTipModel(ElectrodeModel):
             else:
                 min_edge = get_lowest_edge(contact)
                 min_edge.name = name
-                vector = tuple(np.array(self._direction) * distance)
+                vector = tuple(np.array(direction) * distance)
                 contacts.append(contact.Move(vector))
                 distance += (
                     self._parameters.contact_length + self._parameters.contact_spacing
                 )
-
-        return occ.Glue(contacts)
+        if np.allclose(self._direction, direction):
+            return netgen.occ.Fuse(contacts)
+        # rotate electrode to match orientation
+        # e.g. from z-axis to y-axis
+        rotation = tuple(
+            np.cross(direction, self._direction)
+            / np.linalg.norm(np.cross(direction, self._direction))
+        )
+        angle = np.degrees(np.arccos(self._direction[2]))
+        return netgen.occ.Fuse(contacts).Rotate(occ.Axis(p=origin, d=rotation), angle)
 
 
 @dataclass
@@ -165,6 +178,17 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
     def _construct_encapsulation_geometry(
         self, thickness: float
     ) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        """Generate geometry of encapsulation layer around electrode.
+
+        Parameters
+        ----------
+        thickness : float
+            Thickness of encapsulation layer.
+
+        Returns
+        -------
+        geometry : netgen.libngpy._NgOCC.TopoDS_Shape
+        """
         center = tuple(np.array(self._direction) * self._parameters.lead_diameter * 0.5)
         radius = self._parameters.lead_diameter * 0.5 + thickness
         height = self._parameters.total_length - self._parameters.tip_length
@@ -195,18 +219,19 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         vectors = []
+        direction = (0, 0, 1)
         distance = self._parameters.tip_length
         for _ in range(0, 4):
-            vectors.append(tuple(np.array(self._direction) * distance))
+            vectors.append(tuple(np.array(direction) * distance))
             distance += (
                 self._parameters.contact_length + self._parameters.contact_spacing
             )
 
-        point = (0, 0, 0)
+        origin = (0, 0, 0)
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
-        contact = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
-        axis = occ.Axis(p=point, d=self._direction)
+        contact = occ.Cylinder(p=origin, d=direction, r=radius, h=height)
+        axis = occ.Axis(p=origin, d=direction)
 
         contact_directed = self._contact_directed()
         contacts = [
@@ -233,56 +258,53 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
             else:
                 # Label all the named contacts appropriately
                 for edge in contact.edges:
-                    if edge.name is not None:
+                    if edge.name == "Rename":
                         edge.name = name
-        return netgen.occ.Fuse(contacts)
+
+        if np.allclose(self._direction, direction):
+            return netgen.occ.Fuse(contacts)
+        else:
+            rotation = tuple(
+                np.cross(direction, self._direction)
+                / np.linalg.norm(np.cross(direction, self._direction))
+            )
+            angle = np.degrees(np.arccos(self._direction[2]))
+            rotated_geo = netgen.occ.Fuse(contacts).Rotate(
+                occ.Axis(p=origin, d=rotation), angle
+            )
+            rotation_angle = get_electrode_spin_angle(rotation, angle, self._direction)
+            if np.isclose(rotation_angle, 0):
+                return rotated_geo
+            return rotated_geo.Rotate(
+                occ.Axis(p=(0, 0, 0), d=self._direction), rotation_angle
+            )
 
     def _contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        point = (0, 0, 0)
+        origin = (0, 0, 0)
+        direction = (0, 0, 1)
         radius = self._parameters.lead_diameter * 0.5
         height = self._parameters.contact_length
-        body = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
+        body = occ.Cylinder(p=origin, d=direction, r=radius, h=height)
         # tilted y-vector marker is in YZ-plane and orthogonal to _direction
-        new_direction = (0, self._direction[2], -self._direction[1])
-        eraser = occ.HalfSpace(p=point, n=new_direction)
-        delta = 15
-        angle = 30 + delta
-        axis = occ.Axis(p=point, d=self._direction)
+        new_direction = (0, 1, 0)
+        eraser = occ.HalfSpace(p=origin, n=new_direction)
+        angle = 45
+        axis = occ.Axis(p=origin, d=direction)
 
         contact = body - eraser.Rotate(axis, angle) - eraser.Rotate(axis, -angle)
-        # Centering contact to label edges
-        contact = contact.Rotate(axis, angle)
 
-        # TODO refactor / wrap in function
-        # Find  max z, min z, max x, and max y values and label min x and min y edge
-        max_z_val = max_y_val = max_x_val = float("-inf")
-        min_z_val = float("inf")
+        # Label all outer edges
         for edge in contact.edges:
-            if edge.center.z > max_z_val:
-                max_z_val = edge.center.z
-            if edge.center.z < min_z_val:
-                min_z_val = edge.center.z
-            if edge.center.x > max_x_val:
-                max_x_val = edge.center.x
-                max_x_edge = edge
-            if edge.center.y > max_y_val:
-                max_y_val = edge.center.y
-                max_y_edge = edge
-        max_x_edge.name = "max x"
-        max_y_edge.name = "max y"
-        # Label only the outer edges of the contact with min z and max z values
-        for edge in contact.edges:
-            if np.isclose(edge.center.z, max_z_val) and not (
-                np.isclose(edge.center.x, radius / 2)
-                or np.isclose(edge.center.y, radius / 2)
-            ):
-                edge.name = "max z"
-            elif np.isclose(edge.center.z, min_z_val) and not (
-                np.isclose(edge.center.x, radius / 2)
-                or np.isclose(edge.center.y, radius / 2)
-            ):
-                edge.name = "min z"
-        contact = contact.Rotate(axis, -angle)
-        # TODO check that the starting axis of the contacts
-        # are correct according to the documentation
+            edge_center = np.array([edge.center.x, edge.center.y, edge.center.z])
+
+            # Skip center edge
+            if np.allclose(np.cross(edge_center, direction), 0):
+                continue
+
+            new_center = np.dot(edge_center, direction) * np.array(direction)
+
+            # Mark only outer edges
+            if not np.isclose(np.linalg.norm(edge_center - new_center), radius / 2):
+                edge.name = "Rename"
+
         return contact

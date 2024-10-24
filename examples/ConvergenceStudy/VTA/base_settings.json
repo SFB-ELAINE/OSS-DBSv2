@@ -1,0 +1,113 @@
+{
+  "BrainRegion": {
+    "Center": {
+      "x[mm]": -9.476,
+      "y[mm]": 11.605,
+      "z[mm]": 4.676
+    },
+    "Dimension": {
+      "x[mm]": 40.0,
+      "y[mm]": 40.0,
+      "z[mm]": 40.0
+    },
+    "Shape": "Ellipsoid"
+  },
+  "Electrodes": [
+    {
+      "Name": "",
+      "Rotation[Degrees]": 0,
+      "Direction": {
+        "x[mm]": 0.0,
+        "y[mm]": 0.0,
+        "z[mm]": 1.0
+      },
+      "TipPosition": {
+        "x[mm]": -9.476,
+        "y[mm]": 11.605,
+        "z[mm]": 4.676
+      },
+      "Contacts": [],
+      "EncapsulationLayer": {
+        "Thickness[mm]": 0.0,
+        "Material": "Blood",
+        "DielectricModel": "ColeCole4"
+      }
+    }
+  ],
+  "MaterialDistribution": {
+    "MRIPath": "../../../../../input_files/Butenko_segmask.nii.gz",
+    "MRIMapping": {
+      "Gray matter": 1,
+      "White matter": 2,
+      "CSF": 3,
+      "Blood": 4,
+      "Unknown": 0
+    },
+    "DiffusionTensorActive": false,
+    "DTIPath": ""
+  },
+  "DielectricModel": {
+    "Type": "ColeCole4"
+  },
+  "StimulationSignal": {
+    "CurrentControlled": false,
+    "Type": "Multisine",
+    "ListOfFrequencies": [
+      10000.0
+    ]
+  },
+  "Mesh": {
+    "LoadMesh": false,
+    "MeshElementOrder": 2,
+    "MeshingHypothesis": {
+      "Type": "Default"
+    },
+    "MeshSize": {
+      "Edges": {},
+      "Faces": {},
+      "Volumes": {}
+    },
+    "SaveMesh": false
+  },
+  "Solver": {
+    "Type": "CG",
+    "Preconditioner": "bddc",
+    "PreconditionerKwargs": {},
+    "PrintRates": true,
+    "MaximumSteps": 200,
+    "Precision": 1e-8
+  },
+  "PointModel": {
+    "Pathway": {
+      "Active": false,
+      "FileName": ""
+    },
+    "Lattice": {
+      "Active": true,
+      "Center": {
+        "x[mm]": -9.476,
+        "y[mm]": 11.605,
+        "z[mm]": 4.676
+      },
+      "Shape": {
+        "x": 40,
+        "y": 40,
+        "z": 40
+      },
+      "Direction": {
+        "x[mm]": 0,
+        "y[mm]": 0,
+        "z[mm]": 1
+      },
+      "PointDistance[mm]": 0.25
+    }
+  },
+  "ActivationThresholdVTA[V-per-m]": 200.0,
+  "CollapseVTA": false,
+  "EQSMode": false,
+  "FEMOrder": 2,
+  "OutputPath": "Results_VTA",
+  "ComputeImpedance": true,
+  "ExportVTK": true,
+  "ExportElectrode": false 
+}

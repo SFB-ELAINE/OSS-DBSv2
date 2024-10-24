@@ -51,8 +51,8 @@ class TimeDomainSignal(ABC):
         self,
         frequency: float,
         pulse_width: float,
-        inter_pulse_width: float,
-        counter_pulse_width: Optional[float] = None,
+        inter_pulse_width: Optional[float] = 0.0,
+        counter_pulse_width: Optional[float] = 0.0,
         counter_pulse_amplitude: Optional[float] = 1.0,
     ) -> None:
         if np.isclose(frequency, 0):
@@ -151,3 +151,7 @@ class TimeDomainSignal(ABC):
             plt.show()
         else:
             plt.close()
+
+    def get_active_time(self) -> float:
+        """Return time during which the stimulator is active."""
+        return self._pulse_width + self._inter_pulse_width + self._counter_pulse_width

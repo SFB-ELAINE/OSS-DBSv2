@@ -5,6 +5,7 @@
 import json
 import logging
 import os
+from typing import Optional
 
 import numpy as np
 
@@ -139,12 +140,14 @@ def prepare_dielectric_properties(settings: dict) -> dict:
     return dielectric_properties
 
 
-def generate_brain_model(settings):
+def generate_brain_model(settings, rotate_initial_geo: bool = False):
     """Generate OCC brain model."""
     brain_region_parameters = settings["BrainRegion"]
     brain_shape = brain_region_parameters["Shape"]
     brain_region = create_bounding_box(brain_region_parameters)
-    brain_model = BrainGeometry(brain_shape, brain_region)
+    brain_model = BrainGeometry(
+        brain_shape, brain_region, rotate_initial_geo=rotate_initial_geo
+    )
     return brain_model
 
 
@@ -152,8 +155,49 @@ def generate_model_geometry(settings):
     """Generate a full geometry comprising brain and electrodes."""
     brain = generate_brain_model(settings)
     electrodes = generate_electrodes(settings)
-    model_geometry = ModelGeometry(brain, electrodes)
+    try:
+        model_geometry = ModelGeometry(brain, electrodes)
+    except RuntimeError:
+        _logger.warning(
+            "Could not build geometry, trying again after "
+            "rotation of initial geometry"
+        )
+        brain = generate_brain_model(settings, rotate_initial_geo=True)
+        model_geometry = ModelGeometry(brain, electrodes)
     return model_geometry
+
+
+def build_brain_model(
+    settings,
+    mri_image: Optional[MagneticResonanceImage] = None,
+    rotate_initial_geo: bool = False,
+) -> BrainGeometry:
+    """Build geometry model of brain."""
+    # MRI image is default choice for brain construction
+    if "BrainRegion" in settings:
+        _logger.debug("Generating model geometry for fixed brain region")
+        region_parameters = settings["BrainRegion"]
+        brain_region = create_bounding_box(region_parameters)
+        shape = settings["BrainRegion"]["Shape"]
+        return BrainGeometry(shape, brain_region, rotate_initial_geo=rotate_initial_geo)
+    else:
+        _logger.debug("Generating model geometry from MRI image")
+        if mri_image is None:
+            raise ValueError("Need to provide MRI image to build geo.")
+        # attention: bounding box is given in voxel space!
+        brain_region = mri_image.bounding_box
+        shape = "Ellipsoid"
+        # transformation to real space in geometry creation
+        _logger.debug(
+            "Generate OCC model, passing transformation matrix from MRI image"
+        )
+        return BrainGeometry(
+            shape,
+            brain_region,
+            trafo_matrix=mri_image.trafo_matrix,
+            translation=mri_image.translation,
+            rotate_intial_geo=rotate_initial_geo,
+        )
 
 
 def set_contact_and_encapsulation_layer_properties(settings, model_geometry):
@@ -248,7 +292,8 @@ def generate_point_models(settings: dict):
     if settings["PointModel"]["Pathway"]["Active"]:
         file_name = settings["PointModel"]["Pathway"]["FileName"]
         _logger.info(f"Import neuron geometries stored in {file_name}")
-        point_models.append(Pathway(file_name))
+        export_field = settings["PointModel"]["Pathway"]["ExportField"]
+        point_models.append(Pathway(file_name, export_field=export_field))
     if settings["PointModel"]["Lattice"]["Active"]:
         shape_par = settings["PointModel"]["Lattice"]["Shape"]
         shape = shape_par["x"], shape_par["y"], shape_par["z"]
@@ -258,6 +303,7 @@ def generate_point_models(settings: dict):
         direction = dir_par["x[mm]"], dir_par["y[mm]"], dir_par["z[mm]"]
         distance = settings["PointModel"]["Lattice"]["PointDistance[mm]"]
         collapse_vta = settings["PointModel"]["Lattice"]["CollapseVTA"]
+        export_field = settings["PointModel"]["Lattice"]["ExportField"]
 
         point_models.append(
             Lattice(
@@ -266,6 +312,7 @@ def generate_point_models(settings: dict):
                 distance=distance,
                 direction=direction,
                 collapse_vta=collapse_vta,
+                export_field=export_field,
             )
         )
 
@@ -278,7 +325,10 @@ def generate_point_models(settings: dict):
         header = mri_image.header
         shape_par = settings["PointModel"]["VoxelLattice"]["Shape"]
         shape = np.array([shape_par["x"], shape_par["y"], shape_par["z"]])
-        point_models.append(VoxelLattice(center, affine, shape, header))
+        export_field = settings["PointModel"]["VoxelLattice"]["ExportField"]
+        point_models.append(
+            VoxelLattice(center, affine, shape, header, export_field=export_field)
+        )
     return point_models
 
 
@@ -334,32 +384,22 @@ def prepare_volume_conductor_model(
 
     mesh_parameters = settings["Mesh"]
     floating_mode = model_geometry.get_floating_mode()
+    output_path = settings["OutputPath"]
+    _logger.info(f"Output path set to: {output_path}")
     if floating_mode == "Floating":
         _logger.debug("Floating mode selected")
         return VolumeConductorFloating(
-            model_geometry,
-            conductivity,
-            solver,
-            order,
-            mesh_parameters,
+            model_geometry, conductivity, solver, order, mesh_parameters, output_path
         )
 
     elif floating_mode == "FloatingImpedance":
         _logger.debug("FloatingImpedance mode selected")
         return VolumeConductorFloatingImpedance(
-            model_geometry,
-            conductivity,
-            solver,
-            order,
-            mesh_parameters,
+            model_geometry, conductivity, solver, order, mesh_parameters, output_path
         )
     _logger.debug("Non floating mode selected")
     return VolumeConductorNonFloating(
-        model_geometry,
-        conductivity,
-        solver,
-        order,
-        mesh_parameters,
+        model_geometry, conductivity, solver, order, mesh_parameters, output_path
     )
 
 
@@ -411,7 +451,9 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
     return frequency_domain_signal
 
 
-def run_volume_conductor_model(settings, volume_conductor, frequency_domain_signal):
+def run_volume_conductor_model(
+    settings, volume_conductor, frequency_domain_signal, truncation_time=None
+):
     """TODO document.
 
 
@@ -421,8 +463,6 @@ def run_volume_conductor_model(settings, volume_conductor, frequency_domain_sign
     If the mode is multisine, a provided list of frequencies is used.
     """
     _logger.info("Run volume conductor model")
-    volume_conductor.output_path = settings["OutputPath"]
-    _logger.info(f"Output path set to: {volume_conductor.output_path}")
 
     out_of_core = settings["OutOfCore"]
     compute_impedance = False
@@ -448,10 +488,12 @@ def run_volume_conductor_model(settings, volume_conductor, frequency_domain_sign
         compute_impedance,
         export_vtk,
         point_models=point_models,
-        activation_threshold=settings["ActivationThresholdVTA"],
+        activation_threshold=settings["ActivationThresholdVTA[V-per-m]"],
         out_of_core=out_of_core,
         export_frequency=export_frequency,
         adaptive_mesh_refinement_settings=settings["Mesh"]["AdaptiveMeshRefinement"],
+        material_mesh_refinement_steps=settings["Mesh"]["MaterialRefinementSteps"],
+        truncation_time=truncation_time,
     )
     return vcm_timings
 
@@ -473,11 +515,11 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             ", thus the setting was switched on"
         )
     # no vtk export
-    export_vtk = False
+    export_vtk = settings["ExportVTK"]
     # no intermediate exports
     export_frequency = None
     # no VTA analysis
-    activation_threshold = None
+    activation_threshold = settings["ActivationThresholdVTA[V-per-m]"]
     # prepare point model
     point_models = generate_point_models(settings)
 
@@ -504,14 +546,21 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             active = False
             floating = True
             current = 0.0
+            voltage = False
             if contact.name == upd_contact.name:
                 active = True
                 floating = False
                 current = 1.0
+                voltage = 1.0
             # write new contact settings
             geometry.update_contact(
                 contact_idx,
-                {"Floating": floating, "Active": active, "Current[A]": current},
+                {
+                    "Floating": floating,
+                    "Active": active,
+                    "Current[A]": current,
+                    "Voltage[V]": voltage,
+                },
             )
         volume_conductor = prepare_volume_conductor_model(
             settings, geometry, conductivity, solver
@@ -526,6 +575,10 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             activation_threshold=activation_threshold,
             out_of_core=out_of_core,
             export_frequency=export_frequency,
+            adaptive_mesh_refinement_settings=settings["Mesh"][
+                "AdaptiveMeshRefinement"
+            ],
+            material_mesh_refinement_steps=settings["Mesh"]["MaterialRefinementSteps"],
         )
         _logger.info(f"Timing for contact {contact.name}: {vcm_timings}")
 
@@ -564,6 +617,8 @@ def run_PAM(settings):
         raise NotImplementedError(f"Model {model_type} not yet implemented.")
 
     if settings["StimSets"]["Active"]:
+        if "CurrentVector" not in settings:
+            settings["CurrentVector"] = None
         # files to load individual solutions from
         time_domain_solution_files = []
 
@@ -579,7 +634,7 @@ def run_PAM(settings):
             n_contacts = len(list(stim_protocols[0]))
         else:
             if settings["CurrentVector"] is None:
-                raise ValueError("Provide either a StimSetsFile or " "a CurrentVector")
+                raise ValueError("Provide either a StimSetsFile or a CurrentVector")
             n_stim_protocols = 1
             # load current from input file
             stim_protocols = [settings["CurrentVector"]]
