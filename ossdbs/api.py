@@ -575,6 +575,10 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             activation_threshold=activation_threshold,
             out_of_core=out_of_core,
             export_frequency=export_frequency,
+            adaptive_mesh_refinement_settings=settings["Mesh"][
+                "AdaptiveMeshRefinement"
+            ],
+            material_mesh_refinement_steps=settings["Mesh"]["MaterialRefinementSteps"],
         )
         _logger.info(f"Timing for contact {contact.name}: {vcm_timings}")
 
