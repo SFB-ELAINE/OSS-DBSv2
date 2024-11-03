@@ -30,9 +30,7 @@ for result_directory in result_directories:
     print("++++++++++++++")
     print(result_directory)
     print("--------------")
-    print(
-        "Pathway, Mean activation, Std. dev, Mean difference, Std. dev, Max. difference"
-    )
+    print("Pathway, Mean activation, Mean difference, Max. difference")
     df = pd.read_csv(result_directory + "_overview.csv")
     for pathway in pathways:
         best_activation = best_result[pathway].to_numpy()
@@ -43,8 +41,5 @@ for result_directory in result_directories:
         mean_diff = np.mean(difference)
         std_diff = np.std(difference)
         max_diff = np.max(difference)
-        print(
-            f"{pathway}, {mean_activation:.2f}, {std_activation:.2f}, "
-            f"{mean_diff:.2f}, {std_diff:.2f}, {max_diff:.2f}"
-        )
+        print(f"{pathway}, {mean_activation:.2f}, " f"{mean_diff:.2f}, {max_diff:.2f}")
     print("++++++++++++++")
