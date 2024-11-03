@@ -122,8 +122,8 @@ class BostonScientificCartesiaXModel(ElectrodeModel):
         direction = (0, 0, 1)
         # add distances
         vectors = []
-        # TODO adjust to start at right height
-        distance = self._parameters.tip_length + self._parameters.contact_spacing
+
+        distance = self._parameters.tip_length
         for _ in range(0, 6):
             vectors.append(tuple(np.array(direction) * distance))
             distance += (
@@ -247,8 +247,8 @@ class BostonScientificCartesiaHXModel(BostonScientificCartesiaXModel):
         origin = (0, 0, 0)
         # add distances
         vectors = []
-        # TODO adjust to start at right height
-        distance = self._parameters.tip_length + self._parameters.contact_spacing
+
+        distance = self._parameters.tip_length
         for _ in range(0, 8):
             vectors.append(tuple(np.array(direction) * distance))
             distance += (

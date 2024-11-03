@@ -1,0 +1,280 @@
+{
+  "BrainRegion": {
+    "Center": {
+      "x[mm]": 11.6657,
+      "y[mm]": -17.3816,
+      "z[mm]": -10.4943
+    },
+    "Dimension": {
+      "x[mm]": 60,
+      "y[mm]": 60,
+      "z[mm]": 80
+    },
+    "Shape": "Ellipsoid"
+  },
+  "Electrodes": [
+    {
+      "Name": "BostonScientificVerciseDirectedCustom",
+      "CustomParameters": {
+        "tip_length": 1.800802762903603,
+        "contact_length": 1.800802762903603,
+        "contact_spacing": 0.6002675876345344,
+        "lead_diameter": 1.3,
+        "total_length": 450.0
+      },
+      "Rotation[Degrees]": 4.67585974119466,
+      "Direction": {
+        "x[mm]": 0.22284506014026012,
+        "y[mm]": 0.5325263930924642,
+        "z[mm]": 0.8165511128098559
+      },
+      "TipPosition": {
+        "x[mm]": 11.46505,
+        "y[mm]": -17.8610875,
+        "z[mm]": -11.22952375
+      },
+      "EncapsulationLayer": {
+        "Thickness[mm]": 0.0,
+        "Material": "Gray matter",
+        "DielectricModel": "ColeCole4",
+        "DielectricParameters": null,
+        "MaxMeshSize": 0.1
+      },
+      "Contacts": [
+        {
+          "Contact_ID": 1,
+          "Active": false,
+          "Current[A]": 0.002,
+          "Voltage[V]": 0.0,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        },
+        {
+          "Contact_ID": 2,
+          "Active": false,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        },
+        {
+          "Contact_ID": 3,
+          "Active": false,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        },
+        {
+          "Contact_ID": 4,
+          "Active": false,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        },
+        {
+          "Contact_ID": 5,
+          "Active": false,
+          "Current[A]": -0.0006666666666666665,
+          "Voltage[V]": 0.0,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        },
+        {
+          "Contact_ID": 6,
+          "Active": false,
+          "Current[A]": -0.0006666666666666665,
+          "Voltage[V]": 0.0,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        },
+        {
+          "Contact_ID": 7,
+          "Active": false,
+          "Current[A]": -0.0006666666666666665,
+          "Voltage[V]": 0.0,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        },
+        {
+          "Contact_ID": 8,
+          "Active": false,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        }
+      ]
+    }
+  ],
+  "Surfaces": [
+    {
+      "Name": "BrainSurface",
+      "Active": true,
+      "Current[A]": -0.0,
+      "Voltage[V]": 0.0
+    }
+  ],
+  "MaterialDistribution": {
+    "MRIPath": "segmask.nii.gz",
+    "MRIMapping": {
+      "Blood": 4,
+      "Gray matter": 1,
+      "White matter": 2,
+      "CSF": 3,
+      "Unknown": 0
+    },
+    "DiffusionTensorActive": false,
+    "DTIPath": ""
+  },
+  "DielectricModel": {
+    "Type": "ColeCole4",
+    "CustomParameters": null
+  },
+  "Mesh": {
+    "LoadMesh": false,
+    "LoadPath": "",
+    "MeshingHypothesis": {
+      "Type": "Fine",
+      "MaxMeshSize": 1000000.0,
+      "MeshSizeFilename": ""
+    },
+    "HPRefinement": {
+      "Active": false,
+      "Levels": 2,
+      "Factor": 0.125
+    },
+    "AdaptiveMeshRefinement": {
+      "Active": false,
+      "MaxIterations": 10,
+      "ErrorTolerance": 0.1
+    },
+    "MaterialRefinementSteps": 0,
+    "MeshSize": {
+      "Edges": {},
+      "Faces": {},
+      "Volumes": {}
+    },
+    "SaveMesh": false,
+    "SavePath": "mesh"
+  },
+  "EQSMode": false,
+  "FEMOrder": 3,
+  "StimulationSignal": {
+    "Type": "Rectangle",
+    "ListOfFrequencies": [
+      10000
+    ],
+    "Frequency[Hz]": 130.0,
+    "PulseWidth[us]": 60.0,
+    "PulseTopWidth[us]": 0.0,
+    "CounterPulseWidth[us]": 0.0,
+    "InterPulseWidth[us]": 0.0,
+    "SpectrumMode": "OctaveBand",
+    "CounterAmplitude": 1.0,
+    "CutoffFrequency": 250000.0,
+    "CurrentControlled": true
+  },
+  "Solver": {
+    "Type": "CG",
+    "Preconditioner": "local",
+    "PreconditionerKwargs": {},
+    "MaximumSteps": 2000,
+    "Precision": 1e-10
+  },
+  "PointModel": {
+    "Pathway": {
+      "Active": true,
+      "FileName": "Allocated_axons.h5",
+      "ExportField": false
+    },
+    "Lattice": {
+      "Active": false,
+      "Center": {
+        "x[mm]": 12.169716666666668,
+        "y[mm]": -16.129033333333332,
+        "z[mm]": -8.53663
+      },
+      "Shape": {
+        "x": 71,
+        "y": 71,
+        "z": 71
+      },
+      "Direction": {
+        "x[mm]": 0,
+        "y[mm]": 0,
+        "z[mm]": 1
+      },
+      "PointDistance[mm]": 0.33,
+      "CollapseVTA": true,
+      "ExportField": false
+    },
+    "VoxelLattice": {
+      "Active": false,
+      "Shape": {
+        "x": 31,
+        "y": 31,
+        "z": 41
+      },
+      "TimeDomain": false,
+      "ExportField": false
+    }
+  },
+  "OutputPath": "Results",
+  "ComputeImpedance": false,
+  "ExportVTK": true,
+  "ExportFrequency": null,
+  "ExportElectrode": false,
+  "ModelSide": 0,
+  "CalcAxonActivation": true,
+  "ActivationThresholdVTA[V-per-m]": 200.0,
+  "FailFlag": "rh",
+  "OutOfCore": false,
+  "PathwayFile": "Allocated_axons_parameters.json",
+  "StimSets": {
+    "Active": false,
+    "StimSetsFile": ""
+  },
+  "StimulationFolder": ""
+}

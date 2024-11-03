@@ -21,6 +21,8 @@ def get_reference_and_model_geo(electrode_name, idx):
     model_geo = generate_model_geometry(settings)
     mesh = ngsolve.Mesh(
         os.path.join(
+            "tests",
+            "electrode_tests",
             "reference_directed_electrodes",
             f"mesh_{electrode_name}_direction_{idx}.vol.gz",
         )

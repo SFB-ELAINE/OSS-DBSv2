@@ -148,8 +148,16 @@ class ModelGeometry:
                 return idx
         return -1
 
+    # ruff: noqa: C901
     def update_contact(self, idx: int, settings: dict) -> None:
         """Overwrite contact properties."""
+        if idx >= len(self._contacts):
+            raise ValueError(
+                f"You want to access contact {idx} "
+                "which is not in the geometry. "
+                "The highest possible index is "
+                f"{len(self._contacts) - 1}."
+            )
         contact = self._contacts[idx]
         for setting, value in settings.items():
             if setting == "Active":

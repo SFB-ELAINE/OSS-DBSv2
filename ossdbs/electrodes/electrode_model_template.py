@@ -5,6 +5,7 @@
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
+from typing import Optional
 
 import netgen
 import netgen.occ as occ
@@ -97,12 +98,13 @@ class ElectrodeModel(ABC):
 
     @encapsulation_thickness.setter
     def encapsulation_thickness(self, thickness: float) -> None:
-        self._encapsulation_geometry = self._construct_encapsulation_geometry(thickness)
+        if np.greater(thickness, 1e-3):
+            self._encapsulation_geometry = self._construct_encapsulation_geometry(
+                thickness
+            )
         self._encapsulation_thickness = thickness
 
-    def encapsulation_geometry(
-        self, thickness: float
-    ) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+    def encapsulation_geometry(self, thickness: float) -> Optional[netgen.occ.Solid]:
         """Generate geometry of encapsulation layer around electrode.
 
         Parameters
@@ -162,6 +164,11 @@ class ElectrodeModel(ABC):
         _logger.info("Boundary names updated")
 
     @property
+    def parameters(self) -> dataclass:
+        """Electrode geometry parameters."""
+        return self._parameters
+
+    @property
     def index(self) -> int:
         """Index of electrode, relevant if multiple electrodes used."""
         return self._index
@@ -200,10 +207,8 @@ class ElectrodeModel(ABC):
             )
             / 2
         )
-        try:
-            radius = self._parameters.lead_diameter / 2
-        except AttributeError:
-            radius = 1  # Set larger radius in case lead_diameter is not defined
+
+        radius = self._parameters.lead_diameter
 
         cylinder = netgen.occ.Cylinder(
             p=self._position,
@@ -213,6 +218,7 @@ class ElectrodeModel(ABC):
         )
 
         occgeo = occ.OCCGeometry(cylinder * self.geometry)
+        _logger.debug("Generating mesh")
         mesh_electrode = Mesh(occgeo.GenerateMesh())
         bnd_dict = {}
         for idx, contact in enumerate(self.boundaries):

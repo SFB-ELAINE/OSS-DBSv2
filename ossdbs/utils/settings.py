@@ -63,6 +63,7 @@ class Settings:
             "MeshingHypothesis": {
                 "Type": "Default",
                 "MaxMeshSize": 1e6,
+                "MeshSizeFilename": "",
             },
             "HPRefinement": {
                 "Active": False,
@@ -74,6 +75,7 @@ class Settings:
                 "MaxIterations": 10,
                 "ErrorTolerance": 0.1,
             },
+            "MaterialRefinementSteps": 0,
             "MeshSize": {"Edges": {}, "Faces": {}, "Volumes": {}},
             "SaveMesh": False,
             "SavePath": "mesh",
@@ -125,8 +127,8 @@ class Settings:
         "ExportElectrode": False,
         "ModelSide": 0,
         "CalcAxonActivation": False,
-        "ActivationThresholdVTA": None,
         "DielectricAccuracy": 0.01,
+        "ActivationThresholdVTA[V-per-m]": None,
         "FailFlag": "oss",
         "OutOfCore": False,
         "PathwayFile": None,
@@ -136,6 +138,7 @@ class Settings:
             "StimSetsFile": None,
         },
         "StimulationFolder": os.getcwd(),
+        "TruncateAfterActivePartRatio": None,
     }
 
     def __init__(self, partial_settings: dict) -> None:

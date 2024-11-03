@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Open-source software for deep brain stimulation."""
+
 import logging
 
 import ngsolve
@@ -23,7 +24,11 @@ from ossdbs.api import (
 )
 from ossdbs.fem import ConductivityCF, Mesh
 from ossdbs.model_geometry import BrainGeometry, ModelGeometry
-from ossdbs.utils.nifti1image import DiffusionTensorImage, MagneticResonanceImage
+from ossdbs.utils.nifti1image import (
+    DiffusionTensorImage,
+    MagneticResonanceImage,
+    VTAImage,
+)
 
 _logger = logging.getLogger(__name__)
 _logger.addHandler(logging.NullHandler())
@@ -72,6 +77,7 @@ __all__ = (
     "load_images",
     "create_bounding_box",
     "MagneticResonanceImage",
+    "VTAImage",
     "DiffusionTensorImage",
     "set_contact_and_encapsulation_layer_properties",
     "Mesh",

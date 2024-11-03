@@ -7,7 +7,7 @@ name = "ossdbs"
 version = "0.5"
 description = "OSS-DBS v2: faster and modular open-source code for deep brain stimulation"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { file = "LICENSE" }
 authors = [{ name = "Julius Zimmermann", email = "julius.zimmermann@uni-rostock.de" },
            { name = "Jan Philipp Payonk", email = "jan.payonk@uni-rostock.de" },
@@ -19,9 +19,10 @@ authors = [{ name = "Julius Zimmermann", email = "julius.zimmermann@uni-rostock.
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent"
 ]
@@ -31,15 +32,14 @@ dependencies = ["h5py==3.11.0",
                 "pandas",
                 "scipy",
 		"matplotlib",
-		# always install NEURON under Linux
+		# always install NEURON under Linux and Mac
+		# windows has no automated installer
 		"neuron==8.2.6; platform_system=='Linux'", 
-		# on Mac, Python > 3.9 is required, Windows has no automated installer
-		"neuron==8.2.6; python_version>'3.8' and platform_system=='Darwin'", 
+		"neuron==8.2.6; platform_system=='Darwin'", 
 		# if Neuron cannot be installed from Pypi
 		# pin the numpy version to < 2
 		"numpy<2; platform_system=='Windows'",
 		"dipy>=1.8.0",
-		"importlib_resources; python_version=='3.8'"
                 ]
 
 [project.optional-dependencies]
@@ -124,4 +124,5 @@ ignore = [
     ".ruff_cache/**/*",
     "setup.py",
     "tests/**/*",
+    "examples/ConvergenceStudy/**/*"
 ]

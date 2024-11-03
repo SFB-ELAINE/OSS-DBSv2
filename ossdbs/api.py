@@ -451,7 +451,9 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
     return frequency_domain_signal
 
 
-def run_volume_conductor_model(settings, volume_conductor, frequency_domain_signal):
+def run_volume_conductor_model(
+    settings, volume_conductor, frequency_domain_signal, truncation_time=None
+):
     """Run volume conductor model at multiple frequencies.
 
     Notes
@@ -486,11 +488,13 @@ def run_volume_conductor_model(settings, volume_conductor, frequency_domain_sign
         compute_impedance,
         export_vtk,
         point_models=point_models,
-        activation_threshold=settings["ActivationThresholdVTA"],
+        activation_threshold=settings["ActivationThresholdVTA[V-per-m]"],
         dielectric_threshold=settings["DielectricAccuracy"],
         out_of_core=out_of_core,
         export_frequency=export_frequency,
         adaptive_mesh_refinement_settings=settings["Mesh"]["AdaptiveMeshRefinement"],
+        material_mesh_refinement_steps=settings["Mesh"]["MaterialRefinementSteps"],
+        truncation_time=truncation_time,
     )
     return vcm_timings
 
@@ -516,7 +520,7 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
     # no intermediate exports
     export_frequency = None
     # no VTA analysis
-    activation_threshold = settings["ActivationThresholdVTA"]
+    activation_threshold = settings["ActivationThresholdVTA[V-per-m]"]
     # prepare point model
     point_models = generate_point_models(settings)
 
@@ -572,6 +576,10 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             activation_threshold=activation_threshold,
             out_of_core=out_of_core,
             export_frequency=export_frequency,
+            adaptive_mesh_refinement_settings=settings["Mesh"][
+                "AdaptiveMeshRefinement"
+            ],
+            material_mesh_refinement_steps=settings["Mesh"]["MaterialRefinementSteps"],
         )
         _logger.info(f"Timing for contact {contact.name}: {vcm_timings}")
 
@@ -610,6 +618,8 @@ def run_PAM(settings):
         raise NotImplementedError(f"Model {model_type} not yet implemented.")
 
     if settings["StimSets"]["Active"]:
+        if "CurrentVector" not in settings:
+            settings["CurrentVector"] = None
         # files to load individual solutions from
         time_domain_solution_files = []
 
@@ -625,7 +635,7 @@ def run_PAM(settings):
             n_contacts = len(list(stim_protocols[0]))
         else:
             if settings["CurrentVector"] is None:
-                raise ValueError("Provide either a StimSetsFile or " "a CurrentVector")
+                raise ValueError("Provide either a StimSetsFile or a CurrentVector")
             n_stim_protocols = 1
             # load current from input file
             stim_protocols = [settings["CurrentVector"]]

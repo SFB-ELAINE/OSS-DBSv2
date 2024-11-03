@@ -104,7 +104,7 @@ class LeadSettings:
             pulses_sign_amplitude = self.get_phi_vec() * 0.001  # switch to A
             pulse_sign_amplitude = pulses_sign_amplitude[hemis_idx, :]
             grounded_current = -1 * np.round(
-                np.sum(pulse_sign_amplitude[~np.isnan(pulse_sign_amplitude)]), 6
+                np.sum(pulse_sign_amplitude[~np.isnan(pulse_sign_amplitude)]), 9
             )  # could be 0
         else:
             # otherwise not relevant, but set to 0.0 if non-active contacts present
@@ -183,7 +183,9 @@ class LeadSettings:
             },
             "StimulationSignal": {"CurrentControlled": current_controlled},
             "CalcAxonActivation": bool(self.get_calc_axon_act()),
-            "ActivationThresholdVTA": float(self.get_act_thresh_vta()[hemis_idx]),
+            "ActivationThresholdVTA[V-per-m]": float(
+                self.get_act_thresh_vta()[hemis_idx]
+            ),
             "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATH),
             "FailFlag": side,
             "TemplateSpace": self.get_est_in_temp(),
@@ -214,7 +216,7 @@ class LeadSettings:
             if current_controlled:
                 floating = True
         if floating:
-            partial_dict["Solver"]["PreconditionerKwargs"] = {"coarsetype": "local"}
+            partial_dict["Solver"]["Preconditioner"] = "local"
             # increase number of iterations for FFEM
             if partial_dict["CalcAxonActivation"]:
                 partial_dict["Solver"]["MaximumSteps"] = 2000
@@ -476,9 +478,9 @@ class LeadSettings:
         # hardwired for now
         partial_dict["StimulationSignal"]["Frequency[Hz]"] = 130.0
         partial_dict["StimulationSignal"]["SpectrumMode"] = "OctaveBand"
-        partial_dict["StimulationSignal"][
-            "CutoffFrequency"
-        ] = 250000.0  # 2 us time step
+        partial_dict["StimulationSignal"]["CutoffFrequency"] = (
+            250000.0  # 2 us time step
+        )
         partial_dict["StimulationSignal"]["PulseTopWidth[us]"] = 0.0
         partial_dict["StimulationSignal"]["InterPulseWidth[us]"] = 0.0
 

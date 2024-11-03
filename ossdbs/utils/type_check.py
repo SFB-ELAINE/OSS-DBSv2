@@ -13,6 +13,7 @@ class TypeChecker:
         "Electrodes": list,
         "FailFlag": str,
         "StimulationFolder": str,
+        "TruncateAfterActivePartRatio": (type(None), float),
         "ModelSide": int,
         "CalcAxonActivation": bool,
         "OutOfCore": bool,
@@ -21,9 +22,10 @@ class TypeChecker:
             "StimSetsFile": (type(None), str),
         },
         "AdaptiveMeshRefinement": bool,
+        # TODO add more tests
         "PathwayFile": (type(None), str),
-        "ActivationThresholdVTA": (type(None), float),
         "DielectricAccuracy": float,
+        "ActivationThresholdVTA[V-per-m]": (type(None), float),
         "Contacts": {"MaxMeshSize": float, "MaxMeshSizeEdge": float},
         "EncapsulationLayer": {
             "Thickness[mm]": (int, float),
@@ -42,7 +44,11 @@ class TypeChecker:
             "LoadMesh": bool,
             "LoadPath": str,
             "MeshElementOrder": int,
-            "MeshingHypothesis": {"Type": str},
+            "MeshingHypothesis": {
+                "Type": str,
+                "MaxMeshSize": (int, float),
+                "MeshSizeFilename": str,
+            },
             "SaveMesh": bool,
             "SavePath": str,
         },

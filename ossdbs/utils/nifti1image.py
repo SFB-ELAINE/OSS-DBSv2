@@ -231,3 +231,36 @@ class DiffusionTensorImage(Nifti1Image):
             raise ValueError(f"Component must be in {self.components.keys()}")
         extract_index = self.components[component]
         return self.data[:, :, :, extract_index]
+
+
+class VTAImage(MagneticResonanceImage):
+    """VTA image containing only boolean data."""
+
+    def compute_dice_coefficent(self, reference_image) -> float:
+        """Compute dice coefficient with image of same shape."""
+        if not isinstance(reference_image, VTAImage):
+            raise ValueError("Can compute Dice coefficient only for VTAImage type.")
+        affines_equal = np.all(np.isclose(self.affine, reference_image.affine))
+        if not affines_equal:
+            raise ValueError("Need to provide a reference_image from same space.")
+        if not self.data.shape == reference_image.data.shape:
+            raise ValueError(
+                "Need to provide a reference_image with same shape."
+                f"Expected shape: {self.data.shape}"
+            )
+        # sum all values that are the same
+        # values are 0 or 1
+        intersection = np.sum(
+            np.isclose(self.data.flatten(), reference_image.data.flatten())
+        )
+        # take size of entire voxel image
+        data_size = self.data.size + reference_image.data.size
+        # compute dice coefficient
+        dice_coefficient = 2.0 * intersection / data_size
+        return dice_coefficient
+
+    def get_vta_volume(self) -> float:
+        """Compute volume of VTA."""
+        voxel_volume = np.prod(self.voxel_sizes)
+        # values are 0 or 1
+        return voxel_volume * np.sum(self.data)

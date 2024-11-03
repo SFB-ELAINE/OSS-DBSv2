@@ -35,3 +35,5 @@ test_input_cases_results.csv
 *.stp
 ngmesh.ini
 x86_64/
+
+meshsizes.txt

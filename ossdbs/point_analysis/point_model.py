@@ -538,6 +538,7 @@ class PointModel(ABC):
 
         # nifti exports
         field_mags_full = np.zeros(self.lattice_mask.shape[0])
+        # convert to V/m
         field_mags_full[self.lattice_mask[:, 0]] = field_mags * 1000.0
 
         self.save_as_nifti(
@@ -555,27 +556,45 @@ class PointModel(ABC):
         self,
         timesteps: np.ndarray,
         potential_in_time: np.ndarray,
-        Ex_in_time: np.ndarray = None,
-        Ey_in_time: np.ndarray = None,
-        Ez_in_time: np.ndarray = None,
+        Ex_in_time: Optional[np.ndarray] = None,
+        Ey_in_time: Optional[np.ndarray] = None,
+        Ez_in_time: Optional[np.ndarray] = None,
+        truncation_index: Optional[int] = None,
     ) -> TimeResult:
         """Prepare time result and save it to file.
 
-        Notes
-        -----
-        TODO rethink structure for out-of-core processing.
+        Parameters
+        ----------
+        timesteps: np.ndarray
+            Array with timesteps related to solution
+        potential_in_time: np.ndarray
+            Solution array with electric potential
+        Ex_in_time: np.ndarray
+            Solution array with x-component of field
+        Ey_in_time: np.ndarray
+            Solution array with y-component of field
+        Ez_in_time: np.ndarray
+            Solution array with z-component of field
+        truncation_index: int
+            Index to truncate solution
         """
         _logger.info("Create time results")
         field_magnitude = None
         # if all field entries are defined
         if not (Ex_in_time is None and Ey_in_time is None and Ez_in_time is None):
+            # truncate here otherwise they are none
+            # first axis is points, second is time
+            Ex_in_time = Ex_in_time[:, :truncation_index]
+            Ey_in_time = Ey_in_time[:, :truncation_index]
+            Ez_in_time = Ez_in_time[:, :truncation_index]
             field_magnitude = compute_field_magnitude_from_components(
                 Ex_in_time, Ey_in_time, Ez_in_time
             )
         time_result = TimeResult(
-            time_steps=timesteps,
+            time_steps=timesteps[:truncation_index],
             points=self.lattice,
-            potential=potential_in_time,
+            # first axis is points, second is time
+            potential=potential_in_time[:, :truncation_index],
             electric_field_vector_x=Ex_in_time,
             electric_field_vector_y=Ey_in_time,
             electric_field_vector_z=Ez_in_time,
@@ -638,3 +657,38 @@ class PointModel(ABC):
             Ey_in_time = ifft(self.tmp_Ey_freq_domain, axis=1, workers=-1).real
             Ez_in_time = ifft(self.tmp_Ez_freq_domain, axis=1, workers=-1).real
         return potential_in_time, Ex_in_time, Ey_in_time, Ez_in_time
+
+    def export_point_model_information(self, filename: str) -> None:
+        """Export all relevant information about the model to JSON."""
+        raise NotImplementedError(
+            "Point model information export " "has not yet been implemented."
+        )
+
+    def write_netgen_meshsize_file(self, meshsize: float, filename: str) -> None:
+        """Use coordinates of point model to impose local mesh size.
+
+        Notes
+        -----
+        Local mesh size for points is set.
+        The file has the format (according to Netgen documentation):
+          nr_points
+          x1, y1, z1, meshsize
+          x2, y2, z2, meshsize
+          ...
+          xn, yn, zn, meshsize
+
+          nr_edges
+          x11, y11, z11, x12, y12, z12, meshsize
+          ...
+          xn1, yn1, zn1, xn2, yn2, zn2, meshsize
+        """
+        points = self.coordinates
+        with open(filename, "w") as fp:
+            # write points to file
+            fp.write(f"{len(points)}\n")
+            fp.write("\n")
+            for point in points:
+                fp.write(f"{point[0]} {point[1]} {point[2]} {meshsize}\n")
+            # we could also write lines but we do not
+            fp.write("\n")
+            fp.write("0\n")
