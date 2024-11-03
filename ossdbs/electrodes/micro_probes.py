@@ -63,10 +63,13 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
 
     def parameter_check(self):
         """Check geometry parameters."""
-        # Check to ensure that all parameters are at least 0
         for param_name, param_value in asdict(self._parameters).items():
             if param_name != "exposed_wire" and param_value < 0:
                 raise ValueError(f"Parameter {param_name} cannot be less than zero.")
+            elif param_name == "exposed_wire":
+                contact_radius = getattr(self._parameters, "contact_radius", None)
+                if contact_radius is not None and param_value < -contact_radius:
+                    raise ValueError(f"Parameter {param_name} cannot be less than the negative of the contact radius.")
 
         # check that electrode is long enough
         if (
@@ -276,7 +279,7 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
                 )
                 # Convert to gp_Pnt and gp_Vec
                 cover_start_pt_pnt = occ.gp_Pnt(*cover_start_pt)
-                normal_vec = occ.gp_Vec(*-np.array(direction))
+                normal_vec = occ.gp_Vec(*np.array(direction))
                 half_space = netgen.occ.HalfSpace(p=cover_start_pt_pnt, n=normal_vec)
                 covered_tip = tip * half_space
                 contact = covered_tip
