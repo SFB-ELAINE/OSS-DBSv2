@@ -63,10 +63,14 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
 
     def parameter_check(self):
         """Check geometry parameters."""
-        # Check to ensure that all parameters are at least 0
-        for param in asdict(self._parameters).values():
-            if param < 0:
-                raise ValueError("Parameter values cannot be less than zero")
+        for param_name, param_value in asdict(self._parameters).items():
+            if param_name != "exposed_wire" and param_value < 0:
+                raise ValueError(f"Parameter {param_name} cannot be less than zero.")
+            elif param_name == "exposed_wire":
+                contact_radius = getattr(self._parameters, "contact_radius", None)
+                if contact_radius is not None and param_value < -contact_radius:
+                    raise ValueError(f"Parameter {param_name} cannot be less than the negative of the contact radius.")
+
         # check that electrode is long enough
         if (
             self._parameters.total_length
@@ -224,9 +228,12 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         direction = self._direction
         lead_radius = self._parameters.lead_radius
-        lead_height = self._parameters.total_length - (
-            self._parameters.exposed_wire + self._parameters.contact_radius
+        lead_height = (
+            self._parameters.total_length
+            - max(self._parameters.exposed_wire, 0)
+            - self._parameters.contact_radius
         )
+
         # If wire doesn't exist, start point will be the same as the tip center
         lead_start_pt = tuple(
             np.array(direction)
@@ -245,37 +252,53 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         # If exposed wire exists,
         # we include the wire and tip as part of the contact object
         if self.wire_exists:
-            lead_start_pt = tuple(
-                np.array(direction)
-                * (self._parameters.exposed_wire + self._parameters.contact_radius)
-            )
-            half_space = netgen.occ.HalfSpace(p=lead_start_pt, n=direction)
-            wire_height = self._parameters.exposed_wire
-            wire_start_pt = tip_center
-            wire = occ.Cylinder(
-                p=wire_start_pt,
-                d=direction,
-                r=self._parameters.wire_radius,
-                h=wire_height,
-            )
-            contact = (tip * half_space) + wire
+            if self._parameters.exposed_wire > 0:
+                # Standard case, exposed wire
+                lead_start_pt = tuple(
+                    np.array(direction)
+                    * (self._parameters.exposed_wire + self._parameters.contact_radius)
+                )
+                half_space = netgen.occ.HalfSpace(
+                    p=occ.gp_Pnt(*lead_start_pt), n=occ.gp_Vec(*direction)
+                )
+                wire_height = self._parameters.exposed_wire
+                wire_start_pt = tip_center
+                wire = occ.Cylinder(
+                    p=wire_start_pt,
+                    d=direction,
+                    r=self._parameters.wire_radius,
+                    h=wire_height,
+                )
+                contact = (tip * half_space) + wire
+            else:
+                # Negative exposed_wire, meaning part of the tip is covered
+                covering_height = abs(self._parameters.exposed_wire)
+                cover_start_pt = tuple(
+                    np.array(direction)
+                    * (self._parameters.contact_radius - covering_height)
+                )
+                # Convert to gp_Pnt and gp_Vec
+                cover_start_pt_pnt = occ.gp_Pnt(*cover_start_pt)
+                normal_vec = occ.gp_Vec(*np.array(direction))
+                half_space = netgen.occ.HalfSpace(p=cover_start_pt_pnt, n=normal_vec)
+                covered_tip = tip * half_space
+                contact = covered_tip
         else:
-            half_space = netgen.occ.HalfSpace(p=tip_center, n=direction)
+            # No exposed wire, simple contact
+            half_space = netgen.occ.HalfSpace(
+                p=occ.gp_Pnt(*tip_center), n=occ.gp_Vec(*direction)
+            )
             contact = tip * half_space
 
         contact.bc(self._boundaries["Contact_1"])
 
-        # Find edge with the max z value
-        max_edge_z = get_highest_edge(contact)
-
-        # Only name edge with the maximum z value
-        # (represents the edge between the non-contact and contact surface)
-        max_edge_z.name = self._boundaries["Contact_1"]
+        for edge in contact.edges:
+            edge.name = "Contact_1"
 
         if np.allclose(self._direction, direction):
             return contact
-        # rotate electrode to match orientation
-        # e.g. from z-axis to y-axis
+
+        # Rotate electrode to match orientation if required
         rotation = tuple(
             np.cross(direction, self._direction)
             / np.linalg.norm(np.cross(direction, self._direction))
