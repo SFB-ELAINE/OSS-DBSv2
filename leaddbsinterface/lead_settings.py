@@ -190,8 +190,6 @@ class LeadSettings:
             "FailFlag": side,
             "TemplateSpace": self.get_est_in_temp(),
             "Solver": {},
-            # 2nd order enough for stim volumes
-            "FEMOrder": 2 + int(self.get_calc_axon_act()),
             "OutOfCore": bool(self.get_out_of_core()),
             "StimSets": {
                 "Active": bool(self.get_stim_set_mode()),
@@ -222,12 +220,6 @@ class LeadSettings:
                 partial_dict["Solver"]["MaximumSteps"] = 2000
 
         return partial_dict
-
-    # def save_to_oss_json(self, json_path, hemis_idx=0):
-    #
-    #     settings = self.make_settings(hemis_idx)
-    #     with open(json_path, 'w') as f:
-    #         json.dump(total_dict, f)
 
     def get_num_elecs(self):
         """Number of electrodes."""
@@ -595,8 +587,8 @@ class LeadSettings:
         ----------
         hemis_idx: int
             hemisphere ID (0 - right, 1 - left)
-        elec_dict: dict
-            default=None, electrode dictionary to create/update
+        elec_dict: dict, Optional
+            electrode dictionary to create/update
 
         Returns
         -------
@@ -686,9 +678,7 @@ class LeadSettings:
 
         return elec_dict, unit_directions, specs_array_length
 
-    def import_stimulation_settings(
-        self, hemis_idx, current_controlled, elec_dict=None
-    ):
+    def import_stimulation_settings(self, hemis_idx, current_controlled, elec_dict):
         """Convert Lead-DBS stim settings to OSS-DBS parameters,
         update electrode dictionary.
 
@@ -699,7 +689,7 @@ class LeadSettings:
         current_controlled: bool
             Current-controlled stimulation
         elec_dict: dict
-            default=None, electrode dictionary to create/update
+            electrode dictionary to update
 
         Returns
         -------
@@ -747,6 +737,16 @@ class LeadSettings:
             cntct_dicts = np.empty(len(pulse_amp), dtype=object)
             cntcts_made = 0
 
+            # get edge size from lead diameter
+            # used in mesh refinement
+
+            if "Name" not in elec_dict:
+                raise KeyError("Need to provide name of electrode")
+            electrode_name = elec_dict["Name"].replace("Custom", "")
+            lead_diameter = default_electrode_parameters[electrode_name].lead_diameter
+            perimeter = np.pi * lead_diameter
+            edge_size = perimeter / 50.0
+
             for i in range(len(pulse_amp)):
                 # all (truly) non-active contacts are floating with 0A
                 if np.isnan(pulse_amp[i]):
@@ -769,6 +769,7 @@ class LeadSettings:
                             "Current[A]": pulse_amp[i],
                             "Voltage[V]": 0.0,
                             "Floating": True,
+                            "MaxMeshSizeEdge": edge_size,
                         }
                     else:
                         cntct_dicts[cntcts_made] = {
@@ -778,12 +779,11 @@ class LeadSettings:
                             "Current[A]": 0.0,
                             "Voltage[V]": pulse_amp[i],
                             "Floating": False,
+                            "MaxMeshSizeEdge": edge_size,
                         }
 
                 cntcts_made += 1
 
-        if elec_dict is None:
-            elec_dict = {}  # or you could set default to {}
         elec_dict["Contacts"] = cntct_dicts.tolist()
 
         return elec_dict, case_grounding, floating

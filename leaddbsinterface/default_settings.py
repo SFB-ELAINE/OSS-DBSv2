@@ -30,12 +30,15 @@ def load_default_for_lead(settings):
     settings["Electrodes"][settings["ModelSide"]]["EncapsulationLayer"][
         "Thickness[mm]"
     ] = 0.1
-    settings["Electrodes"][settings["ModelSide"]]["EncapsulationLayer"][
-        "Material"
-    ] = "White matter"
+    settings["Electrodes"][settings["ModelSide"]]["EncapsulationLayer"]["Material"] = (
+        "White matter"
+    )
     settings["ExportVTK"] = True
-    settings["Mesh"]["MeshingHypothesis"]["Type"] = "Fine"
-    settings["FEMOrder"] = 3
+    settings["Mesh"]["MeshingHypothesis"]["Type"] = "Default"
+    # material refinement
+    settings["Mesh"]["MaterialRefinementSteps"] = 1
+    # edge refinement is defined in other file depending on lead geometry
+    settings["FEMOrder"] = 2
     settings["ComputeImpedance"] = False
 
     settings["Solver"]["MaximumSteps"] = 500
