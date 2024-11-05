@@ -1,6 +1,34 @@
+import os
 from typing import ClassVar, List
 
+import ngsolve
 import numpy as np
+
+from ossdbs import generate_model_geometry
+
+from .reference_directed_electrodes.tested_directions import (
+    base_settings,
+    directions,
+    get_direction_dict,
+)
+
+
+def get_reference_and_model_geo(electrode_name, idx):
+    direction = directions[idx]
+    settings = base_settings.copy()
+    settings["Electrodes"][0]["Name"] = electrode_name
+    settings["Electrodes"][0]["Direction"] = get_direction_dict(direction)
+    model_geo = generate_model_geometry(settings)
+    mesh = ngsolve.Mesh(
+        os.path.join(
+            "tests",
+            "electrode_tests",
+            "reference_directed_electrodes",
+            f"mesh_{electrode_name}_direction_{idx}.vol.gz",
+        )
+    )
+    ref_geo = mesh.ngmesh.GetGeometry().shape
+    return ref_geo, model_geo
 
 
 # TODO is there a nicer way to not need to copy-paste
@@ -47,10 +75,10 @@ class TestElectrode:
 
         desired = {"RenamedBody", "RenamedContact_1"}
 
-        if electrode_name == "MicroElectrode":
-            desired.add("fillet")
-        else:
-            desired.update({f"Contact_{i+2}" for i in range(n_contacts - 1)})
+        # if electrode_name == "MicroElectrode":
+        #     desired.add("fillet")
+        # else:
+        desired.update({f"Contact_{i+2}" for i in range(n_contacts - 1)})
 
         assert desired == set(faces)
 
@@ -63,8 +91,8 @@ class TestElectrode:
         desired = {"Body"}
         desired.update({f"Contact_{i+1}" for i in range(n_contacts)})
 
-        if electrode_name == "MicroElectrode":
-            desired.add("fillet")
+        # if electrode_name == "MicroElectrode":
+        #     desired.add("fillet")
 
         assert desired == set(faces)
 

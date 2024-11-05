@@ -1,0 +1,258 @@
+{
+  "BrainRegion": {
+    "Center": {
+      "x[mm]": 11.6939,
+      "y[mm]": -15.9992,
+      "z[mm]": -10.1624
+    },
+    "Dimension": {
+      "x[mm]": 60,
+      "y[mm]": 60,
+      "z[mm]": 80
+    },
+    "Shape": "Ellipsoid"
+  },
+  "Electrodes": [
+    {
+      "Name": "BostonScientificVerciseDirected",
+      "Rotation[Degrees]": 5.560808219457241,
+      "Direction": {
+        "x[mm]": 0.3027327778243897,
+        "y[mm]": 0.5101293066126904,
+        "z[mm]": 0.805059597648264
+      },
+      "TipPosition": {
+        "x[mm]": 11.449074999999999,
+        "y[mm]": -16.41175,
+        "z[mm]": -10.813465
+      },
+      "EncapsulationLayer": {
+        "Thickness[mm]": 0.0,
+        "Material": "Gray matter",
+        "DielectricModel": "ColeCole4",
+        "DielectricParameters": null,
+        "MaxMeshSize": 0.1
+      },
+      "Contacts": [
+        {
+          "Contact_ID": 1,
+          "Active": false,
+          "Current[A]": 0.125,
+          "Voltage[V]": false,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        },
+        {
+          "Contact_ID": 2,
+          "Active": false,
+          "Current[A]": 0.125,
+          "Voltage[V]": false,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        },
+        {
+          "Contact_ID": 3,
+          "Active": false,
+          "Current[A]": 0.125,
+          "Voltage[V]": false,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        },
+        {
+          "Contact_ID": 4,
+          "Active": false,
+          "Current[A]": 0.125,
+          "Voltage[V]": false,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        },
+        {
+          "Contact_ID": 5,
+          "Active": false,
+          "Current[A]": 0.125,
+          "Voltage[V]": false,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        },
+        {
+          "Contact_ID": 6,
+          "Active": false,
+          "Current[A]": 0.125,
+          "Voltage[V]": false,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        },
+        {
+          "Contact_ID": 7,
+          "Active": false,
+          "Current[A]": 0.125,
+          "Voltage[V]": false,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        },
+        {
+          "Contact_ID": 8,
+          "Active": false,
+          "Current[A]": 0.125,
+          "Voltage[V]": false,
+          "Floating": true,
+          "SurfaceImpedance[Ohmm]": {
+            "real": 0.0,
+            "imag": 0.0
+          },
+          "MaxMeshSize": 1000000.0,
+          "MaxMeshSizeEdge": 1000000.0
+        }
+      ]
+    }
+  ],
+  "Surfaces": [
+    {
+      "Name": "BrainSurface",
+      "Active": true,
+      "Current[A]": -1.0,
+      "Voltage[V]": 0.0
+    }
+  ],
+  "MaterialDistribution": {
+    "MRIPath": "segmask.nii.gz",
+    "MRIMapping": {
+      "Blood": 4,
+      "Gray matter": 1,
+      "White matter": 2,
+      "CSF": 3,
+      "Unknown": 0
+    },
+    "DiffusionTensorActive": false,
+    "DTIPath": ""
+  },
+  "DielectricModel": {
+    "Type": "ColeCole4",
+    "CustomParameters": null
+  },
+  "Mesh": {
+    "LoadMesh": false,
+    "LoadPath": "",
+    "MeshingHypothesis": {
+      "MaxMeshSize": 1000000.0
+    },
+    "MeshSize": {
+      "Edges": {},
+      "Faces": {},
+      "Volumes": {}
+    },
+    "SaveMesh": false,
+    "SavePath": "mesh"
+  },
+  "EQSMode": false,
+  "FEMOrder": 2,
+  "StimulationSignal": {
+    "Type": "Rectangle",
+    "ListOfFrequencies": [
+      10000
+    ],
+    "Frequency[Hz]": 130.0,
+    "PulseWidth[us]": 60.0,
+    "PulseTopWidth[us]": 0.0,
+    "CounterPulseWidth[us]": 0.0,
+    "InterPulseWidth[us]": 0.0,
+    "SpectrumMode": "OctaveBand",
+    "CounterAmplitude": 1.0,
+    "CutoffFrequency": 250000.0,
+    "CurrentControlled": true
+  },
+  "Solver": {
+    "Type": "CG",
+    "Preconditioner": "local",
+    "PreconditionerKwargs": {},
+    "MaximumSteps": 2000,
+    "Precision": 1e-10
+  },
+  "PointModel": {
+    "Pathway": {
+      "Active": true,
+      "FileName": "OSS_sim_files_rh/Allocated_axons.h5"
+    },
+    "Lattice": {
+      "Active": false,
+      "Center": {
+        "x[mm]": 13.021466666666667,
+        "y[mm]": -13.809433333333333,
+        "z[mm]": -6.647916666666667
+      },
+      "Shape": {
+        "x": 71,
+        "y": 71,
+        "z": 71
+      },
+      "Direction": {
+        "x[mm]": 0,
+        "y[mm]": 0,
+        "z[mm]": 1
+      },
+      "PointDistance[mm]": 0.33,
+      "CollapseVTA": false
+    },
+    "VoxelLattice": {
+      "Active": false,
+      "Shape": {
+        "x": 31,
+        "y": 31,
+        "z": 41
+      },
+      "TimeDomain": false
+    }
+  },
+  "OutputPath": "OSS_sim_files_rh/Results",
+  "ComputeImpedance": false,
+  "ExportVTK": false,
+  "ExportFrequency": null,
+  "ExportElectrode": false,
+  "ModelSide": 0,
+  "CalcAxonActivation": true,
+  "ActivationThresholdVTA": 200.0,
+  "FailFlag": "rh",
+  "OutOfCore": false,
+  "PathwayFile": "OSS_sim_files_rh/Allocated_axons_parameters.json",
+  "StimSets": {
+    "Active": true,
+    "StimSetsFile": "OSS_sim_files_rh/Current_protocols_0.csv"
+  },
+  "AdaptiveMeshRefinement": false,
+  "StimulationFolder": ""
+}

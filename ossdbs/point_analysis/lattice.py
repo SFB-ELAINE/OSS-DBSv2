@@ -1,12 +1,16 @@
 # Copyright 2023, 2024 Konstantin Butenko, Jan Philipp Payonk, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Tuple
+import json
+import logging
+from typing import Optional, Tuple
 
 import nibabel as nib
 import numpy as np
 
 from .point_model import PointModel
+
+_logger = logging.getLogger(__name__)
 
 
 class Lattice(PointModel):
@@ -34,14 +38,16 @@ class Lattice(PointModel):
         distance: float,
         direction: tuple,
         collapse_vta: bool = False,
+        export_field: bool = False,
     ) -> None:
         if distance < 0:
             raise ValueError("The spacing between points must be positive.")
-        self._distance = distance
         if len(shape) != 3:
             raise ValueError("Pass a 3-valued tuple as the lattice shape.")
+        self._distance = distance
         self._shape = shape
         self.collapse_VTA = collapse_vta
+        self._export_field = export_field
         self._center = center
         norm = np.linalg.norm(direction)
         # TODO why can norm be not be there?
@@ -54,6 +60,19 @@ class Lattice(PointModel):
 
         # never compute time-domain signal
         self.time_domain_conversion = False
+
+        # VTA volume
+        self._vta_volume = None
+
+    @property
+    def VTA_volume(self) -> Optional[float]:
+        """Return VTA volume in mm^3."""
+        return self._vta_volume
+
+    @VTA_volume.setter
+    def VTA_volume(self, value: float) -> None:
+        """Set VTA volume in mm^3."""
+        self._vta_volume = value
 
     def _initialize_coordinates(self) -> np.ndarray:
         """Generates coordinates of points.
@@ -122,6 +141,8 @@ class Lattice(PointModel):
 
         nifti_output = np.zeros(nifti_grid.shape, float)
         if binarize:
+            if activation_threshold is None:
+                raise ValueError("Provide an activation threshold.")
             nifti_output[nifti_grid >= activation_threshold] = 1
             nifti_output[nifti_grid < activation_threshold] = 0
         else:
@@ -141,3 +162,24 @@ class Lattice(PointModel):
 
         img = nib.Nifti1Image(nifti_output, affine)
         nib.save(img, filename)
+
+    def export_point_model_information(self, filename: str) -> None:
+        """Export all relevant information about the model to JSON."""
+        if not filename.endswith(".json"):
+            _logger.warning(
+                "Filename for export did not end with `json`, "
+                "added `json` as fileending."
+            )
+            filename += ".json"
+        vta_info = {
+            "distance": self._distance,
+            "shape": self._shape,
+            "collapse_VTA": self.collapse_VTA,
+            "export_field": self._export_field,
+            "center": self._center,
+            "direction": self._direction,
+            "volume": self.VTA_volume,
+        }
+        # write to file
+        with open(filename, "w") as fp:
+            json.dump(vta_info, fp)

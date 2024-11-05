@@ -89,14 +89,27 @@ class MicroElectrodeModel(ElectrodeModel):
         return lead
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        point = (0, 0, 0)
+        origin = (0, 0, 0)
+        direction = (0, 0, 1)
         radius = self._parameters.tip_diameter * 0.5
         height = self._parameters.contact_length
-        contact = occ.Cylinder(p=point, d=self._direction, r=radius, h=height)
+        contact = occ.Cylinder(p=origin, d=direction, r=radius, h=height)
         contact.bc(self._boundaries["Contact_1"])
         min_edge = get_lowest_edge(contact)
         max_edge = get_highest_edge(contact)
         min_edge.name = "Contact_1"
         contact = contact.MakeFillet(contact.edges["Contact_1"], 0.05)
         max_edge.name = "Contact_1"
-        return contact
+        for face in contact.faces:
+            face.name = "Contact_1"
+
+        if np.allclose(self._direction, direction):
+            return contact
+        # rotate electrode to match orientation
+        # e.g. from z-axis to y-axis
+        rotation = tuple(
+            np.cross(direction, self._direction)
+            / np.linalg.norm(np.cross(direction, self._direction))
+        )
+        angle = np.degrees(np.arccos(self._direction[2]))
+        return contact.Rotate(occ.Axis(p=origin, d=rotation), angle)

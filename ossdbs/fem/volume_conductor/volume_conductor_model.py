@@ -2,6 +2,7 @@
 # Copyright 2023, 2024 Johannes Reding, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import json
 import logging
 import os
 import time
@@ -15,7 +16,7 @@ import pandas as pd
 from ossdbs.fem.mesh import Mesh
 from ossdbs.fem.solver import Solver
 from ossdbs.model_geometry import Contacts, ModelGeometry
-from ossdbs.point_analysis import PointModel
+from ossdbs.point_analysis import Lattice, PointModel
 from ossdbs.stimulation_signals import (
     FrequencyDomainSignal,
     get_indices_in_octave_band,
@@ -45,6 +46,8 @@ class VolumeConductor(ABC):
         Order of solver and mesh (curved elements)
     meshing_parameters: dict
         Dictionary with setting for meshing
+    output_path: str
+        Path to store solution
     """
 
     def __init__(
@@ -54,6 +57,7 @@ class VolumeConductor(ABC):
         solver: Solver,
         order: int,
         meshing_parameters: dict,
+        output_path: str = "Results",
     ) -> None:
         self._solver = solver
         self._order = order
@@ -76,6 +80,9 @@ class VolumeConductor(ABC):
         self._stimulation_variable = None
         self._floatings_potentials = None
 
+        # set output path
+        self.output_path = output_path
+
         # generate the mesh
         self._mesh = Mesh(self._model_geometry.geometry, self._order)
         if meshing_parameters["LoadMesh"]:
@@ -89,9 +96,6 @@ class VolumeConductor(ABC):
         # to save previous solution and do post-processing
         self._frequency = None
         self._sigma = None
-
-        # to write results
-        self._output_path = None
 
         # frequency at which VTK shall be exported
         self._export_frequency = None
@@ -122,6 +126,8 @@ class VolumeConductor(ABC):
         out_of_core: bool = False,
         export_frequency: Optional[float] = None,
         adaptive_mesh_refinement_settings: Optional[dict] = None,
+        material_mesh_refinement_steps: int = 0,
+        truncation_time: Optional[float] = None,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -135,6 +141,7 @@ class VolumeConductor(ABC):
             List of PointModel to extract solution for VTA / PAM
         activation_threshold: float
             If VTA is estimated by threshold, provide it here.
+            Its unit must be V/m!
         out_of_core: bool
             Indicate whether point model shall be done out-of-core
         export_frequency: float
@@ -144,6 +151,10 @@ class VolumeConductor(ABC):
             Frequency-domain representation of stimulation signal
         adaptive_mesh_refinement_settings: dict
             Perform adaptive mesh refinement (only at first frequency)
+        material_mesh_refinement_steps: int
+            How often should elements with more than one material be refined
+        truncation_time: float
+            Time until which result will be written to hard drive
 
         Notes
         -----
@@ -178,8 +189,8 @@ class VolumeConductor(ABC):
         # always compute impedance for CC with 2 contacts
         if self.current_controlled and len(self.contacts.active) == 2:
             _logger.info(
-                """Set compute_impedance to True.
-                   Impedance calculation is required for 2 contacts."""
+                "Set compute_impedance to True."
+                "Impedance calculation is required for 2 contacts."
             )
             compute_impedance = True
 
@@ -217,12 +228,15 @@ class VolumeConductor(ABC):
                 shape=(len(self.signal.frequencies)), dtype=dtype
             )
 
-        for point_model in point_models:
-            point_model.output_path = self.output_path
-            point_model.prepare_VCM_specific_evaluation(self.mesh, self.conductivity_cf)
-            point_model.prepare_frequency_domain_data_structure(
-                self.signal.signal_length, out_of_core
-            )
+        _logger.info(
+            "Number of elements before material refinement:"
+            f"{self.mesh.ngsolvemesh.ne}"
+        )
+        self.refine_mesh_by_material(material_mesh_refinement_steps)
+        _logger.info(
+            "Number of elements after material refinement:"
+            f"{self.mesh.ngsolvemesh.ne}"
+        )
 
         for computing_idx, freq_idx in enumerate(frequency_indices):
             frequency = self.signal.frequencies[freq_idx]
@@ -251,36 +265,53 @@ class VolumeConductor(ABC):
                     self._impedances[band_indices] = impedance
 
                 # refine only at first frequency
-                if freq_idx == frequency_indices[0] and _do_AMR:
+                if computing_idx == 0 and _do_AMR:
                     if not compute_impedance:
-                        impedance = self.compute_impedance()
+                        try:
+                            impedance = self.compute_impedance()
+                        except NotImplementedError:
+                            _logger.info("Using power instead of impedance in AMR")
+                            impedance = self.compute_power()
                     else:
-                        impedance = self._impedances[band_indices]
+                        impedance = self._impedances[freq_idx]
                     _logger.info(
                         "Number of elements before refinement:"
                         f"{self.mesh.ngsolvemesh.ne}"
                     )
-                    error = 100
+                    error = 100.0
                     refinements = 0
                     tolerance = adaptive_mesh_refinement_settings["ErrorTolerance"]
                     max_iterations = adaptive_mesh_refinement_settings["MaxIterations"]
-                    # TODO write a meaningful algo
                     while error > tolerance and refinements < max_iterations:
                         self.adaptive_mesh_refinement()
                         # solve on refined mesh
                         self.compute_solution(frequency)
-                        new_impedance = self.compute_impedance()
+                        # check new impedance
+                        try:
+                            new_impedance = self.compute_impedance()
+                        except NotImplementedError:
+                            new_impedance = self.compute_power()
                         # error in percent
-                        error = 100 * abs(impedance - new_impedance) / abs(impedance)
+                        error = 100.0 * abs(impedance - new_impedance) / abs(impedance)
                         # update variables for loop
                         refinements += 1
                         impedance = new_impedance
-                    # overwrite impedance values
-                    self._impedances[band_indices] = impedance
+                        _logger.info(
+                            f"Adaptive refinement step {refinements}, "
+                            f"error {error:.3f}%."
+                        )
+                    if compute_impedance:
+                        # overwrite impedance values
+                        self._impedances[band_indices] = impedance
 
                     _logger.info(
                         "Number of elements after refinement:"
                         f"{self.mesh.ngsolvemesh.ne}"
+                    )
+                    _logger.info(
+                        "Adaptive mesh refinement converged after "
+                        f"{refinements} refinement steps with an "
+                        f"error in the impedance of {error:.3f}%"
                     )
             else:
                 _logger.info(f"Skipped computation at {frequency} Hz")
@@ -305,6 +336,18 @@ class VolumeConductor(ABC):
             time_0 = time_1
 
             _logger.info("Copy solution to point models")
+            # initialise point models only after possible mesh change
+            # AMR can change points in mesh
+            if computing_idx == 0:
+                for point_model in point_models:
+                    point_model.output_path = self.output_path
+                    point_model.prepare_VCM_specific_evaluation(
+                        self.mesh, self.conductivity_cf
+                    )
+                    point_model.prepare_frequency_domain_data_structure(
+                        self.signal.signal_length, out_of_core
+                    )
+
             # copy solution to point models
             self._process_frequency_domain_solution(band_indices, point_models)
             time_1 = time.time()
@@ -343,16 +386,21 @@ class VolumeConductor(ABC):
         # export time domain solution if a proper signal has been passed
         _logger.info("Launching reconstruction of time domain")
         if len(self.signal.frequencies) > 1 and not multisine_mode:
+            _logger.info("Reconstructing time-domain signal.")
+            timesteps = get_timesteps(
+                self.signal.cutoff_frequency,
+                self.signal.base_frequency,
+                self.signal.signal_length,
+            )
+
+            truncation_index = None
+            if truncation_time is not None:
+                timestep = timesteps[1] - timesteps[0]
+                truncation_index = round(truncation_time / timestep)
             for point_model_idx, point_model in enumerate(point_models):
                 # skip point models that are not considered in time domain
                 if not point_model.time_domain_conversion:
                     continue
-                _logger.info("Reconstructing time-domain signal.")
-                timesteps = get_timesteps(
-                    self.signal.cutoff_frequency,
-                    self.signal.base_frequency,
-                    self.signal.signal_length,
-                )
 
                 (
                     potential_in_time,
@@ -360,10 +408,15 @@ class VolumeConductor(ABC):
                     Ey_in_time,
                     Ez_in_time,
                 ) = point_model.compute_solutions_in_time_domain(
-                    self.signal.signal_length
+                    self.signal.signal_length, convert_field=point_model.export_field
                 )
                 point_model.create_time_result(
-                    timesteps, potential_in_time, Ex_in_time, Ey_in_time, Ez_in_time
+                    timesteps,
+                    potential_in_time,
+                    Ex_in_time,
+                    Ey_in_time,
+                    Ez_in_time,
+                    truncation_index=truncation_index,
                 )
 
                 time_1 = time.time()
@@ -373,11 +426,19 @@ class VolumeConductor(ABC):
                 time_0 = time_1
 
         # close output-file
+        # and write point model reports
         for point_model in point_models:
             point_model.close_output_file()
+            try:
+                point_model.export_point_model_information(
+                    os.path.join(point_model.output_path, point_model.name + ".json")
+                )
+            except NotImplementedError:
+                pass
 
         if len(self.signal.frequencies) > 1 and not multisine_mode:
             self.export_solution_at_contacts()
+        self._save_report(timings)
         return timings
 
     def export_solution_at_contacts(self) -> None:
@@ -396,12 +457,12 @@ class VolumeConductor(ABC):
         free_stimulation_variable_at_contact = {}
         free_stimulation_variable_at_contact["time"] = timesteps
         for contact_idx, contact in enumerate(self.contacts.active):
-            free_stimulation_variable_at_contact[
-                contact.name + "_free"
-            ] = free_stimulation_variable_in_time[:, contact_idx]
-            free_stimulation_variable_at_contact[
-                contact.name
-            ] = stimulation_variable_in_time[:, contact_idx]
+            free_stimulation_variable_at_contact[contact.name + "_free"] = (
+                free_stimulation_variable_in_time[:, contact_idx]
+            )
+            free_stimulation_variable_at_contact[contact.name] = (
+                stimulation_variable_in_time[:, contact_idx]
+            )
 
         df = pd.DataFrame(free_stimulation_variable_at_contact)
         df.to_csv(
@@ -460,11 +521,11 @@ class VolumeConductor(ABC):
                 sum_currents += contact.current
                 voltages_active[idx] = contact.voltage
             for contact in self.contacts.floating:
-                all_active_contacts_grounded = np.all(np.isclose(voltages_active, 0.0))
-                if not all_active_contacts_grounded:
+                active_contacts_grounded = np.isclose(voltages_active, 0.0)
+                if len(np.where(active_contacts_grounded)[0]) != 1:
                     raise ValueError(
-                        """In multipolar current-controlled mode,
-                           all active contacts have to be grounded!"""
+                        "In multipolar current-controlled mode, "
+                        "only one active contact has to be grounded!"
                     )
                 sum_currents += contact.current
             if not np.isclose(sum_currents, 0):
@@ -578,6 +639,15 @@ class VolumeConductor(ABC):
         """Compute electric field from potential."""
         return -ngsolve.grad(self.potential)
 
+    def compute_power(self) -> complex:
+        """Compute power in domain."""
+        mesh = self.mesh.ngsolvemesh
+        # do not need to account for mm because of integration
+        power = ngsolve.Integrate(
+            ngsolve.Conj(self.electric_field) * self.current_density, mesh
+        )
+        return power
+
     def compute_impedance(self) -> complex:
         """Compute impedance at most recent solution.
 
@@ -601,11 +671,7 @@ class VolumeConductor(ABC):
 
         """
         if len(self.contacts.active) == 2:
-            mesh = self.mesh.ngsolvemesh
-            # do not need to account for mm because of integration
-            power = ngsolve.Integrate(
-                ngsolve.Conj(self.electric_field) * self.current_density, mesh
-            )
+            power = self.compute_power()
             # TODO integrate surface impedance by thin layer
             voltage = 0
             for idx, contact in enumerate(self.contacts.active):
@@ -650,8 +716,23 @@ class VolumeConductor(ABC):
         multisine_mode: bool
             If rectangular pulse is used (multisine_mode = False)
         """
-        ngmesh = self.mesh.ngsolvemesh
+        self.export_solution_to_vtk(freq_idx, multisine_mode)
+        self.export_conductivity_to_vtk()
+        self.export_material_distribution_to_vtk()
 
+    def export_solution_to_vtk(
+        self, freq_idx: int, multisine_mode: bool = False
+    ) -> None:
+        """Export potential and field at frequency to VTK.
+
+        Parameters
+        ----------
+        freq_idx: int
+            Index of frequency
+        multisine_mode: bool
+            If rectangular pulse is used (multisine_mode = False)
+        """
+        ngmesh = self.mesh.ngsolvemesh
         # use standard solution with 1V voltage drop
         # unless we run multisine mode
         scale_factor = 1.0
@@ -665,6 +746,9 @@ class VolumeConductor(ABC):
             scale_factor * self.electric_field, "E_field", ngmesh, self.is_complex
         ).save(os.path.join(self.output_path, "E-field"))
 
+    def export_conductivity_to_vtk(self) -> None:
+        """Write conductivity to VTK file."""
+        ngmesh = self.mesh.ngsolvemesh
         if self.conductivity_cf.is_tensor:
             # Naming convention by ParaView!
             cf_list = (
@@ -698,6 +782,9 @@ class VolumeConductor(ABC):
                 os.path.join(self.output_path, "dti")
             )
 
+    def export_material_distribution_to_vtk(self) -> None:
+        """Write material distribution to VTK file."""
+        ngmesh = self.mesh.ngsolvemesh
         FieldSolution(
             self.conductivity_cf.material_distribution(self.mesh),
             "material",
@@ -799,25 +886,30 @@ class VolumeConductor(ABC):
         """Check contacts and assign voltages if needed."""
         if len(self.contacts.active) == 2:
             _logger.info("Overwrite voltage for current-controlled mode")
+            ground_assigned = False
             for contact_idx, contact in enumerate(self.contacts.active):
-                if self.contacts[contact.name].current < 0:
-                    # negative contact is ground
-                    contact_voltage = 0
+                if np.isclose(self.contacts[contact.name].voltage, 0):
+                    if ground_assigned:
+                        raise ValueError(
+                            "All active contacts have been grounded (voltage = 0V)."
+                            "Choose only one ground."
+                        )
+                    ground_assigned = True
                 else:
                     contact_voltage = float(contact_idx) + 1
-                self.contacts[contact.name].voltage = contact_voltage
+                    self.contacts[contact.name].voltage = contact_voltage
         else:
             if len(self.contacts.active) != 1:
                 raise ValueError(
-                    """In multicontact current-controlled mode,
-                       currently only one active contact with fixed voltage can be used.
-                       Its voltage has to be 0V (ground)."""
+                    "In multicontact current-controlled mode,"
+                    "currently only one active contact with fixed voltage can be used."
+                    "Its voltage has to be 0V (ground)."
                 )
             for contact in self.contacts.active:
                 if not np.isclose(contact.voltage, 0):
                     raise ValueError(
-                        """In multicontact current-controlled mode,
-                           only ground voltage (0V) can be set on active contacts!"""
+                        "In multicontact current-controlled mode,"
+                        "only ground voltage (0V) can be set on active contacts!"
                     )
 
     def setup_timings_dict(
@@ -884,6 +976,20 @@ class VolumeConductor(ABC):
                 freq_idx, scale_factor * potentials, scale_factor * fields
             )
 
+    def threshold_frequency_domain_Efield(
+        self, scale_factor: float, activation_threshold: float
+    ) -> float:
+        """Determine volume of E-field above threshold at current frequency."""
+        field = scale_factor * self.electric_field
+        # convert to V/m
+        field_magnitude = 1000.0 * ngsolve.sqrt(ngsolve.InnerProduct(field, field))
+        # subtract threshold from electric field,
+        # all positive values are 1, negative values 0
+        threshold_cf = ngsolve.IfPos(field_magnitude - activation_threshold, 1, 0)
+        mesh = self.mesh.ngsolvemesh
+        # Integrate to get volume
+        return ngsolve.Integrate(threshold_cf, mesh=mesh)
+
     def _has_sigma_changed(self, freq_idx, threshold=0.01) -> bool:
         """Check if conductivity has changed."""
         if self._sigma is None:
@@ -949,11 +1055,19 @@ class VolumeConductor(ABC):
                 electrode=self.model_geometry.electrodes[0],
                 activation_threshold=activation_threshold,
             )
+            if isinstance(point_model, Lattice):
+                scale_factor = (
+                    self._scale_factor * self.signal.amplitudes[export_frequency_index]
+                )
+                point_model.VTA_volume = self.threshold_frequency_domain_Efield(
+                    scale_factor, activation_threshold
+                )
+                _logger.info(f"VTA volume is: {point_model.VTA_volume:.3f}")
 
     def _process_frequency_domain_solution(
         self, band_indices: Union[List, np.ndarray], point_models: PointModel
     ):
-        """Copy results a points."""
+        """Copy results to points."""
         for point_model in point_models:
             potentials = self.evaluate_potential_at_points(point_model.lattice)
             fields = self.evaluate_field_at_points(point_model.lattice)
@@ -981,4 +1095,21 @@ class VolumeConductor(ABC):
             raise ValueError(
                 "Need to specify ErrorTolerance and "
                 "MaxIterations for adaptive mesh refinement"
+            )
+
+    def _save_report(self, timings: dict):
+        """Save simulation run report to disk."""
+        report = {}
+        report["DOF"] = self._space.ndof
+        report["Elements"] = self.mesh.n_elements
+        report["Timings"] = timings
+
+        with open(os.path.join(self.output_path, "VCM_report.json"), "w") as fp:
+            json.dump(report, fp)
+
+    def refine_mesh_by_material(self, material_mesh_refinement_steps: int) -> None:
+        """Check materials and refine mesh if more than one material per element."""
+        for _ in range(material_mesh_refinement_steps):
+            self.mesh.refine_by_material_cf(
+                self.conductivity_cf.material_distribution(self.mesh)
             )

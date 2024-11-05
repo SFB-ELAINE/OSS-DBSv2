@@ -32,6 +32,11 @@ class MicroProbesRodentElectrodeParameters:
         """Returns distance between first level contact and fourth level contact."""
         return -1.0
 
+    @property
+    def lead_diameter(self) -> float:
+        """Lead diameter."""
+        return 2.0 * self.lead_radius
+
 
 class MicroProbesRodentElectrodeModel(ElectrodeModel):
     """MicroProbes Custom Rodent electrode.
@@ -58,10 +63,14 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
 
     def parameter_check(self):
         """Check geometry parameters."""
-        # Check to ensure that all parameters are at least 0
-        for param in asdict(self._parameters).values():
-            if param < 0:
-                raise ValueError("Parameter values cannot be less than zero")
+        for param_name, param_value in asdict(self._parameters).items():
+            if param_name != "exposed_wire" and param_value < 0:
+                raise ValueError(f"Parameter {param_name} cannot be less than zero.")
+            elif param_name == "exposed_wire":
+                contact_radius = getattr(self._parameters, "contact_radius", None)
+                if contact_radius is not None and param_value < -contact_radius:
+                    raise ValueError(f"Parameter {param_name} cannot be less than the negative of the contact radius.")
+
         # check that electrode is long enough
         if (
             self._parameters.total_length
@@ -219,9 +228,12 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         direction = self._direction
         lead_radius = self._parameters.lead_radius
-        lead_height = self._parameters.total_length - (
-            self._parameters.exposed_wire + self._parameters.contact_radius
+        lead_height = (
+            self._parameters.total_length
+            - max(self._parameters.exposed_wire, 0)
+            - self._parameters.contact_radius
         )
+
         # If wire doesn't exist, start point will be the same as the tip center
         lead_start_pt = tuple(
             np.array(direction)
@@ -232,41 +244,67 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         return body
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        direction = self._direction
+        origin = (0, 0, 0)
+        direction = (0, 0, 1)
         contact_radius = self._parameters.contact_radius
-        tip_center = tuple(np.array(self._direction) * self._parameters.contact_radius)
+        tip_center = tuple(np.array(direction) * self._parameters.contact_radius)
         tip = occ.Sphere(c=tip_center, r=contact_radius)
         # If exposed wire exists,
         # we include the wire and tip as part of the contact object
         if self.wire_exists:
-            lead_start_pt = tuple(
-                np.array(self._direction)
-                * (self._parameters.exposed_wire + self._parameters.contact_radius)
-            )
-            half_space = netgen.occ.HalfSpace(p=lead_start_pt, n=direction)
-            wire_height = self._parameters.exposed_wire
-            wire_start_pt = tip_center
-            wire = occ.Cylinder(
-                p=wire_start_pt,
-                d=direction,
-                r=self._parameters.wire_radius,
-                h=wire_height,
-            )
-            contact = (tip * half_space) + wire
+            if self._parameters.exposed_wire > 0:
+                # Standard case, exposed wire
+                lead_start_pt = tuple(
+                    np.array(direction)
+                    * (self._parameters.exposed_wire + self._parameters.contact_radius)
+                )
+                half_space = netgen.occ.HalfSpace(
+                    p=occ.gp_Pnt(*lead_start_pt), n=occ.gp_Vec(*direction)
+                )
+                wire_height = self._parameters.exposed_wire
+                wire_start_pt = tip_center
+                wire = occ.Cylinder(
+                    p=wire_start_pt,
+                    d=direction,
+                    r=self._parameters.wire_radius,
+                    h=wire_height,
+                )
+                contact = (tip * half_space) + wire
+            else:
+                # Negative exposed_wire, meaning part of the tip is covered
+                covering_height = abs(self._parameters.exposed_wire)
+                cover_start_pt = tuple(
+                    np.array(direction)
+                    * (self._parameters.contact_radius - covering_height)
+                )
+                # Convert to gp_Pnt and gp_Vec
+                cover_start_pt_pnt = occ.gp_Pnt(*cover_start_pt)
+                normal_vec = occ.gp_Vec(*np.array(direction))
+                half_space = netgen.occ.HalfSpace(p=cover_start_pt_pnt, n=normal_vec)
+                covered_tip = tip * half_space
+                contact = covered_tip
         else:
-            half_space = netgen.occ.HalfSpace(p=tip_center, n=direction)
+            # No exposed wire, simple contact
+            half_space = netgen.occ.HalfSpace(
+                p=occ.gp_Pnt(*tip_center), n=occ.gp_Vec(*direction)
+            )
             contact = tip * half_space
 
         contact.bc(self._boundaries["Contact_1"])
 
-        # Find edge with the max z value
-        max_edge_z = get_highest_edge(contact)
+        for edge in contact.edges:
+            edge.name = "Contact_1"
 
-        # Only name edge with the maximum z value
-        # (represents the edge between the non-contact and contact surface)
-        max_edge_z.name = self._boundaries["Contact_1"]
+        if np.allclose(self._direction, direction):
+            return contact
 
-        return contact
+        # Rotate electrode to match orientation if required
+        rotation = tuple(
+            np.cross(direction, self._direction)
+            / np.linalg.norm(np.cross(direction, self._direction))
+        )
+        angle = np.degrees(np.arccos(self._direction[2]))
+        return contact.Rotate(occ.Axis(p=origin, d=rotation), angle)
 
 
 @dataclass
@@ -290,6 +328,11 @@ class MicroProbesSNEX100Parameters:
     def get_distance_l1_l4(self) -> float:
         """Returns distance between first level contact and fourth level contact."""
         return -1.0
+
+    @property
+    def lead_diameter(self) -> float:
+        """Lead diameter, used outermost point of SNEX."""
+        return self.outer_tubing_diameter
 
 
 class MicroProbesSNEX100Model(ElectrodeModel):
@@ -377,7 +420,8 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         # TODO check if this is a good idea to find this edge
         # TODO maybe define new object instead of passing added shapes
         max_CoreE = get_highest_edge(part_1 + part_0)
-        max_CoreE.name = "fillet"
+        # TODO why is naming the edge important?
+        # max_CoreE.name = "fillet"
 
         # Constructing core tubing
         distance_2 = self._parameters.core_electrode_length
@@ -390,8 +434,8 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         # and max Z value for edge between outer tubing and outer electrode
         min_CoreTubeE = get_lowest_edge(part_2)
         max_CoreTubeE = get_highest_edge(part_2)
-        min_CoreTubeE.name = "fillet_edge"
-        max_CoreTubeE.name = "fillet_edge"
+        # min_CoreTubeE.name = "fillet_edge"
+        # max_CoreTubeE.name = "fillet_edge"
 
         # Constructing Outer Electrode
         distance_3 = distance_2 + self._parameters.core_tubing_length
@@ -403,8 +447,8 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         min_OuterE = get_lowest_edge(part_3)
         max_OuterE = get_highest_edge(part_3)
 
-        min_OuterE.name = "fillet_edge"
-        max_OuterE.name = "fillet_edge"
+        # min_OuterE.name = "fillet_edge"
+        # max_OuterE.name = "fillet_edge"
 
         # Constructing Outer tubing
         distance_4 = distance_3 + self._parameters.outer_electrode_length
@@ -415,7 +459,7 @@ class MicroProbesSNEX100Model(ElectrodeModel):
 
         # Find min Z value for for edge between outer tubing rim
         min_OuterTubeE = get_lowest_edge(part_4)
-        min_OuterTubeE.name = "fillet_edge"
+        # min_OuterTubeE.name = "fillet_edge"
 
         encapsulation = part_0 + part_1 + part_2 + part_3 + part_4
         # Run MakeFillet on edges - command is very sensitive to input parameters
@@ -469,9 +513,10 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         return body
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        direction = self._direction
+        origin = (0, 0, 0)
+        direction = (0, 0, 1)
         radius_1 = self._parameters.core_electrode_diameter * 0.5
-        center = tuple(np.array(self._direction) * radius_1)
+        center = tuple(np.array(direction) * radius_1)
         # define half space at tip_center
         # to construct a hemsiphere as part of the contact tip
         half_space = netgen.occ.HalfSpace(p=center, n=direction)
@@ -483,7 +528,7 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         distance = (
             self._parameters.core_electrode_length + self._parameters.core_tubing_length
         )
-        point = tuple(np.array(self._direction) * distance)
+        point = tuple(np.array(direction) * distance)
         radius_2 = self._parameters.outer_electrode_diameter * 0.5
         height_2 = self._parameters.outer_electrode_length
         contact_2 = occ.Cylinder(p=point, d=direction, r=radius_2, h=height_2)
@@ -500,7 +545,18 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         max_edge_z = get_highest_edge(contact_2)
         max_edge_z.name = self._boundaries["Contact_2"]
 
-        return netgen.occ.Glue([contact_1, contact_2])
+        if np.allclose(self._direction, direction):
+            return netgen.occ.Fuse([contact_1, contact_2])
+        # rotate electrode to match orientation
+        # e.g. from z-axis to y-axis
+        rotation = tuple(
+            np.cross(direction, self._direction)
+            / np.linalg.norm(np.cross(direction, self._direction))
+        )
+        angle = np.degrees(np.arccos(self._direction[2]))
+        return netgen.occ.Fuse([contact_1, contact_2]).Rotate(
+            occ.Axis(p=origin, d=rotation), angle
+        )
 
     def get_max_mesh_size_contacts(self, ratio: float) -> float:
         """Use electrode's contact size to estimate maximal mesh size.

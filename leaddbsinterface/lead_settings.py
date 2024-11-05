@@ -30,13 +30,12 @@ class LeadSettings:
         try:
             self._file = h5py.File(str(mat_file_path), "r")
             self._h5 = True
-        # TODO what do you want to catch here?
-        except:
+        except ValueError:
             print(
-                """\n Please, save oss-dbs_parameters using
-                        'save(oss-dbs_parameters_path, 'settings', '-v7.3')'"""
+                "\n Please, save oss-dbs_parameters using"
+                "'save(oss-dbs_parameters_path, 'settings', '-v7.3')'"
             )
-            raise SystemExit
+            raise
             # TODO  Fix non-binary .mat import
             self._file = scipy.io.loadmat(mat_file_path)
             self._h5 = False
@@ -105,7 +104,7 @@ class LeadSettings:
             pulses_sign_amplitude = self.get_phi_vec() * 0.001  # switch to A
             pulse_sign_amplitude = pulses_sign_amplitude[hemis_idx, :]
             grounded_current = -1 * np.round(
-                np.sum(pulse_sign_amplitude[~np.isnan(pulse_sign_amplitude)]), 6
+                np.sum(pulse_sign_amplitude[~np.isnan(pulse_sign_amplitude)]), 9
             )  # could be 0
         else:
             # otherwise not relevant, but set to 0.0 if non-active contacts present
@@ -184,13 +183,13 @@ class LeadSettings:
             },
             "StimulationSignal": {"CurrentControlled": current_controlled},
             "CalcAxonActivation": bool(self.get_calc_axon_act()),
-            "ActivationThresholdVTA": float(self.get_act_thresh_vta()[hemis_idx]),
+            "ActivationThresholdVTA[V-per-m]": float(
+                self.get_act_thresh_vta()[hemis_idx]
+            ),
             "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATH),
             "FailFlag": side,
             "TemplateSpace": self.get_est_in_temp(),
             "Solver": {},
-            # 2nd order enough for stim volumes
-            "FEMOrder": 2 + int(self.get_calc_axon_act()),
             "OutOfCore": bool(self.get_out_of_core()),
             "StimSets": {
                 "Active": bool(self.get_stim_set_mode()),
@@ -204,7 +203,9 @@ class LeadSettings:
         if self.get_calc_axon_act():
             partial_dict = self.add_stimsignal_params(partial_dict, hemis_idx)
             # add path to the pathway parameter file
-            partial_dict["PathwayFile"] = os.path.join(output_path, self.get_pathway_params_file())
+            partial_dict["PathwayFile"] = os.path.join(
+                output_path, self.get_pathway_params_file()
+            )
 
         # do not use h1amg as coarsetype preconditioner
         # if floating potentials are involved
@@ -213,18 +214,12 @@ class LeadSettings:
             if current_controlled:
                 floating = True
         if floating:
-            partial_dict["Solver"]["PreconditionerKwargs"] = {"coarsetype": "local"}
+            partial_dict["Solver"]["Preconditioner"] = "local"
             # increase number of iterations for FFEM
             if partial_dict["CalcAxonActivation"]:
                 partial_dict["Solver"]["MaximumSteps"] = 2000
 
         return partial_dict
-
-    # def save_to_oss_json(self, json_path, hemis_idx=0):
-    #
-    #     settings = self.make_settings(hemis_idx)
-    #     with open(json_path, 'w') as f:
-    #         json.dump(total_dict, f)
 
     def get_num_elecs(self):
         """Number of electrodes."""
@@ -475,9 +470,9 @@ class LeadSettings:
         # hardwired for now
         partial_dict["StimulationSignal"]["Frequency[Hz]"] = 130.0
         partial_dict["StimulationSignal"]["SpectrumMode"] = "OctaveBand"
-        partial_dict["StimulationSignal"][
-            "CutoffFrequency"
-        ] = 250000.0  # 2 us time step
+        partial_dict["StimulationSignal"]["CutoffFrequency"] = (
+            250000.0  # 2 us time step
+        )
         partial_dict["StimulationSignal"]["PulseTopWidth[us]"] = 0.0
         partial_dict["StimulationSignal"]["InterPulseWidth[us]"] = 0.0
 
@@ -592,8 +587,8 @@ class LeadSettings:
         ----------
         hemis_idx: int
             hemisphere ID (0 - right, 1 - left)
-        elec_dict: dict
-            default=None, electrode dictionary to create/update
+        elec_dict: dict, Optional
+            electrode dictionary to create/update
 
         Returns
         -------
@@ -683,9 +678,7 @@ class LeadSettings:
 
         return elec_dict, unit_directions, specs_array_length
 
-    def import_stimulation_settings(
-        self, hemis_idx, current_controlled, elec_dict=None
-    ):
+    def import_stimulation_settings(self, hemis_idx, current_controlled, elec_dict):
         """Convert Lead-DBS stim settings to OSS-DBS parameters,
         update electrode dictionary.
 
@@ -696,7 +689,7 @@ class LeadSettings:
         current_controlled: bool
             Current-controlled stimulation
         elec_dict: dict
-            default=None, electrode dictionary to create/update
+            electrode dictionary to update
 
         Returns
         -------
@@ -744,6 +737,16 @@ class LeadSettings:
             cntct_dicts = np.empty(len(pulse_amp), dtype=object)
             cntcts_made = 0
 
+            # get edge size from lead diameter
+            # used in mesh refinement
+
+            if "Name" not in elec_dict:
+                raise KeyError("Need to provide name of electrode")
+            electrode_name = elec_dict["Name"].replace("Custom", "")
+            lead_diameter = default_electrode_parameters[electrode_name].lead_diameter
+            perimeter = np.pi * lead_diameter
+            edge_size = perimeter / 50.0
+
             for i in range(len(pulse_amp)):
                 # all (truly) non-active contacts are floating with 0A
                 if np.isnan(pulse_amp[i]):
@@ -753,7 +756,7 @@ class LeadSettings:
                         "Contact_ID": i + 1,
                         "Active": False,
                         "Current[A]": 0.0,
-                        "Voltage[V]": False,
+                        "Voltage[V]": 0.0,
                         "Floating": True,
                     }
                 else:
@@ -764,23 +767,23 @@ class LeadSettings:
                             "Contact_ID": i + 1,
                             "Active": False,
                             "Current[A]": pulse_amp[i],
-                            "Voltage[V]": False,
+                            "Voltage[V]": 0.0,
                             "Floating": True,
+                            "MaxMeshSizeEdge": edge_size,
                         }
                     else:
                         cntct_dicts[cntcts_made] = {
                             # Assuming one-indexed contact ids
                             "Contact_ID": i + 1,
                             "Active": True,
-                            "Current[A]": False,
+                            "Current[A]": 0.0,
                             "Voltage[V]": pulse_amp[i],
                             "Floating": False,
+                            "MaxMeshSizeEdge": edge_size,
                         }
 
                 cntcts_made += 1
 
-        if elec_dict is None:
-            elec_dict = {}  # or you could set default to {}
         elec_dict["Contacts"] = cntct_dicts.tolist()
 
         return elec_dict, case_grounding, floating

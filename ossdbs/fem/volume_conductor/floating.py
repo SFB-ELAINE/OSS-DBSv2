@@ -24,13 +24,10 @@ class VolumeConductorFloating(VolumeConductor):
         solver: Solver,
         order: int,
         meshing_parameters: dict,
+        output_path: str = "Results",
     ) -> None:
         super().__init__(
-            geometry,
-            conductivity,
-            solver,
-            order,
-            meshing_parameters,
+            geometry, conductivity, solver, order, meshing_parameters, output_path
         )
         _logger.debug("Create space")
         self.update_space()
