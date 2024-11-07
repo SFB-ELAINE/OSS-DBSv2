@@ -1,6 +1,8 @@
 # Copyright 2023, 2024 Jan Philipp Payonk, Johannes Reding, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import logging
+
 import ngsolve
 
 from ossdbs.fem.solver import Solver
@@ -9,9 +11,11 @@ from ossdbs.model_geometry import ModelGeometry
 
 from .conductivity import ConductivityCF
 
+_logger = logging.getLogger(__name__)
+
 
 class VolumeConductorFloatingImpedance(VolumeConductor):
-    """Model for representing a volume conductor which evaluates the potential."""
+    """Volume conductor with floating conductors and surface impedances."""
 
     def __init__(
         self,
@@ -25,6 +29,7 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         super().__init__(
             geometry, conductivity, solver, order, meshing_parameters, output_path
         )
+        _logger.debug("Create space")
         self._floating_values = {}
         self.update_space()
 
@@ -49,24 +54,27 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
             floating values of floating contacts.
         """
         self._frequency = frequency
+        _logger.debug("Get conductivity at frequency")
+        self._sigma = self.conductivity_cf(self.mesh, frequency)
+        _logger.debug(f"Sigma: {self._sigma}")
         boundary_values = self.contacts.voltages
         coefficient = self.mesh.boundary_coefficients(boundary_values)
-        solution = ngsolve.GridFunction(space=self._space)
-        solution.components[0].Set(coefficient=coefficient, VOL_or_BND=ngsolve.BND)
-        self._sigma = self.conductivity_cf(self.mesh, frequency)
+        self._solution.components[0].Set(
+            coefficient=coefficient, VOL_or_BND=ngsolve.BND
+        )
+        _logger.debug("Bilinear form")
         bilinear_form = self.__bilinear_form(self._sigma, self._space)
+        _logger.debug("Linear form")
+        # TODO how to impose current?
         linear_form = ngsolve.LinearForm(space=self._space)
+        _logger.debug("Solve BVP")
+        self.solver.bvp(bilinear_form, linear_form, self._solution)
+        _logger.debug("Get floating values")
+        self._update_floating_voltages()
 
-        self.solver.bvp(bilinear_form, linear_form, solution)
-        components = solution.components[1:]
-        self._floating_values = {
-            contact.name: component.vec[0]
-            for (contact, component) in zip(self.contacts.floating, components)
-        }
-
-    def __create_space(self):
+    def __create_space(self) -> ngsolve.FESpace:
         boundaries = [contact.name for contact in self.contacts.active]
-
+        # TODO insert condition similar to EIT?
         h1_space = self.h1_space(boundaries=boundaries)
         number_spaces = [self.number_space() for _ in self.contacts.floating]
         spaces = [h1_space, *number_spaces]
@@ -88,3 +96,18 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
             bilinear_form += a * (u - ufix) * (v - vfix) * ngsolve.ds(boundary)
 
         return bilinear_form
+
+    def _update_floating_voltages(self) -> None:
+        """Set contact voltages with floating values."""
+        components = self._solution.components[1:]
+        floating_values = {
+            contact.name: component.vec[0]
+            for (contact, component) in zip(self.contacts.floating, components)
+        }
+        for contact in self.contacts.floating:
+            if contact.name in floating_values:
+                contact.voltage = floating_values[contact.name]
+            _logger.debug(
+                f"""Contact {contact.name} updated
+                    with floating potential {contact.voltage}"""
+            )
