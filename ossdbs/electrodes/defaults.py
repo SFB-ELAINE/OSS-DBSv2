@@ -23,6 +23,10 @@ from .dixi_microtechniques import (
     DixiSEEGModel,
     DixiSEEGParameters,
 )
+from .pmt_seeg import (
+    PMTsEEGModel,
+    PMTsEEGParameters,
+)
 from .medtronic import (
     MedtronicModel,
     MedtronicParameters,
@@ -248,6 +252,46 @@ default_electrode_parameters = {
         total_length=400.0,
         n_contacts=18,
     ),
+    "PMTsEEG2102_08": PMTsEEGParameters(
+        tip_length=0.8,
+        contact_length=2.0,
+        contact_spacing=2.0,
+        lead_diameter=0.8,
+        total_length=400.0,
+        n_contacts=8,
+    ),
+    "PMTsEEG2102_10": PMTsEEGParameters(
+        tip_length=0.8,
+        contact_length=2.0,
+        contact_spacing=2.0,
+        lead_diameter=0.8,
+        total_length=400.0,
+        n_contacts=10,
+    ),
+    "PMTsEEG2102_12": PMTsEEGParameters(
+        tip_length=0.8,
+        contact_length=2.0,
+        contact_spacing=2.0,
+        lead_diameter=0.8,
+        total_length=400.0,
+        n_contacts=12,
+    ),
+    "PMTsEEG2102_14": PMTsEEGParameters(
+        tip_length=0.8,
+        contact_length=2.0,
+        contact_spacing=2.0,
+        lead_diameter=0.8,
+        total_length=400.0,
+        n_contacts=14,
+    ),
+    "PMTsEEG2102_16": PMTsEEGParameters(
+        tip_length=0.8,
+        contact_length=2.0,
+        contact_spacing=2.0,
+        lead_diameter=0.8,
+        total_length=400.0,
+        n_contacts=16,
+    ),
 }
 
 
@@ -467,3 +511,38 @@ def DixiSEEG18(
     """DixiSEEG18 electrode."""
     parameters = default_electrode_parameters["DixiSEEG18"]
     return DixiSEEGModel(parameters, rotation, direction, position)
+
+def PMTsEEG2102_08(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """PMTsEEG2102_08 electrode."""
+    parameters = default_electrode_parameters["PMTsEEG2102_08"]
+    return PMTsEEGModel(parameters, rotation, direction, position)
+
+def PMTsEEG2102_10(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """PMTsEEG2102_10 electrode."""
+    parameters = default_electrode_parameters["PMTsEEG2102_10"]
+    return PMTsEEGModel(parameters, rotation, direction, position)
+
+def PMTsEEG2102_12(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """PMTsEEG2102_12 electrode."""
+    parameters = default_electrode_parameters["PMTsEEG2102_12"]
+    return PMTsEEGModel(parameters, rotation, direction, position)
+
+def PMTsEEG2102_14(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """PMTsEEG2102_14 electrode."""
+    parameters = default_electrode_parameters["PMTsEEG2102_14"]
+    return PMTsEEGModel(parameters, rotation, direction, position)
+
+def PMTsEEG2102_16(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """PMTsEEG2102_16 electrode."""
+    parameters = default_electrode_parameters["PMTsEEG2102_16"]
+    return PMTsEEGModel(parameters, rotation, direction, position)
