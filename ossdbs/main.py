@@ -11,7 +11,6 @@ import time
 
 import ngsolve
 
-from ossdbs import log_to_file, set_logger
 from ossdbs.api import (
     build_brain_model,
     generate_electrodes,
@@ -26,6 +25,7 @@ from ossdbs.api import (
     set_contact_and_encapsulation_layer_properties,
 )
 from ossdbs.fem import ConductivityCF
+from ossdbs.logging_config import log_to_file, set_logger
 from ossdbs.model_geometry import ModelGeometry
 from ossdbs.utils.settings import Settings
 from ossdbs.utils.type_check import TypeChecker
