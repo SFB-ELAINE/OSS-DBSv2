@@ -92,7 +92,7 @@ class Settings:
             "InterPulseWidth[us]": 0.0,
             "SpectrumMode": "FullSpectrum",
             "CounterAmplitude": 1.0,  # relative to amplitude given by contact
-            "CutoffFrequency": 1e8,
+            "CutoffFrequency": 1e6,
             "CurrentControlled": False,
         },
         "Solver": {
