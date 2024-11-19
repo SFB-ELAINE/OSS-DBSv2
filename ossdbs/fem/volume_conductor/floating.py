@@ -83,6 +83,7 @@ class VolumeConductorFloating(VolumeConductor):
         return finite_element_space
 
     def __bilinear_form(self, sigma, space) -> ngsolve.BilinearForm:
+        """Bilinear form."""
         u = space.TrialFunction()
         v = space.TestFunction()
         bilinear_form = ngsolve.BilinearForm(space)

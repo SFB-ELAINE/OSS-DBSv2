@@ -4,6 +4,7 @@
 import logging
 
 import ngsolve
+import numpy as np
 
 from ossdbs.fem.solver import Solver
 from ossdbs.fem.volume_conductor.volume_conductor_model import VolumeConductor
@@ -63,7 +64,7 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
             coefficient=coefficient, VOL_or_BND=ngsolve.BND
         )
         _logger.debug("Bilinear form")
-        bilinear_form = self.__bilinear_form(self._sigma, self._space)
+        bilinear_form = self.__bilinear_form(self._sigma, self._space, frequency)
         _logger.debug("Linear form")
         # TODO how to impose current?
         linear_form = ngsolve.LinearForm(space=self._space)
@@ -75,24 +76,28 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
     def __create_space(self) -> ngsolve.FESpace:
         boundaries = [contact.name for contact in self.contacts.active]
         # TODO insert condition similar to EIT?
-        h1_space = self.h1_space(boundaries=boundaries)
+        h1_space = self.h1_space(boundaries=boundaries, is_complex=self.is_complex)
         number_spaces = [self.number_space() for _ in self.contacts.floating]
         spaces = [h1_space, *number_spaces]
         finite_elements_space = ngsolve.FESpace(spaces=spaces)
         return ngsolve.CompressCompound(fespace=finite_elements_space)
 
-    @staticmethod
-    def __bilinear_form(self, sigma, space):
+    def __bilinear_form(self, sigma, space, frequency) -> ngsolve.BilinearForm:
+        """Bilinear form."""
         bilinear_form = ngsolve.BilinearForm(space)
         trial = space.TrialFunction()
         test = space.TestFunction()
         u = trial[0]
         v = test[0]
         bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
-        surface_impedances = self.contacts.floating_impedance_values()
+        surface_impedances = self.contacts.get_surface_impedances(frequency)
         boundaries = [contact.name for contact in self.contacts.floating]
         for ufix, vfix, boundary in zip(trial[1:], test[1:], boundaries):
-            a = ngsolve.CoefficientFunction(1 / surface_impedances[boundary])
+            if np.isclose(surface_impedances[boundary], 0.0):
+                raise ValueError(
+                    f"A surface impedance on boundary {boundary} is numerically zero."
+                )
+            a = ngsolve.CoefficientFunction(1.0 / surface_impedances[boundary])
             bilinear_form += a * (u - ufix) * (v - vfix) * ngsolve.ds(boundary)
 
         return bilinear_form

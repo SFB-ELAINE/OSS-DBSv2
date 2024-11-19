@@ -168,8 +168,13 @@ class ModelGeometry:
                 contact.floating = value
             elif setting == "Voltage[V]":
                 contact.voltage = value
-            elif setting == "SurfaceImpedance[Ohmm]":
-                contact.surface_impedance = value["real"] + 1j * value["imag"]
+            elif setting == "SurfaceImpedance":
+                if "Model" not in value:
+                    raise ValueError("No surface impedance model provided.")
+                if "Parameters" not in value:
+                    raise ValueError("No surface impedance model parameters provided.")
+                contact.surface_impedance_model = value["Model"]
+                contact.surface_impedance_parameters = value["Parameters"]
             elif setting == "MaxMeshSize":
                 contact.max_h = value
                 self.set_face_mesh_sizes({contact.name: value})
@@ -240,17 +245,10 @@ class ModelGeometry:
         for contact in self.contacts:
             if contact.floating:
                 floating_mode = "Floating"
-                if not np.isclose(contact.surface_impedance, 0.0):
+                # if we find one surface with a floating impedance, break
+                if contact.surface_impedance_model is not None:
                     floating_mode = "FloatingImpedance"
                 break
-        if floating_mode == "FloatingImpedance":
-            for contact in self.contacts:
-                if not np.isclose(contact.surface_impedance, 0.0):
-                    _logger.warning(
-                        f"""Mode has been set to Floating but there
-                        is a nonzero surface impedance on contact {contact.name}"""
-                    )
-
         return floating_mode
 
     def set_mesh_sizes(self, mesh_sizes: dict) -> None:
