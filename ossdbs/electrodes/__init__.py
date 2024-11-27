@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Electrode models for DBS."""
+
 from .abbott_stjude import (
     AbbottStJudeActiveTipModel,
     AbbottStJudeActiveTipParameters,
@@ -35,11 +36,6 @@ from .defaults import (
     DixiSEEG12,
     DixiSEEG15,
     DixiSEEG18,
-    PMTsEEG2102_08,
-    PMTsEEG2102_10,
-    PMTsEEG2102_12,
-    PMTsEEG2102_14,
-    PMTsEEG2102_16,
     Medtronic3387,
     Medtronic3389,
     Medtronic3391,
@@ -53,15 +49,16 @@ from .defaults import (
     PINSMedicalL301,
     PINSMedicalL302,
     PINSMedicalL303,
+    PMTsEEG2102_08,
+    PMTsEEG2102_10,
+    PMTsEEG2102_12,
+    PMTsEEG2102_14,
+    PMTsEEG2102_16,
     default_electrode_parameters,
 )
 from .dixi_microtechniques import (
     DixiSEEGModel,
     DixiSEEGParameters,
-)
-from .pmt_seeg import (
-    PMTsEEGModel,
-    PMTsEEGParameters,
 )
 from .electrode_model_template import ElectrodeModel
 from .medtronic import (
@@ -78,6 +75,10 @@ from .micro_probes import (
 from .microelectrode import MicroElectrodeModel, MicroElectrodeParameters
 from .neuro_pace import NeuroPaceModel, NeuroPaceParameters
 from .pins_medical import PINSMedicalModel, PINSMedicalParameters
+from .pmt_seeg import (
+    PMTsEEGModel,
+    PMTsEEGParameters,
+)
 
 ELECTRODES = {
     "AbbottStJudeActiveTip6142_6145": AbbottStJudeActiveTip6142_6145,
@@ -203,7 +204,7 @@ __all__ = (
     "PMTsEEG2102_14",
     "PMTsEEG2102_16",
     "PMTsEEGModel",
-    "PMTsEEGParameters",    
+    "PMTsEEGParameters",
     "Medtronic3387",
     "Medtronic3389",
     "Medtronic3391",
