@@ -75,10 +75,6 @@ from .micro_probes import (
 from .microelectrode import MicroElectrodeModel, MicroElectrodeParameters
 from .neuro_pace import NeuroPaceModel, NeuroPaceParameters
 from .pins_medical import PINSMedicalModel, PINSMedicalParameters
-from .pmt_seeg import (
-    PMTsEEGModel,
-    PMTsEEGParameters,
-)
 
 ELECTRODES = {
     "AbbottStJudeActiveTip6142_6145": AbbottStJudeActiveTip6142_6145,
@@ -130,11 +126,11 @@ ELECTRODE_MODELS = {
     "DixiSEEG12Custom": DixiSEEGModel,
     "DixiSEEG15Custom": DixiSEEGModel,
     "DixiSEEG18Custom": DixiSEEGModel,
-    "PMTsEEG2102_08Custom": PMTsEEGModel,
-    "PMTsEEG2102_10Custom": PMTsEEGModel,
-    "PMTsEEG2102_12Custom": PMTsEEGModel,
-    "PMTsEEG2102_14Custom": PMTsEEGModel,
-    "PMTsEEG2102_16Custom": PMTsEEGModel,
+    "PMTsEEG2102_08Custom": DixiSEEGModel,
+    "PMTsEEG2102_10Custom": DixiSEEGModel,
+    "PMTsEEG2102_12Custom": DixiSEEGModel,
+    "PMTsEEG2102_14Custom": DixiSEEGModel,
+    "PMTsEEG2102_16Custom": DixiSEEGModel,
     "Medtronic3387Custom": MedtronicModel,
     "Medtronic3389Custom": MedtronicModel,
     "Medtronic3391Custom": MedtronicModel,
@@ -159,7 +155,7 @@ ELECTRODE_PARAMETERS = {
     "BostonScientificCartesiaXModel": BostonScientificCartesiaParameters,
     "BostonScientificCartesiaHXModel": BostonScientificCartesiaParameters,
     "DixiSEEGModel": DixiSEEGParameters,
-    "PMTsEEGModel": PMTsEEGParameters,
+    "PMTsEEGModel": DixiSEEGParameters,
     "MedtronicModel": MedtronicParameters,
     "MedtronicSenSightModel": MedtronicParameters,
     "MicroElectrodeModel": MicroElectrodeParameters,
@@ -203,8 +199,6 @@ __all__ = (
     "PMTsEEG2102_12",
     "PMTsEEG2102_14",
     "PMTsEEG2102_16",
-    "PMTsEEGModel",
-    "PMTsEEGParameters",
     "Medtronic3387",
     "Medtronic3389",
     "Medtronic3391",
