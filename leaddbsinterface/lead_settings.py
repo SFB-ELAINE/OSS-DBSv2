@@ -627,6 +627,16 @@ class LeadSettings:
             "DIXI D08-12AM": "DixiSEEG12",
             "DIXI D08-15AM": "DixiSEEG15",
             "DIXI D08-18AM": "DixiSEEG18",
+            "PMT 2102-08-091": "PMTsEEG2102_08",
+            "PMT 2102-10-091": "PMTsEEG2102_10",
+            "PMT 2102-12-091": "PMTsEEG2102_12",
+            "PMT 2102-14-091": "PMTsEEG2102_14",
+            "PMT 2102-16-091": "PMTsEEG2102_16",
+            "PMT 2102-08-094": "PMTsEEG2102_08",  # same, just with permanent stylet
+            "PMT 2102-10-094": "PMTsEEG2102_10",
+            "PMT 2102-12-094": "PMTsEEG2102_12",
+            "PMT 2102-14-094": "PMTsEEG2102_14",
+            "PMT 2102-16-094": "PMTsEEG2102_16",
         }
 
         for lead in electrode_names.keys():

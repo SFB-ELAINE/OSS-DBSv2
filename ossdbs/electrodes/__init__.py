@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Electrode models for DBS."""
+
 from .abbott_stjude import (
     AbbottStJudeActiveTipModel,
     AbbottStJudeActiveTipParameters,
@@ -48,6 +49,11 @@ from .defaults import (
     PINSMedicalL301,
     PINSMedicalL302,
     PINSMedicalL303,
+    PMTsEEG2102_08,
+    PMTsEEG2102_10,
+    PMTsEEG2102_12,
+    PMTsEEG2102_14,
+    PMTsEEG2102_16,
     default_electrode_parameters,
 )
 from .dixi_microtechniques import (
@@ -85,6 +91,11 @@ ELECTRODES = {
     "DixiSEEG12": DixiSEEG12,
     "DixiSEEG15": DixiSEEG15,
     "DixiSEEG18": DixiSEEG18,
+    "PMTsEEG2102_08": PMTsEEG2102_08,
+    "PMTsEEG2102_10": PMTsEEG2102_10,
+    "PMTsEEG2102_12": PMTsEEG2102_12,
+    "PMTsEEG2102_14": PMTsEEG2102_14,
+    "PMTsEEG2102_16": PMTsEEG2102_16,
     "Medtronic3387": Medtronic3387,
     "Medtronic3389": Medtronic3389,
     "Medtronic3391": Medtronic3391,
@@ -115,6 +126,11 @@ ELECTRODE_MODELS = {
     "DixiSEEG12Custom": DixiSEEGModel,
     "DixiSEEG15Custom": DixiSEEGModel,
     "DixiSEEG18Custom": DixiSEEGModel,
+    "PMTsEEG2102_08Custom": DixiSEEGModel,
+    "PMTsEEG2102_10Custom": DixiSEEGModel,
+    "PMTsEEG2102_12Custom": DixiSEEGModel,
+    "PMTsEEG2102_14Custom": DixiSEEGModel,
+    "PMTsEEG2102_16Custom": DixiSEEGModel,
     "Medtronic3387Custom": MedtronicModel,
     "Medtronic3389Custom": MedtronicModel,
     "Medtronic3391Custom": MedtronicModel,
@@ -139,6 +155,7 @@ ELECTRODE_PARAMETERS = {
     "BostonScientificCartesiaXModel": BostonScientificCartesiaParameters,
     "BostonScientificCartesiaHXModel": BostonScientificCartesiaParameters,
     "DixiSEEGModel": DixiSEEGParameters,
+    "PMTsEEGModel": DixiSEEGParameters,
     "MedtronicModel": MedtronicParameters,
     "MedtronicSenSightModel": MedtronicParameters,
     "MicroElectrodeModel": MicroElectrodeParameters,
@@ -177,6 +194,11 @@ __all__ = (
     "DixiSEEG18",
     "DixiSEEGModel",
     "DixiSEEGParameters",
+    "PMTsEEG2102_08",
+    "PMTsEEG2102_10",
+    "PMTsEEG2102_12",
+    "PMTsEEG2102_14",
+    "PMTsEEG2102_16",
     "Medtronic3387",
     "Medtronic3389",
     "Medtronic3391",

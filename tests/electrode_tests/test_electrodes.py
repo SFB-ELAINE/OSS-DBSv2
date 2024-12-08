@@ -60,6 +60,14 @@ class TestElectrode:
         "DixiSEEG18",
     ]
 
+    PMTsEEG2102: ClassVar[List[str]] = [
+        "PMTsEEG2102_08",
+        "PMTsEEG2102_10",
+        "PMTsEEG2102_12",
+        "PMTsEEG2102_14",
+        "PMTsEEG2102_16",
+    ]
+
     def check_rename_boundaries(self, electrode, electrode_name):
         """Check whether set_contact_names() works."""
         changes = {
@@ -249,7 +257,7 @@ class TestElectrode:
                 return (contact_length * tip_radius**2 * np.pi) - filet_val
 
             else:
-                if electrode_name in self.Dixi:
+                if electrode_name in self.Dixi or electrode_name in self.PMTsEEG2102:
                     C1_height = contact_length - lead_radius
                 else:
                     C1_height = tip_length - lead_radius
