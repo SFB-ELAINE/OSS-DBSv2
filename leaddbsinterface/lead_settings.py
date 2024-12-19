@@ -114,6 +114,12 @@ class LeadSettings:
             elec_dict["Name"], hemis_idx, unit_directions, specs_array_length
         )
 
+        # check the distance between the first and the last contact for brain approx. dimensions
+        contact_locations = self.get_cntct_loc()
+        first_contact  = np.array([contact_locations[hemis_idx][0][0],contact_locations[hemis_idx][1][0],contact_locations[hemis_idx][2][0]])
+        last_contact  = np.array([contact_locations[hemis_idx][0][-1],contact_locations[hemis_idx][1][-1],contact_locations[hemis_idx][2][-1]])
+        actual_span = np.linalg.norm(last_contact-first_contact) 
+        
         # MAKE THE DICTIONARY
         partial_dict = {
             "ModelSide": 0,  # hardcoded for now, always keep to 0
@@ -123,6 +129,12 @@ class LeadSettings:
                     "x[mm]": self.get_imp_coord()[hemis_idx, 0],
                     "y[mm]": self.get_imp_coord()[hemis_idx, 1],
                     "z[mm]": self.get_imp_coord()[hemis_idx, 2],
+                },
+                # define brain approximation according to the electrode directionality
+                "Dimension": {   
+                    "x[mm]": 50.0 + np.abs(unit_directions[hemis_idx, 0]) * actual_span * 2.0,
+                    "y[mm]": 50.0 + np.abs(unit_directions[hemis_idx, 1]) * actual_span * 2.0,
+                    "z[mm]": 50.0 + np.abs(unit_directions[hemis_idx, 2]) * actual_span * 2.0,                   
                 }
             },
             "Electrodes": elec_dicts,
