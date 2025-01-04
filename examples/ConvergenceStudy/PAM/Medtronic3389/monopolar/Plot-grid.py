@@ -15,16 +15,27 @@ plt.rcParams["text.latex.preamble"] = (
 
 convergence_threshold = 5.0  # in %
 
-data = pd.read_csv("vta_results_summary.csv")
+data = pd.read_csv("pam_results_summary.csv")
 data["roman"] = data["roman"].astype("string")
 
-columns_to_plot = ["time", "dofs", "imp_rel_error", "ngs_vta_volume_rel_error"]
-labels = ["Time / s", "DOFs", r"Rel. err. impedance / \%", r"Rel. err. VTA / \%"]
-scales = ["linear", "log", "linear", "linear"]
+columns_to_plot = ["time", "dofs"]
+labels = ["Time / s", "DOFs"]
+scales = ["linear", "log"]
+data["not_converged"] = False
+for column in data.columns:
+    if "activated_rel_error" in column:
+        columns_to_plot.append(column)
+        pathway_name = (
+            column.replace("Pathway_status_", "")
+            .replace(".json", "")
+            .replace("_activated_rel_error", "")
+        )
+        labels.append(rf"Err. {pathway_name} / \%")
+        scales.append("linear")
 
-data["not_converged"] = (data["imp_rel_error"] > convergence_threshold) | (
-    data["ngs_vta_volume_rel_error"] > convergence_threshold
-)
+        data["not_converged"] = (
+            data["not_converged"] | data[column] > convergence_threshold
+        )
 
 g = sns.PairGrid(
     data, x_vars=data[columns_to_plot], y_vars=["roman"], height=4, hue="not_converged"
@@ -48,6 +59,6 @@ for ax, label, scale in zip(g.axes.flat, labels, scales):
     ax.set(xscale=scale)
     ax.set(ylabel="Strategy")
 sns.despine(left=True, bottom=False)
-plt.savefig("vta_convergence_overview.pdf")
-plt.savefig("vta_convergence_overview.svg")
+plt.savefig("pam_convergence_overview.pdf")
+plt.savefig("pam_convergence_overview.svg")
 plt.close()

@@ -39,20 +39,12 @@ def save_input_dict(base_input_dict):
         json.dump(input_dict, fp, indent=2)
 
 
-BASE_CONTACT = {
-    "Contact_ID": 1,
-    "Active": False,
-    "Current[A]": 0.0,
-    "Voltage[V]": 0.0,
-    "Floating": False,
-}
-
 ossdbs.set_logger()
 _logger = logging.getLogger("ossdbs")
 
 electrode_name = "BostonScientificVerciseDirected"
 
-with open("../../oss_dbs_parameters.json") as fp:
+with open("../../oss-dbs_parameters.json") as fp:
     base_input_dict = json.load(fp)
 
 
@@ -66,21 +58,6 @@ base_input_dict["PointModel"]["Pathway"]["FileName"] = os.path.join(
 base_input_dict["PathwayFile"] = os.path.join(
     "..", "..", base_input_dict["PathwayFile"]
 )
-
-# add electrode
-base_input_dict["Electrodes"][0]["Name"] = electrode_name
-
-# change contacts
-base_input_dict["Electrodes"][0]["Contacts"][0]["Current[A]"] = 0.0
-base_input_dict["Electrodes"][0]["Contacts"][1]["Contact_ID"] = 2
-base_input_dict["Electrodes"][0]["Contacts"][1]["Current[A]"] = 0.0
-base_input_dict["Electrodes"][0]["Contacts"][2]["Contact_ID"] = 7
-base_input_dict["Electrodes"][0]["Contacts"][2]["Current[A]"] = 0.014
-base_input_dict["Electrodes"][0]["Contacts"][3]["Contact_ID"] = 8
-base_input_dict["Electrodes"][0]["Contacts"][3]["Current[A]"] = 0.0
-
-# counter electrode
-base_input_dict["Surfaces"][0]["Current[A]"] = -0.014
 
 # for PAM
 base_input_dict["Scaling"] = 1.0
@@ -172,7 +149,6 @@ main_run(base_input_dict)
 save_input_dict(base_input_dict)
 ossdbs.api.run_PAM(base_input_dict)
 remove_file_handler(_logger)
-
 # eigth refinement: edge refinement + limit on voxel size
 max_mesh_size = 10.0 * min(mri_image.voxel_sizes)
 print(f"Imposing max mesh size of: {max_mesh_size:.2f}")

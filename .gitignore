@@ -37,3 +37,6 @@ ngmesh.ini
 x86_64/
 
 meshsizes.txt
+# match all SVG and PDF files in this folder
+examples/ConvergenceStudy/**/*.svg
+examples/ConvergenceStudy/**/*.pdf
