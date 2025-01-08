@@ -57,6 +57,9 @@ ossdbs input.json
 
 Also check out the `examples` directory and the documentation.
 
+**Tip:** Check for example the [JSON Crack editor](https://jsoncrack.com/).
+It helps to visualise the input parameters.
+
 Development
 -----------
 

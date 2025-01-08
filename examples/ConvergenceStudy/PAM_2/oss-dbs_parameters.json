@@ -200,7 +200,7 @@
     "SavePath": "mesh"
   },
   "EQSMode": false,
-  "FEMOrder": 3,
+  "FEMOrder": 2,
   "StimulationSignal": {
     "Type": "Rectangle",
     "ListOfFrequencies": [

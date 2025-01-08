@@ -37,104 +37,72 @@
         {
           "Contact_ID": 1,
           "Active": false,
-          "Current[A]": 0.125,
-          "Voltage[V]": false,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         },
         {
           "Contact_ID": 2,
           "Active": false,
-          "Current[A]": 0.125,
-          "Voltage[V]": false,
+          "Current[A]": -0.0004,
+          "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         },
         {
           "Contact_ID": 3,
           "Active": false,
-          "Current[A]": 0.125,
-          "Voltage[V]": false,
+          "Current[A]": -0.0004,
+          "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         },
         {
           "Contact_ID": 4,
           "Active": false,
-          "Current[A]": 0.125,
-          "Voltage[V]": false,
+          "Current[A]": -0.0004,
+          "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         },
         {
           "Contact_ID": 5,
           "Active": false,
-          "Current[A]": 0.125,
-          "Voltage[V]": false,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         },
         {
           "Contact_ID": 6,
           "Active": false,
-          "Current[A]": 0.125,
-          "Voltage[V]": false,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         },
         {
           "Contact_ID": 7,
           "Active": false,
-          "Current[A]": 0.125,
-          "Voltage[V]": false,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         },
         {
           "Contact_ID": 8,
           "Active": false,
-          "Current[A]": 0.125,
-          "Voltage[V]": false,
+          "Current[A]": 0.0012,
+          "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         }
@@ -145,7 +113,7 @@
     {
       "Name": "BrainSurface",
       "Active": true,
-      "Current[A]": -1.0,
+      "Current[A]": -0.0,
       "Voltage[V]": 0.0
     }
   ],
@@ -207,7 +175,8 @@
   "PointModel": {
     "Pathway": {
       "Active": true,
-      "FileName": "OSS_sim_files_rh/Allocated_axons.h5"
+      "FileName": "OSS_sim_files_rh/Allocated_axons.h5",
+      "ExportField": false
     },
     "Lattice": {
       "Active": false,
@@ -246,14 +215,13 @@
   "ExportElectrode": false,
   "ModelSide": 0,
   "CalcAxonActivation": true,
-  "ActivationThresholdVTA": 200.0,
+  "ActivationThresholdVTA[V-per-m]": 200.0,
   "FailFlag": "rh",
   "OutOfCore": false,
   "PathwayFile": "OSS_sim_files_rh/Allocated_axons_parameters.json",
   "StimSets": {
-    "Active": true,
-    "StimSetsFile": "OSS_sim_files_rh/Current_protocols_0.csv"
+    "Active": false,
+    "StimSetsFile": ""
   },
-  "AdaptiveMeshRefinement": false,
   "StimulationFolder": ""
 }
