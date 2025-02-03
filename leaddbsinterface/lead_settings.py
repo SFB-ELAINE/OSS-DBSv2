@@ -627,10 +627,14 @@ class LeadSettings:
         # Cartesia X not available is OSS-DBS, SNEX not available in Lead
         electrode_names = {
             "Abbott Directed 6172 (short)": "AbbottStJudeDirected6172",
-            "St. Jude Directed 6180": "AbbottStJudeDirected6172",
             "Abbott Directed 6173 (long)": "AbbottStJudeDirected6173",
             "Abbott ActiveTip (6146-6149)": "AbbottStJudeActiveTip6146_6149",
             "Abbott ActiveTip (6142-6145)": "AbbottStJudeActiveTip6142_6145",
+            "St. Jude ActiveTip (6146-6149)": "AbbottStJudeActiveTip6146_6149",
+            "St. Jude ActiveTip (6142-6145)": "AbbottStJudeActiveTip6142_6145",
+            "St. Jude Directed 6180": "AbbottStJudeDirected6172",
+            "St. Jude Directed 6172 (short)": "AbbottStJudeDirected6172",
+            "St. Jude Directed 6173 (long)": "AbbottStJudeDirected6173",
             "Boston Scientific Vercise": "BostonScientificVercise",
             "Boston Scientific Vercise Directed": "BostonScientificVerciseDirected",
             "Boston Scientific Vercise Cartesia HX": "BostonScientificCartesiaHX",
