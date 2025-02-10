@@ -132,7 +132,7 @@ class BostonScientificCartesiaXModel(ElectrodeModel):
 
         origin = (0, 0, 0)
         height = self._parameters.contact_length
-        axis = occ.Axis(p=origin, d=self._direction)
+        axis = occ.Axis(p=origin, d=direction)
         contact_16 = occ.Cylinder(p=origin, d=direction, r=radius, h=height)
         contact_directed = self._contact_directed()
 
