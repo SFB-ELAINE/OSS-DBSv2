@@ -130,6 +130,12 @@ class Contacts:
             for contact in self._all_contacts
             if not contact.floating and not contact.active
         ]
+        # if a contact has a surface impedance model, set the surface impedance to active
+        self._surface_impedance_active = False
+        for contact in self._all_contacts:
+            if contact.surface_impedance_model is not None:
+                self._surface_impedance_active = True
+                break
 
     def append(self, contact: Contact) -> None:
         """Add another contact."""
@@ -170,6 +176,11 @@ class Contacts:
         list of Contacts
         """
         return self._unused
+
+    @property
+    def surface_impedance_active(self) -> bool:
+        """Get status of surface impedance."""
+        return self._surface_impedance_active
 
     @property
     def currents(self) -> dict:
