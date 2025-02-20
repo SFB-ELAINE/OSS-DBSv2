@@ -767,9 +767,12 @@ class LeadSettings:
             else:
                 # for VC, case grounding is defined explicitly
                 case_grounding = bool(self.get_case_grnd()[index_side])
+                              
                 # shift all voltages if bipolar case
                 # to have 0V and cathodes (as in the stimulators)
-                if np.nanmax(pulse_amp) > 0.0:
+                # but don't shift if purely anodic stim
+                cathodic_case = case_grounding and np.nanmin(pulse_amp) >= 0.0
+                if not cathodic_case and np.nanmax(pulse_amp) > 0.0:
                     pulse_amp[:] = pulse_amp[:] - np.nanmax(pulse_amp)
 
             # cntct_dicts is a list of the contacts that will go in the json
