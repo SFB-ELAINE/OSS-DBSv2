@@ -4,7 +4,7 @@ import seaborn as sns
 
 # Thanks to StackOverflow: https://stackoverflow.com/questions/34177378/pyplot-annotation-roman-numerals
 # Turn on LaTeX formatting for text
-plt.rcParams["text.usetex"] = True
+# plt.rcParams["text.usetex"] = True
 plt.rcParams["axes.labelsize"] = 18
 
 # Place the command in the text.latex.preamble using rcParams
@@ -13,31 +13,53 @@ plt.rcParams["text.latex.preamble"] = (
     r"\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother"
 )
 
-convergence_threshold = 5.0  # in %
+pathways_to_plot = ["M1_cf_lowerex_right",
+                    "M1_cf_upperex_right",
+                    "M1_cf_face_right",
+                    "R_M1_hdp_lowerex_right",
+                    "R_M1_hdp_upperex_right",
+                    "R_M1_hdp_face_right",
+                    "gpe2stn_sm_right",
+                    "gpe2stn_ass_right",  
+                    "cerebellothalamic_right",
+                    "medial_lemniscus_right"
+                    ]
+
+pathway_labels = ["M1 lower extr.", 
+                  "M1 upper extr.",
+                  "M1 face",
+                  "HDP M1 lower extr.",
+                  "HDP M1 upper extr.",
+                  "HDP M1 face",
+                  "Pallido-subthalamic Motor",
+                  "Pallido-subthalamic Assoc",
+                  "Cerebellothalamic",
+                  "Medial lemniscus"
+                  ]
+
+pathway_label_dict = {}
+for pathway, label in zip(pathways_to_plot, pathway_labels):
+    pathway_label_dict[pathway] = label
+
 
 data = pd.read_csv("pam_results_summary.csv")
 data["roman"] = data["roman"].astype("string")
+
+for pathway in pathways_to_plot:
+    pw_id = f"Pathway_status_{pathway}.json_activated"
+    if pw_id not in data.columns:
+        raise ValueError(f"Pathway {pathway} not in dataset.")
 
 columns_to_plot = ["time", "dofs"]
 labels = ["Time / s", "DOFs"]
 scales = ["linear", "log"]
 data["not_converged"] = False
-for column in data.columns:
-    if "activated" in column:
-        if "rel_err" in column or "best" in column:
-            continue
-        columns_to_plot.append(column)
-        pathway_name = (
-            column.replace("Pathway_status_", "")
-            .replace(".json", "")
-            .replace("_activated", "")
-        )
-        labels.append(rf"Activation {pathway_name} / \%")
-        scales.append("linear")
+for pathway in pathways_to_plot:
+    pw_id = f"Pathway_status_{pathway}.json_activated"
+    columns_to_plot.append(pw_id)
+    labels.append(f"{pathway_label_dict[pathway]} / %")
+    scales.append("linear")
 
-        data["not_converged"] = (
-            data["not_converged"] | data[column] > convergence_threshold
-        )
 
 g = sns.PairGrid(
     data, x_vars=data[columns_to_plot], y_vars=["roman"], height=4, hue="not_converged"
