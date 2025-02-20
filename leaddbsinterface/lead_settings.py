@@ -771,7 +771,8 @@ class LeadSettings:
                 # shift all voltages if bipolar case
                 # to have 0V and cathodes (as in the stimulators)
                 # but don't shift if purely anodic stim
-                if not(case_grounding and np.nanmin(pulse_amp) >= 0.0) and np.nanmax(pulse_amp) > 0.0:
+                cathodic_case = case_grounding and np.nanmin(pulse_amp) >= 0.0
+                if not cathodic_case and np.nanmax(pulse_amp) > 0.0:
                     pulse_amp[:] = pulse_amp[:] - np.nanmax(pulse_amp)
 
             # cntct_dicts is a list of the contacts that will go in the json
