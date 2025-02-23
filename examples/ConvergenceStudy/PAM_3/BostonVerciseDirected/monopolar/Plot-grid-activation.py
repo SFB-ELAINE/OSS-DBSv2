@@ -76,7 +76,6 @@ g.map(
     edgecolor="w",
 )
 
-ax_count = 0
 for ax, label, scale in zip(g.axes.flat, labels, scales):
     # Make the grid horizontal instead of vertical
     ax.xaxis.grid(False)
@@ -85,10 +84,6 @@ for ax, label, scale in zip(g.axes.flat, labels, scales):
     ax.set(xlabel=label)
     ax.set(xscale=scale)
     ax.set(ylabel="Strategy")
-    # set consistent limit except for M1 upper extrem
-    if ax_count > 1 and ax_count != 3:
-        ax.set(xlim=(None, 2.5))
-    ax_count += 1
 sns.despine(left=True, bottom=False)
 plt.savefig("pam_convergence_overview.pdf")
 plt.savefig("pam_convergence_overview.svg")
