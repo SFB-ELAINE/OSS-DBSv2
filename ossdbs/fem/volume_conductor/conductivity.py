@@ -93,18 +93,18 @@ class ConductivityCF:
                 materials_to_delete.append(material)
                 continue
         for material in materials_to_delete:
+            _logger.info(f"Remove material {material} because not present in MRI.")
             del self._dielectric_properties[material]
             del materials[material]
 
         self._materials = materials
 
         # Creates a boolean mask for the indices that material is present in
-        self._masks = [None] * len(self.materials)
+        self._masks = {}
         self._trafo_cf = mri_image.trafo_cf
-        materials_to_delete = []
         for material in self.materials:
             material_idx = self.materials[material]
-            self._masks[material_idx] = np.isclose(
+            self._masks[material] = np.isclose(
                 self._material_distribution, material_idx
             )
 
@@ -199,15 +199,14 @@ class ConductivityCF:
             Data structure representing the conductivity distribution in space.
         """
         for material in self.materials:
-            material_idx = self.materials[material]
             # Sets conductivity values based on
             # what indices in self._data are material_idx
             if self.is_complex:
-                self._data[self._masks[material_idx]] = self._dielectric_properties[
+                self._data[self._masks[material]] = self._dielectric_properties[
                     material
                 ].complex_conductivity(omega)
             else:
-                self._data[self._masks[material_idx]] = self._dielectric_properties[
+                self._data[self._masks[material]] = self._dielectric_properties[
                     material
                 ].conductivity(omega)
         start = self._mri_voxel_bounding_box.start
