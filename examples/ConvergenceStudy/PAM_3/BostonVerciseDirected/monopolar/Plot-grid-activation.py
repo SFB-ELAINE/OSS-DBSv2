@@ -4,7 +4,7 @@ import seaborn as sns
 
 # Thanks to StackOverflow: https://stackoverflow.com/questions/34177378/pyplot-annotation-roman-numerals
 # Turn on LaTeX formatting for text
-# plt.rcParams["text.usetex"] = True
+plt.rcParams["text.usetex"] = True
 plt.rcParams["axes.labelsize"] = 18
 
 # Place the command in the text.latex.preamble using rcParams
@@ -13,29 +13,31 @@ plt.rcParams["text.latex.preamble"] = (
     r"\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother"
 )
 
-pathways_to_plot = ["M1_cf_lowerex_right",
-                    "M1_cf_upperex_right",
-                    "M1_cf_face_right",
-                    "R_M1_hdp_lowerex_right",
-                    "R_M1_hdp_upperex_right",
-                    "R_M1_hdp_face_right",
-                    "gpe2stn_sm_right",
-                    "gpe2stn_ass_right",  
-                    "cerebellothalamic_right",
-                    "medial_lemniscus_right"
-                    ]
+pathways_to_plot = [
+    "M1_cf_lowerex_right",
+    "M1_cf_upperex_right",
+    # "M1_cf_face_right",  # not activated
+    "R_M1_hdp_lowerex_right",
+    "R_M1_hdp_upperex_right",
+    "R_M1_hdp_face_right",
+    "gpe2stn_sm_right",
+    "gpe2stn_ass_right",
+    "cerebellothalamic_right",
+    # "medial_lemniscus_right"  # not activated
+]
 
-pathway_labels = ["M1 lower extr.", 
-                  "M1 upper extr.",
-                  "M1 face",
-                  "HDP M1 lower extr.",
-                  "HDP M1 upper extr.",
-                  "HDP M1 face",
-                  "Pallido-subthalamic Motor",
-                  "Pallido-subthalamic Assoc",
-                  "Cerebellothalamic",
-                  "Medial lemniscus"
-                  ]
+pathway_labels = [
+    "M1 lower extr.",
+    "M1 upper extr.",
+    # "M1 face",  # not activated
+    "HDP M1 lower extr.",
+    "HDP M1 upper extr.",
+    "HDP M1 face",
+    "Pallido-subthalamic Motor",
+    "Pallido-subthalamic Assoc",
+    "Cerebellothalamic",
+    # "Medial lemniscus"  # not activated
+]
 
 pathway_label_dict = {}
 for pathway, label in zip(pathways_to_plot, pathway_labels):
@@ -74,6 +76,7 @@ g.map(
     edgecolor="w",
 )
 
+ax_count = 0
 for ax, label, scale in zip(g.axes.flat, labels, scales):
     # Make the grid horizontal instead of vertical
     ax.xaxis.grid(False)
@@ -82,6 +85,10 @@ for ax, label, scale in zip(g.axes.flat, labels, scales):
     ax.set(xlabel=label)
     ax.set(xscale=scale)
     ax.set(ylabel="Strategy")
+    # set consistent limit except for M1 upper extrem
+    if ax_count > 1 and ax_count != 3:
+        ax.set(xlim=(None, 2.5))
+    ax_count += 1
 sns.despine(left=True, bottom=False)
 plt.savefig("pam_convergence_overview.pdf")
 plt.savefig("pam_convergence_overview.svg")
