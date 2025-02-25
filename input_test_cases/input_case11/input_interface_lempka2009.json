@@ -1,0 +1,146 @@
+{
+  "BrainRegion": {
+    "Center": {
+      "x[mm]": -9.476,
+      "y[mm]": 11.605,
+      "z[mm]": 10
+    },
+    "Dimension": {
+      "x[mm]": 40.0,
+      "y[mm]": 40.0,
+      "z[mm]": 70.0
+    },
+    "Shape": "Ellipsoid"
+  },
+  "Electrodes": [
+    {
+      "Name": "BostonScientificVercise",
+      "Rotation[Degrees]": 0,
+      "Direction": {
+        "x[mm]": 0.0,
+        "y[mm]": 0.0,
+        "z[mm]": 1.0
+      },
+      "TipPosition": {
+        "x[mm]": -9.476,
+        "y[mm]": 11.605,
+        "z[mm]": 4.676
+      },
+      "Contacts": [
+        {
+          "Contact_ID": 1,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 1.0,
+          "Floating": false,
+	  "MaxMeshSizeEdge": 0.05,
+	  "SurfaceImpedance":
+	  {"Model": "CPE_dl", "Parameters": {"dl_k": 1.5e6, "dl_alpha": 0.8}}
+       },
+        {
+          "Contact_ID": 7,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
+	  "MaxMeshSizeEdge": 0.05,
+          "Floating": false
+        }
+      ],
+      "EncapsulationLayer": {
+        "Thickness[mm]": 0.0,
+        "Material": "Blood",
+        "DielectricModel": "ColeCole4",
+        "MaxMeshSize": 0.1
+      }
+    }
+  ],
+  "MaterialDistribution": {
+    "MRIPath": "../../input_files/Butenko_segmask.nii.gz",
+    "MRIMapping": {
+      "Gray matter": 1,
+      "White matter": 2,
+      "CSF": 3,
+      "Blood": 4,
+      "Unknown": 0
+    },
+    "DiffusionTensorActive": false,
+    "DTIPath": ""
+  },
+  "DielectricModel": {
+    "Type": "ColeCole4"
+  },
+  "StimulationSignal": {
+    "CurrentControlled": false,
+    "Type": "Multisine",
+    "ListOfFrequencies": [
+	    1.00000000e+00, 1.20679264e+00, 1.45634848e+00, 1.75751062e+00,
+       2.12095089e+00, 2.55954792e+00, 3.08884360e+00, 3.72759372e+00,
+       4.49843267e+00, 5.42867544e+00, 6.55128557e+00, 7.90604321e+00,
+       9.54095476e+00, 1.15139540e+01, 1.38949549e+01, 1.67683294e+01,
+       2.02358965e+01, 2.44205309e+01, 2.94705170e+01, 3.55648031e+01,
+       4.29193426e+01, 5.17947468e+01, 6.25055193e+01, 7.54312006e+01,
+       9.10298178e+01, 1.09854114e+02, 1.32571137e+02, 1.59985872e+02,
+       1.93069773e+02, 2.32995181e+02, 2.81176870e+02, 3.39322177e+02,
+       4.09491506e+02, 4.94171336e+02, 5.96362332e+02, 7.19685673e+02,
+       8.68511374e+02, 1.04811313e+03, 1.26485522e+03, 1.52641797e+03,
+       1.84206997e+03, 2.22299648e+03, 2.68269580e+03, 3.23745754e+03,
+       3.90693994e+03, 4.71486636e+03, 5.68986603e+03, 6.86648845e+03,
+       8.28642773e+03, 1.00000000e+04
+    ]
+  },
+  "Mesh": {
+    "LoadMesh": false,
+    "MeshElementOrder": 2,
+    "MeshingHypothesis": {
+      "Type": "Fine",
+      "MaxMeshSize": 1
+    },
+    "MeshSize": {
+      "Edges": {},
+      "Faces": {},
+      "Volumes": {}
+    },
+    "SaveMesh": false
+  },
+  "Solver": {
+    "Type": "CG",
+    "Preconditioner": "bddc",
+    "PreconditionerKwargs": {},
+    "PrintRates": true,
+    "MaximumSteps": 200,
+    "Precision": 1e-8
+  },
+  "PointModel": {
+    "Pathway": {
+      "Active": false,
+      "FileName": ""
+    },
+    "Lattice": {
+      "Active": false,
+      "Center": {
+        "x[mm]": -9.476,
+        "y[mm]": 11.605,
+        "z[mm]": 4.7
+      },
+      "Shape": {
+        "x": 40,
+        "y": 40,
+        "z": 160
+      },
+      "Direction": {
+        "x[mm]": 0,
+        "y[mm]": 0,
+        "z[mm]": 1
+      },
+      "PointDistance[mm]": 0.125 
+    }
+  },
+  "ActivationThresholdVTA[V-per-m]": 200.0,
+  "CollapseVTA": false,
+  "EQSMode": true,
+  "FEMOrder": 2,
+  "OutputPath": "Results_LempkaImpedance",
+  "ComputeImpedance": true,
+  "ExportVTK": true,
+  "ExportElectrode": true
+}
