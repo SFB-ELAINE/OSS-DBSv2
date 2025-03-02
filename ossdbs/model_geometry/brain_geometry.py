@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
+from typing import List
 
 import netgen.occ
 import numpy as np
@@ -75,7 +76,17 @@ class BrainGeometry:
         start, end = self.geometry.bounding_box
         return BoundingBox(start, end)
 
-    def get_surface_names(self):
+    def get_surface_areas(self) -> dict:
+        """Get areas of surfaces in geometry."""
+        surface_areas = {}
+        for face in self.geometry.faces:
+            if face.name not in surface_areas:
+                surface_areas[face.name] = face.mass
+            else:
+                surface_areas[face.name] += face.mass
+        return surface_areas
+
+    def get_surface_names(self) -> List[str]:
         """Get names of surfaces in geometry."""
         surface_list = []
         for face in self.geometry.faces:

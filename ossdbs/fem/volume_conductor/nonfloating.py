@@ -29,7 +29,12 @@ class VolumeConductorNonFloating(VolumeConductor):
         super().__init__(
             geometry, conductivity, solver, order, meshing_parameters, output_path
         )
-        boundaries = [contact.name for contact in self.contacts.active]
+        # dirichlet boundaries (no surface impedance)
+        boundaries = [
+            contact.name
+            for contact in self.contacts.active
+            if contact.surface_impedance_model is None
+        ]
         self._space = self.h1_space(boundaries=boundaries, is_complex=self.is_complex)
         self._floating_values = {}
         self.update_space()
@@ -69,12 +74,26 @@ class VolumeConductorNonFloating(VolumeConductor):
         v = self._space.TestFunction()
         _logger.debug("Bilinear form")
         # TODO symmetric even if anisotropy?
-        bilinear_form = ngsolve.BilinearForm(space=self._space, symmetric=True)
+        bilinear_form = ngsolve.BilinearForm(space=self._space)  # , symmetric=True)
         _logger.debug("Bilinear form, formulation")
         bilinear_form += self._sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
 
-        # TODO add surface impedance
         _logger.debug("Linear form")
         linear_form = ngsolve.LinearForm(space=self._space)
+
+        # add surface impedance as Robin BC
+        surface_impedances = self.contacts.get_surface_impedances(frequency)
+        for contact in self.contacts.active:
+            if contact.surface_impedance_model is None:
+                continue
+            ys = ngsolve.CF(1.0 / surface_impedances[contact.name])
+            bilinear_form += ys * u * v * ngsolve.ds(contact.name)
+            linear_form += (
+                ys
+                * ngsolve.CF(boundary_values[contact.name])
+                * v
+                * ngsolve.ds(contact.name)
+            )
+
         _logger.debug("Solve BVP")
         self.solver.bvp(bilinear_form, linear_form, self._potential)

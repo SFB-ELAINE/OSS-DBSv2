@@ -22,6 +22,7 @@ class Contact:
     General property:
 
         * `name`: Will be set during the geometry creation process.
+        * `area`: Will be set during the geometry creation process.
 
     Mesh related properties:
 
@@ -39,6 +40,7 @@ class Contact:
     """
 
     name: str
+    area: float
     max_h: float = 1e10  # Netgen default
     edge_max_h: float = 1e10
     active: bool = False
@@ -77,9 +79,9 @@ class Contact:
 
         # TODO cache this variable
         ecm = ifit.get_equivalent_circuit_model(self.surface_impedance_model)
-        return ecm.eval(
-            omega=2.0 * np.pi * frequency, **self.surface_impedance_parameters
-        )
+        # TODO add surface area to it?
+        Z = ecm.eval(omega=2.0 * np.pi * frequency, **self.surface_impedance_parameters)
+        return complex(Z) * self.area
 
 
 def check_contact(contact: Contact):
@@ -130,7 +132,8 @@ class Contacts:
             for contact in self._all_contacts
             if not contact.floating and not contact.active
         ]
-        # if a contact has a surface impedance model, set the surface impedance to active
+        # if a contact has a surface impedance model,
+        # set the surface impedance to active
         self._surface_impedance_active = False
         for contact in self._all_contacts:
             if contact.surface_impedance_model is not None:

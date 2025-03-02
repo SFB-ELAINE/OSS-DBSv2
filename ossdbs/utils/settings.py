@@ -122,6 +122,7 @@ class Settings:
         },
         "OutputPath": "Results",
         "ComputeImpedance": False,
+        "ComputeCurrents": False,
         "ExportVTK": False,
         "ExportFrequency": None,
         "ExportElectrode": False,

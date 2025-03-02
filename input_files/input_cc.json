@@ -34,10 +34,7 @@
           "Current[A]": 0.004,
           "Voltage[V]": 0.0,
           "Floating": false,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
+	  "SurfaceImpedance": {"Model": null, "Parameters": {}},
           "MaxMeshSizeEdge": 0.05
         },
         {
@@ -46,10 +43,7 @@
           "Current[A]": -0.004,
           "Voltage[V]": 0.0,
           "Floating": false,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
+	  "SurfaceImpedance": {"Model": null, "Parameters": {}},
           "MaxMeshSizeEdge": 0.05
         }
       ],

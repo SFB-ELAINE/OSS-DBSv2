@@ -141,6 +141,7 @@
   "FEMOrder": 2,
   "OutputPath": "Results_LempkaImpedance",
   "ComputeImpedance": true,
+  "ComputeCurrents": true,
   "ExportVTK": true,
-  "ExportElectrode": true
+  "ExportElectrode": false
 }

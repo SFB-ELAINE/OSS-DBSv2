@@ -29,7 +29,7 @@ class TestModelGeometry:
                             "Current[A]": 0.0,
                             "Voltage[V]": 1.0,
                             "Floating": False,
-                            "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
+                            "SurfaceImpedance": {"Model": None, "Parameters": {}},
                             "MaxMeshSizeEdge": 0.01,
                         },
                         {
@@ -38,7 +38,7 @@ class TestModelGeometry:
                             "Current[A]": 0.0,
                             "Voltage[V]": 0.0,
                             "Floating": False,
-                            "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
+                            "SurfaceImpedance": {"Model": None, "Parameters": {}},
                             "MaxMeshSizeEdge": 0.01,
                         },
                     ],
@@ -48,7 +48,6 @@ class TestModelGeometry:
                         "DielectricModel": "ColeCole4",
                         "MaxMeshSize": 0.5,
                     },
-
                 },
                 {
                     "Name": "AbbottStJudeActiveTip6142_6145",
@@ -99,7 +98,6 @@ class TestModelGeometry:
         elif brain_shape == "Ellipsoid":
             brain_vol = 4 / 3 * np.pi * x * y * z
 
-
         electrode_vol = 0
         electrodes = modelGeometry[3]
         for electrode in electrodes:
@@ -132,18 +130,19 @@ class TestModelGeometry:
             "Current[A]": 2.0,
             "Floating": False,
             "Voltage[V]": 4.0,
-            "SurfaceImpedance[Ohmm]": {"real": 1, "imag": 1},
+            "SurfaceImpedance": {"Model": "R", "Parameters": {"R": 100}},
         }
         geometry = modelGeometry[0]
         geometry.update_contact(0, new_properties)
 
-        desired = {True, 2.0, False, 4.0, (1 + 1j)}
+        desired = {True, 2.0, False, 4.0, 100 + 0j}
         actual = set()
         actual.add(geometry.contacts[0].active)
         actual.add(geometry.contacts[0].current)
         actual.add(geometry.contacts[0].floating)
         actual.add(geometry.contacts[0].voltage)
-        actual.add(geometry.contacts[0].surface_impedance)
+        # surface impedance at 100 Hz, independent of frequency here
+        actual.add(geometry.contacts[0].get_surface_impedance(1))
 
         assert actual == desired
 

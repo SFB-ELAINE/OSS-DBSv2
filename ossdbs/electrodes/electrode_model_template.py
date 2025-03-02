@@ -280,3 +280,13 @@ class ElectrodeModel(ABC):
         for vertex in self.geometry.vertices:
             if vertex.name in vertex_sizes:
                 vertex.hpref = vertex_sizes[vertex.name]
+
+    def get_contact_areas(self) -> dict:
+        """Measure contact areas."""
+        surface_areas = {}
+        for face in self.geometry.faces:
+            if face.name not in surface_areas:
+                surface_areas[face.name] = face.mass
+            else:
+                surface_areas[face.name] += face.mass
+        return surface_areas

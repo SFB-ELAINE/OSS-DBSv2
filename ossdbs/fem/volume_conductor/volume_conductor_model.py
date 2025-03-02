@@ -130,6 +130,7 @@ class VolumeConductor(ABC):
         adaptive_mesh_refinement_settings: Optional[dict] = None,
         material_mesh_refinement_steps: int = 0,
         truncation_time: Optional[float] = None,
+        estimate_currents: Optional[bool] = False,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -159,6 +160,8 @@ class VolumeConductor(ABC):
             How often should elements with more than one material be refined
         truncation_time: float
             Time until which result will be written to hard drive
+        estimate_currents: bool
+            Get current estimate per contact by integration of normal component
 
         Notes
         -----
@@ -232,6 +235,13 @@ class VolumeConductor(ABC):
                 shape=(len(self.signal.frequencies)), dtype=dtype
             )
 
+        if estimate_currents:
+            self._currents = {}
+            for contact in self.contacts:
+                self._currents[contact.name] = np.ndarray(
+                    shape=(len(self.signal.frequencies)), dtype=dtype
+                )
+
         _logger.info(
             "Number of elements before material refinement:"
             f"{self.mesh.ngsolvemesh.ne}"
@@ -269,6 +279,12 @@ class VolumeConductor(ABC):
                 if compute_impedance:
                     impedance = self.compute_impedance()
                     self._impedances[band_indices] = impedance
+                if estimate_currents:
+                    estimated_currents = self.estimate_currents()
+                    for contact in self.contacts:
+                        self._currents[contact.name][band_indices] = estimated_currents[
+                            contact.name
+                        ]
 
                 # refine only at first frequency
                 if computing_idx == 0 and _do_AMR:
@@ -309,6 +325,11 @@ class VolumeConductor(ABC):
                     if compute_impedance:
                         # overwrite impedance values
                         self._impedances[band_indices] = impedance
+                    if estimate_currents:
+                        for contact in self.contacts:
+                            self._currents[contact.name][band_indices] = (
+                                estimated_currents[contact.name]
+                            )
 
                     _logger.info(
                         "Number of elements after refinement:"
@@ -325,6 +346,11 @@ class VolumeConductor(ABC):
                     # copy from previous frequency
                     impedance = self._impedances[computing_idx - 1]
                     self._impedances[band_indices] = impedance
+                if estimate_currents:
+                    for contact in self.contacts:
+                        self._currents[contact.name][band_indices] = self._currents[
+                            contact.name
+                        ][computing_idx - 1]
             # scale factor: is one for VC and depends on impedance for other case
             self._scale_factor = self.get_scale_factor(freq_idx)
             _logger.debug(f"Scale factor: {self._scale_factor}")
@@ -388,6 +414,16 @@ class VolumeConductor(ABC):
                 }
             )
             df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
+        if estimate_currents:
+            df = pd.DataFrame(
+                {
+                    "freq": self.signal.frequencies,
+                }
+            )
+            for contact in self.contacts:
+                df[f"{contact.name}_real"] = self._currents[contact.name].real
+                df[f"{contact.name}_imag"] = self._currents[contact.name].imag
+            df.to_csv(os.path.join(self.output_path, "currents.csv"), index=False)
 
         # export time domain solution if a proper signal has been passed
         _logger.info("Launching reconstruction of time domain")
@@ -679,6 +715,8 @@ class VolumeConductor(ABC):
         if len(self.contacts.active) == 2:
             power = self.compute_power()
             # TODO integrate surface impedance by thin layer
+            # tmp = np.abs(Integrate(ys * (cf - gfu) * (cf - gfu), mesh,
+            # definedon=mesh.Boundaries("Electrode1")))
             voltage = 0
             for idx, contact in enumerate(self.contacts.active):
                 voltage += (-1) ** idx * contact.voltage

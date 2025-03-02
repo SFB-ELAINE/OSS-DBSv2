@@ -89,8 +89,9 @@ class ModelGeometry:
                 raise RuntimeError("Geometry could not be built.")
 
         brain_surfaces = brain.get_surface_names()
+        surface_areas = brain.get_surface_areas()
         for surface in brain_surfaces:
-            self._contacts.append(Contact(name=surface))
+            self._contacts.append(Contact(name=surface, area=surface_areas[surface]))
         try:
             return netgen.occ.OCCGeometry(brain_geo)
         except netgen.occ.OCCException:
@@ -229,10 +230,12 @@ class ModelGeometry:
 
         """
         new_boundary_names = {}
+        surface_areas = electrode.get_contact_areas()
         for contact_index in range(1, electrode.n_contacts + 1):
             name = self.get_contact_name(electrode.index, contact_index)
             new_boundary_names[f"Contact_{contact_index}"] = name
-            self._contacts.append(Contact(name=name))
+            area = surface_areas[f"Contact_{contact_index}"]
+            self._contacts.append(Contact(name=name, area=area))
         electrode.set_contact_names(new_boundary_names)
 
     def get_contact_name(self, electrode_index: int, contact_index: int) -> str:

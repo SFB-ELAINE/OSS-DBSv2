@@ -470,6 +470,11 @@ def run_volume_conductor_model(
         if settings["ComputeImpedance"]:
             _logger.info("Will compute impedance at each frequency")
             compute_impedance = True
+    compute_currents = False
+    if "ComputeCurrents" in settings:
+        if settings["ComputeCurrents"]:
+            _logger.info("Will estimate currents at each frequency")
+            compute_currents = True
     if "ExportVTK" in settings:
         export_vtk = settings["ExportVTK"]
         if export_vtk:
@@ -495,6 +500,7 @@ def run_volume_conductor_model(
         adaptive_mesh_refinement_settings=settings["Mesh"]["AdaptiveMeshRefinement"],
         material_mesh_refinement_steps=settings["Mesh"]["MaterialRefinementSteps"],
         truncation_time=truncation_time,
+        estimate_currents=compute_currents,
     )
     return vcm_timings
 
