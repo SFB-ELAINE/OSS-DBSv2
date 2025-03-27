@@ -115,19 +115,19 @@ class LeadSettings:
         )
 
         # check the distance between first and last contact for brain approx. dimensions
-        contact_locations = self.get_cntct_loc()
+        contact_locations = self.get_cntct_loc(hemis_idx)
         first_contact = np.array(
             [
-                contact_locations[hemis_idx][0][0],
-                contact_locations[hemis_idx][1][0],
-                contact_locations[hemis_idx][2][0],
+                contact_locations[0][0],
+                contact_locations[1][0],
+                contact_locations[2][0],
             ]
         )
         last_contact = np.array(
             [
-                contact_locations[hemis_idx][0][-1],
-                contact_locations[hemis_idx][1][-1],
-                contact_locations[hemis_idx][2][-1],
+                contact_locations[0][-1],
+                contact_locations[1][-1],
+                contact_locations[2][-1],
             ]
         )
         actual_span = np.linalg.norm(last_contact - first_contact)
@@ -321,11 +321,10 @@ class LeadSettings:
         )
         return el_array_length / specs_array_length
 
-    def get_cntct_loc(self):
+    def get_cntct_loc(self,hemis_idx):
         """Contact location."""
-        e1 = np.asarray(self._file[self._settings["contactLocation"][0, 0]][:, :])
-        e2 = np.asarray(self._file[self._settings["contactLocation"][1, 0]][:, :])
-        return np.stack((e1, e2))
+        contactCoords = np.asarray(self._file[self._settings["contactLocation"][hemis_idx, 0]][:, :])
+        return contactCoords
 
     # Used to re-compute rot_z
     def get_y_mark_nat(self):
