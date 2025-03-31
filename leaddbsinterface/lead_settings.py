@@ -114,6 +114,24 @@ class LeadSettings:
             elec_dict["Name"], hemis_idx, unit_directions, specs_array_length
         )
 
+        # check the distance between first and last contact for brain approx. dimensions
+        contact_locations = self.get_cntct_loc(hemis_idx)
+        first_contact = np.array(
+            [
+                contact_locations[0][0],
+                contact_locations[1][0],
+                contact_locations[2][0],
+            ]
+        )
+        last_contact = np.array(
+            [
+                contact_locations[0][-1],
+                contact_locations[1][-1],
+                contact_locations[2][-1],
+            ]
+        )
+        actual_span = np.linalg.norm(last_contact - first_contact)
+
         # MAKE THE DICTIONARY
         partial_dict = {
             "ModelSide": 0,  # hardcoded for now, always keep to 0
@@ -123,7 +141,16 @@ class LeadSettings:
                     "x[mm]": self.get_imp_coord()[hemis_idx, 0],
                     "y[mm]": self.get_imp_coord()[hemis_idx, 1],
                     "z[mm]": self.get_imp_coord()[hemis_idx, 2],
-                }
+                },
+                # define brain approximation according to the electrode directionality
+                "Dimension": {
+                    "x[mm]": 50.0
+                    + np.abs(unit_directions[hemis_idx, 0]) * actual_span * 2.0,
+                    "y[mm]": 50.0
+                    + np.abs(unit_directions[hemis_idx, 1]) * actual_span * 2.0,
+                    "z[mm]": 50.0
+                    + np.abs(unit_directions[hemis_idx, 2]) * actual_span * 2.0,
+                },
             },
             "Electrodes": elec_dicts,
             "Surfaces": [
@@ -294,11 +321,12 @@ class LeadSettings:
         )
         return el_array_length / specs_array_length
 
-    def get_cntct_loc(self):
+    def get_cntct_loc(self, hemis_idx):
         """Contact location."""
-        e1 = np.asarray(self._file[self._settings["contactLocation"][0, 0]][:, :])
-        e2 = np.asarray(self._file[self._settings["contactLocation"][1, 0]][:, :])
-        return np.stack((e1, e2))
+        contactCoords = np.asarray(
+            self._file[self._settings["contactLocation"][hemis_idx, 0]][:, :]
+        )
+        return contactCoords
 
     # Used to re-compute rot_z
     def get_y_mark_nat(self):
@@ -600,10 +628,14 @@ class LeadSettings:
         # Cartesia X not available is OSS-DBS, SNEX not available in Lead
         electrode_names = {
             "Abbott Directed 6172 (short)": "AbbottStJudeDirected6172",
-            "St. Jude Directed 6180": "AbbottStJudeDirected6172",
             "Abbott Directed 6173 (long)": "AbbottStJudeDirected6173",
             "Abbott ActiveTip (6146-6149)": "AbbottStJudeActiveTip6146_6149",
             "Abbott ActiveTip (6142-6145)": "AbbottStJudeActiveTip6142_6145",
+            "St. Jude ActiveTip (6146-6149)": "AbbottStJudeActiveTip6146_6149",
+            "St. Jude ActiveTip (6142-6145)": "AbbottStJudeActiveTip6142_6145",
+            "St. Jude Directed 6180": "AbbottStJudeDirected6172",
+            "St. Jude Directed 6172 (short)": "AbbottStJudeDirected6172",
+            "St. Jude Directed 6173 (long)": "AbbottStJudeDirected6173",
             "Boston Scientific Vercise": "BostonScientificVercise",
             "Boston Scientific Vercise Directed": "BostonScientificVerciseDirected",
             "Boston Scientific Vercise Cartesia HX": "BostonScientificCartesiaHX",
@@ -736,9 +768,12 @@ class LeadSettings:
             else:
                 # for VC, case grounding is defined explicitly
                 case_grounding = bool(self.get_case_grnd()[index_side])
+
                 # shift all voltages if bipolar case
                 # to have 0V and cathodes (as in the stimulators)
-                if np.nanmax(pulse_amp) > 0.0:
+                # but don't shift if purely anodic stim
+                cathodic_case = case_grounding and np.nanmin(pulse_amp) >= 0.0
+                if not cathodic_case and np.nanmax(pulse_amp) > 0.0:
                     pulse_amp[:] = pulse_amp[:] - np.nanmax(pulse_amp)
 
             # cntct_dicts is a list of the contacts that will go in the json
