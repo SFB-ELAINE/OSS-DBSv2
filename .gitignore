@@ -40,3 +40,5 @@ meshsizes.txt
 # match all SVG and PDF files in this folder
 examples/ConvergenceStudy/**/*.svg
 examples/ConvergenceStudy/**/*.pdf
+
+nohup.out
