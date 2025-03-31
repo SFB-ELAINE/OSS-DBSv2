@@ -19,4 +19,7 @@ This is an overview about the electrode models used for simulation.
    electrode_files/Micro_Probes_Snex100
    electrode_files/Neuro_Pace
    electrode_files/Pins_Medical
+   electrode_files/PMTsEEG
    electrode_files/add_electrode
+
+.. note:: The total length does not influence the computational domain; therefore, the above electrodes are modeled at 400 mm.
