@@ -321,9 +321,11 @@ class LeadSettings:
         )
         return el_array_length / specs_array_length
 
-    def get_cntct_loc(self,hemis_idx):
+    def get_cntct_loc(self, hemis_idx):
         """Contact location."""
-        contactCoords = np.asarray(self._file[self._settings["contactLocation"][hemis_idx, 0]][:, :])
+        contactCoords = np.asarray(
+            self._file[self._settings["contactLocation"][hemis_idx, 0]][:, :]
+        )
         return contactCoords
 
     # Used to re-compute rot_z
@@ -766,7 +768,7 @@ class LeadSettings:
             else:
                 # for VC, case grounding is defined explicitly
                 case_grounding = bool(self.get_case_grnd()[index_side])
-                              
+
                 # shift all voltages if bipolar case
                 # to have 0V and cathodes (as in the stimulators)
                 # but don't shift if purely anodic stim
