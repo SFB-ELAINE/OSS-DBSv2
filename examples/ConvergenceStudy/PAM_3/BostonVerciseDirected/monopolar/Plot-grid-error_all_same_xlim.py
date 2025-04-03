@@ -44,11 +44,13 @@ for pathway, label in zip(pathways_to_plot, pathway_labels):
     pathway_label_dict[pathway] = label
 
 
+convergence_threshold = 5.0  # in %
+
 data = pd.read_csv("pam_results_summary.csv")
 data["roman"] = data["roman"].astype("string")
 
 for pathway in pathways_to_plot:
-    pw_id = f"Pathway_status_{pathway}.json_activated"
+    pw_id = f"Pathway_status_{pathway}.json_activated_rel_error"
     if pw_id not in data.columns:
         raise ValueError(f"Pathway {pathway} not in dataset.")
 
@@ -57,25 +59,12 @@ labels = ["Time / s", "DOFs"]
 scales = ["linear", "log"]
 data["not_converged"] = False
 for pathway in pathways_to_plot:
-    pw_id = f"Pathway_status_{pathway}.json_activated"
+    pw_id = f"Pathway_status_{pathway}.json_activated_rel_error"
     columns_to_plot.append(pw_id)
-    labels.append(rf"{pathway_label_dict[pathway]} / \%")
+    labels.append(rf"Err. {pathway_label_dict[pathway]} / \%")
     scales.append("linear")
 
-best_df = data.filter(regex="best", axis=1).iloc[0].to_dict()
-best_df["time"] = best_df["best_time"]
-best_df["dofs"] = best_df["best_dofs"]
-# best_df["roman"] = r"\rom{" f"{len(data) + 1}" "}"
-best_df["roman"] = "Best"
-
-for pathway in pathways_to_plot:
-    pw_id = f"Pathway_status_{pathway}.json_activated"
-    best_df[pw_id] = best_df[pw_id + "_best"]
-
-best_df = pd.DataFrame([best_df])
-data = pd.concat([data, best_df], ignore_index=True)
-# required for plot
-data.fillna(0.0, inplace=True)
+    data["not_converged"] = data["not_converged"] | data[pw_id] > convergence_threshold
 
 g = sns.PairGrid(
     data, x_vars=data[columns_to_plot], y_vars=["roman"], height=4, hue="not_converged"
@@ -90,6 +79,7 @@ g.map(
     edgecolor="w",
 )
 
+ax_count = 0
 for ax, label, scale in zip(g.axes.flat, labels, scales):
     # Make the grid horizontal instead of vertical
     ax.xaxis.grid(False)
@@ -98,7 +88,11 @@ for ax, label, scale in zip(g.axes.flat, labels, scales):
     ax.set(xlabel=label)
     ax.set(xscale=scale)
     ax.set(ylabel="Strategy")
+    # set consistent limit
+    if ax_count > 1:
+        ax.set(xlim=(-0.3, 8))
+    ax_count += 1
 sns.despine(left=True, bottom=False)
-plt.savefig("pam_convergence_overview.pdf")
-plt.savefig("pam_convergence_overview.svg")
+plt.savefig("pam_convergence_overview_errors_all_same.pdf")
+plt.savefig("pam_convergence_overview_errors_all_same.svg")
 plt.close()

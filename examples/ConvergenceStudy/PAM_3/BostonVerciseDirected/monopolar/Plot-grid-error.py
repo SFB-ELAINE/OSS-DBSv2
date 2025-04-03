@@ -89,8 +89,11 @@ for ax, label, scale in zip(g.axes.flat, labels, scales):
     ax.set(xscale=scale)
     ax.set(ylabel="Strategy")
     # set consistent limit except for M1 upper extrem
-    if ax_count > 1 and ax_count != 3:
-        ax.set(xlim=(None, 2.5))
+    if ax_count > 1:
+        if ax_count != 3:
+            ax.set(xlim=(-0.1, 2.5))
+        else:
+            ax.set(xlim=(-0.1, None))
     ax_count += 1
 sns.despine(left=True, bottom=False)
 plt.savefig("pam_convergence_overview_errors.pdf")
