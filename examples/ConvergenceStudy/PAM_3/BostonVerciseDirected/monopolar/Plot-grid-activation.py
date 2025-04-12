@@ -54,7 +54,7 @@ for pathway in pathways_to_plot:
 
 columns_to_plot = ["time", "dofs"]
 labels = ["Time / s", "DOFs"]
-scales = ["linear", "log"]
+scales = ["log", "log"]
 data["not_converged"] = False
 for pathway in pathways_to_plot:
     pw_id = f"Pathway_status_{pathway}.json_activated"
