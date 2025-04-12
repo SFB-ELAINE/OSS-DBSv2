@@ -4,6 +4,7 @@
 
 import json
 import logging
+import os
 
 import numpy as np
 
@@ -34,6 +35,10 @@ electrode_name = "BostonScientificVerciseDirected"
 with open("../../base_settings.json") as fp:
     base_input_dict = json.load(fp)
 
+# adjust pathes
+base_input_dict["MaterialDistribution"]["MRIPath"] = os.path.join(
+    "..", "..", base_input_dict["MaterialDistribution"]["MRIPath"]
+)
 # add electrode
 base_input_dict["Electrodes"][0]["Name"] = electrode_name
 # add contacts

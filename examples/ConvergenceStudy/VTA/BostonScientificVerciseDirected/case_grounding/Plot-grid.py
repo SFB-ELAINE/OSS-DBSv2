@@ -20,7 +20,7 @@ data["roman"] = data["roman"].astype("string")
 
 columns_to_plot = ["time", "dofs", "imp_rel_error", "ngs_vta_volume_rel_error"]
 labels = ["Time / s", "DOFs", r"Rel. err. impedance / \%", r"Rel. err. VTA / \%"]
-scales = ["linear", "log", "linear", "linear"]
+scales = ["log", "log", "linear", "linear"]
 
 data["not_converged"] = (data["imp_rel_error"] > convergence_threshold) | (
     data["ngs_vta_volume_rel_error"] > convergence_threshold

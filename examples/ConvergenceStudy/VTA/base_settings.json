@@ -1,30 +1,30 @@
 {
   "BrainRegion": {
     "Center": {
-      "x[mm]": -9.476,
-      "y[mm]": 11.605,
-      "z[mm]": 4.676
+      "x[mm]": 11.6939,
+      "y[mm]": -15.9992,
+      "z[mm]": -10.1624
     },
     "Dimension": {
-      "x[mm]": 40.0,
-      "y[mm]": 40.0,
-      "z[mm]": 40.0
+      "x[mm]": 60,
+      "y[mm]": 60,
+      "z[mm]": 80
     },
     "Shape": "Ellipsoid"
   },
   "Electrodes": [
     {
       "Name": "",
-      "Rotation[Degrees]": 0,
+      "Rotation[Degrees]": 5.560808219457241,
       "Direction": {
-        "x[mm]": 0.0,
-        "y[mm]": 0.0,
-        "z[mm]": 1.0
+        "x[mm]": 0.3027327778243897,
+        "y[mm]": 0.5101293066126904,
+        "z[mm]": 0.805059597648264
       },
       "TipPosition": {
-        "x[mm]": -9.476,
-        "y[mm]": 11.605,
-        "z[mm]": 4.676
+        "x[mm]": 11.449074999999999,
+        "y[mm]": -16.41175,
+        "z[mm]": -10.813465
       },
       "Contacts": [],
       "EncapsulationLayer": {
@@ -35,7 +35,7 @@
     }
   ],
   "MaterialDistribution": {
-    "MRIPath": "../../../../../input_files/Butenko_segmask.nii.gz",
+    "MRIPath": "segmask.nii.gz",
     "MRIMapping": {
       "Gray matter": 1,
       "White matter": 2,
@@ -85,9 +85,9 @@
     "Lattice": {
       "Active": true,
       "Center": {
-        "x[mm]": -9.476,
-        "y[mm]": 11.605,
-        "z[mm]": 4.676
+        "x[mm]": 11.449074999999999,
+        "y[mm]": -16.41175,
+        "z[mm]": -10.813465
       },
       "Shape": {
         "x": 40,
