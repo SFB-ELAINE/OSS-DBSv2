@@ -42,6 +42,7 @@ from .neuro_pace import (
     NeuroPaceModel,
     NeuroPaceParameters,
 )
+from .neuronexus import NeuroNexusElectrodeModel, NeuroNexusParameters
 from .pins_medical import (
     PINSMedicalModel,
     PINSMedicalParameters,
@@ -287,6 +288,16 @@ default_electrode_parameters = {
         lead_diameter=0.8,
         total_length=400.0,
         n_contacts=16,
+    ),
+    "NeuroNexusA1x16_5mm_50_177": NeuroNexusParameters(
+        shank_thickness=20.0e-3,
+        max_width=125.0e-3,
+        min_width=33.0e-3,
+        total_length=400.0,
+        angle_tip=30.0,
+        tip_length=50.0e-3,
+        contact_spacing=50.0e-3,
+        contact_diameter=30.0e-3,
     ),
 }
 
@@ -547,3 +558,11 @@ def PMTsEEG2102_16(
     """PMTsEEG2102_16 electrode."""
     parameters = default_electrode_parameters["PMTsEEG2102_16"]
     return DixiSEEGModel(parameters, rotation, direction, position)
+
+
+def NeuroNexusA1x16_5mm_50_177(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """NeuroNexusA1x16_5mm_50_177 electrode."""
+    parameters = default_electrode_parameters["NeuroNexusA1x16_5mm_50_177"]
+    return NeuroNexusElectrodeModel(parameters, rotation, direction, position)
