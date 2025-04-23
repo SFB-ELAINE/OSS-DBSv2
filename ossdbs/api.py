@@ -2,6 +2,7 @@
 # Copyright 2023, 2024 Jan Philipp Payonk, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import importlib
 import json
 import logging
 import os
@@ -9,7 +10,6 @@ from typing import Optional
 
 import numpy as np
 
-from ossdbs.axon_processing import MRG2002, McNeal1976
 from ossdbs.dielectric_model import (
     default_dielectric_parameters,
     dielectric_model_parameters,
@@ -37,6 +37,10 @@ from ossdbs.stimulation_signals import (
 from ossdbs.utils.nifti1image import DiffusionTensorImage, MagneticResonanceImage
 
 _logger = logging.getLogger(__name__)
+
+PAM_AVAILABLE = importlib.util.find_spec("neuron") is not None
+if not PAM_AVAILABLE:
+    _logger.warning("NEURON is not installed, disabling PAM analysis!")
 
 
 def create_bounding_box(box_parameters: dict) -> BoundingBox:
@@ -598,6 +602,10 @@ def load_images(settings):
 
 def run_PAM(settings):
     """Run pathway activation analysis."""
+    if not PAM_AVAILABLE:
+        raise RuntimeError("PAM not available! Please install NEURON!")
+    from ossdbs.axon_processing import get_neuron_model
+
     _logger.info("Running PAM")
     pathway_file = settings["PathwayFile"]
     pathway_solution_dir = settings["OutputPath"]
@@ -608,13 +616,7 @@ def run_PAM(settings):
         pathways_dict = json.load(fp)
 
     model_type = pathways_dict["Axon_Model_Type"]
-
-    if "MRG2002" in model_type:
-        neuron_model = MRG2002(pathways_dict, pathway_solution_dir)
-    elif "McNeal1976" in model_type:
-        neuron_model = McNeal1976(pathways_dict, pathway_solution_dir)
-    else:
-        raise NotImplementedError(f"Model {model_type} not yet implemented.")
+    neuron_model = get_neuron_model(model_type, pathways_dict, pathway_solution_dir)
 
     if settings["StimSets"]["Active"]:
         if "CurrentVector" not in settings:
