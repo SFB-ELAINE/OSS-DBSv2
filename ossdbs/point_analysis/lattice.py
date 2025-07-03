@@ -38,7 +38,7 @@ class Lattice(PointModel):
         distance: float,
         direction: tuple,
         collapse_vta: bool = False,
-        export_field: bool = False,
+        export_field: bool = True,
     ) -> None:
         if distance < 0:
             raise ValueError("The spacing between points must be positive.")
