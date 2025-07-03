@@ -99,10 +99,10 @@ class Pathway(PointModel):
         group: str
             Name of the group, which contains the axons.
 
-        Retruns
+        Returns
         -------
         axons: list
-            Retruns list of all axons within one group.
+            Returns list of all axons within one group.
         """
         return [
             self.Axon(sub_group, np.array(file[group][sub_group]), 0)
@@ -208,7 +208,7 @@ class Pathway(PointModel):
             Returns filtered_points after removing axons that are (partially)
             outside the geometry.
         """
-        x, y, z = (grid_pts.T)
+        x, y, z = grid_pts.T
         lattice_mask = np.invert(grid_pts.mask)[:, 0]
         idx_axon = 0
 
@@ -235,9 +235,15 @@ class Pathway(PointModel):
                     axon.status = -1
                 else:
                     # Fill all_points for this axon
-                    all_points[point_idx:point_idx+axon_length, 0] = x.data[idx_axon:idx_axon+axon_length]
-                    all_points[point_idx:point_idx+axon_length, 1] = y.data[idx_axon:idx_axon+axon_length]
-                    all_points[point_idx:point_idx+axon_length, 2] = z.data[idx_axon:idx_axon+axon_length]
+                    all_points[point_idx : point_idx + axon_length, 0] = x.data[
+                        idx_axon : idx_axon + axon_length
+                    ]
+                    all_points[point_idx : point_idx + axon_length, 1] = y.data[
+                        idx_axon : idx_axon + axon_length
+                    ]
+                    all_points[point_idx : point_idx + axon_length, 2] = z.data[
+                        idx_axon : idx_axon + axon_length
+                    ]
                     point_idx += axon_length
                     n_axons_inside += 1
                 idx_axon += axon_length
@@ -251,7 +257,6 @@ class Pathway(PointModel):
         if filtered_points.shape[0] == 0:
             raise ValueError("No points inside the computational domain.")
 
-        # Logging
         for name, n_axons, n_axons_inside in pop_axons_stats:
             _logger.info(f"Total axons in {name}: {n_axons}")
             _logger.info(f"Outside the domain: {n_axons - n_axons_inside}")
@@ -280,11 +285,13 @@ class Pathway(PointModel):
                 if axon.status != -1:
                     axon_length = axon.points.shape[0]
                     for idx in range(axon_length):
-                        if inside_csf[idx_axon + idx]:
-                            axon.status = -2  # set status -2 for inside csf
                         if inside_encap[idx_axon + idx]:
                             axon.status = -1  # set status -1 for inside encap
-                    idx_axon = idx_axon + axon_length
+                            break
+                        if inside_csf[idx_axon + idx]:
+                            axon.status = -2  # set status -2 for inside csf
+                            break
+                    idx_axon += axon_length
         _logger.info("Marked axons inside CSF and encapsulation layer")
         return
 
@@ -386,7 +393,6 @@ class Pathway(PointModel):
         encapsulation layer etc.
 
         Prepares data storage for all frequencies at all points.
-        TODO type hints
         """
         grid_pts = self.points_in_mesh(mesh)
         self._lattice_mask = np.invert(grid_pts.mask)
@@ -394,9 +400,15 @@ class Pathway(PointModel):
         self._inside_csf = self.get_points_in_csf(mesh, conductivity_cf)
         self._inside_encap = self.get_points_in_encapsulation_layer(mesh)
 
-        # mark complete axons
+        # mark complete axons and log how many axons were finally seeded
         self.filter_csf_encap(self.inside_csf, self.inside_encap)
-        # TODO: log how many axons were finally seeded
+
+        total_axons = sum(len(pop.axons) for pop in self._populations)
+        seeded_axons = sum(
+            sum(axon.status == 0 for axon in pop.axons) for pop in self._populations
+        )
+        _logger.info(f"Axons finally seeded: {seeded_axons} / {total_axons}")
+
         # create index for axons
         self._axon_index = self.create_index(self.lattice)
 
@@ -519,3 +531,4 @@ class Pathway(PointModel):
                 os.path.join(self.output_path, f"E_field_{self.name}.csv"),
                 index=False,
             )
+        return
