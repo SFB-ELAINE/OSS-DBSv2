@@ -119,7 +119,7 @@
       },
       "PointDistance[mm]": 0.125,
       "CollapseVTA": false,
-      "ExportField": false
+      "ExportField": true
     },
     "VoxelLattice": {
       "Active": false,
@@ -128,7 +128,7 @@
         "y": 40,
         "z": 160
       },
-      "ExportField": false
+      "ExportField": true
     }
   },
   "ActivationThresholdVTA[V-per-m]": 200.0,

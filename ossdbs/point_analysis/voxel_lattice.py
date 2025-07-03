@@ -4,7 +4,6 @@
 from typing import Optional
 
 import nibabel
-import nibabel as nib
 import numpy as np
 
 from .point_model import PointModel
@@ -16,20 +15,15 @@ class VoxelLattice(PointModel):
     Attributes
     ----------
     imp_coord : np.ndarray
-        implantation coordinates in mm space, this will be the center of the grid
-
+        Implantation coordinates in mm space, this will be the center of the grid
     affine : np.ndarray
-        affine transformation of the MRI image
-
+        Affine transformation of the MRI image.
     shape : np.ndarray
-        the number of points in each direction (x, y, z)
+        Number of points in each direction (x, y, z).
 
     Notes
     -----
-    The dimension of the shape must be odd.
-    Otherwise, the point corresponding to the voxel containing the implantation
-    coordinate will not be at the center of the grid.
-
+    Each dimension of shape must be odd to ensure the grid is centered.
     """
 
     def __init__(
@@ -44,30 +38,31 @@ class VoxelLattice(PointModel):
         self._affine = affine
         self._shape = shape
         self._header = header
-        self.collapse_VTA = False
+        self._collapse_VTA = False
         self._export_field = export_field
 
         # TODO is that correct?
         self._location = None
 
         # Check on dimension condition on shape input
-        if np.sum(shape[shape / 2 == 0]) > 0:
-            raise Exception("Each dimension of the shape must be an odd number")
+        if np.any(self._shape % 2 == 0):
+            raise ValueError("Each dimension of the shape must be an odd number")
 
         self._coordinates = self._initialize_coordinates()
 
         # identifiers
         self._name = "VoxelLattice"
 
-        # never compute time-domain signal
-        self.time_domain_conversion = False
+        # never compute time-domain signal by default
+        self._time_domain_conversion = False
 
     def _initialize_coordinates(self) -> np.ndarray:
-        """Generates grids of points in the MRI voxels.
+        """Generate coordinates for voxel lattice centered at implantation coordinate.
 
         Returns
         -------
         np.ndarray
+            Array of voxel center coordinates in MRI space.
         """
         # CALCULATION OF GRID CENTER
 
@@ -152,7 +147,9 @@ class VoxelLattice(PointModel):
         else:
             nifti_output = nifti_grid  # V/mm
 
-        nib.save(nib.Nifti1Image(nifti_output, affine_grid, self._header), filename)
+        nibabel.save(
+            nibabel.Nifti1Image(nifti_output, affine_grid, self._header), filename
+        )
 
     def _gen_grid(self):
         """Return list of ndarrays (coordinate matrices from coordinate vectors)."""
