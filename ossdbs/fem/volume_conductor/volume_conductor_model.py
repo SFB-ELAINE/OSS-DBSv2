@@ -1049,12 +1049,16 @@ class VolumeConductor(ABC):
             point_model.export_potential_at_frequency(
                 self._export_frequency, export_frequency_index
             )
-            point_model.export_field_at_frequency(
-                self._export_frequency,
-                export_frequency_index,
-                electrode=self.model_geometry.electrodes[0],
-                activation_threshold=activation_threshold,
-            )
+            if point_model._export_field:
+                _logger.info(
+                    f"Exporting electric field at frequency {self._export_frequency}Hz."
+                )
+                point_model.export_field_at_frequency(
+                    self._export_frequency,
+                    export_frequency_index,
+                    electrode=self.model_geometry.electrodes[0],
+                    activation_threshold=activation_threshold,
+                )
             if isinstance(point_model, Lattice):
                 scale_factor = (
                     self._scale_factor * self.signal.amplitudes[export_frequency_index]
