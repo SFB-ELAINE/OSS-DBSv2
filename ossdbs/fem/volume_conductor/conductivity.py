@@ -1,4 +1,4 @@
-# Copyright 2023, 2024 Julius Zimmermann
+# Copyright 2023, 2024 Julius Zimmermann, Jan Philipp Payonk
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
@@ -20,6 +20,8 @@ _logger = logging.getLogger(__name__)
 
 class ConductivityCF:
     """Conductivity wrapper."""
+
+    _WM_MASKING = True  # Class variable to control masking behavior
 
     def __init__(
         self,
@@ -91,7 +93,9 @@ class ConductivityCF:
         # Creates a boolean mask for the indices that material is present in
         for material in self.materials:
             material_idx = self.materials[material]
-            self._masks[material_idx] = np.isclose(self._material_distribution, material_idx)
+            self._masks[material_idx] = np.isclose(
+                self._material_distribution, material_idx
+            )
 
     @property
     def is_complex(self) -> bool:
@@ -171,7 +175,13 @@ class ConductivityCF:
         self,
         omega: float,
     ) -> ngsolve.VoxelCoefficient:
-        """Return the conductivity distribution at the given frequency.
+        """
+        Return the conductivity distribution at the given frequency.
+
+        - If no DTI, returns a scalar VoxelCoefficient.
+        - If _WM_MASKING is False, returns DTI tensor everywhere (scaled).
+        - If _WM_MASKING is True, returns DTI tensor in white matter, identity
+        elsewhere, all scaled by local conductivity.
 
         Parameters
         ----------
@@ -183,27 +193,72 @@ class ConductivityCF:
         ngsolve.VoxelCoefficient
             Data structure representing the conductivity distribution in space.
         """
+        _logger.debug("Entering _distribution with omega=%s", omega)
+
+        # Update scalar conductivity data for all materials
         for material in self.materials:
             material_idx = self.materials[material]
-            # Sets conductivity values based on
-            # what indices in self._data are material_idx
             if self.is_complex:
-                self._data[self._masks[material_idx]] = self._dielectric_properties[
-                    material
-                ].complex_conductivity(omega)
+                sigma = self._dielectric_properties[material].complex_conductivity(
+                    omega
+                )
             else:
-                self._data[self._masks[material_idx]] = self._dielectric_properties[
-                    material
-                ].conductivity(omega)
+                sigma = self._dielectric_properties[material].conductivity(omega)
+            self._data[self._masks[material_idx]] = sigma
+
         start = self._mri_voxel_bounding_box.start
         end = self._mri_voxel_bounding_box.end
+
+        # If no DTI, return scalar field
         if self._dti_voxel_cf is None:
+            _logger.debug(
+                "No DTI voxel coefficient function, returning scalar VoxelCoefficient"
+            )
             return ngsolve.VoxelCoefficient(
                 start, end, self._data, False, trafocf=self._trafo_cf
             )
-        return self._dti_voxel_cf * ngsolve.VoxelCoefficient(
+
+        # If debug flag is set, use DTI tensor everywhere
+        if not self._WM_MASKING:
+            _logger.debug("_WM_MASKING is False: using DTI tensor everywhere")
+            return self._dti_voxel_cf * ngsolve.VoxelCoefficient(
+                start, end, self._data, False, trafocf=self._trafo_cf
+            )
+
+        # Otherwise, use DTI tensor only in white matter
+        white_idx = self.materials["White matter"]
+        white_mask = self._material_distribution == white_idx
+        _logger.debug("White matter mask sum: %d", np.sum(white_mask))
+
+        # Create a mask array for WM (1 for WM, 0 elsewhere)
+        wm_mask_array = np.zeros(
+            self._material_distribution.shape, dtype=self._get_datatype()
+        )
+        wm_mask_array[white_mask] = 1.0
+
+        # Create a VoxelCoefficient for the mask
+        wm_mask_cf = ngsolve.VoxelCoefficient(
+            start, end, wm_mask_array, False, trafocf=self._trafo_cf
+        )
+
+        # Identity tensor as CoefficientFunction for non-WM
+        identity_tensor = ngsolve.CoefficientFunction(
+            (1, 0, 0, 0, 1, 0, 0, 0, 1), dims=(3, 3)
+        )
+
+        # Compose the tensor-valued coefficient function:
+        # sigma(x) = WM_MASK(x) * DTI(x) * sigma(x) + (1-WM_MASK(x)) * I * sigma(x)
+        sigma_cf = ngsolve.VoxelCoefficient(
             start, end, self._data, False, trafocf=self._trafo_cf
         )
+
+        tensor_cf = (
+            wm_mask_cf * self._dti_voxel_cf * sigma_cf
+            + (1 - wm_mask_cf) * identity_tensor * sigma_cf
+        )
+
+        _logger.debug("Returning VoxelCoefficient with DTI tensor only in white matter")
+        return tensor_cf
 
     def material_distribution(self, mesh: Mesh) -> ngsolve.VoxelCoefficient:
         """Return MRI image projected onto mesh.
