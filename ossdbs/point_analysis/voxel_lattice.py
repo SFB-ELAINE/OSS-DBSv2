@@ -1,7 +1,6 @@
 # Copyright 2023, 2024 Konstantin Butenko, Jan Philipp Payonk, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Optional
 
 import nibabel
 import nibabel as nib
@@ -112,7 +111,7 @@ class VoxelLattice(PointModel):
         scalar_field: np.ndarray,
         filename: str,
         binarize: bool = False,
-        activation_threshold: Optional[float] = None,
+        activation_threshold: float | None = None,
     ):
         """Save scalar field in abstract orthogonal space in nifti format.
 

@@ -3,7 +3,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
-from typing import List
 
 import netgen.occ
 import numpy as np
@@ -32,7 +31,7 @@ class ModelGeometry:
     def __init__(
         self,
         brain: BrainGeometry,
-        electrodes: List[ElectrodeModel],
+        electrodes: list[ElectrodeModel],
     ) -> None:
         self._brain = brain
         self._electrodes = electrodes
@@ -115,7 +114,7 @@ class ModelGeometry:
         return correct_geo
 
     @property
-    def electrodes(self) -> List[ElectrodeModel]:
+    def electrodes(self) -> list[ElectrodeModel]:
         """Return collection of electrodes.
 
         Returns
@@ -125,7 +124,7 @@ class ModelGeometry:
         return self._electrodes
 
     @property
-    def contacts(self) -> List[Contact]:
+    def contacts(self) -> list[Contact]:
         """Return collection of contacts.
 
         Returns
@@ -208,7 +207,7 @@ class ModelGeometry:
         return
 
     @property
-    def encapsulation_layers(self) -> List:
+    def encapsulation_layers(self) -> list:
         """Return collection of active contacts and contacts of property
         floating.
         """

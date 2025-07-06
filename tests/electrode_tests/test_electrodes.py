@@ -1,5 +1,5 @@
 import os
-from typing import ClassVar, List
+from typing import ClassVar
 
 import ngsolve
 import numpy as np
@@ -36,22 +36,22 @@ def get_reference_and_model_geo(electrode_name, idx):
 class TestElectrode:
     """Class for testing electrodes."""
 
-    AbbottStJudeDirected: ClassVar[List[str]] = [
+    AbbottStJudeDirected: ClassVar[list[str]] = [
         "AbbottStJudeDirected6172",
         "AbbottStJudeDirected6173",
     ]
-    Medtronic: ClassVar[List[str]] = ["Medtronic3387", "Medtronic3389", "Medtronic3391"]
-    MedtronicSenSight: ClassVar[List[str]] = [
+    Medtronic: ClassVar[list[str]] = ["Medtronic3387", "Medtronic3389", "Medtronic3391"]
+    MedtronicSenSight: ClassVar[list[str]] = [
         "MedtronicSenSightB33005",
         "MedtronicSenSightB33015",
     ]
-    NeuroPace: ClassVar[List[str]] = ["NeuroPaceDL344_3_5", "NeuroPaceDL344_10"]
-    PINSMedical: ClassVar[List[str]] = [
+    NeuroPace: ClassVar[list[str]] = ["NeuroPaceDL344_3_5", "NeuroPaceDL344_10"]
+    PINSMedical: ClassVar[list[str]] = [
         "PINSMedicalL301",
         "PINSMedicalL302",
         "PINSMedicalL303",
     ]
-    Dixi: ClassVar[List[str]] = [
+    Dixi: ClassVar[list[str]] = [
         "DixiSEEG5",
         "DixiSEEG8",
         "DixiSEEG10",
@@ -60,7 +60,7 @@ class TestElectrode:
         "DixiSEEG18",
     ]
 
-    PMTsEEG2102: ClassVar[List[str]] = [
+    PMTsEEG2102: ClassVar[list[str]] = [
         "PMTsEEG2102_08",
         "PMTsEEG2102_10",
         "PMTsEEG2102_12",

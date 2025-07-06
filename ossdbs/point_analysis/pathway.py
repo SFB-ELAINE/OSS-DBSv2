@@ -4,7 +4,6 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import List, Optional
 
 import h5py
 import numpy as np
@@ -57,7 +56,7 @@ class Pathway(PointModel):
         """
 
         name: str
-        axons: List["Pathway.Axon"]
+        axons: list["Pathway.Axon"]
 
     def __init__(self, input_path: str, export_field: bool = False) -> None:
         # identifiers
@@ -396,7 +395,7 @@ class Pathway(PointModel):
         frequency: float,
         frequency_index: int,
         electrode=None,
-        activation_threshold: Optional[float] = None,
+        activation_threshold: float | None = None,
     ):
         """Write field values to CSV.
 

@@ -7,7 +7,6 @@ import logging
 import math
 import os
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import h5py
 import numpy as np
@@ -252,8 +251,8 @@ class AxonMorphologyMRG2002(AxonMorphology):
     def update_axon_morphology(
         self,
         fiber_diam: float,
-        axon_length: Optional[float] = None,
-        n_Ranvier: Optional[int] = None,
+        axon_length: float | None = None,
+        n_Ranvier: int | None = None,
     ) -> dict:
         """Get geometric description of a single axon.
 
@@ -419,8 +418,8 @@ class AxonMorphologyMcNeal1976(AxonMorphology):
     def update_axon_morphology(
         self,
         fiber_diam: float,
-        axon_length: Optional[float] = None,
-        n_Ranvier: Optional[int] = None,
+        axon_length: float | None = None,
+        n_Ranvier: int | None = None,
     ) -> dict:
         """Get geometric description of a single axon.
 

@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
-from typing import Optional
 
 import ngsolve
 import numpy as np
@@ -27,7 +26,7 @@ class ConductivityCF:
         brain_bounding_box: BoundingBox,
         dielectric_properties: dict,
         materials: dict,
-        encapsulation_layers: Optional[dict] = None,
+        encapsulation_layers: dict | None = None,
         complex_data: bool = False,
         dti_image: DiffusionTensorImage = None,
     ) -> None:
