@@ -18,16 +18,16 @@ from .utilities import (
 )
 
 __all__ = [
-    "TimeDomainSignal",
     "FrequencyDomainSignal",
     "RectangleSignal",
+    "TimeDomainSignal",
     "TrapezoidSignal",
     "TriangleSignal",
-    "retrieve_time_domain_signal_from_fft",
-    "reconstruct_time_signals",
-    "get_octave_band_indices",
     "get_indices_in_octave_band",
-    "get_minimum_octave_band_index",
     "get_maximum_octave_band_index",
+    "get_minimum_octave_band_index",
+    "get_octave_band_indices",
     "get_timesteps",
+    "reconstruct_time_signals",
+    "retrieve_time_domain_signal_from_fft",
 ]

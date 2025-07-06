@@ -14,7 +14,7 @@ __all__ = [
     "Lattice",
     "Pathway",
     "PointModel",
+    "TimeResult",
     "VoxelLattice",
     "imp_coord",
-    "TimeResult",
 ]

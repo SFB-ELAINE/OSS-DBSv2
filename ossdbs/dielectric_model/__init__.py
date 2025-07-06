@@ -28,16 +28,16 @@ default_dielectric_parameters = {
 
 
 __all__ = (
-    "DielectricModel",
-    "ColeCole4Model",
     "ColeCole3Model",
+    "ColeCole4Model",
     "ColeColeParameters",
     "ConstantModel",
     "ConstantParameters",
-    "default_cole_cole4_parameters",
+    "DielectricModel",
     "default_cole_cole3_parameters",
+    "default_cole_cole4_parameters",
     "default_constant_parameters",
-    "dielectric_models",
-    "dielectric_model_parameters",
     "default_dielectric_parameters",
+    "dielectric_model_parameters",
+    "dielectric_models",
 )

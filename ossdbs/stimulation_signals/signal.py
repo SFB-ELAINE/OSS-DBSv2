@@ -4,7 +4,7 @@
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -123,7 +123,7 @@ class TimeDomainSignal(ABC):
 
     def retrieve_time_domain_signal(
         self, fft_signal: np.ndarray, cutoff_frequency: float
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Compute time-domain signal by FFT."""
         return retrieve_time_domain_signal_from_fft(
             fft_signal, cutoff_frequency, self.frequency
