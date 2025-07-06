@@ -13,8 +13,8 @@ for material, parameters in default_dielectric_parameters["ColeCole4"].items():
     material_model[material] = model(parameters)
 
 
-# benchmark from impedancefitter
 def get_benchmark(tissue, frequencies):
+    """Get benchmark from impedancefitter."""
     with open(tissue + "colecole4gabriel.json") as stream:
         resultcc4 = json.load(stream)
     omega = 2.0 * np.pi * frequencies

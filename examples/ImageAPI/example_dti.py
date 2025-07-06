@@ -1,6 +1,6 @@
 """
 Example of reading in a DTI image and using get_component function for xy and zy
-Tests function for randomly generated 100 voxel points
+Tests function for randomly generated 100 voxel points.
 
 Outcome:
     get_component returns 3D array for each component with correct values

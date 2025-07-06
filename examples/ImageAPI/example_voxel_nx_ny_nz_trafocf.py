@@ -1,5 +1,5 @@
 """
-Example of an ellipsoid
+Example of an ellipsoid.
 
 We choose three radii:
     rx = 0.5

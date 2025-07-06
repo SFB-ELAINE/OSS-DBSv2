@@ -1,7 +1,7 @@
 """
 Example of a full model geometry
 with one Vercise electrode without
-encapsulation layer
+encapsulation layer.
 """
 
 from pprint import pprint

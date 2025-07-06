@@ -1,5 +1,5 @@
 """
-Example of an ellipsoid
+Example of an ellipsoid.
 
 We choose three radii:
     rx = 0.5
@@ -18,7 +18,7 @@ Outcome:
 
 import netgen.occ as occ
 import numpy as np
-from ngsolve import *
+from ngsolve import H1, Draw, GridFunction, Mesh, VoxelCoefficient, sqrt
 
 Origin = (-1, -0.5, -0.25)
 EndOfBox = (1, 0.5, 0.25)

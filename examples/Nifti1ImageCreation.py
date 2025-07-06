@@ -3,6 +3,7 @@ import numpy as np
 
 
 def main():
+    """Create a NIFTI image."""
     x = 193
     y = 229
     z = 193
