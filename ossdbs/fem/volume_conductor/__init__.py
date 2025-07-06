@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """Core module for volume-conductor model."""
+
 from .conductivity import ConductivityCF
 from .floating import VolumeConductorFloating
 from .floating_impedance import VolumeConductorFloatingImpedance

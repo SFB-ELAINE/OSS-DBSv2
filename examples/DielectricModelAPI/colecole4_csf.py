@@ -1,9 +1,11 @@
-from ossdbs.dielectric_model import dielectric_models, default_dielectric_parameters
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy.constants import epsilon_0 as e0
-import impedancefitter as ifit
 import json
+
+import impedancefitter as ifit
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.constants import epsilon_0 as e0
+
+from ossdbs.dielectric_model import default_dielectric_parameters, dielectric_models
 
 model = dielectric_models["ColeCole4"]
 material_model = {}
@@ -13,13 +15,13 @@ for material, parameters in default_dielectric_parameters["ColeCole4"].items():
 
 # benchmark from impedancefitter
 def get_benchmark(tissue, frequencies):
-    with open(tissue + "colecole4gabriel.json", "r") as stream:
+    with open(tissue + "colecole4gabriel.json") as stream:
         resultcc4 = json.load(stream)
-    omega = 2. * np.pi * frequencies
+    omega = 2.0 * np.pi * frequencies
     ecmcc4 = ifit.get_equivalent_circuit_model("ColeCole4")
     Zcc4 = ecmcc4.eval(omega=omega, **resultcc4)
     c0 = resultcc4["c0"] * 1e-12
-    eps_ast = 1. / (1j * 2. * np.pi * frequencies * c0 * Zcc4)
+    eps_ast = 1.0 / (1j * 2.0 * np.pi * frequencies * c0 * Zcc4)
     eps_r, conductivity = ifit.utils.return_diel_properties(omega, Zcc4, c0)
     conductivity_ast = conductivity + 1j * omega * eps_r * e0
     return eps_ast * e0, conductivity_ast

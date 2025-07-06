@@ -7,24 +7,24 @@ the brain are shown.
 The different geometries are saved
 to STEP files.
 """
-import ossdbs
-from ngsolve import Draw, Mesh, TaskManager
+
 import netgen.occ as occ
+from ngsolve import Draw, Mesh, TaskManager
 
-settings = \
-    {"MaterialDistribution":
-        {"MRIPath": "segmask.nii.gz"
-         },
-     "BrainRegion":
-        {"Center": {"x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5},
-         "Dimension": {"x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0}
-         }
-     }
+import ossdbs
 
-nifti_image = ossdbs.MagneticResonanceImage(settings['MaterialDistribution']['MRIPath'])
+settings = {
+    "MaterialDistribution": {"MRIPath": "segmask.nii.gz"},
+    "BrainRegion": {
+        "Center": {"x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5},
+        "Dimension": {"x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0},
+    },
+}
+
+nifti_image = ossdbs.MagneticResonanceImage(settings["MaterialDistribution"]["MRIPath"])
 box = ossdbs.BrainGeometry("Box", nifti_image.bounding_box)
 box.geometry.WriteStep("box.step")
-region_parameters = settings['BrainRegion']
+region_parameters = settings["BrainRegion"]
 region_of_interest = ossdbs.create_bounding_box(region_parameters)
 box = ossdbs.BrainGeometry("Box", region_of_interest)
 box.geometry.WriteStep("box_ROI.step")
