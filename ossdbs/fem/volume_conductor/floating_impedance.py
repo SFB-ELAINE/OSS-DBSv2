@@ -61,9 +61,7 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         components = solution.components[1:]
         self._floating_values = {
             contact.name: component.vec[0]
-            for (contact, component) in zip(
-                self.contacts.floating, components, strict=False
-            )
+            for (contact, component) in zip(self.contacts.floating, components)
         }
 
     def __create_space(self):
@@ -85,7 +83,7 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
         surface_impedances = self.contacts.floating_impedance_values()
         boundaries = [contact.name for contact in self.contacts.floating]
-        for ufix, vfix, boundary in zip(trial[1:], test[1:], boundaries, strict=False):
+        for ufix, vfix, boundary in zip(trial[1:], test[1:], boundaries):
             a = ngsolve.CoefficientFunction(1 / surface_impedances[boundary])
             bilinear_form += a * (u - ufix) * (v - vfix) * ngsolve.ds(boundary)
 

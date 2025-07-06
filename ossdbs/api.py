@@ -5,6 +5,7 @@
 import json
 import logging
 import os
+from typing import Optional
 
 import numpy as np
 
@@ -168,7 +169,7 @@ def generate_model_geometry(settings):
 
 def build_brain_model(
     settings,
-    mri_image: MagneticResonanceImage | None = None,
+    mri_image: Optional[MagneticResonanceImage] = None,
     rotate_initial_geo: bool = False,
 ) -> BrainGeometry:
     """Build geometry model of brain."""

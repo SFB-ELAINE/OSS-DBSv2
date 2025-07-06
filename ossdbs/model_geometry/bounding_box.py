@@ -1,6 +1,7 @@
 # Copyright 2023, 2024 Johannes Reding, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from typing import List, Tuple
 
 import numpy as np
 
@@ -22,7 +23,7 @@ class BoundingBox:
         self.end = end
 
     @property
-    def shape(self) -> tuple[int]:
+    def shape(self) -> Tuple[int]:
         """Return the integer distances between start and end point of
         bounding box.
 
@@ -56,7 +57,7 @@ class BoundingBox:
 
         return BoundingBox(start=(x_s, y_s, z_s), end=(x_e, y_e, z_e))
 
-    def points(self, offset: tuple, voxel_size: tuple) -> list[tuple]:
+    def points(self, offset: tuple, voxel_size: tuple) -> List[tuple]:
         """Generate point coordinates matrix.
 
         Parameters

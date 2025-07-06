@@ -3,6 +3,7 @@
 
 import logging
 import os
+from typing import List
 
 import netgen.meshing
 import netgen.occ
@@ -116,12 +117,12 @@ class Mesh:
         return self._geometry
 
     @property
-    def boundaries(self) -> list:
+    def boundaries(self) -> List:
         """Get list of boundary names."""
         return self.ngsolvemesh.GetBoundaries()
 
     @property
-    def materials(self) -> list:
+    def materials(self) -> List:
         """Get list of material names."""
         return self.ngsolvemesh.GetMaterials()
 
@@ -228,11 +229,11 @@ class Mesh:
         grid_function.Set(cf)
         flags = grid_function.vec.FV().NumPy()
 
-        for element, flag in zip(self._mesh.Elements(ngsolve.VOL), flags, strict=False):
+        for element, flag in zip(self._mesh.Elements(ngsolve.VOL), flags):
             self._mesh.SetRefinementFlag(ei=element, refine=flag)
         self.refine()
 
-    def refine_at_materials(self, materials: list[str]) -> None:
+    def refine_at_materials(self, materials: List[str]) -> None:
         """Refine the mesh by the boundaries.
 
         Parameters
@@ -260,7 +261,7 @@ class Mesh:
             self._mesh.SetRefinementFlag(ei=element, refine=to_refine)
         self.refine(at_surface=True)
 
-    def refine_by_error_cf(self, error_cf: ngsolve.GridFunction) -> list:
+    def refine_by_error_cf(self, error_cf: ngsolve.GridFunction) -> List:
         """Refine the mesh by the error at each mesh element.
 
         Parameters
@@ -278,7 +279,7 @@ class Mesh:
         )
         self.refine()
 
-    def refine_by_material_cf(self, material_cf: ngsolve.GridFunction) -> list:
+    def refine_by_material_cf(self, material_cf: ngsolve.GridFunction) -> List:
         """Refine the mesh by checking the material cf.
         Each element-wise integral divided by area should yield an integer value.
         If not, it needs to be refined.

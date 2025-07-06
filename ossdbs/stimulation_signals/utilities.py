@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
+from typing import List, Tuple, Union
 
 import numpy as np
 from scipy.fft import ifft
@@ -26,7 +27,7 @@ def get_timesteps(
 
 def retrieve_time_domain_signal_from_fft(
     fft_signal: np.ndarray, cutoff_frequency: float, base_frequency: float
-) -> tuple[np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Compute time-domain signal via fft."""
     # double the cutoff_frequency to actually sample until there
     signal = ifft(fft_signal).real
@@ -86,7 +87,7 @@ def get_maximum_octave_band_index(freq_idx: int) -> int:
 
 def get_indices_in_octave_band(
     freq_idx: int, frequency_indices: list, cutoff_frequency_index: int
-) -> list | np.ndarray:
+) -> Union[List, np.ndarray]:
     """Get indices of frequencies in octave band.
 
     Notes

@@ -3,6 +3,7 @@
 
 import logging
 from dataclasses import dataclass
+from typing import List
 
 _logger = logging.getLogger(__name__)
 
@@ -75,7 +76,7 @@ class Contacts:
     detect active, floating and unused contacts.
     """
 
-    def __init__(self, contacts: list[Contact]) -> None:
+    def __init__(self, contacts: List[Contact]) -> None:
         for contact in contacts:
             check_contact(contact)
         self._all_contacts = contacts
@@ -105,7 +106,7 @@ class Contacts:
             self._unused.append(contact)
 
     @property
-    def active(self) -> list[Contact]:
+    def active(self) -> List[Contact]:
         """List of all active contacts.
 
         Returns
@@ -115,7 +116,7 @@ class Contacts:
         return self._active
 
     @property
-    def floating(self) -> list[Contact]:
+    def floating(self) -> List[Contact]:
         """List of all floating contacts.
 
         Returns
@@ -125,7 +126,7 @@ class Contacts:
         return self._floating
 
     @property
-    def unused(self) -> list[Contact]:
+    def unused(self) -> List[Contact]:
         """List of all unused (i.e. not active and not floating) contacts.
 
         Returns

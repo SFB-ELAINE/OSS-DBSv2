@@ -7,6 +7,7 @@ import subprocess
 import sys
 from abc import ABC, abstractmethod
 from importlib.resources import files
+from typing import Optional
 
 import h5py
 import neuron
@@ -45,7 +46,7 @@ class NeuronSimulator(ABC):
         self,
         pathways_dict: dict,
         output_path: str,
-        scaling_vector: list | None = None,
+        scaling_vector: Optional[list] = None,
     ):
         self._neuron_executable = "nrnivmodl"
         # executable named different on Windows
@@ -269,7 +270,9 @@ class NeuronSimulator(ABC):
                                 + neuron_time_sol * scaling_vector[solution_i]
                             )
 
-    def process_pathways(self, scaling: float = 1.0, scaling_index: int | None = None):
+    def process_pathways(
+        self, scaling: float = 1.0, scaling_index: Optional[int] = None
+    ):
         """Go through all pathways and compute the activation.
 
         Parameters

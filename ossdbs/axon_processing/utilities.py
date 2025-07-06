@@ -4,6 +4,7 @@
 import json
 import logging
 import os
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -97,8 +98,8 @@ def create_leaddbs_outputs(
     output_path: str,
     Axon_Lead_DBS: np.ndarray,
     connectome_name: str,
-    scaling_index: int | None = None,
-    pathway_name: str | None = None,
+    scaling_index: Optional[int] = None,
+    pathway_name: Optional[str] = None,
 ):
     """Export axons with activation state in Lead-DBS supported format.
 
@@ -142,8 +143,8 @@ def create_leaddbs_outputs(
 def create_paraview_outputs(
     output_path: str,
     Axon_Lead_DBS: np.ndarray,
-    scaling_index: int | None = None,
-    pathway_name: str | None = None,
+    scaling_index: Optional[int] = None,
+    pathway_name: Optional[str] = None,
 ):
     """Export axons with activation state in Paraview supported format.
 
@@ -201,8 +202,8 @@ def store_axon_statuses(
     percent_activated: float,
     percent_damaged: float,
     percent_csf: float,
-    scaling_index: int | None = None,
-    pathway_name: bool | None = None,
+    scaling_index: Optional[int] = None,
+    pathway_name: Optional[bool] = None,
 ):
     """Store PAM results.
 
@@ -338,7 +339,7 @@ def index_for_length(xyz, req_length, along=True):
     return idx, cummulated_lengths[idx]
 
 
-def resample_fibers_to_Ranviers(streamlines: list, node_step: int, n_Ranvier: int):
+def resample_fibers_to_Ranviers(streamlines: List, node_step: int, n_Ranvier: int):
     """Get streamlines resampled by nodes of Ranvier for a specific axonal morphology.
 
     Parameters
@@ -389,7 +390,7 @@ def normalized(vector: np.ndarray, axis: int = -1, order: int = 2):
 
 # ruff: noqa: C901
 def place_axons_on_streamlines(
-    streamlines_resampled: list, n_Ranvier: int, centering_coordinates: list
+    streamlines_resampled: List, n_Ranvier: int, centering_coordinates: List
 ):
     """Allocate axons on streamlines at seeding points given by centering_coordinates.
 

@@ -1,4 +1,4 @@
-from typing import ClassVar
+from typing import ClassVar, Dict, List, Tuple
 
 import numpy as np
 import pytest
@@ -10,12 +10,12 @@ import ossdbs
 class TestBrainGeometry:
     """Class for testing brain geometry."""
 
-    region_parameters: ClassVar[dict[str, dict[str, float]]] = {
+    region_parameters: ClassVar[Dict[str, Dict[str, float]]] = {
         "Center": {"x[mm]": 0.0, "y[mm]": 0.0, "z[mm]": 0.0},
         "Dimension": {"x[mm]": 10.0, "y[mm]": 20.0, "z[mm]": 30.0},
     }
 
-    TESTDATA: ClassVar[list[tuple[dict[str, dict[str, float]], str]]] = [
+    TESTDATA: ClassVar[List[Tuple[Dict[str, Dict[str, float]], str]]] = [
         # region_parameters, shape
         (region_parameters, "Box"),
         (region_parameters, "Sphere"),
