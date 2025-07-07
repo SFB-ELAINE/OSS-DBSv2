@@ -661,7 +661,7 @@ class PointModel(ABC):
     def export_point_model_information(self, filename: str) -> None:
         """Export all relevant information about the model to JSON."""
         raise NotImplementedError(
-            "Point model information export " "has not yet been implemented."
+            "Point model information export has not yet been implemented."
         )
 
     def write_netgen_meshsize_file(self, meshsize: float, filename: str) -> None:
