@@ -3,7 +3,7 @@
 
 import json
 import logging
-from typing import Optional, Tuple
+from typing import Optional
 
 import nibabel as nib
 import numpy as np
@@ -107,7 +107,7 @@ class Lattice(PointModel):
 
         return np.dot(r_z, np.dot(r_x, point))
 
-    def _rotation_angles_xz(self) -> Tuple[float]:
+    def _rotation_angles_xz(self) -> tuple[float]:
         x_d, y_d, z_d = self._direction
 
         if not x_d and not y_d:

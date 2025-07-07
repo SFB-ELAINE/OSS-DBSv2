@@ -516,9 +516,9 @@ class AxonModels:
             raise ValueError("hemis_idx has to be either 0 or 1")
 
         if hemis_idx == 0:
-            self.oss_sim_folder = 'OSS_sim_files_rh'
+            self.oss_sim_folder = "OSS_sim_files_rh"
         else:
-            self.oss_sim_folder = 'OSS_sim_files_lh'
+            self.oss_sim_folder = "OSS_sim_files_lh"
 
         # defaults, they will be overwritten
         # TODO wrap them in @property ?
@@ -669,7 +669,11 @@ class AxonModels:
         if stimSets:
             _logger.info("Use stimSets")
             stim_protocols = np.genfromtxt(
-                os.path.join(self.stim_dir, self.oss_sim_folder, f"Current_protocols_{hemis_idx}.csv"),
+                os.path.join(
+                    self.stim_dir,
+                    self.oss_sim_folder,
+                    f"Current_protocols_{hemis_idx}.csv",
+                ),
                 dtype=float,
                 delimiter=",",
                 names=True,
@@ -697,7 +701,9 @@ class AxonModels:
                 self.centering_coordinates.append(b[:, i])
 
         # hardcoded name for axons pre-filtered by Lead-DBS
-        self.combined_h5_file = os.path.join(self.stim_dir, self.oss_sim_folder, "Allocated_axons.h5")
+        self.combined_h5_file = os.path.join(
+            self.stim_dir, self.oss_sim_folder, "Allocated_axons.h5"
+        )
         self.output_directory = os.path.dirname(self.combined_h5_file)
 
         # morphology set in Lead-DBS
@@ -1010,9 +1016,9 @@ class AxonModels:
             # last node of Ranvier
             axon_array[-1, :, inx_axn] = streamlines_axons[inx_axn][-1]
 
-            axon_array_2D[
-                glob_ind : glob_ind + axon_morphology.n_segments, :3
-            ] = axon_array[:, :, inx_axn]
+            axon_array_2D[glob_ind : glob_ind + axon_morphology.n_segments, :3] = (
+                axon_array[:, :, inx_axn]
+            )
             axon_array_2D[glob_ind : glob_ind + axon_morphology.n_segments, 3] = (
                 inx_axn + 1
             )  # because in Matlab they start from 1

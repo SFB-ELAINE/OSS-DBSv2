@@ -7,7 +7,7 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import ngsolve
 import numpy as np
@@ -121,7 +121,7 @@ class VolumeConductor(ABC):
         frequency_domain_signal: FrequencyDomainSignal,
         compute_impedance: bool = False,
         export_vtk: bool = False,
-        point_models: Optional[List[PointModel]] = None,
+        point_models: Optional[list[PointModel]] = None,
         activation_threshold: Optional[float] = None,
         out_of_core: bool = False,
         export_frequency: Optional[float] = None,
@@ -137,8 +137,8 @@ class VolumeConductor(ABC):
             If True, the impedance will be computed at each frequency.
         export_vtk: bool
             VTK export for visualization in ParaView
-        point_models: List[PointModel]
-            List of PointModel to extract solution for VTA / PAM
+        point_models: list[PointModel]
+            list of PointModel to extract solution for VTA / PAM
         activation_threshold: float
             If VTA is estimated by threshold, provide it here.
             Its unit must be V/m!
@@ -799,13 +799,13 @@ class VolumeConductor(ABC):
             floating_voltages[contact.name] = contact.voltage
         return floating_voltages
 
-    def h1_space(self, boundaries: List[str], is_complex: bool) -> ngsolve.H1:
+    def h1_space(self, boundaries: list[str], is_complex: bool) -> ngsolve.H1:
         """Return a h1 space on the mesh.
 
         Parameters
         ----------
         boundaries : list of str
-            List of boundary names.
+            list of boundary names.
         is_complex: bool
             Whether to use complex arithmetic
 
@@ -913,7 +913,7 @@ class VolumeConductor(ABC):
                     )
 
     def setup_timings_dict(
-        self, export_vtk: bool, point_models: List[PointModel]
+        self, export_vtk: bool, point_models: list[PointModel]
     ) -> dict:
         """Setup dictionary to save execution times estimate."""
         timings = {}
@@ -927,7 +927,7 @@ class VolumeConductor(ABC):
         return timings
 
     def _store_solution_at_contacts(
-        self, band_indices: Union[List, np.ndarray]
+        self, band_indices: Union[list, np.ndarray]
     ) -> None:
         """Save voltages / currents at given frequency band for all contacts."""
         if self.current_controlled:
@@ -960,7 +960,7 @@ class VolumeConductor(ABC):
 
     def _copy_frequency_domain_solution(
         self,
-        band_indices: Union[List, np.ndarray],
+        band_indices: Union[list, np.ndarray],
         point_model: PointModel,
         potentials: np.ndarray,
         fields: np.ndarray,
@@ -1037,7 +1037,7 @@ class VolumeConductor(ABC):
 
     def _frequency_domain_exports(
         self,
-        point_models: List,
+        point_models: list,
         export_frequency_index: int,
         activation_threshold: float,
     ):
@@ -1065,7 +1065,7 @@ class VolumeConductor(ABC):
                 _logger.info(f"VTA volume is: {point_model.VTA_volume:.3f}")
 
     def _process_frequency_domain_solution(
-        self, band_indices: Union[List, np.ndarray], point_models: PointModel
+        self, band_indices: Union[list, np.ndarray], point_models: PointModel
     ):
         """Copy results to points."""
         for point_model in point_models:

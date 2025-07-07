@@ -1,3 +1,5 @@
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/SFB-ELAINE/OSS-DBSv2/main.svg)](https://results.pre-commit.ci/latest/github/SFB-ELAINE/OSS-DBSv2/main)
+
 OSS-DBSv2
 =========
 

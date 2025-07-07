@@ -4,7 +4,7 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional
 
 import h5py
 import numpy as np
@@ -51,13 +51,13 @@ class Pathway(PointModel):
         name: str
             Name of neuronal population, e.g. a pathway.
 
-        axons: List["Pathway.Axon"]
+        axons: list["Pathway.Axon"]
             List that contains all axons within one population.
 
         """
 
         name: str
-        axons: List["Pathway.Axon"]
+        axons: list["Pathway.Axon"]
 
     def __init__(self, input_path: str, export_field: bool = False) -> None:
         # identifiers
