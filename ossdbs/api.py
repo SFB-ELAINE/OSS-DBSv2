@@ -159,8 +159,7 @@ def generate_model_geometry(settings):
         model_geometry = ModelGeometry(brain, electrodes)
     except RuntimeError:
         _logger.warning(
-            "Could not build geometry, trying again after "
-            "rotation of initial geometry"
+            "Could not build geometry, trying again after rotation of initial geometry"
         )
         brain = generate_brain_model(settings, rotate_initial_geo=True)
         model_geometry = ModelGeometry(brain, electrodes)
@@ -530,7 +529,7 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             _logger.info(f"Will skip ground contact {contact.name}")
     if ground_contact is None:
         raise ValueError(
-            "No ground contact set. " "Choose one active contact with current -1."
+            "No ground contact set. Choose one active contact with current -1."
         )
     for contact in geometry.contacts:
         if contact.name == ground_contact:

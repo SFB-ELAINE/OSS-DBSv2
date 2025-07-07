@@ -229,13 +229,11 @@ class VolumeConductor(ABC):
             )
 
         _logger.info(
-            "Number of elements before material refinement:"
-            f"{self.mesh.ngsolvemesh.ne}"
+            f"Number of elements before material refinement:{self.mesh.ngsolvemesh.ne}"
         )
         self.refine_mesh_by_material(material_mesh_refinement_steps)
         _logger.info(
-            "Number of elements after material refinement:"
-            f"{self.mesh.ngsolvemesh.ne}"
+            f"Number of elements after material refinement:{self.mesh.ngsolvemesh.ne}"
         )
 
         for computing_idx, freq_idx in enumerate(frequency_indices):
