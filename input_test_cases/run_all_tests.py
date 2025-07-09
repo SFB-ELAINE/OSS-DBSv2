@@ -339,9 +339,9 @@ def check_tests(df: pd.DataFrame) -> bool:
     # Print a concise summary table at the end
     summary_cols = ["input_file", "impedance_test", "VTA_test"]
     summary = df[summary_cols] if all(col in df.columns for col in summary_cols) else df
-    logging.info("\n" + "="*60)
+    logging.info("\n" + "=" * 60)
     logging.info("Test Summary:")
-    logging.info("\n" + summary.to_string(index=False) + "\n" + "="*60)
+    logging.info("\n" + summary.to_string(index=False) + "\n" + "=" * 60)
 
     # Log failed tests only once
     failed = df[(df["impedance_test"] == "Failed") | (df["VTA_test"] == "Failed")]
