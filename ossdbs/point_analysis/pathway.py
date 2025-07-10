@@ -217,6 +217,8 @@ class Pathway(PointModel):
             for population in self._populations
             for axon in sorted(population.axons, key=lambda x: int(x.name[4:]))
         )
+
+        # Create an array of NaNs to filter the axons outside the domain
         all_points = np.full((total_points, 3), np.nan)
 
         point_idx = 0
@@ -252,7 +254,10 @@ class Pathway(PointModel):
         filtered_points = all_points[~np.isnan(all_points).any(axis=1)]
 
         if np.isnan(filtered_points).any():
-            raise RuntimeError("NaN entries remain in filtered_points after filtering.")
+            raise RuntimeError(
+                "NaN entries remain in filtered_points after filtering indicating a "
+                "possible NumPy or logic bug."
+            )
 
         if filtered_points.shape[0] == 0:
             raise ValueError("No points inside the computational domain.")
