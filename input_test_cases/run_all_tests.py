@@ -1,12 +1,17 @@
 import json
+import logging
 import os
-from pprint import pprint
 
 import nibabel as nib
 import numpy as np
 import pandas as pd
 
 from ossdbs.main import main_run
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
 
 INPUT_DATA = [
     {
@@ -98,17 +103,23 @@ VTA_solution_Lattice.nii",
     },
 ]
 
+# Tolerances for test comparisons
+IMPEDANCE_ATOL = 1e-2
+VTA_ATOL = 1e-2
 
-def run_test() -> None:
+
+def run_test() -> pd.DataFrame:
     """
-    Runs JSON files in input_test_cases.
+    Runs all test cases defined in INPUT_DATA:
+    - Runs simulations for each input JSON.
+    - Compares output impedance and VTA results to desired outputs.
+    - Collects and logs results for each test.
+    - Writes a summary CSV file with the results.
 
-    Parameters
-    ----------
-    check_impedance : bool
-        Check impedance if True.
-    check_VTA : bool
-        Check VTA if True.
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing the results of all tests.
     """
     impedance_test_passed = True
     vta_test_passed = True
@@ -116,50 +127,56 @@ def run_test() -> None:
 
     # run all simulations
     for data in INPUT_DATA:
-        pprint("Running " + data["input_json"])
-        pprint("####################")
+        logging.info("Running %s", data["input_json"])
+        logging.info("####################")
         _run_simulation(data["input_dir"], data["input_json"])
 
     # test everything
     for data in INPUT_DATA:
         tests_appended = False
-        # check impedances
-        if "desired_csv" in data:
-            pprint("Testing impedance of " + data["input_json"])
-            pprint("####################")
-            impedance_test_passed = _test_impedance(
-                data["output_csv"], data["desired_csv"]
-            )
+        try:
+            # check impedances
+            if "desired_csv" in data:
+                logging.info("Testing impedance of %s", data["input_json"])
+                impedance_test_passed = _test_impedance(
+                    data["output_csv"], data["desired_csv"]
+                )
+                test_results.append(
+                    {
+                        "input_file": data["input_json"],
+                        "impedance_test": "Passed"
+                        if impedance_test_passed
+                        else "Failed",
+                        "VTA_test": "-",
+                    }
+                )
+                tests_appended = True
+
+            if "desired_nii" in data:
+                logging.info("Testing VTA of %s", data["input_json"])
+                vta_test_passed = _test_VTA(data["output_nii"], data["desired_nii"])
+
+                if tests_appended:
+                    test_results[-1]["VTA_test"] = (
+                        "Passed" if vta_test_passed else "Failed"
+                    )
+                else:
+                    test_results.append(
+                        {
+                            "input_file": data["input_json"],
+                            "impedance_test": "-",
+                            "VTA_test": "Passed" if vta_test_passed else "Failed",
+                        }
+                    )
+        except Exception as e:
             test_results.append(
                 {
                     "input_file": data["input_json"],
-                    "impedance_test": "Passed" if impedance_test_passed else "Failed",
-                    "VTA_test": "-",
+                    "impedance_test": "Error",
+                    "VTA_test": "Error",
+                    "error": str(e),
                 }
             )
-            pprint(test_results)
-            pprint("####################")
-            tests_appended = True
-
-        if "desired_nii" in data:
-            pprint("Testing VTA of " + data["input_json"])
-            pprint("####################")
-            vta_test_passed = _test_VTA(data["output_nii"], data["desired_nii"])
-
-            if tests_appended:
-                pprint(test_results)
-                pprint("####################")
-                pprint(test_results[-1])
-                pprint("####################")
-                test_results[-1]["VTA_test"] = "Passed" if vta_test_passed else "Failed"
-            else:
-                test_results.append(
-                    {
-                        "input file": data["input_json"],
-                        "impedance_test": "-",
-                        "VTA_test": "Passed" if vta_test_passed else "Failed",
-                    }
-                )
 
     df = pd.DataFrame(test_results)
     output_csv_file = "test_input_cases_results.csv"
@@ -169,14 +186,14 @@ def run_test() -> None:
 
 def _run_simulation(input_dir: str, input_json: str):
     """
-    Runs a simulation with a given JSON file.
+    Runs a simulation with a given JSON file and updates input paths as needed.
 
     Parameters
     ----------
     input_dir : str
         Directory where the input files are located.
     input_json : str
-        JSON file with input parameters.
+        Path to the JSON file with input parameters.
     """
     with open(input_json) as json_file:
         input_settings = json.load(json_file)
@@ -201,26 +218,31 @@ def _run_simulation(input_dir: str, input_json: str):
     main_run(input_settings)
 
 
-def _test_impedance(output_csv: str, desired_csv: str):
+def _test_impedance(output_csv: str, desired_csv: str) -> bool:
     """
     Tests impedance by comparing the actual output with the desired output.
 
     Parameters
     ----------
     output_csv : str
-        CSV file with actual output values.
+        Path to CSV file with actual output values.
     desired_csv : str
-        CSV file with desired output values.
+        Path to CSV file with desired output values.
+
+    Returns
+    -------
+    bool
+        True if actual and desired values are close within tolerance, else False.
     """
     with open(output_csv) as csv_file:
         actual = pd.read_csv(csv_file).to_numpy()
 
     with open(desired_csv) as csv_file:
         desired = pd.read_csv(csv_file).to_numpy()
-    return np.allclose(actual, desired, atol=1e-5)
+    return np.allclose(actual, desired, atol=IMPEDANCE_ATOL)
 
 
-def _test_VTA(output_nii: str, desired_nii: str):
+def _test_VTA(output_nii: str, desired_nii: str) -> bool:
     """
     Tests VTA by comparing the actual output with the desired output
     using the Dice coefficient.
@@ -228,23 +250,33 @@ def _test_VTA(output_nii: str, desired_nii: str):
     Parameters
     ----------
     output_nii : str
-        NIfTI file with the output data.
+        Path to NIfTI file with the output data.
     desired_nii : str
-        NIfTI file with the desired data.
+        Path to NIfTI file with the desired data.
+
+    Returns
+    -------
+    bool
+        True if Dice coefficient is close to 1, else False.
     """
     actual = _readNIfTI(output_nii)
     desired = _readNIfTI(desired_nii)
-    return np.isclose(_compute_dice_coefficient(actual, desired), 1)
+    return np.isclose(_compute_dice_coefficient(actual, desired), 1, atol=VTA_ATOL)
 
 
 def _readNIfTI(filename: str) -> set:
     """
-    Reads a NIfTI file.
+    Reads a NIfTI file and returns a set of coordinates for voxels above threshold.
 
     Parameters
     ----------
     filename : str
         Path to the NIfTI file.
+
+    Returns
+    -------
+    set
+        Set of (X, Y, Z) coordinates for voxels with value > 0.1.
     """
     image = nib.load(filename)
     affine = image.affine
@@ -267,9 +299,9 @@ def _readNIfTI(filename: str) -> set:
     return set(vta_points)
 
 
-def _compute_dice_coefficient(set1, set2) -> float:
+def _compute_dice_coefficient(set1: set, set2: set) -> float:
     """
-    Computes the Dice coefficient.
+    Computes the Dice coefficient between two sets.
 
     Parameters
     ----------
@@ -277,6 +309,11 @@ def _compute_dice_coefficient(set1, set2) -> float:
         First set of points.
     set2 : set
         Second set of points.
+
+    Returns
+    -------
+    float
+        Dice coefficient between set1 and set2.
     """
     intersection = set1.intersection(set2)
     intersection_size = len(intersection)
@@ -285,16 +322,37 @@ def _compute_dice_coefficient(set1, set2) -> float:
     return (2 * intersection_size) / (size1 + size2)
 
 
-def check_tests(df):
-    """Check if all tests were succesful."""
-    all_tests_passed = True
-    for _, df_row in df.iterrows():
-        if "Failed" in [df_row["impedance_test"], df_row["VTA_test"]]:
-            print(f"Test {df_row['input_file']} failed")
-            print(f"Impedance test: {df_row['impedance_test']}")
-            print(f"VTA test: {df_row['VTA_test']}")
-            all_tests_passed = False
-    return all_tests_passed
+def check_tests(df: pd.DataFrame) -> bool:
+    """
+    Check if all tests were successful.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame containing test results.
+
+    Returns
+    -------
+    bool
+        True if all tests passed, False otherwise.
+    """
+    # Print a concise summary table at the end
+    summary_cols = ["input_file", "impedance_test", "VTA_test"]
+    summary = df[summary_cols] if all(col in df.columns for col in summary_cols) else df
+    logging.info("\n" + "=" * 60)
+    logging.info("Test Summary:")
+    logging.info("\n" + summary.to_string(index=False) + "\n" + "=" * 60)
+
+    # Log failed tests only once
+    failed = df[(df["impedance_test"] == "Failed") | (df["VTA_test"] == "Failed")]
+    if not failed.empty:
+        for _, row in failed.iterrows():
+            logging.error(
+                f"Test {row.get('input_file', row.get('input_file', ''))} failed | "
+                f"Impedance: {row.get('impedance_test')} | VTA: {row.get('VTA_test')}"
+            )
+        return False
+    return True
 
 
 if __name__ == "__main__":

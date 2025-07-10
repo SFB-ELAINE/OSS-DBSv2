@@ -64,7 +64,11 @@ class TestPointAnalysis:
             header = mri_image.header
             voxel_shape_par = settings["PointModel"]["VoxelLattice"]["Shape"]
             voxel_shape = np.array(
-                [voxel_shape_par["x"], voxel_shape_par["y"], voxel_shape_par["z"]]
+                [
+                    voxel_shape_par["x"] + 1,
+                    voxel_shape_par["y"] + 1,
+                    voxel_shape_par["z"] + 1,
+                ]
             )
 
             voxelLattice = VoxelLattice(center, affine, voxel_shape, header)

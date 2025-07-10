@@ -5,7 +5,7 @@ import json
 import logging
 from typing import Optional
 
-import nibabel as nib
+import nibabel
 import numpy as np
 
 from .point_model import PointModel
@@ -20,13 +20,10 @@ class Lattice(PointModel):
     ----------
     shape : tuple
         Number of points in each direction (x, y, z).
-
     center : tuple
         Center position of cuboid matrix.
-
     distance : float
         Distance between adjacent points.
-
     direction : tuple
         Orientation of cuboid in 3d space.
     """
@@ -38,7 +35,7 @@ class Lattice(PointModel):
         distance: float,
         direction: tuple,
         collapse_vta: bool = False,
-        export_field: bool = False,
+        export_field: bool = True,
     ) -> None:
         if distance < 0:
             raise ValueError("The spacing between points must be positive.")
@@ -46,7 +43,7 @@ class Lattice(PointModel):
             raise ValueError("Pass a 3-valued tuple as the lattice shape.")
         self._distance = distance
         self._shape = shape
-        self.collapse_VTA = collapse_vta
+        self._collapse_VTA = collapse_vta
         self._export_field = export_field
         self._center = center
         norm = np.linalg.norm(direction)
@@ -59,7 +56,7 @@ class Lattice(PointModel):
         self._name = "Lattice"
 
         # never compute time-domain signal
-        self.time_domain_conversion = False
+        self._time_domain_conversion = False
 
         # VTA volume
         self._vta_volume = None
@@ -120,7 +117,11 @@ class Lattice(PointModel):
         return -np.arctan(y_d / x_d), -np.arctan(z_d / y_d)
 
     def save_as_nifti(
-        self, scalar_field, filename, binarize=False, activation_threshold=None
+        self,
+        scalar_field: np.ndarray,
+        filename: str,
+        binarize: bool = False,
+        activation_threshold: Optional[float] = None,
     ):
         """Save scalar field in abstract orthogonal space in nifti format.
 
@@ -160,8 +161,7 @@ class Lattice(PointModel):
         affine[1, 1] = self._distance
         affine[2, 2] = self._distance
 
-        img = nib.Nifti1Image(nifti_output, affine)
-        nib.save(img, filename)
+        nibabel.save(nibabel.Nifti1Image(nifti_output, affine), filename)
 
     def export_point_model_information(self, filename: str) -> None:
         """Export all relevant information about the model to JSON."""
