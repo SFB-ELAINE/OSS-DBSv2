@@ -21,8 +21,6 @@ _logger = logging.getLogger(__name__)
 class ConductivityCF:
     """Conductivity wrapper."""
 
-    _WM_MASKING = True  # Class variable to control masking behavior
-
     def __init__(
         self,
         mri_image: MagneticResonanceImage,
@@ -32,6 +30,7 @@ class ConductivityCF:
         encapsulation_layers: Optional[dict] = None,
         complex_data: bool = False,
         dti_image: DiffusionTensorImage = None,
+        wm_masking: bool = True,
     ) -> None:
         """Convert MRI conductivity distribution to NGSolve.
 
@@ -51,12 +50,15 @@ class ConductivityCF:
             a dictionary containing the materials of the encapsulation layer
         complex_data: bool
             if complex arithmetic is required
+        wm_masking: bool
+            if True, use DTI tensor only in white matter, identity elsewhere.
         """
         if encapsulation_layers is None:
             encapsulation_layers = []
         self._dielectric_properties = dielectric_properties
         self._encapsulation_layers = encapsulation_layers
         self._is_complex = complex_data
+        self._WM_MASKING = wm_masking
 
         _logger.debug("Crop MRI image")
         brain_bounding_box_voxel = mri_image.get_voxel_bounding_box(brain_bounding_box)
@@ -220,12 +222,13 @@ class ConductivityCF:
 
         # If debug flag is set, use DTI tensor everywhere
         if not self._WM_MASKING:
-            _logger.debug("_WM_MASKING is False: using DTI tensor everywhere")
+            _logger.info("White matter mask for DTI is False: using tensor everywhere")
             return self._dti_voxel_cf * ngsolve.VoxelCoefficient(
                 start, end, self._data, False, trafocf=self._trafo_cf
             )
 
         # Otherwise, use DTI tensor only in white matter
+        _logger.info("White matter masking is enabled, applying mask")
         white_idx = self.materials["White matter"]
         white_mask = self._material_distribution == white_idx
         _logger.debug("White matter mask sum: %d", np.sum(white_mask))
