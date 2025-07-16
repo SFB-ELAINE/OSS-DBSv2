@@ -27,7 +27,7 @@ class ConductivityCF:
         brain_bounding_box: BoundingBox,
         dielectric_properties: dict,
         materials: dict,
-        encapsulation_layers: Optional[dict] = None,
+        encapsulation_layers: Optional[list] = None,
         complex_data: bool = False,
         dti_image: DiffusionTensorImage = None,
         wm_masking: bool = True,
@@ -46,8 +46,8 @@ class ConductivityCF:
             mapping of materials to integers in MRI
         dielectric_properties: dict
             dictionary with dielectric properties of each material
-        encapsulation_layers: dict
-            a dictionary containing the materials of the encapsulation layer
+        encapsulation_layers: list
+            a list containing the encapsulation layer objects
         complex_data: bool
             if complex arithmetic is required
         wm_masking: bool
@@ -220,7 +220,7 @@ class ConductivityCF:
                 start, end, self._data, False, trafocf=self._trafo_cf
             )
 
-        # If debug flag is set, use DTI tensor everywhere
+        # If no WM masking is set, use DTI tensor everywhere
         if not self._WM_MASKING:
             _logger.info("White matter mask for DTI is False: using tensor everywhere")
             return self._dti_voxel_cf * ngsolve.VoxelCoefficient(
