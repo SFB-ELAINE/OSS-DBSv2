@@ -37,6 +37,7 @@ class TypeChecker:
             "MRIPath": str,
             "DiffusionTensorActive": bool,
             "DTIPath": str,
+            "WMMasking": bool,
         },
         "Mesh": {
             "LoadMesh": bool,
