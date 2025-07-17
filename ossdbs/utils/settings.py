@@ -55,6 +55,7 @@ class Settings:
             "MRIMapping": MATERIALS,
             "DiffusionTensorActive": False,
             "DTIPath": "",
+            "WMMasking": True,
         },
         "DielectricModel": {"Type": "ColeCole4", "CustomParameters": None},
         "Mesh": {
