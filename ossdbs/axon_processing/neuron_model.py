@@ -243,32 +243,48 @@ class NeuronSimulator(ABC):
         pathways = list(self._td_unit_solutions[0].keys())
         pathways.remove("TimeSteps[s]")
 
-        for solution_i in range(len(self._td_unit_solutions)):
-            for pathway_idx, pathway_name in enumerate(pathways):
-                pathway_dataset = self._td_unit_solutions[solution_i][pathway_name]
-                # pathway_super_dataset = self._td_solution[solution_i][pathway_name]
-                N_neurons = self.get_N_seeded_neurons(pathway_idx)
-                for neuron_index in range(N_neurons):
-                    if pathway_dataset["Status"][neuron_index] == 0:
-                        # other statuses are the same across solutions
+        for pathway_idx, pathway_name in enumerate(pathways):
+            N_neurons = self.get_N_seeded_neurons(pathway_idx)
 
-                        neuron = pathway_dataset["axon" + str(neuron_index)]
-                        neuron_time_sol = np.array(neuron["Potential[V]"])
+            # Store Status once, assuming it's consistent
+            status_dataset_first_solution = self._td_unit_solutions[0][pathway_name][
+                "Status"
+            ]
 
-                        # scale and superimpose
-                        if solution_i == 0:
-                            self._td_solution[pathway_name]["axon" + str(neuron_index)][
-                                "Potential[V]"
-                            ][...] = neuron_time_sol * scaling_vector[solution_i]
-                        else:
-                            self._td_solution[pathway_name]["axon" + str(neuron_index)][
-                                "Potential[V]"
-                            ][...] = (
-                                self._td_solution[pathway_name][
-                                    "axon" + str(neuron_index)
-                                ]["Potential[V]"][...]
-                                + neuron_time_sol * scaling_vector[solution_i]
-                            )
+            for neuron_index in range(N_neurons):
+                if status_dataset_first_solution[neuron_index] == 0:
+                    neuron_name = "axon" + str(neuron_index)
+
+                    # Read all neuron potentials for this axon across all solutions into a list of arrays
+                    neuron_potentials_all_solutions = []
+                    for solution_i in range(len(self._td_unit_solutions)):
+                        pathway_dataset = self._td_unit_solutions[solution_i][
+                            pathway_name
+                        ]
+                        neuron = pathway_dataset[neuron_name]
+                        neuron_potentials_all_solutions.append(
+                            np.array(neuron["Potential[V]"])
+                        )
+
+                    all_potentials_stacked = np.stack(
+                        neuron_potentials_all_solutions, axis=0
+                    )
+
+                    scaling_vector_np = np.array(scaling_vector)
+
+                    # Perform the vectorized scalar multiplication and sum
+                    # (num_solutions, time_points) * (num_solutions,) -> (num_solutions, time_points)
+                    # The multiplication broadcasts scaling_vector_np along axis=1
+                    scaled_potentials = (
+                        all_potentials_stacked
+                        * scaling_vector_np[:, np.newaxis, np.newaxis]
+                    )
+
+                    # Sum along the solutions axis to get the superimposed result
+
+                    self._td_solution[pathway_name]["axon" + str(neuron_index)][
+                        "Potential[V]"
+                    ][...] = np.sum(scaled_potentials, axis=0)
 
     def process_pathways(
         self, scaling: float = 1.0, scaling_index: Optional[int] = None
