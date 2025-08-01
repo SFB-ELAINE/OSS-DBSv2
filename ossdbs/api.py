@@ -649,7 +649,7 @@ def run_PAM(settings):
                     "oss_time_result_PAM.h5",
                 )
             )
-            
+
         td_unit_solutions = neuron_model.load_unit_solutions(time_domain_solution_files)
 
         # go through stimulation protocols
@@ -660,20 +660,20 @@ def run_PAM(settings):
             # swap NaNs to zero current and convert to A (StimSets in mA)
             scaling_vector = [0 if np.isnan(x) else 1e-3 * x for x in scaling_vector]
 
-            td_solution = neuron_model.superimpose_unit_solutions(td_unit_solutions,scaling_vector)
+            td_solution = neuron_model.superimpose_unit_solutions(
+                td_unit_solutions, scaling_vector
+            )
             # when using optimizer, scaling_index is not used
             if (
                 settings["CurrentVector"] is not None
                 and settings["StimSets"]["StimSetsFile"] is None
             ):
                 neuron_model.process_pathways(
-                    td_solution,
-                    scaling=settings["Scaling"], scaling_index=None
+                    td_solution, scaling=settings["Scaling"], scaling_index=None
                 )
             else:
                 neuron_model.process_pathways(
-                    td_solution,
-                    scaling=settings["Scaling"], scaling_index=protocol_i
+                    td_solution, scaling=settings["Scaling"], scaling_index=protocol_i
                 )
     else:
         td_solution = neuron_model.load_solution(time_domain_solution)

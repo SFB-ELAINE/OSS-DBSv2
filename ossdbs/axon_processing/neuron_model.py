@@ -203,14 +203,14 @@ class NeuronSimulator(ABC):
         ----------
         time_domain_h5_file: str
             Name of file holding time-domain solution
-            
+
         Returns
         -------
         td_solution: h5 dataset
-            Time-domain solution             
+            Time-domain solution
         """
         td_solution = h5py.File(time_domain_h5_file, "r")
-        
+
         return td_solution
 
     def load_unit_solutions(self, time_domain_h5_files: list):
@@ -220,17 +220,17 @@ class NeuronSimulator(ABC):
         ----------
         time_domain_h5_files: list
             names of files holding time-domain solution
-        
+
         Returns
         -------
         td_unit_solutions: list
-            unit time-domain solutions for each contact    
+            unit time-domain solutions for each contact
         """
         td_unit_solutions = []  # list where we store datasets
         for solution_i in range(len(time_domain_h5_files)):
             td_solution = h5py.File(time_domain_h5_files[solution_i], "r")
             td_unit_solutions.append(td_solution)
-            
+
         return td_unit_solutions
 
     def superimpose_unit_solutions(self, td_unit_solutions, scaling_vector: list):
@@ -240,14 +240,14 @@ class NeuronSimulator(ABC):
         Parameters
         ----------
         td_unit_solutions: list
-            unit time-domain solutions for each contact 
+            unit time-domain solutions for each contact
         scaling_vector: list
             current scaling across contacts
-            
+
         Returns
         -------
         td_solution: h5 dataset
-            Superimposed and scaled time-domain solution            
+            Superimposed and scaled time-domain solution
         """
         # very dumb way to get td_solution initialized
         td_solution = h5py.File(
@@ -263,9 +263,7 @@ class NeuronSimulator(ABC):
             N_neurons = self.get_N_seeded_neurons(pathway_idx)
 
             # Store Status once, assuming it's consistent
-            status_dataset_first_solution = td_unit_solutions[0][pathway_name][
-                "Status"
-            ]
+            status_dataset_first_solution = td_unit_solutions[0][pathway_name]["Status"]
 
             for neuron_index in range(N_neurons):
                 if status_dataset_first_solution[neuron_index] == 0:
@@ -274,9 +272,7 @@ class NeuronSimulator(ABC):
                     # Read all neuron potentials for this axon across all solutions into a list of arrays
                     neuron_potentials_all_solutions = []
                     for solution_i in range(len(td_unit_solutions)):
-                        pathway_dataset = td_unit_solutions[solution_i][
-                            pathway_name
-                        ]
+                        pathway_dataset = td_unit_solutions[solution_i][pathway_name]
                         neuron = pathway_dataset[neuron_name]
                         neuron_potentials_all_solutions.append(
                             np.array(neuron["Potential[V]"])
@@ -301,7 +297,7 @@ class NeuronSimulator(ABC):
                     td_solution[pathway_name]["axon" + str(neuron_index)][
                         "Potential[V]"
                     ][...] = np.sum(scaled_potentials, axis=0)
-                    
+
         return td_solution
 
     def process_pathways(
