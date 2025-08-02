@@ -45,9 +45,9 @@ class TestElectrode:
         "MedtronicSenSightB33005",
         "MedtronicSenSightB33015",
     ]
-    NeuroPace: ClassVar[List[str]] = ["NeuroPaceDL344_3_5", "NeuroPaceDL344_10"]
-    NeuroNexus: ClassVar[List[str]] = ["NeuroNexusA1x16_5mm_50_177"]
-    PINSMedical: ClassVar[List[str]] = [
+    NeuroPace: ClassVar[list[str]] = ["NeuroPaceDL344_3_5", "NeuroPaceDL344_10"]
+    NeuroNexus: ClassVar[list[str]] = ["NeuroNexusA1x16_5mm_50_177"]
+    PINSMedical: ClassVar[list[str]] = [
         "PINSMedicalL301",
         "PINSMedicalL302",
         "PINSMedicalL303",
