@@ -46,6 +46,7 @@ class TestElectrode:
         "MedtronicSenSightB33015",
     ]
     NeuroPace: ClassVar[List[str]] = ["NeuroPaceDL344_3_5", "NeuroPaceDL344_10"]
+    NeuroNexus: ClassVar[List[str]] = ["NeuroNexusA1x16_5mm_50_177"]
     PINSMedical: ClassVar[List[str]] = [
         "PINSMedicalL301",
         "PINSMedicalL302",
@@ -83,9 +84,6 @@ class TestElectrode:
 
         desired = {"RenamedBody", "RenamedContact_1"}
 
-        # if electrode_name == "MicroElectrode":
-        #     desired.add("fillet")
-        # else:
         desired.update({f"Contact_{i+2}" for i in range(n_contacts - 1)})
 
         assert desired == set(faces)
@@ -164,6 +162,33 @@ class TestElectrode:
 
             return body1 + body2 + contact_1 + contact_2
 
+        elif "NeuroNexus" in electrode_name:
+            total_length = electrode._parameters.total_length
+            tip_length = electrode._parameters.tip_length
+            contact_spacing = electrode._parameters.contact_spacing
+            first_contact_position = electrode._parameters.get_center_first_contact()
+            thickness = electrode._parameters.shank_thickness
+            max_width = electrode._parameters.max_width
+            min_width = electrode._parameters.min_width
+            n_contacts = electrode._n_contacts
+            # length of straight part until first contact, where width
+            # is max_width
+            straight_part_length = (
+                total_length - tip_length - (n_contacts - 1) * contact_spacing
+            )
+            shaft_volume = straight_part_length * max_width * thickness
+
+            # surface area until tip, shaped like a trapezoid
+            middle_area = (
+                0.5 * (min_width + max_width) * (n_contacts - 1) * contact_spacing
+            )
+            middle_volume = middle_area * thickness
+
+            # last tip part
+            tip_area = 0.5 * min_width * first_contact_position
+            tip_volume = tip_area * thickness
+            return shaft_volume + middle_volume + tip_volume
+
         else:
             contact_length = electrode._parameters.contact_length
             lead_radius = electrode._parameters.lead_diameter * 0.5
@@ -186,6 +211,7 @@ class TestElectrode:
                     4 / 3 * np.pi * lead_radius**3 * 0.5
                 )
 
+    # ruff: noqa: C901
     def _calculate_contacts_volume(self, electrode, electrode_name):
         if electrode_name == "MicroProbesRodentElectrode":
             contact_radius = electrode._parameters.contact_radius
@@ -255,7 +281,6 @@ class TestElectrode:
                 tip_radius = electrode._parameters.tip_diameter * 0.5
                 filet_val = 0.00114218702387580
                 return (contact_length * tip_radius**2 * np.pi) - filet_val
-
             else:
                 if electrode_name in self.Dixi or electrode_name in self.PMTsEEG2102:
                     C1_height = contact_length - lead_radius

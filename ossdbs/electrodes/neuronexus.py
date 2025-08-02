@@ -65,7 +65,7 @@ class NeuroNexusElectrodeModel(ElectrodeModel):
         if not np.isclose(self._parameters.angle_tip, 30.0):
             raise NotImplementedError("So far, the tip angle is hard-coded")
         if not np.isclose(self._parameters.tip_length, 50.0e-3):
-            raise NotImplementedError("So far, the tip angle is hard-coded")
+            raise NotImplementedError("So far, the tip length is hard-coded")
 
     def _construct_encapsulation_geometry(
         self, thickness: float
@@ -171,5 +171,18 @@ class NeuroNexusElectrodeModel(ElectrodeModel):
         occ_electrode = occ.OCCGeometry(electrode)
         occ_electrode.Heal()
         electrode = occ_electrode.shape
+        # some face names get lost, rename
+        contact_areas = 0
+        for face in electrode.faces:
+            if face.name is None:
+                face.name = "Body"
+            elif "Contact" in face.name:
+                contact_areas += face.mass
+        # check if contact areas are correct
+        if not np.isclose(
+            contact_areas,
+            self._n_contacts * np.pi * (self._parameters.contact_diameter * 0.5) ** 2,
+        ):
+            raise ValueError("NeuroNexus electrodes was not correctly built.")
 
         return electrode.Move(v=self._position)
