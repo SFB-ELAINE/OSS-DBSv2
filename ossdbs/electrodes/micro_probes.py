@@ -69,7 +69,10 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
             elif param_name == "exposed_wire":
                 contact_radius = getattr(self._parameters, "contact_radius", None)
                 if contact_radius is not None and param_value < -contact_radius:
-                    raise ValueError(f"Parameter {param_name} cannot be less than the negative of the contact radius.")
+                    raise ValueError(
+                        f"Parameter {param_name} cannot be less than the negative of "
+                        "the contact radius."
+                    )
 
         # check that electrode is long enough
         if (

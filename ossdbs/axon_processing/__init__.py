@@ -4,7 +4,6 @@ from .axon_models import AxonModels
 from .neuron_model import MRG2002, McNeal1976, NeuronSimulator
 from .utilities import compare_pathways
 
-
 def get_neuron_model(model_type: str, pathways_dict: dict, pathway_solution_dir: str):
     """Turn a string into a NEURON model."""
     if "MRG2002" in model_type:

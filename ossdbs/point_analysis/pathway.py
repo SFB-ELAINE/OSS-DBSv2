@@ -4,7 +4,7 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional
 
 import h5py
 import numpy as np
@@ -51,13 +51,13 @@ class Pathway(PointModel):
         name: str
             Name of neuronal population, e.g. a pathway.
 
-        axons: List["Pathway.Axon"]
+        axons: list["Pathway.Axon"]
             List that contains all axons within one population.
 
         """
 
         name: str
-        axons: List["Pathway.Axon"]
+        axons: list["Pathway.Axon"]
 
     def __init__(self, input_path: str, export_field: bool = False) -> None:
         # identifiers
@@ -99,10 +99,10 @@ class Pathway(PointModel):
         group: str
             Name of the group, which contains the axons.
 
-        Retruns
+        Returns
         -------
         axons: list
-            Retruns list of all axons within one group.
+            Returns list of all axons within one group.
         """
         return [
             self.Axon(sub_group, np.array(file[group][sub_group]), 0)
@@ -193,61 +193,79 @@ class Pathway(PointModel):
         return start, idx, status_list
 
     def filter_for_geometry(self, grid_pts: np.ma.MaskedArray) -> np.ndarray:
-        """Checks if a point of an axon is outside the geometry.
-        If thats the case, the whole axon will be marked,
-        and the points are removed for further processing.
+        """Check if any point of an axon is outside the geometry.
+        If this is the case, the entire axon will be marked,
+        and its points will be removed from further processing.
 
         Parameters
         ----------
         grid_pts: np.ma.MaskedArray
-            The array contains 1 if the corresponding point is inside
-            the geometry, 0 otherwise.
+            Array containing points inside the mesh.
 
         Returns
         -------
         filtered_points: np.ndarray
-            Returns filtered_points which are inside the geometry.
+            Returns filtered_points after removing axons that are (partially)
+            outside the geometry.
         """
         x, y, z = grid_pts.T
         lattice_mask = np.invert(grid_pts.mask)[:, 0]
         idx_axon = 0
-        n_points = 0
 
+        total_points = sum(
+            axon.points.shape[0]
+            for population in self._populations
+            for axon in sorted(population.axons, key=lambda x: int(x.name[4:]))
+        )
+
+        # Create an array of NaNs to filter the axons outside the domain
+        all_points = np.full((total_points, 3), np.nan)
+
+        point_idx = 0
+        pop_axons_stats = []  # List of (population_name, n_axons, n_axons_inside)
         for population in self._populations:
+            n_axons = len(population.axons)
+            n_axons_inside = 0
             for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
                 axon_length = axon.points.shape[0]
+                axon_outside = False
                 for idx in range(axon_length):
                     if not lattice_mask[idx_axon + idx]:
-                        axon.status = -1
-                if axon.status != -1:
-                    n_points += axon_length
+                        axon_outside = True
+                        break
+                if axon_outside:
+                    axon.status = -1
+                else:
+                    # Fill all_points for this axon
+                    all_points[point_idx : point_idx + axon_length, 0] = x.data[
+                        idx_axon : idx_axon + axon_length
+                    ]
+                    all_points[point_idx : point_idx + axon_length, 1] = y.data[
+                        idx_axon : idx_axon + axon_length
+                    ]
+                    all_points[point_idx : point_idx + axon_length, 2] = z.data[
+                        idx_axon : idx_axon + axon_length
+                    ]
+                    point_idx += axon_length
+                    n_axons_inside += 1
                 idx_axon += axon_length
+            pop_axons_stats.append((population.name, n_axons, n_axons_inside))
 
-        if n_points == 0:
+        filtered_points = all_points[~np.isnan(all_points).any(axis=1)]
+
+        if np.isnan(filtered_points).any():
+            raise RuntimeError(
+                "NaN entries remain in filtered_points after filtering indicating a "
+                "possible NumPy or logic bug."
+            )
+
+        if filtered_points.shape[0] == 0:
             raise ValueError("No points inside the computational domain.")
-        filtered_points = np.zeros((n_points, 3))
-        idx_points = 0
-        idx_grid = 0
-        for population in self._populations:
-            counter = 0
-            n_axons = len(population.axons)
-            for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
-                axon_length = axon.points.shape[0]
-                if axon.status == 0:
-                    counter += 1
-                    filtered_points[idx_points : idx_points + axon_length, 0] = x.data[
-                        idx_grid : idx_grid + axon_length
-                    ]
-                    filtered_points[idx_points : idx_points + axon_length, 1] = y.data[
-                        idx_grid : idx_grid + axon_length
-                    ]
-                    filtered_points[idx_points : idx_points + axon_length, 2] = z.data[
-                        idx_grid : idx_grid + axon_length
-                    ]
-                    idx_points += axon_length
-                idx_grid += axon_length
-            _logger.info(f"Total axons in {population.name}: {n_axons}")
-            _logger.info(f"Outside the domain: {n_axons - counter}")
+
+        for name, n_axons, n_axons_inside in pop_axons_stats:
+            _logger.info(f"Total axons in {name}: {n_axons}")
+            _logger.info(f"Outside the domain: {n_axons - n_axons_inside}")
+
         return filtered_points
 
     def filter_csf_encap(
@@ -272,11 +290,13 @@ class Pathway(PointModel):
                 if axon.status != -1:
                     axon_length = axon.points.shape[0]
                     for idx in range(axon_length):
-                        if inside_csf[idx_axon + idx]:
-                            axon.status = -2  # set status -2 for inside csf
                         if inside_encap[idx_axon + idx]:
                             axon.status = -1  # set status -1 for inside encap
-                    idx_axon = idx_axon + axon_length
+                            break
+                        if inside_csf[idx_axon + idx]:
+                            axon.status = -2  # set status -2 for inside csf
+                            break
+                    idx_axon += axon_length
         _logger.info("Marked axons inside CSF and encapsulation layer")
         return
 
@@ -378,7 +398,6 @@ class Pathway(PointModel):
         encapsulation layer etc.
 
         Prepares data storage for all frequencies at all points.
-        TODO type hints
         """
         grid_pts = self.points_in_mesh(mesh)
         self._lattice_mask = np.invert(grid_pts.mask)
@@ -386,8 +405,15 @@ class Pathway(PointModel):
         self._inside_csf = self.get_points_in_csf(mesh, conductivity_cf)
         self._inside_encap = self.get_points_in_encapsulation_layer(mesh)
 
-        # mark complete axons
+        # mark complete axons and log how many axons were finally seeded
         self.filter_csf_encap(self.inside_csf, self.inside_encap)
+
+        total_axons = sum(len(pop.axons) for pop in self._populations)
+        seeded_axons = sum(
+            sum(axon.status == 0 for axon in pop.axons) for pop in self._populations
+        )
+        _logger.info(f"Axons finally seeded: {seeded_axons} / {total_axons}")
+
         # create index for axons
         self._axon_index = self.create_index(self.lattice)
 
@@ -510,3 +536,4 @@ class Pathway(PointModel):
                 os.path.join(self.output_path, f"E_field_{self.name}.csv"),
                 index=False,
             )
+        return

@@ -25,8 +25,7 @@ def main() -> None:
     parser.add_argument(
         "input_dictionary",
         type=str,
-        help="input dictionary in JSON format "
-        "as used for preparation of StimSets run",
+        help="input dictionary in JSON format as used for preparation of StimSets run",
     )
     parser.add_argument(
         "--scaling", type=float, help="specify scalar scaling of solution", default=1.0

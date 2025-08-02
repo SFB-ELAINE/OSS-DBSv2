@@ -1,4 +1,4 @@
-from typing import ClassVar, List, Tuple
+from typing import ClassVar
 
 import numpy as np
 import pytest
@@ -10,7 +10,7 @@ from ossdbs.stimulation_signals.utilities import adjust_cutoff_frequency
 
 
 class TestFFT:
-    TESTDATA: ClassVar[List[Tuple[str, float, float, float, float, float]]] = [
+    TESTDATA: ClassVar[list[tuple[str, float, float, float, float, float]]] = [
         # signal_type, frequency, pulse_width, counter_pulse_width,
         # inter_pulse_width, cutoff_frequency
         ("Rectangle", 130.0, 60e-6, 120e-6, 120e-6, 1e5),

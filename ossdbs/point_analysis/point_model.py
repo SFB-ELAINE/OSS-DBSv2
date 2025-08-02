@@ -4,7 +4,7 @@
 import logging
 import os
 from abc import ABC, abstractmethod
-from typing import Optional, Tuple
+from typing import Optional
 
 import h5py
 import ngsolve
@@ -610,7 +610,7 @@ class PointModel(ABC):
 
     def compute_solutions_in_time_domain(
         self, signal_length: int, convert_field: bool = False
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Compute time-domain  solution for all properties."""
         out_of_core = self.tmp_hdf5_file is not None
 
@@ -661,7 +661,7 @@ class PointModel(ABC):
     def export_point_model_information(self, filename: str) -> None:
         """Export all relevant information about the model to JSON."""
         raise NotImplementedError(
-            "Point model information export " "has not yet been implemented."
+            "Point model information export has not yet been implemented."
         )
 
     def write_netgen_meshsize_file(self, meshsize: float, filename: str) -> None:
