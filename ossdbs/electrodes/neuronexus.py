@@ -149,7 +149,7 @@ class NeuroNexusElectrodeModel(ElectrodeModel):
             contact.Circle(self._parameters.contact_diameter / 2)
             contact_face = contact.Face()
             # Name the contact
-            name = f"Contact_{i+1}"
+            name = f"Contact_{i + 1}"
             # Add material and boundary condition
             contact_face.mat(name)
             contact_face.bc(name)

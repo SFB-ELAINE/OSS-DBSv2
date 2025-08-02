@@ -84,7 +84,7 @@ class TestElectrode:
 
         desired = {"RenamedBody", "RenamedContact_1"}
 
-        desired.update({f"Contact_{i+2}" for i in range(n_contacts - 1)})
+        desired.update({f"Contact_{i + 2}" for i in range(n_contacts - 1)})
 
         assert desired == set(faces)
 
@@ -211,7 +211,6 @@ class TestElectrode:
                     4 / 3 * np.pi * lead_radius**3 * 0.5
                 )
 
-    # ruff: noqa: C901
     def _calculate_contacts_volume(self, electrode, electrode_name):
         if electrode_name == "MicroProbesRodentElectrode":
             contact_radius = electrode._parameters.contact_radius
