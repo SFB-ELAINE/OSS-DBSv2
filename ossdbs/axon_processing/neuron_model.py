@@ -7,6 +7,7 @@ import subprocess
 import sys
 from abc import ABC, abstractmethod
 from importlib.resources import files
+from pathlib import Path
 from typing import Optional
 
 import h5py
@@ -62,10 +63,10 @@ class NeuronSimulator(ABC):
             os.mkdir(self.output_path)
 
         # directory, where all NEURON simulations will be conducted
-        self._neuron_workdir = os.path.join(self._output_path, NEURON_DIR)
+        self._neuron_workdir = Path(self._output_path) / NEURON_DIR
         # create local directory if it does not exist
-        if not os.path.isdir(self._neuron_workdir):
-            os.mkdir(self._neuron_workdir)
+        if not self._neuron_workdir.isdir():
+            self._neuron_workdir.mkdir(parents=True)
 
         # copy NEURON files and compile them
         _logger.info("Copy and compile NEURON files")
@@ -182,12 +183,13 @@ class NeuronSimulator(ABC):
             # do not change! causes OSError
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
-            cwd=os.path.abspath(self._neuron_workdir),
+            cwd=self._neuron_workdir.abspath(),
+            shell="win" in sys.platform,  # shell=True only on Windows
         )
         _logger.info("Load mechanisms into environment")
         # TODO should be written in a safer way
         try:
-            neuron.load_mechanisms(self._neuron_workdir)
+            neuron.load_mechanisms(self._neuron_workdir.as_posix())
         except RuntimeError:
             _logger.warning(
                 "Mechanism was already loaded, continuing"
@@ -406,10 +408,9 @@ class NeuronSimulator(ABC):
         extra_initialization: bool
             Delete and create nodes (needed for MRG2002 model)
         """
-        _logger.debug(f"Load file: {os.path.join(self._neuron_workdir, self.hoc_file)}")
-        neuron.h(
-            f'{{load_file("{os.path.join(self._neuron_workdir, self.hoc_file)}")}}'
-        )
+        _neuron_file_path = self._neuron_workdir / self.hoc_file
+        _logger.debug(f"Load file: {_neuron_file_path.as_posix()}")
+        neuron.h(f'{{load_file("{_neuron_file_path.as_posix()}")}}')
         if extra_initialization:
             neuron.h.deletenodes()
             neuron.h.createnodes()
@@ -670,7 +671,7 @@ class MRG2002(NeuronSimulator):
             raise ValueError("Need to provide all parameters: {info_to_update}")
 
         hoc_file = fileinput.input(
-            files=os.path.join(self._neuron_workdir, "axon4pyfull.hoc"), inplace=1
+            files=self._neuron_workdir / "axon4pyfull.hoc", inplace=1
         )
         for line in hoc_file:
             if any(line.startswith(matched_info := info) for info in info_to_update):
@@ -915,7 +916,7 @@ class McNeal1976(NeuronSimulator):
             raise ValueError("Need to provide all parameters: {info_to_update}")
 
         hoc_file = fileinput.input(
-            files=os.path.join(self._neuron_workdir, "init_B5_extracellular.hoc"),
+            files=self._neuron_workdir / "init_B5_extracellular.hoc",
             inplace=1,
         )
 
@@ -933,9 +934,7 @@ class McNeal1976(NeuronSimulator):
         axonnodes = parameters_dict["axonnodes"]
         NNODES_input = f"NNODES = {axonnodes}\n"
 
-        hoc_file = fileinput.input(
-            files=os.path.join(self._neuron_workdir, "axon5.hoc"), inplace=1
-        )
+        hoc_file = fileinput.input(files=self._neuron_workdir / "axon5.hoc", inplace=1)
         for line in hoc_file:
             if line.startswith(NNODES_line):
                 line = NNODES_input
