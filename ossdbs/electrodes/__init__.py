@@ -44,6 +44,7 @@ from .defaults import (
     MicroElectrode,
     MicroProbesRodentElectrode,
     MicroProbesSNEX100,
+    NeuroNexusA1x16_5mm_50_177,
     NeuroPaceDL344_3_5,
     NeuroPaceDL344_10,
     PINSMedicalL301,
@@ -74,6 +75,7 @@ from .micro_probes import (
 )
 from .microelectrode import MicroElectrodeModel, MicroElectrodeParameters
 from .neuro_pace import NeuroPaceModel, NeuroPaceParameters
+from .neuronexus import NeuroNexusElectrodeModel, NeuroNexusParameters
 from .pins_medical import PINSMedicalModel, PINSMedicalParameters
 
 ELECTRODES = {
@@ -109,6 +111,7 @@ ELECTRODES = {
     "PINSMedicalL301": PINSMedicalL301,
     "PINSMedicalL302": PINSMedicalL302,
     "PINSMedicalL303": PINSMedicalL303,
+    "NeuroNexusA1x16_5mm_50_177": NeuroNexusA1x16_5mm_50_177,
 }
 
 ELECTRODE_MODELS = {
@@ -144,6 +147,7 @@ ELECTRODE_MODELS = {
     "PINSMedicalL301Custom": PINSMedicalModel,
     "PINSMedicalL302Custom": PINSMedicalModel,
     "PINSMedicalL303Custom": PINSMedicalModel,
+    "NeuroNexusA1x16_5mm_50_177Custom": NeuroNexusElectrodeModel,
 }
 
 
@@ -163,6 +167,7 @@ ELECTRODE_PARAMETERS = {
     "MicroProbesSNEX100Model": MicroProbesSNEX100Parameters,
     "NeuroPaceModel": NeuroPaceParameters,
     "PINSMedicalModel": PINSMedicalParameters,
+    "NeuroNexusElectrodeModel": NeuroNexusParameters,
 }
 
 __all__ = (
@@ -210,6 +215,7 @@ __all__ = (
     "MicroProbesSNEX100",
     "MicroProbesSNEX100Model",
     "MicroProbesSNEX100Parameters",
+    "NeuroNexusParameters",
     "NeuroPaceDL344_3_5",
     "NeuroPaceDL344_10",
     "NeuroPaceModel",
