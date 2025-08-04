@@ -65,7 +65,7 @@ class NeuronSimulator(ABC):
         # directory, where all NEURON simulations will be conducted
         self._neuron_workdir = Path(self._output_path) / NEURON_DIR
         # create local directory if it does not exist
-        if not self._neuron_workdir.isdir():
+        if not self._neuron_workdir.is_dir():
             self._neuron_workdir.mkdir(parents=True)
 
         # copy NEURON files and compile them
@@ -183,7 +183,7 @@ class NeuronSimulator(ABC):
             # do not change! causes OSError
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
-            cwd=self._neuron_workdir.abspath(),
+            cwd=self._neuron_workdir.absolute(),
             shell="win" in sys.platform,  # shell=True only on Windows
         )
         _logger.info("Load mechanisms into environment")
