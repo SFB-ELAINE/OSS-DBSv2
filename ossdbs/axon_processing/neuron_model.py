@@ -392,6 +392,8 @@ class NeuronSimulator(ABC):
         """
         v_ext = self.get_v_ext(v_time_sol)
         spike = self.run_NEURON(v_ext, self._extra_initialization)
+        # TODO remove later, for debugging
+        raise ValueError(f"Spike done: {spike}")
         return output.put([neuron_index, spike])
 
     def run_NEURON(
@@ -409,7 +411,7 @@ class NeuronSimulator(ABC):
             Delete and create nodes (needed for MRG2002 model)
         """
         _neuron_file_path = self._neuron_workdir / self.hoc_file
-        _logger.debug(f"Load file: {_neuron_file_path.as_posix()}")
+        _logger.info(f"Load file: {_neuron_file_path.as_posix()}")
         neuron.h(f'{{load_file("{_neuron_file_path.as_posix()}")}}')
         if extra_initialization:
             neuron.h.deletenodes()
@@ -470,14 +472,14 @@ class NeuronSimulator(ABC):
         in Lead-DBS and Paraview, respectively.
         Also stores summary statistics in 'Pathway_status_*.json'
         """
-        # use half of CPUs
-        N_proc = mp.cpu_count() / 2
-
         # get parameters
         N_neurons = self.get_N_seeded_neurons(pathway_idx)
         axon_diam = self.get_axon_diam(pathway_idx)
         n_Ranvier = self.get_n_Ranvier(pathway_idx)
         orig_N_neurons = self.get_N_orig_neurons(pathway_idx)
+
+        # use half of CPUs or at max number of neurons
+        N_proc = min(mp.cpu_count() / 2, N_neurons)
 
         axon_morphology = self._ax_morph_class()
         axon_morphology.update_axon_morphology(axon_diam, n_Ranvier=n_Ranvier)
@@ -552,13 +554,11 @@ class NeuronSimulator(ABC):
 
                 j_proc += 1
                 neuron_index += 1
-
             for p in proc:
                 p.start()
             for p in proc:
                 p.join()
-
-            # check the status of batch processed neurons
+            raise RuntimeError("MP")
             neurons_idxs_stat = [output.get() for p in proc]
             # n_idx_stat is a list[neuron index, status (1 or 0)]
             for n_idx_stat in neurons_idxs_stat:
