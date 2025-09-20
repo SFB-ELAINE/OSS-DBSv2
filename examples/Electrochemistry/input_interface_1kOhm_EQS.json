@@ -1,0 +1,146 @@
+{
+  "BrainRegion": {
+    "Center": {
+      "x[mm]": 0,
+      "y[mm]": 0,
+      "z[mm]": 0
+    },
+    "Dimension": {
+      "x[mm]": 50.0,
+      "y[mm]": 50.0,
+      "z[mm]": 50.0
+    },
+    "Shape": "Sphere"
+  },
+  "Electrodes": [
+    {
+      "Name": "BostonScientificVercise",
+      "Rotation[Degrees]": 0,
+      "Direction": {
+        "x[mm]": 0.0,
+        "y[mm]": 0.0,
+        "z[mm]": 1.0
+      },
+      "TipPosition": {
+        "x[mm]": 0,
+        "y[mm]": 0,
+        "z[mm]": 0
+      },
+      "Contacts": [
+        {
+          "Contact_ID": 1,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 1.0,
+          "Floating": false,
+	  "SurfaceImpedance":
+	  {"Model": "CPE", "Parameters": {"k": 1e5, "alpha": 0.5}}
+       },
+        {
+          "Contact_ID": 8,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
+          "Floating": false
+        }
+      ]
+    }
+  ],
+  "MaterialDistribution": {
+    "MRIPath": "../../input_files/homogeneous.nii.gz",
+    "DiffusionTensorActive": false,
+    "DTIPath": ""
+  },
+  "DielectricModel": {
+    "Type": "Constant",
+    "CustomParameters": {
+      "Gray matter": {
+        "permittivity": 0,
+        "conductivity": 0.1
+      },
+      "Unknown": {
+        "permittivity": 0,
+        "conductivity": 0.1
+      },
+      "White matter": {
+        "permittivity": 0,
+        "conductivity": 0.1
+      },
+      "CSF": {
+        "permittivity": 0,
+        "conductivity": 0.1
+      },
+      "Blood": {
+        "permittivity": 0,
+        "conductivity": 0.1
+      }
+    }
+  },
+  "StimulationSignal": {
+    "CurrentControlled": false,
+    "Type": "Multisine",
+    "ListOfFrequencies": [
+	    1.0e+3
+    ]
+  },
+  "Mesh": {
+    "LoadMesh": false,
+    "MeshElementOrder": 2,
+    "MeshingHypothesis": {
+      "Type": "Moderate"
+    },
+    "HPRefinement": {
+	"Active": true,
+	"Levels": 2,
+	"Factor": 0.125
+    },
+    "MeshSize": {
+      "Edges": {},
+      "Faces": {},
+      "Volumes": {}
+    },
+    "SaveMesh": false
+  },
+  "Solver": {
+    "Type": "CG",
+    "Preconditioner": "bddc",
+    "PreconditionerKwargs": {},
+    "PrintRates": true,
+    "MaximumSteps": 200,
+    "Precision": 1e-8
+  },
+  "PointModel": {
+    "Pathway": {
+      "Active": false,
+      "FileName": ""
+    },
+    "Lattice": {
+      "Active": false,
+      "Center": {
+        "x[mm]": -9.476,
+        "y[mm]": 11.605,
+        "z[mm]": 4.7
+      },
+      "Shape": {
+        "x": 40,
+        "y": 40,
+        "z": 160
+      },
+      "Direction": {
+        "x[mm]": 0,
+        "y[mm]": 0,
+        "z[mm]": 1
+      },
+      "PointDistance[mm]": 0.125 
+    }
+  },
+  "ActivationThresholdVTA[V-per-m]": 200.0,
+  "CollapseVTA": false,
+  "EQSMode": true,
+  "FEMOrder": 2,
+  "OutputPath": "Results_1kOhm_EQS",
+  "ComputeImpedance": true,
+  "ComputeCurrents": true,
+  "ExportVTK": true,
+  "ExportElectrode": false
+}
