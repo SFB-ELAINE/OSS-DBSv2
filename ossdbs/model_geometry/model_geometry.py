@@ -40,6 +40,7 @@ class ModelGeometry:
         self._encapsulation_layers = []
 
         self._geometry = self._construct_geometry(self._brain, self._electrodes)
+        self.update_contact_areas()
 
     @property
     def geometry(self) -> netgen.occ.OCCGeometry:
@@ -88,6 +89,7 @@ class ModelGeometry:
             if not built_correctly:
                 raise RuntimeError("Geometry could not be built.")
 
+        # add brain surface
         brain_surfaces = brain.get_surface_names()
         surface_areas = brain.get_surface_areas()
         for surface in brain_surfaces:
@@ -101,6 +103,20 @@ class ModelGeometry:
                 "or remove the encapsulation layer."
             )
             raise
+
+    def update_contact_areas(self) -> None:
+        """Update contact areas."""
+        for contact in self.contacts:
+            area_set = False
+            for surface in self.geometry.shape.faces:
+                if contact.name == surface.name:
+                    if area_set:
+                        _logger.warning(f"Trying to set area twice for {contact.name}")
+                    area = surface.mass
+                    area_set = True
+                    contact.area = area
+            if not area_set:
+                raise RuntimeError(f"Area for {contact.name} not set")
 
     def check_brain_geo(
         self, brain_geo: netgen.occ.Solid, electrode: ElectrodeModel
@@ -230,12 +246,10 @@ class ModelGeometry:
 
         """
         new_boundary_names = {}
-        surface_areas = electrode.get_contact_areas()
         for contact_index in range(1, electrode.n_contacts + 1):
             name = self.get_contact_name(electrode.index, contact_index)
             new_boundary_names[f"Contact_{contact_index}"] = name
-            area = surface_areas[f"Contact_{contact_index}"]
-            self._contacts.append(Contact(name=name, area=area))
+            self._contacts.append(Contact(name=name))
         electrode.set_contact_names(new_boundary_names)
 
     def get_contact_name(self, electrode_index: int, contact_index: int) -> str:

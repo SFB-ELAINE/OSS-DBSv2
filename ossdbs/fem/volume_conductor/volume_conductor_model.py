@@ -80,6 +80,7 @@ class VolumeConductor(ABC):
         self._free_stimulation_variable = None
         self._stimulation_variable = None
         self._floatings_potentials = None
+        self._surface_impedances = None
 
         # set output path
         self.output_path = output_path
@@ -243,13 +244,11 @@ class VolumeConductor(ABC):
                 )
 
         _logger.info(
-            "Number of elements before material refinement:"
-            f"{self.mesh.ngsolvemesh.ne}"
+            f"Number of elements before material refinement:{self.mesh.ngsolvemesh.ne}"
         )
         self.refine_mesh_by_material(material_mesh_refinement_steps)
         _logger.info(
-            "Number of elements after material refinement:"
-            f"{self.mesh.ngsolvemesh.ne}"
+            f"Number of elements after material refinement:{self.mesh.ngsolvemesh.ne}"
         )
 
         for computing_idx, freq_idx in enumerate(frequency_indices):
@@ -379,6 +378,9 @@ class VolumeConductor(ABC):
                     point_model.prepare_frequency_domain_data_structure(
                         self.signal.signal_length, out_of_core
                     )
+                    _logger.debug(
+                        f"Points in point model: {point_model.coordinates.shape}"
+                    )
 
             # copy solution to point models
             self._process_frequency_domain_solution(band_indices, point_models)
@@ -403,6 +405,8 @@ class VolumeConductor(ABC):
                 timings["FieldExport"] = time_1 - time_0
                 time_0 = time_1
 
+            # reset surface impedances
+            self._surface_impedances = None
         # save impedance at all frequencies to file!
         if compute_impedance:
             _logger.info("Saving impedance")
@@ -674,7 +678,7 @@ class VolumeConductor(ABC):
     def current_density(self) -> ngsolve.GridFunction:
         """Return current density in A/mm^2."""
         # scale to account for mm as length unit (not yet contained in conductivity)
-        return 1e-3 * self.conductivity * self.electric_field
+        return self.conductivity * self.electric_field
 
     @property
     def electric_field(self) -> ngsolve.GridFunction:
@@ -714,14 +718,26 @@ class VolumeConductor(ABC):
         """
         if len(self.contacts.active) == 2:
             power = self.compute_power()
-            # TODO integrate surface impedance by thin layer
-            # tmp = np.abs(Integrate(ys * (cf - gfu) * (cf - gfu), mesh,
-            # definedon=mesh.Boundaries("Electrode1")))
-            voltage = 0
+            voltage_diff = 0
             for idx, contact in enumerate(self.contacts.active):
-                voltage += (-1) ** idx * contact.voltage
-            _logger.debug(f"Voltage drop for impedance: {voltage}")
-            return voltage * np.conj(voltage) / power
+                voltage = contact.voltage
+                voltage_diff += (-1) ** idx * contact.voltage
+                if contact.surface_impedance_model is not None:
+                    interface_addmittance = ngsolve.CF(
+                        1.0 / self._surface_impedances[contact.name]
+                    )
+                    diff = (
+                        self.mesh.boundary_coefficients({contact.name: voltage})
+                        - self.potential
+                    )
+                    power += ngsolve.Integrate(
+                        interface_addmittance * diff * ngsolve.Conj(diff),
+                        mesh=self.mesh.ngsolvemesh,
+                        definedon=self.mesh.ngsolvemesh.Boundaries(contact.name),
+                    )
+            _logger.debug(f"Voltage drop for impedance: {voltage_diff}")
+            _logger.debug(f"Power after surface imp: {power}")
+            return voltage_diff * np.conj(voltage_diff) / power
         else:
             # TODO implement meaningful way to access contribution of individual
             # electrode to impedance

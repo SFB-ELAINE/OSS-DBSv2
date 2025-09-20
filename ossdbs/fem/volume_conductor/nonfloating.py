@@ -82,14 +82,20 @@ class VolumeConductorNonFloating(VolumeConductor):
         linear_form = ngsolve.LinearForm(space=self._space)
 
         # add surface impedance as Robin BC
-        surface_impedances = self.contacts.get_surface_impedances(frequency)
+        self._surface_impedances = self.contacts.get_surface_impedances(
+            frequency, is_complex=self.is_complex
+        )
         for contact in self.contacts.active:
             if contact.surface_impedance_model is None:
                 continue
-            ys = ngsolve.CF(1.0 / surface_impedances[contact.name])
-            bilinear_form += ys * u * v * ngsolve.ds(contact.name)
+            ys = 1.0 / self._surface_impedances[contact.name]
+            _logger.debug(
+                f"Contact: {contact.name}, Ys: {ys},"
+                f" Boundary Value: {boundary_values[contact.name]}"
+            )
+            bilinear_form += ngsolve.CF(ys) * u * v * ngsolve.ds(contact.name)
             linear_form += (
-                ys
+                ngsolve.CF(ys)
                 * ngsolve.CF(boundary_values[contact.name])
                 * v
                 * ngsolve.ds(contact.name)

@@ -161,6 +161,8 @@ class ConductivityCF:
                 encapsulation_layer_properties = (
                     encapsulation_layer.dielectric_properties.conductivity(omega)
                 )
+            # change unit system
+            encapsulation_layer_properties *= 1e-3
             if self._dti_voxel_cf is not None:
                 # reshape CoefficientFunction for isotropic encapsulation layer
                 encapsulation_layer_properties_cf = ngsolve.CoefficientFunction(
@@ -180,6 +182,8 @@ class ConductivityCF:
             else:
                 encapsulation_layer_properties_cf = encapsulation_layer_properties
             material_dict[encapsulation_layer.name] = encapsulation_layer_properties_cf
+
+        _logger.debug(f"Assigning material dict: {material_dict}")
         return mesh.material_coefficients(material_dict)
 
     def _distribution(
@@ -209,6 +213,9 @@ class ConductivityCF:
                 self._data[self._masks[material]] = self._dielectric_properties[
                     material
                 ].conductivity(omega)
+        # change units
+        self._data *= 1e-3
+        _logger.debug(f"Unique conductivity values: {np.unique(self._data)}")
         start = self._mri_voxel_bounding_box.start
         end = self._mri_voxel_bounding_box.end
         if self._dti_voxel_cf is None:

@@ -46,7 +46,8 @@ def log_to_file(output_file: str, level=logging.INFO):
 def set_logger(level=logging.INFO):
     """Set log level."""
     _logger.setLevel(level)
-    if level == logging.DEBUG:
+    # set level to 0 to get also ngsolve logs
+    if level == logging.NOTSET:
         ngsolve.ngsglobals.msg_level = 10
     # to avoid multiple output in Jupyter notebooks
     if len(_logger.handlers) == 1:

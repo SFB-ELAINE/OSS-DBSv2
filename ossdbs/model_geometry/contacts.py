@@ -40,7 +40,7 @@ class Contact:
     """
 
     name: str
-    area: float
+    area: Optional[float] = None
     max_h: float = 1e10  # Netgen default
     edge_max_h: float = 1e10
     active: bool = False
@@ -68,20 +68,27 @@ class Contact:
             )
         return contact_str
 
-    def get_surface_impedance(self, frequency: float) -> complex:
+    def get_surface_impedance(
+        self, frequency: float, is_complex: bool
+    ) -> float | complex:
         """Return surface impedance at fixed frequency."""
         try:
             import impedancefitter as ifit
         except ImportError as err:
             raise ImportError(
                 "Please install impedancefitter to compute the surface impedance."
+                "Ensure that impedancefitter and its dependencies were correctly "
+                "installed."
             ) from err
 
         # TODO cache this variable
         ecm = ifit.get_equivalent_circuit_model(self.surface_impedance_model)
         # TODO add surface area to it?
         Z = ecm.eval(omega=2.0 * np.pi * frequency, **self.surface_impedance_parameters)
-        return complex(Z) * self.area
+        surface_Z = complex(Z) * self.area
+        if not is_complex:
+            return np.abs(surface_Z)
+        return surface_Z
 
 
 def check_contact(contact: Contact):
@@ -236,7 +243,7 @@ class Contacts:
             if contact.name in voltage_values:
                 contact.voltage = voltage_values[contact.name]
 
-    def get_surface_impedances(self, frequency: float) -> dict:
+    def get_surface_impedances(self, frequency: float, is_complex: bool) -> dict:
         """Returns the floating impedance values of each contact at a fixed frequency.
 
         Returns
@@ -244,7 +251,7 @@ class Contacts:
         dict
         """
         return {
-            contact.name: contact.get_surface_impedance(frequency)
+            contact.name: contact.get_surface_impedance(frequency, is_complex)
             if contact.surface_impedance_model is not None
             else None
             for contact in self._all_contacts

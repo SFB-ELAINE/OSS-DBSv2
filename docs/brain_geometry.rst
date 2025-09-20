@@ -20,6 +20,11 @@ Create final geometry
 
 TODO
 
+Setting surface impedances
+--------------------------
+
+TODO
+
 API reference
 -------------
 

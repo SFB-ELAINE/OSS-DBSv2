@@ -320,3 +320,13 @@ class Mesh:
     def n_elements(self) -> int:
         """Number of elements."""
         return self.ngsolvemesh.ne
+
+    def get_boundary_areas(self) -> dict:
+        """Integrate over boundaries to obtain surface areas."""
+        surface_area_dict = {}
+        for boundary in self.boundaries:
+            area = ngsolve.Integrate(
+                ngsolve.CF(1.0) * ngsolve.ds(boundary), mesh=self.ngsolvemesh
+            )
+            surface_area_dict[boundary] = area
+        return surface_area_dict
