@@ -86,6 +86,8 @@ class Contact:
         # TODO add surface area to it?
         Z = ecm.eval(omega=2.0 * np.pi * frequency, **self.surface_impedance_parameters)
         surface_Z = complex(Z) * self.area
+        if np.isclose(surface_Z, 0.0, atol=1e-6):
+            raise ValueError(f"Surface impedance on contact {self.name} almost zero.")
         if not is_complex:
             return np.abs(surface_Z)
         return surface_Z
