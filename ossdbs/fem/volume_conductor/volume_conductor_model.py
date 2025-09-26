@@ -79,7 +79,7 @@ class VolumeConductor(ABC):
         # or current (voltage-controlled) stimulation
         self._free_stimulation_variable = None
         self._stimulation_variable = None
-        self._floatings_potentials = None
+        self._floating_potentials = None
         self._surface_impedances = None
 
         # set output path
@@ -226,7 +226,8 @@ class VolumeConductor(ABC):
                 shape=(len(self.signal.frequencies), len(self.contacts.active)),
                 dtype=complex,
             )
-            self._floatings_potentials = np.zeros(
+        if len(self.contacts.floating) > 0:
+            self._floating_potentials = np.zeros(
                 shape=(len(self.signal.frequencies), len(self.contacts.floating)),
                 dtype=complex,
             )
@@ -356,6 +357,13 @@ class VolumeConductor(ABC):
 
             if not multisine_mode:
                 self._store_solution_at_contacts(band_indices)
+            else:
+                for contact_idx, contact in enumerate(self.contacts.floating):
+                    scale_factor = self.signal.amplitudes[freq_idx]
+                    self._floating_potentials[freq_idx, contact_idx] = (
+                        scale_factor * contact.voltage
+                    )
+
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 estimated_currents = self.estimate_currents()
                 _logger.debug(
@@ -428,6 +436,23 @@ class VolumeConductor(ABC):
                 df[f"{contact.name}_real"] = self._currents[contact.name].real
                 df[f"{contact.name}_imag"] = self._currents[contact.name].imag
             df.to_csv(os.path.join(self.output_path, "currents.csv"), index=False)
+        # export floating voltages
+        if self._floating_potentials is not None:
+            df = pd.DataFrame(
+                {
+                    "freq": self.signal.frequencies,
+                }
+            )
+            for contact_idx, contact in enumerate(self.contacts.floating):
+                df[f"{contact.name}_real"] = self._floating_potentials[
+                    :, contact_idx
+                ].real
+                df[f"{contact.name}_imag"] = self._floating_potentials[
+                    :, contact_idx
+                ].imag
+            df.to_csv(
+                os.path.join(self.output_path, "floating_potentials.csv"), index=False
+            )
 
         # export time domain solution if a proper signal has been passed
         _logger.info("Launching reconstruction of time domain")
@@ -518,7 +543,7 @@ class VolumeConductor(ABC):
         floating_at_contact = {}
         floating_at_contact["time"] = timesteps
         floating_potentials_in_time = reconstruct_time_signals(
-            self._floatings_potentials, self.signal.signal_length
+            self._floating_potentials, self.signal.signal_length
         )
         for contact_idx, contact in enumerate(self.contacts.floating):
             floating_at_contact[contact.name] = floating_potentials_in_time[
@@ -1015,7 +1040,7 @@ class VolumeConductor(ABC):
         for contact_idx, contact in enumerate(self.contacts.floating):
             for freq_idx in band_indices:
                 scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
-                self._floatings_potentials[freq_idx, contact_idx] = (
+                self._floating_potentials[freq_idx, contact_idx] = (
                     scale_factor * contact.voltage
                 )
 

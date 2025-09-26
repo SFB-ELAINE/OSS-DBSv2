@@ -29,7 +29,7 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         super().__init__(
             geometry, conductivity, solver, order, meshing_parameters, output_path
         )
-        _logger.debug("Create space")
+        _logger.debug("Save surface impedance boundaries")
         self._surface_impedance_floating_boundaries = []
         for contact in self.contacts.floating:
             if contact.surface_impedance_model is not None:
@@ -39,6 +39,7 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
                     f"Contact {contact.name} ignored because no "
                     "surface impedance model given."
                 )
+        _logger.debug("Create space")
         self._floating_values = {}
         self.update_space()
 
@@ -95,8 +96,9 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
             self.number_space() for _ in self._surface_impedance_floating_boundaries
         ]
         spaces = [h1_space, *number_spaces]
-        finite_elements_space = ngsolve.FESpace(spaces=spaces)
-        return ngsolve.CompressCompound(fespace=finite_elements_space)
+        return ngsolve.FESpace(spaces=spaces)
+        # very slow?!
+        # return ngsolve.CompressCompound(fespace=finite_elements_space)
 
     def __bilinear_form(self, sigma, space, frequency) -> ngsolve.BilinearForm:
         """Bilinear form."""
@@ -105,6 +107,7 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         test = space.TestFunction()
         u = trial[0]
         v = test[0]
+        _logger.debug("Creating space with {len(u)} subspaces")
 
         # sum up all potentials to set sum to zero in the end
         sum_u = None
