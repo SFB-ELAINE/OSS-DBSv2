@@ -57,8 +57,8 @@ class TestFFT:
             )
 
         original_signal = signal.get_time_domain_signal(dt, timesteps)
-        fft_frequencies, fft_signal = signal.get_fft_spectrum(cutoff_frequency)
-        timesteps_retrieved, retrieved_signal = signal.retrieve_time_domain_signal(
+        _, fft_signal = signal.get_fft_spectrum(cutoff_frequency)
+        _, retrieved_signal = signal.retrieve_time_domain_signal(
             fft_signal, cutoff_frequency
         )
         tolerance = 1e-5

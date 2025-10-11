@@ -56,7 +56,7 @@ class TestPointAnalysis:
 
     def test_voxelLattice(self, settings, parameters):
         try:
-            shape, center, distance, direction, collapse_vta = parameters
+            _, center, _, _, _ = parameters
             mri_image = MagneticResonanceImage(
                 settings["MaterialDistribution"]["MRIPath"]
             )
