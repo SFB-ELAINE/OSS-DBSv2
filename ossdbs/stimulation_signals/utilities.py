@@ -5,7 +5,7 @@ import logging
 from typing import Union
 
 import numpy as np
-from scipy.fft import ifft
+from scipy.fft import irfft
 
 _logger = logging.getLogger(__name__)
 
@@ -26,11 +26,23 @@ def get_timesteps(
 
 
 def retrieve_time_domain_signal_from_fft(
-    fft_signal: np.ndarray, cutoff_frequency: float, base_frequency: float
+        fft_signal: np.ndarray, cutoff_frequency: float, base_frequency: float, signal_length: int
 ) -> tuple[np.ndarray, np.ndarray]:
-    """Compute time-domain signal via fft."""
+    """Compute time-domain signal via fft.
+
+    Parameters
+    ----------
+    fft_signal: np.ndarray
+        Frequency-domain signal
+    signal_length: int
+        Length of original time-domain signal
+    cutoff_frequency: float
+        Highest considered frequency
+    base_frequency:float
+        Frequency of time-domain signal (often 130 Hz)
+    """
     # double the cutoff_frequency to actually sample until there
-    signal = ifft(fft_signal).real
+    signal = irfft(fft_signal, n=signal_length)
     timesteps = get_timesteps(cutoff_frequency, base_frequency, len(signal))
     return timesteps, signal
 
@@ -47,25 +59,10 @@ def reconstruct_time_signals(
     signal_length: int
       Length of initial time-domain signal
 
-    Notes
-    -----
-    According to the signal length, the highest frequency is
-    a negative or positive frequency (as it comes from the FFT).
     """
-    # For even signals, highest frequency is not in positive frequencies
-    positive_freqs_part = freq_domain_signal
-    if signal_length % 2 == 0:
-        positive_freqs_part = freq_domain_signal[:-1]
-
-    # Append the reverted signal without the DC frequency
-    tmp_freq_domain = np.append(
-        positive_freqs_part,
-        np.conjugate(np.flip(freq_domain_signal[1:], axis=0)),
-        axis=0,
-    )
-    # run ifft with maximum possible amount of workers
-    result_in_time = ifft(tmp_freq_domain, axis=0, workers=-1)
-    return result_in_time.real
+    # run irfft with maximum possible amount of workers
+    result_in_time = irfft(freq_domain_signal, n=signal_length, axis=0, workers=-1)
+    return result_in_time
 
 
 def get_octave_band_indices(frequencies: np.ndarray) -> np.ndarray:

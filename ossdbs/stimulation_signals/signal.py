@@ -8,7 +8,7 @@ from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.fft import fft, fftfreq
+from scipy.fft import rfft, rfftfreq
 
 from .utilities import adjust_cutoff_frequency, retrieve_time_domain_signal_from_fft
 
@@ -111,6 +111,7 @@ class TimeDomainSignal(ABC):
 
         """
         # we double the cutoff_frequency to actually sample until there
+        # TODO double check
         cutoff_frequency = adjust_cutoff_frequency(
             2.0 * cutoff_frequency, self.frequency
         )
@@ -119,7 +120,7 @@ class TimeDomainSignal(ABC):
         timesteps = int(cutoff_frequency / self.frequency)
 
         time_domain_signal = self.get_time_domain_signal(dt, timesteps)
-        return fftfreq(len(time_domain_signal), d=dt), fft(time_domain_signal)
+        return rfftfreq(len(time_domain_signal), d=dt), rfft(time_domain_signal), len(time_domain_signal)
 
     def retrieve_time_domain_signal(
         self, fft_signal: np.ndarray, cutoff_frequency: float

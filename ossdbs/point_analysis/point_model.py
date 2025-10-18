@@ -10,7 +10,7 @@ import h5py
 import ngsolve
 import numpy as np
 import pandas as pd
-from scipy.fft import ifft
+from scipy.fft import irfft
 
 from ossdbs.fem import Mesh
 from ossdbs.point_analysis.time_results import TimeResult
@@ -288,40 +288,12 @@ class PointModel(ABC):
         self, freq_idx: int, potentials: np.ndarray, fields: np.ndarray
     ) -> None:
         """Copy solution from volume conductor model."""
-        signal_length = self.tmp_potential_freq_domain.shape[1]
-
-        if signal_length % 2 == 0:
-            # For even signals, highest frequency is not in positive frequencies
-            if freq_idx > signal_length / 2 - 1:
-                # copy potentials and fields
-                self.tmp_potential_freq_domain[:, freq_idx] = np.conjugate(
-                    potentials[:, 0]
-                )
-                self.tmp_Ex_freq_domain[:, freq_idx] = np.conjugate(fields[:, 0])
-                self.tmp_Ey_freq_domain[:, freq_idx] = np.conjugate(fields[:, 1])
-                self.tmp_Ez_freq_domain[:, freq_idx] = np.conjugate(fields[:, 2])
-                return
-
+                
         # copy potentials and fields
         self.tmp_potential_freq_domain[:, freq_idx] = potentials[:, 0]
         self.tmp_Ex_freq_domain[:, freq_idx] = fields[:, 0]
         self.tmp_Ey_freq_domain[:, freq_idx] = fields[:, 1]
         self.tmp_Ez_freq_domain[:, freq_idx] = fields[:, 2]
-
-        # if DC, there is no negative frequency
-        if freq_idx == 0:
-            return
-
-        # get the negative frequency index
-        negative_freq_idx = signal_length - freq_idx
-
-        # Append the reverted signal without the DC frequency
-        self.tmp_potential_freq_domain[:, negative_freq_idx] = np.conjugate(
-            potentials[:, 0]
-        )
-        self.tmp_Ex_freq_domain[:, negative_freq_idx] = np.conjugate(fields[:, 0])
-        self.tmp_Ey_freq_domain[:, negative_freq_idx] = np.conjugate(fields[:, 1])
-        self.tmp_Ez_freq_domain[:, negative_freq_idx] = np.conjugate(fields[:, 2])
 
     def close_output_file(self):
         """Close out-of-core file."""
@@ -611,7 +583,19 @@ class PointModel(ABC):
     def compute_solutions_in_time_domain(
         self, signal_length: int, convert_field: bool = False
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        """Compute time-domain  solution for all properties."""
+        """Compute time-domain  solution for all properties.
+
+
+        Parameters
+        ----------
+        signal_length: int
+            Number of frequencies of input time vector.
+            This value must be set correctly, otherwise
+            the inverse FFT does not contain correct information.
+        convert_field: bool
+            Whether to FFT-transform also the electric field.
+
+        """
         out_of_core = self.tmp_hdf5_file is not None
 
         Ex_in_time = None
@@ -651,11 +635,11 @@ class PointModel(ABC):
         else:
             tmp_potential_freq_domain = self.tmp_potential_freq_domain
 
-        potential_in_time = ifft(tmp_potential_freq_domain, axis=1, workers=-1).real
+        potential_in_time = irfft(tmp_potential_freq_domain, n=signal_length, axis=1, workers=-1).real
         if convert_field:
-            Ex_in_time = ifft(self.tmp_Ex_freq_domain, axis=1, workers=-1).real
-            Ey_in_time = ifft(self.tmp_Ey_freq_domain, axis=1, workers=-1).real
-            Ez_in_time = ifft(self.tmp_Ez_freq_domain, axis=1, workers=-1).real
+            Ex_in_time = irfft(self.tmp_Ex_freq_domain, n=signal_length, axis=1, workers=-1).real
+            Ey_in_time = irfft(self.tmp_Ey_freq_domain, n=signal_length, axis=1, workers=-1).real
+            Ez_in_time = irfft(self.tmp_Ez_freq_domain, n=signal_length, axis=1, workers=-1).real
         return potential_in_time, Ex_in_time, Ey_in_time, Ez_in_time
 
     def export_point_model_information(self, filename: str) -> None:
