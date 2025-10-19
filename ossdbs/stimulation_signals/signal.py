@@ -120,14 +120,18 @@ class TimeDomainSignal(ABC):
         timesteps = int(cutoff_frequency / self.frequency)
 
         time_domain_signal = self.get_time_domain_signal(dt, timesteps)
-        return rfftfreq(len(time_domain_signal), d=dt), rfft(time_domain_signal), len(time_domain_signal)
+        return (
+            rfftfreq(len(time_domain_signal), d=dt),
+            rfft(time_domain_signal),
+            len(time_domain_signal),
+        )
 
     def retrieve_time_domain_signal(
-        self, fft_signal: np.ndarray, cutoff_frequency: float
+        self, fft_signal: np.ndarray, cutoff_frequency: float, signal_length: int
     ) -> tuple[np.ndarray, np.ndarray]:
         """Compute time-domain signal by FFT."""
         return retrieve_time_domain_signal_from_fft(
-            fft_signal, cutoff_frequency, self.frequency
+            fft_signal, cutoff_frequency, self.frequency, signal_length
         )
 
     @abstractmethod
