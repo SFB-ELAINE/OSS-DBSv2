@@ -55,6 +55,10 @@ from .defaults import (
     PMTsEEG2102_12,
     PMTsEEG2102_14,
     PMTsEEG2102_16,
+    SceneRay1242,
+    SceneRay1202,
+    SceneRay1211,
+    SceneRay1212,
     default_electrode_parameters,
 )
 from .dixi_microtechniques import (
@@ -77,6 +81,7 @@ from .microelectrode import MicroElectrodeModel, MicroElectrodeParameters
 from .neuro_pace import NeuroPaceModel, NeuroPaceParameters
 from .neuronexus import NeuroNexusElectrodeModel, NeuroNexusParameters
 from .pins_medical import PINSMedicalModel, PINSMedicalParameters
+from .sceneray import SceneRay1242Model, SceneRay1242Parameters
 
 ELECTRODES = {
     "AbbottStJudeActiveTip6142_6145": AbbottStJudeActiveTip6142_6145,
@@ -112,6 +117,10 @@ ELECTRODES = {
     "PINSMedicalL302": PINSMedicalL302,
     "PINSMedicalL303": PINSMedicalL303,
     "NeuroNexusA1x16_5mm_50_177": NeuroNexusA1x16_5mm_50_177,
+    "SceneRay1242": SceneRay1242,
+    "SceneRay1202": SceneRay1202,
+    "SceneRay1211": SceneRay1211,
+    "SceneRay1212": SceneRay1212,
 }
 
 ELECTRODE_MODELS = {
@@ -148,6 +157,10 @@ ELECTRODE_MODELS = {
     "PINSMedicalL302Custom": PINSMedicalModel,
     "PINSMedicalL303Custom": PINSMedicalModel,
     "NeuroNexusA1x16_5mm_50_177Custom": NeuroNexusElectrodeModel,
+    "SceneRay1242Custom": SceneRay1242Model,
+    "SceneRay1211Custom": MedtronicModel,
+    "SceneRay1202Custom": BostonScientificVerciseModel,
+    "SceneRay1212Custom": BostonScientificVerciseModel,    
 }
 
 
@@ -168,6 +181,7 @@ ELECTRODE_PARAMETERS = {
     "NeuroPaceModel": NeuroPaceParameters,
     "PINSMedicalModel": PINSMedicalParameters,
     "NeuroNexusElectrodeModel": NeuroNexusParameters,
+    "SceneRay1242Model": SceneRay1242Parameters
 }
 
 __all__ = (
@@ -230,5 +244,9 @@ __all__ = (
     "PMTsEEG2102_12",
     "PMTsEEG2102_14",
     "PMTsEEG2102_16",
+    "SceneRay1242",
+    "SceneRay1202",
+    "SceneRay1211",
+    "SceneRay1212",
     "default_electrode_parameters",
 )
