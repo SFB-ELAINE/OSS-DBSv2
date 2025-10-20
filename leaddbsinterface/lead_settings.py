@@ -600,6 +600,12 @@ class LeadSettings:
         if (
             electrode_name == "BostonScientificVercise"
             or electrode_name == "BostonScientificVerciseCustom"
+            or electrode_name == "SceneRay1202"
+            or electrode_name == "SceneRay1202Custom"
+            or electrode_name == "SceneRay1212"
+            or electrode_name == "SceneRay1212Custom"
+            or electrode_name == "SceneRay1242"
+            or electrode_name == "SceneRay1242Custom"
             or np.max(np.abs(phi_vector[~np.isnan(phi_vector)])) > 5.0
         ):
             grid_resolution = 0.4
@@ -646,6 +652,10 @@ class LeadSettings:
             "Medtronic 3391": "Medtronic3391",
             "SceneRay SR1210": "Medtronic3387",
             "SceneRay SR1200": "Medtronic3389",
+            "SceneRay SR1242": "SceneRay1242",
+            "SceneRay SR1202": "SceneRay1202",
+            "SceneRay SR1212": "SceneRay1212",
+            "SceneRay SR1211": "SceneRay1211",
             "Medtronic B33005": "MedtronicSenSightB33005",
             "Medtronic B33015": "MedtronicSenSightB33015",
             "PINS Medical L301": "PINSMedicalL301",
