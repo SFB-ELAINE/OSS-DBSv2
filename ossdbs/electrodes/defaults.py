@@ -47,11 +47,7 @@ from .pins_medical import (
     PINSMedicalModel,
     PINSMedicalParameters,
 )
-
-from .sceneray import (
-    SceneRay1242Model,
-    SceneRay1242Parameters
-)
+from .sceneray import SceneRay1242Model, SceneRay1242Parameters
 
 default_electrode_parameters = {
     "AbbottStJudeActiveTip6146_6149": AbbottStJudeActiveTipParameters(
@@ -311,7 +307,7 @@ default_electrode_parameters = {
         contact_spacing=4.0,
         lead_diameter=1.27,
         total_length=400.0,
-    ),   
+    ),
     "SceneRay1202": BostonScientificVerciseParameters(
         tip_length=1.5,
         contact_length=1.5,
@@ -601,12 +597,14 @@ def NeuroNexusA1x16_5mm_50_177(
     parameters = default_electrode_parameters["NeuroNexusA1x16_5mm_50_177"]
     return NeuroNexusElectrodeModel(parameters, rotation, direction, position)
 
+
 def SceneRay1242(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
     """SceneRay 1242 electrode."""
     parameters = default_electrode_parameters["SceneRay1242"]
     return SceneRay1242Model(parameters, rotation, direction, position)
+
 
 def SceneRay1202(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
@@ -615,12 +613,14 @@ def SceneRay1202(
     parameters = default_electrode_parameters["SceneRay1202"]
     return BostonScientificVerciseModel(parameters, rotation, direction, position)
 
+
 def SceneRay1211(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
 ):
     """SceneRay 1211 electrode."""
     parameters = default_electrode_parameters["SceneRay1211"]
     return MedtronicModel(parameters, rotation, direction, position)
+
 
 def SceneRay1212(
     rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)

@@ -10,7 +10,7 @@ import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
-from .utilities import get_electrode_spin_angle, get_highest_edge, get_lowest_edge
+from .utilities import get_highest_edge, get_lowest_edge
 
 
 @dataclass
@@ -31,7 +31,11 @@ class SceneRay1242Parameters:
 
     def get_distance_l1_l4(self) -> float:
         """Returns distance between first level contact and fourth level contact."""
-        return 2 * (self.contact_length + self.contact_spacing) + self.first_contact_spacing + self.contact_length
+        return (
+            2 * (self.contact_length + self.contact_spacing)
+            + self.first_contact_spacing
+            + self.contact_length
+        )
 
 
 class SceneRay1242Model(ElectrodeModel):
@@ -113,17 +117,18 @@ class SceneRay1242Model(ElectrodeModel):
             max_edge.name = name
             vector = tuple(np.array(direction) * distance)
             contacts.append(contact.Move(vector))
-            
+
             if count == 0:
                 # SceneRay1242 has unique spacing between the distal pair of contacts
                 distance += (
-                    self._parameters.contact_length + self._parameters.first_contact_spacing
-                )                
+                    self._parameters.contact_length
+                    + self._parameters.first_contact_spacing
+                )
             else:
                 distance += (
                     self._parameters.contact_length + self._parameters.contact_spacing
                 )
-                
+
         if np.allclose(self._direction, direction):
             return netgen.occ.Fuse(contacts)
         # rotate electrode to match orientation
@@ -134,6 +139,3 @@ class SceneRay1242Model(ElectrodeModel):
         )
         angle = np.degrees(np.arccos(self._direction[2]))
         return netgen.occ.Fuse(contacts).Rotate(occ.Axis(p=origin, d=rotation), angle)
-
-
-

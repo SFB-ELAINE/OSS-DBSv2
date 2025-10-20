@@ -55,10 +55,10 @@ from .defaults import (
     PMTsEEG2102_12,
     PMTsEEG2102_14,
     PMTsEEG2102_16,
-    SceneRay1242,
     SceneRay1202,
     SceneRay1211,
     SceneRay1212,
+    SceneRay1242,
     default_electrode_parameters,
 )
 from .dixi_microtechniques import (
@@ -160,7 +160,7 @@ ELECTRODE_MODELS = {
     "SceneRay1242Custom": SceneRay1242Model,
     "SceneRay1211Custom": MedtronicModel,
     "SceneRay1202Custom": BostonScientificVerciseModel,
-    "SceneRay1212Custom": BostonScientificVerciseModel,    
+    "SceneRay1212Custom": BostonScientificVerciseModel,
 }
 
 
@@ -181,7 +181,7 @@ ELECTRODE_PARAMETERS = {
     "NeuroPaceModel": NeuroPaceParameters,
     "PINSMedicalModel": PINSMedicalParameters,
     "NeuroNexusElectrodeModel": NeuroNexusParameters,
-    "SceneRay1242Model": SceneRay1242Parameters
+    "SceneRay1242Model": SceneRay1242Parameters,
 }
 
 __all__ = (
@@ -244,9 +244,9 @@ __all__ = (
     "PMTsEEG2102_12",
     "PMTsEEG2102_14",
     "PMTsEEG2102_16",
-    "SceneRay1242",
     "SceneRay1202",
     "SceneRay1211",
     "SceneRay1212",
+    "SceneRay1242",
     "default_electrode_parameters",
 )
