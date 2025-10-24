@@ -585,22 +585,45 @@ class VolumeConductor(ABC):
         self._signal = new_signal
 
     def _check_signal(self, new_signal: FrequencyDomainSignal) -> None:
+        """Check the provided signal."""
+        sum_currents = 0
+        # check that floating conditions have been imposed correctly
+        floating_with_surface_impedance = 0
+        for contact in self.contacts.floating:
+            if contact.surface_impedance_model is not None:
+                floating_with_surface_impedance += 1
+            sum_currents += contact.current
+        if floating_with_surface_impedance > 0 and not new_signal.current_controlled:
+            raise ValueError(
+                "Surface impedance floating mode requires "
+                "current-controlled stimulation."
+            )
+
         if new_signal.current_controlled:
-            sum_currents = 0.0
             voltages_active = np.zeros(len(self.contacts.active))
             for idx, contact in enumerate(self.contacts.active):
                 sum_currents += contact.current
                 voltages_active[idx] = contact.voltage
-            for contact in self.contacts.floating:
-                active_contacts_grounded = np.isclose(voltages_active, 0.0)
-                if len(np.where(active_contacts_grounded)[0]) != 1:
-                    raise ValueError(
-                        "In multipolar current-controlled mode, "
-                        "only one active contact has to be grounded!"
-                    )
-                sum_currents += contact.current
             if not np.isclose(sum_currents, 0):
                 raise ValueError("The sum of all currents is not zero!")
+
+            if len(self.contacts.floating) > 0:
+                if floating_with_surface_impedance > 0:
+                    if len(self.contacts.floating) > floating_with_surface_impedance:
+                        raise ValueError(
+                            "You have some floating contacts with a "
+                            "surface impedance model and some without."
+                            " This case has not yet been covered"
+                        )
+                else:
+                    active_contacts_grounded = np.isclose(voltages_active, 0.0)
+                    if len(np.where(active_contacts_grounded)[0]) > 1:
+                        raise ValueError(
+                            "In multipolar current-controlled mode, "
+                            "only one active contact must be grounded!"
+                            "Set all other contacts to floating mode or "
+                            "assign non-zero voltages."
+                        )
 
     @property
     def current_controlled(self) -> bool:
@@ -702,7 +725,6 @@ class VolumeConductor(ABC):
     @property
     def current_density(self) -> ngsolve.GridFunction:
         """Return current density in A/mm^2."""
-        # scale to account for mm as length unit (not yet contained in conductivity)
         return self.conductivity * self.electric_field
 
     @property
@@ -884,7 +906,7 @@ class VolumeConductor(ABC):
             floating_voltages[contact.name] = contact.voltage
         return floating_voltages
 
-    def h1_space(self, boundaries: List[str], is_complex: bool) -> ngsolve.H1:
+    def h1_space(self, boundaries: None | List[str], is_complex: bool) -> ngsolve.H1:
         """Return a h1 space on the mesh.
 
         Parameters
@@ -898,7 +920,10 @@ class VolumeConductor(ABC):
         -------
         ngsolve.H1
         """
-        dirichlet = "|".join(boundary for boundary in boundaries)
+        # default is no Dirichlet BC
+        dirichlet = ""
+        if boundaries is not None:
+            dirichlet = "|".join(boundary for boundary in boundaries)
         return ngsolve.H1(
             mesh=self.mesh.ngsolvemesh,
             order=self._order,
@@ -914,8 +939,6 @@ class VolumeConductor(ABC):
         -------
         ngsolve.NumberSpace
             Space with only one single (global) DOF.
-
-        TODO check if needed
         """
         return ngsolve.NumberSpace(
             mesh=self.mesh.ngsolvemesh, order=0, complex=self.is_complex
@@ -986,11 +1009,17 @@ class VolumeConductor(ABC):
                     self.contacts[contact.name].voltage = contact_voltage
         else:
             if len(self.contacts.active) != 1:
-                raise ValueError(
-                    "In multicontact current-controlled mode,"
-                    "currently only one active contact with fixed voltage can be used."
-                    "Its voltage has to be 0V (ground)."
-                )
+                floating_with_surface_impedance = 0
+                for contact in self.contacts.floating:
+                    if contact.surface_impedance_model is not None:
+                        floating_with_surface_impedance += 1
+                if len(self.contacts.floating) != floating_with_surface_impedance:
+                    raise ValueError(
+                        "In multicontact current-controlled mode,"
+                        "currently only one active contact with "
+                        "fixed voltage can be used. "
+                        "Its voltage has to be 0V (ground)."
+                    )
             for contact in self.contacts.active:
                 if not np.isclose(contact.voltage, 0):
                     raise ValueError(

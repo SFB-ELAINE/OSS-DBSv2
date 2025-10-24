@@ -103,7 +103,7 @@
   },
   "Solver": {
     "Type": "CG",
-    "Preconditioner": "bddc",
+    "Preconditioner": "local",
     "PreconditionerKwargs": {},
     "PrintRates": true,
     "MaximumSteps": 200,

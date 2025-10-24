@@ -29,6 +29,11 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         super().__init__(
             geometry, conductivity, solver, order, meshing_parameters, output_path
         )
+        raise NotImplementedError(
+            "This module needs to be fixed before "
+            "productive release. A proper implementation of the "
+            "complete electrode model is required."
+        )
         _logger.debug("Save surface impedance boundaries")
         self._surface_impedance_floating_boundaries = []
         for contact in self.contacts.floating:
@@ -90,8 +95,7 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         self._update_floating_voltages()
 
     def __create_space(self) -> ngsolve.FESpace:
-        boundaries = self._surface_impedance_floating_boundaries
-        h1_space = self.h1_space(boundaries=boundaries, is_complex=self.is_complex)
+        h1_space = self.h1_space(boundaries=None, is_complex=self.is_complex)
         number_spaces = [
             self.number_space() for _ in self._surface_impedance_floating_boundaries
         ]
@@ -107,7 +111,7 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         test = space.TestFunction()
         u = trial[0]
         v = test[0]
-        _logger.debug("Creating space with {len(u)} subspaces")
+        _logger.debug(f"Creating space with {len(test)} subspaces")
 
         # sum up all potentials to set sum to zero in the end
         sum_u = None
@@ -119,15 +123,15 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         for ufix, vfix, boundary in zip(
             trial[1:], test[1:], self._surface_impedance_floating_boundaries
         ):
-            a = ngsolve.CoefficientFunction(1.0 / self._surface_impedances[boundary])
-            bilinear_form += a * (u - ufix) * (v - vfix) * ngsolve.ds(boundary)
+            print(1.0 / self._surface_impedances[boundary])
+            ys = ngsolve.CoefficientFunction(1.0 / self._surface_impedances[boundary])
+            bilinear_form += ys * (u - ufix) * (v - vfix) * ngsolve.ds(boundary)
             if sum_u is None and sum_v is None:
                 sum_u = ufix
                 sum_v = vfix
             else:
                 sum_u += ufix
                 sum_v += vfix
-
         # enforces that sum of potentials is zero
         bilinear_form += sum_u * test[-1] * ngsolve.dx
         bilinear_form += sum_v * trial[-1] * ngsolve.dx
@@ -142,6 +146,7 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         f = ngsolve.LinearForm(space=self._space)
         for contact in contacts:
             # account for mm as length unit
+            # TODO check here
             length = ngsolve.Integrate(
                 ngsolve.CoefficientFunction(1e-3) * ngsolve.ds(contact.name),
                 self.mesh.ngsolvemesh,
