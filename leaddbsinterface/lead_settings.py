@@ -132,6 +132,9 @@ class LeadSettings:
         )
         actual_span = np.linalg.norm(last_contact - first_contact)
 
+        # use a conductivity model from the GUI
+        cond_model = self.get_cond_model()
+
         # MAKE THE DICTIONARY
         partial_dict = {
             "ModelSide": 0,  # hardcoded for now, always keep to 0
@@ -183,6 +186,10 @@ class LeadSettings:
                 "DiffusionTensorActive": len(self.get_dti_name()) > 0,
                 "DTIPath": self.get_dti_name(),
             },
+            "DielectricModel": {
+                "Type": cond_model,
+                "CustomParameters": None
+            },
             "PointModel": {
                 "Lattice": {
                     "Active": not (
@@ -226,6 +233,34 @@ class LeadSettings:
             },
         }
 
+        # the constant model from Lead-DBS also assumes homogeneity
+        # but this can be customized
+        if cond_model == 'Constant':
+            partial_dict["DielectricModel"]["CustomParameters"] = {
+                "Gray matter": {
+                    "permittivity": 2.22e4,
+                    "conductivity": 0.2,
+                },
+                "White matter": {
+                    "permittivity": 2.22e4,
+                    "conductivity": 0.2,
+                },
+                "CSF": {
+                    "permittivity": 2.22e4,
+                    "conductivity": 0.2,
+                },
+                "Blood": {
+                    "permittivity": 2.22e4,
+                    "conductivity": 0.2,
+                },
+                "Unknown": {
+                    "permittivity": 2.22e4,
+                    "conductivity": 0.2,
+                },               
+            }
+        else:
+            cond_model = self.get_cond_model()
+
         # use actual signal parameters for PAM
         if self.get_calc_axon_act():
             partial_dict = self.add_stimsignal_params(partial_dict, hemis_idx)
@@ -268,6 +303,10 @@ class LeadSettings:
     def get_dti_name(self):
         """Path to DTI file."""
         return self._get_str("DTI_data_name")
+    
+    def get_cond_model(self):
+        """Conducitvity Model"""
+        return self._get_str("cond_model")
 
     def get_gm_idx(self):
         """Gray matter index in MRI."""
@@ -714,7 +753,7 @@ class LeadSettings:
             "EncapsulationLayer": {
                 "Thickness[mm]": 0.1,
                 "Material": self.get_encapsulation_type(),
-                "DielectricModel": "ColeCole4",
+                "DielectricModel": self.get_cond_model(),
                 "DielectricParameters": None,
                 "MaxMeshSize": 0.1,
             },
