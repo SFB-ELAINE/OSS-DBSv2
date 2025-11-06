@@ -186,10 +186,7 @@ class LeadSettings:
                 "DiffusionTensorActive": len(self.get_dti_name()) > 0,
                 "DTIPath": self.get_dti_name(),
             },
-            "DielectricModel": {
-                "Type": cond_model,
-                "CustomParameters": None
-            },
+            "DielectricModel": {"Type": cond_model, "CustomParameters": None},
             "PointModel": {
                 "Lattice": {
                     "Active": not (
@@ -235,7 +232,7 @@ class LeadSettings:
 
         # the constant model from Lead-DBS also assumes homogeneity
         # but this can be customized
-        if cond_model == 'Constant':
+        if cond_model == "Constant":
             partial_dict["DielectricModel"]["CustomParameters"] = {
                 "Gray matter": {
                     "permittivity": 2.22e4,
@@ -256,7 +253,7 @@ class LeadSettings:
                 "Unknown": {
                     "permittivity": 2.22e4,
                     "conductivity": 0.2,
-                },               
+                },
             }
         else:
             cond_model = self.get_cond_model()
@@ -303,7 +300,7 @@ class LeadSettings:
     def get_dti_name(self):
         """Path to DTI file."""
         return self._get_str("DTI_data_name")
-    
+
     def get_cond_model(self):
         """Conducitvity Model"""
         return self._get_str("cond_model")
