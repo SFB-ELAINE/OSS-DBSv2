@@ -302,7 +302,7 @@ class LeadSettings:
         return self._get_str("DTI_data_name")
 
     def get_cond_model(self):
-        """Conducitvity Model"""
+        """Conductivity Model."""
         return self._get_str("cond_model")
 
     def get_gm_idx(self):
