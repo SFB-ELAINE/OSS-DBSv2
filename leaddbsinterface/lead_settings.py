@@ -231,7 +231,7 @@ class LeadSettings:
         }
 
         # the constant model from Lead-DBS also assumes homogeneity
-        # but this can be customized
+        # by default, gray matter parameters at 10 kHz, but can be customized
         if cond_model == "Constant":
             partial_dict["DielectricModel"]["CustomParameters"] = {
                 "Gray matter": {
