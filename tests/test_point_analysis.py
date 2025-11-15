@@ -8,7 +8,11 @@ from ossdbs.stimulation_signals import FrequencyDomainSignal, RectangleSignal
 from ossdbs.utils.nifti1image import MagneticResonanceImage
 from ossdbs.utils.settings import Settings
 
+# ruff: noqa: F401
+from .test_fem import geometry_fixture, mri_fixture, settings_fixture
 
+
+# ruff: noqa: F811
 @pytest.fixture
 def mesh_fixture(geometry_fixture, settings_fixture):
     geometry = geometry_fixture[2].geometry
@@ -17,6 +21,7 @@ def mesh_fixture(geometry_fixture, settings_fixture):
     return mesh
 
 
+# ruff: noqa: F811
 @pytest.fixture
 def conductivity_fixture(mri_fixture, geometry_fixture, settings_fixture):
     mri_image, _ = mri_fixture
@@ -105,7 +110,30 @@ class TestPointAnalysis:
             len(frequency_domain_signal.frequencies)
         )
 
-        # TODO continue
+        amplitudes = np.linspace(
+            start=0, stop=len(pathway.lattice), num=len(pathway.lattice)
+        )
+
+        # copy signal (emulates simulations by using different amplitudes)
+        for (freq_idx, _), scale_factor in zip(
+            enumerate(fft_frequencies), fft_coefficients
+        ):
+            pots = np.expand_dims(scale_factor * amplitudes, axis=-1)
+            pathway.copy_frequency_domain_solution_from_vcm(freq_idx, pots)
+        potentials, _, _, _ = pathway.compute_solutions_in_time_domain(
+            signal_length, convert_field=False
+        )
+
+        # compute original time domain signal td_signal
+        cutoff_frequency = signal.get_adjusted_cutoff_frequency(cutoff_frequency)
+        dt = 1.0 / cutoff_frequency
+        td_signal = signal.get_time_domain_signal(dt=dt, timesteps=signal_length)
+
+        # go through all lattice points and check that fft yields correct signal at all points
+        test_values = []
+        for amplitude, potential in zip(amplitudes, potentials):
+            test_values.append(np.all(np.isclose(potential, amplitude * td_signal)))
+        assert all(test_values)
 
     def test_lattice(self, parameters):
         try:

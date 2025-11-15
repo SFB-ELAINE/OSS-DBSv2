@@ -285,15 +285,14 @@ class PointModel(ABC):
             )
 
     def copy_frequency_domain_solution_from_vcm(
-        self, freq_idx: int, potentials: np.ndarray, fields: np.ndarray
+        self, freq_idx: int, potentials: np.ndarray, fields: Optional[np.ndarray] = None
     ) -> None:
-        """Copy solution from volume conductor model."""
-                
-        # copy potentials and fields
+        """Copy potentials and fields from volume conductor model."""
         self.tmp_potential_freq_domain[:, freq_idx] = potentials[:, 0]
-        self.tmp_Ex_freq_domain[:, freq_idx] = fields[:, 0]
-        self.tmp_Ey_freq_domain[:, freq_idx] = fields[:, 1]
-        self.tmp_Ez_freq_domain[:, freq_idx] = fields[:, 2]
+        if fields is not None:
+            self.tmp_Ex_freq_domain[:, freq_idx] = fields[:, 0]
+            self.tmp_Ey_freq_domain[:, freq_idx] = fields[:, 1]
+            self.tmp_Ez_freq_domain[:, freq_idx] = fields[:, 2]
 
     def close_output_file(self):
         """Close out-of-core file."""
@@ -635,11 +634,19 @@ class PointModel(ABC):
         else:
             tmp_potential_freq_domain = self.tmp_potential_freq_domain
 
-        potential_in_time = irfft(tmp_potential_freq_domain, n=signal_length, axis=1, workers=-1).real
+        potential_in_time = irfft(
+            tmp_potential_freq_domain, n=signal_length, axis=1, workers=-1
+        ).real
         if convert_field:
-            Ex_in_time = irfft(self.tmp_Ex_freq_domain, n=signal_length, axis=1, workers=-1).real
-            Ey_in_time = irfft(self.tmp_Ey_freq_domain, n=signal_length, axis=1, workers=-1).real
-            Ez_in_time = irfft(self.tmp_Ez_freq_domain, n=signal_length, axis=1, workers=-1).real
+            Ex_in_time = irfft(
+                self.tmp_Ex_freq_domain, n=signal_length, axis=1, workers=-1
+            ).real
+            Ey_in_time = irfft(
+                self.tmp_Ey_freq_domain, n=signal_length, axis=1, workers=-1
+            ).real
+            Ez_in_time = irfft(
+                self.tmp_Ez_freq_domain, n=signal_length, axis=1, workers=-1
+            ).real
         return potential_in_time, Ex_in_time, Ey_in_time, Ez_in_time
 
     def export_point_model_information(self, filename: str) -> None:
