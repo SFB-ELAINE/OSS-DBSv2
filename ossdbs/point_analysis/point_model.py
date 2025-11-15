@@ -285,7 +285,7 @@ class PointModel(ABC):
             )
 
     def copy_frequency_domain_solution_from_vcm(
-        self, freq_idx: int, potentials: np.ndarray, fields: np.ndarray
+        self, freq_idx: int, potentials: np.ndarray, fields: Optional[np.ndarray] = None
     ) -> None:
         """Copy solution from volume conductor model."""
         signal_length = self.tmp_potential_freq_domain.shape[1]
@@ -297,16 +297,18 @@ class PointModel(ABC):
                 self.tmp_potential_freq_domain[:, freq_idx] = np.conjugate(
                     potentials[:, 0]
                 )
-                self.tmp_Ex_freq_domain[:, freq_idx] = np.conjugate(fields[:, 0])
-                self.tmp_Ey_freq_domain[:, freq_idx] = np.conjugate(fields[:, 1])
-                self.tmp_Ez_freq_domain[:, freq_idx] = np.conjugate(fields[:, 2])
+                if fields is not None:
+                    self.tmp_Ex_freq_domain[:, freq_idx] = np.conjugate(fields[:, 0])
+                    self.tmp_Ey_freq_domain[:, freq_idx] = np.conjugate(fields[:, 1])
+                    self.tmp_Ez_freq_domain[:, freq_idx] = np.conjugate(fields[:, 2])
                 return
 
         # copy potentials and fields
         self.tmp_potential_freq_domain[:, freq_idx] = potentials[:, 0]
-        self.tmp_Ex_freq_domain[:, freq_idx] = fields[:, 0]
-        self.tmp_Ey_freq_domain[:, freq_idx] = fields[:, 1]
-        self.tmp_Ez_freq_domain[:, freq_idx] = fields[:, 2]
+        if fields is not None:
+            self.tmp_Ex_freq_domain[:, freq_idx] = fields[:, 0]
+            self.tmp_Ey_freq_domain[:, freq_idx] = fields[:, 1]
+            self.tmp_Ez_freq_domain[:, freq_idx] = fields[:, 2]
 
         # if DC, there is no negative frequency
         if freq_idx == 0:
@@ -319,9 +321,10 @@ class PointModel(ABC):
         self.tmp_potential_freq_domain[:, negative_freq_idx] = np.conjugate(
             potentials[:, 0]
         )
-        self.tmp_Ex_freq_domain[:, negative_freq_idx] = np.conjugate(fields[:, 0])
-        self.tmp_Ey_freq_domain[:, negative_freq_idx] = np.conjugate(fields[:, 1])
-        self.tmp_Ez_freq_domain[:, negative_freq_idx] = np.conjugate(fields[:, 2])
+        if fields is not None:
+            self.tmp_Ex_freq_domain[:, negative_freq_idx] = np.conjugate(fields[:, 0])
+            self.tmp_Ey_freq_domain[:, negative_freq_idx] = np.conjugate(fields[:, 1])
+            self.tmp_Ez_freq_domain[:, negative_freq_idx] = np.conjugate(fields[:, 2])
 
     def close_output_file(self):
         """Close out-of-core file."""
