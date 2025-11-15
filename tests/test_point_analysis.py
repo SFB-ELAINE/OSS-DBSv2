@@ -1,9 +1,37 @@
 import numpy as np
 import pytest
 
+import ossdbs
+from ossdbs.fem import Mesh
 from ossdbs.point_analysis import Lattice, Pathway, VoxelLattice
+from ossdbs.stimulation_signals import FrequencyDomainSignal, RectangleSignal
 from ossdbs.utils.nifti1image import MagneticResonanceImage
 from ossdbs.utils.settings import Settings
+
+
+@pytest.fixture
+def mesh_fixture(geometry_fixture, settings_fixture):
+    geometry = geometry_fixture[2].geometry
+    mesh = Mesh(geometry, settings_fixture["FEMOrder"])
+    mesh.generate_mesh({"MeshingHypothesis": {"Type": "Moderate"}})
+    return mesh
+
+
+@pytest.fixture
+def conductivity_fixture(mri_fixture, geometry_fixture, settings_fixture):
+    mri_image, _ = mri_fixture
+
+    brain_region, _, geometry = geometry_fixture
+    dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
+    materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
+    return ossdbs.ConductivityCF(
+        mri_image,
+        brain_region,
+        dielectric_model,
+        materials,
+        geometry.encapsulation_layers,
+        complex_data=settings_fixture["EQSMode"],
+    )
 
 
 @pytest.fixture
@@ -31,13 +59,53 @@ def parameters(settings):
     return shape, center, distance, direction, collapse_vta
 
 
+@pytest.fixture
+def pathway_fixture(settings):
+    return Pathway(input_path=settings["PointModel"]["Pathway"]["FileName"])
+
+
 class TestPointAnalysis:
-    def test_pathway(self, settings):
+    def test_pathway(self, pathway_fixture):
         try:
-            pathway = Pathway(input_path=settings["PointModel"]["Pathway"]["FileName"])
+            pathway = pathway_fixture
             assert pathway is not None
         except Exception:
             pytest.fail("Cannot be instantiated.")
+
+    def test_pathway_signal_assignment(
+        self, pathway_fixture, mesh_fixture, conductivity_fixture
+    ):
+        pathway = pathway_fixture
+        signal = RectangleSignal(
+            frequency=130,
+            pulse_width=60e-6,
+            counter_pulse_width=0.0,
+            inter_pulse_width=0.0,
+            counter_pulse_amplitude=0.0,
+        )
+        base_frequency = signal.frequency
+        cutoff_frequency = 5e5
+        fft_frequencies, fft_coefficients, signal_length = signal.get_fft_spectrum(
+            cutoff_frequency
+        )
+
+        frequency_domain_signal = FrequencyDomainSignal(
+            frequencies=fft_frequencies,
+            amplitudes=fft_coefficients,
+            base_frequency=base_frequency,
+            cutoff_frequency=cutoff_frequency,
+            signal_length=signal_length,
+            current_controlled=False,
+        )
+        mesh = mesh_fixture
+        conductivity = conductivity_fixture
+        # prepare VCM specific data structure
+        pathway.prepare_VCM_specific_evaluation(mesh, conductivity)
+        pathway.prepare_frequency_domain_data_structure(
+            len(frequency_domain_signal.frequencies)
+        )
+
+        # TODO continue
 
     def test_lattice(self, parameters):
         try:
