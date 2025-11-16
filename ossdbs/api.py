@@ -413,11 +413,11 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
     current_controlled = signal_settings["CurrentControlled"]
     octave_band_approximation = False
     if signal_type == "Multisine":
-        frequencies = signal_settings["ListOfFrequencies"]
-        fourier_coefficients = np.ones(len(frequencies))
-        base_frequency = frequencies[0]
-        cutoff_frequency = frequencies[0]
-        signal_length = len(frequencies)
+        fft_frequencies = signal_settings["ListOfFrequencies"]
+        fft_coefficients = np.ones(len(fft_frequencies))
+        base_frequency = fft_frequencies[0]
+        cutoff_frequency = fft_frequencies[0]
+        signal_length = len(fft_frequencies)
     else:
         spectrum_mode = signal_settings["SpectrumMode"]
         if spectrum_mode == "OctaveBand":
