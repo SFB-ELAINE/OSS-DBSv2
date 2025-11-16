@@ -34,6 +34,7 @@ from ossdbs.stimulation_signals import (
     TrapezoidSignal,
     TriangleSignal,
 )
+from ossdbs.stimulation_signals.utilities import get_positive_frequencies
 from ossdbs.utils.nifti1image import DiffusionTensorImage, MagneticResonanceImage
 
 _logger = logging.getLogger(__name__)
@@ -427,7 +428,6 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
         cutoff_frequency = signal_settings["CutoffFrequency"]
         base_frequency = signal.frequency
         fft_frequencies, fft_coefficients, signal_length = signal.get_fft_spectrum(cutoff_frequency)
-
     frequency_domain_signal = FrequencyDomainSignal(
         frequencies=fft_frequencies,
         amplitudes=fft_coefficients,

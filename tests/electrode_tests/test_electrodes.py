@@ -68,6 +68,7 @@ class TestElectrode:
         "PMTsEEG2102_14",
         "PMTsEEG2102_16",
     ]
+    SceneRay1242: ClassVar[list[str]] = ["SceneRay1242"]
 
     def check_rename_boundaries(self, electrode, electrode_name):
         """Check whether set_contact_names() works."""
@@ -262,6 +263,7 @@ class TestElectrode:
                 or electrode_name in self.Medtronic
                 or electrode_name in self.NeuroPace
                 or electrode_name in self.PINSMedical
+                or electrode_name in self.SceneRay1242
             ):
                 C1_height = tip_length - lead_radius
                 C1_volume = (4 / 3 * lead_radius**3 * np.pi * 0.5) + (

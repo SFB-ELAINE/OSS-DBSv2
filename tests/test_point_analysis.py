@@ -83,13 +83,14 @@ class TestPointAnalysis:
         pathway = pathway_fixture
         signal = RectangleSignal(
             frequency=130,
-            pulse_width=60e-6,
+            # larger than usual for lower cutoff and less computational complexity
+            pulse_width=600e-6,
             counter_pulse_width=0.0,
             inter_pulse_width=0.0,
             counter_pulse_amplitude=0.0,
         )
         base_frequency = signal.frequency
-        cutoff_frequency = 5e5
+        cutoff_frequency = 3e4
         fft_frequencies, fft_coefficients, signal_length = signal.get_fft_spectrum(
             cutoff_frequency
         )

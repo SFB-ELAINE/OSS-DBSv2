@@ -132,6 +132,9 @@ class LeadSettings:
         )
         actual_span = np.linalg.norm(last_contact - first_contact)
 
+        # use a conductivity model from the GUI
+        cond_model = self.get_cond_model()
+
         # MAKE THE DICTIONARY
         partial_dict = {
             "ModelSide": 0,  # hardcoded for now, always keep to 0
@@ -183,6 +186,7 @@ class LeadSettings:
                 "DiffusionTensorActive": len(self.get_dti_name()) > 0,
                 "DTIPath": self.get_dti_name(),
             },
+            "DielectricModel": {"Type": cond_model, "CustomParameters": None},
             "PointModel": {
                 "Lattice": {
                     "Active": not (
@@ -226,6 +230,34 @@ class LeadSettings:
             },
         }
 
+        # the constant model from Lead-DBS also assumes homogeneity
+        # by default, gray matter parameters at 10 kHz, but can be customized
+        if cond_model == "Constant":
+            partial_dict["DielectricModel"]["CustomParameters"] = {
+                "Gray matter": {
+                    "permittivity": 2.22e4,
+                    "conductivity": 0.2,
+                },
+                "White matter": {
+                    "permittivity": 2.22e4,
+                    "conductivity": 0.2,
+                },
+                "CSF": {
+                    "permittivity": 2.22e4,
+                    "conductivity": 0.2,
+                },
+                "Blood": {
+                    "permittivity": 2.22e4,
+                    "conductivity": 0.2,
+                },
+                "Unknown": {
+                    "permittivity": 2.22e4,
+                    "conductivity": 0.2,
+                },
+            }
+        else:
+            cond_model = self.get_cond_model()
+
         # use actual signal parameters for PAM
         if self.get_calc_axon_act():
             partial_dict = self.add_stimsignal_params(partial_dict, hemis_idx)
@@ -268,6 +300,10 @@ class LeadSettings:
     def get_dti_name(self):
         """Path to DTI file."""
         return self._get_str("DTI_data_name")
+
+    def get_cond_model(self):
+        """Conductivity Model."""
+        return self._get_str("cond_model")
 
     def get_gm_idx(self):
         """Gray matter index in MRI."""
@@ -600,6 +636,12 @@ class LeadSettings:
         if (
             electrode_name == "BostonScientificVercise"
             or electrode_name == "BostonScientificVerciseCustom"
+            or electrode_name == "SceneRay1202"
+            or electrode_name == "SceneRay1202Custom"
+            or electrode_name == "SceneRay1212"
+            or electrode_name == "SceneRay1212Custom"
+            or electrode_name == "SceneRay1242"
+            or electrode_name == "SceneRay1242Custom"
             or np.max(np.abs(phi_vector[~np.isnan(phi_vector)])) > 5.0
         ):
             grid_resolution = 0.4
@@ -646,6 +688,10 @@ class LeadSettings:
             "Medtronic 3391": "Medtronic3391",
             "SceneRay SR1210": "Medtronic3387",
             "SceneRay SR1200": "Medtronic3389",
+            "SceneRay SR1242": "SceneRay1242",
+            "SceneRay SR1202": "SceneRay1202",
+            "SceneRay SR1212": "SceneRay1212",
+            "SceneRay SR1211": "SceneRay1211",
             "Medtronic B33005": "MedtronicSenSightB33005",
             "Medtronic B33015": "MedtronicSenSightB33015",
             "PINS Medical L301": "PINSMedicalL301",
@@ -704,7 +750,7 @@ class LeadSettings:
             "EncapsulationLayer": {
                 "Thickness[mm]": 0.1,
                 "Material": self.get_encapsulation_type(),
-                "DielectricModel": "ColeCole4",
+                "DielectricModel": self.get_cond_model(),
                 "DielectricParameters": None,
                 "MaxMeshSize": 0.1,
             },
