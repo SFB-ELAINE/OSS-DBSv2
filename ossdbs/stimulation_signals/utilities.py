@@ -26,7 +26,10 @@ def get_timesteps(
 
 
 def retrieve_time_domain_signal_from_fft(
-        fft_signal: np.ndarray, cutoff_frequency: float, base_frequency: float, signal_length: int
+    fft_signal: np.ndarray,
+    cutoff_frequency: float,
+    base_frequency: float,
+    signal_length: int,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Compute time-domain signal via fft.
 
