@@ -16,6 +16,15 @@ OSS-DBS is tested with Python 3.8, 3.9, 3.10, and 3.11.
 **Windows users and Mac users with Python 3.8: Please install NEURON separately before
 installing OSS-DBS. The instructions can be found [here](https://www.neuron.yale.edu/neuron/download).**
 
+
+All other users can run
+
+```
+pip install ossdbs
+```
+
+
+## Developers
 To install OSS-DBS, clone it into a local directory,
 `cd` into this directory and run
 

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ossdbs"
-version = "0.5"
+version = "0.5.0"
 description = "OSS-DBS v2: faster and modular open-source code for deep brain stimulation"
 readme = "README.md"
 requires-python = ">=3.9"
