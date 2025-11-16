@@ -128,3 +128,31 @@ def get_indices_in_octave_band(
     _logger.debug(f"Band indices from {band_indices[0]} to {band_indices[-1]}")
 
     return band_indices
+
+
+def get_positive_frequencies(
+    fft_frequencies, fft_coefficients
+) -> tuple[np.ndarray, np.ndarray]:
+    """Get only positive frequencies and related FFT coefficients.
+
+    Parameters
+    ----------
+    fft_frequencies: np.ndarray
+        Array with frequencies
+    fft_coefficients: np.ndarray
+        Array with complex-valued FFT coefficients
+    """
+    signal_length = len(fft_frequencies)
+    first_negative_freq = np.argwhere(fft_frequencies < 0)[0, 0]
+    frequencies = fft_frequencies[:first_negative_freq]
+    fourier_coefficients = fft_coefficients[:first_negative_freq]
+    # even signal
+    if signal_length % 2 == 0:
+        frequencies = np.append(
+            frequencies, -1.0 * fft_frequencies[first_negative_freq + 1]
+        )
+        fourier_coefficients = np.append(
+            fourier_coefficients,
+            np.conjugate(fft_coefficients[first_negative_freq + 1]),
+        )
+    return frequencies, fourier_coefficients

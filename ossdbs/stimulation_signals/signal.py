@@ -101,6 +101,13 @@ class TimeDomainSignal(ABC):
         """Set frequency of signal."""
         self._frequency = value
 
+    def get_adjusted_cutoff_frequency(self, cutoff_frequency: float) -> float:
+        """Adjust cutoff frequency to signal frequency.
+
+        Double the cutoff frequency to account for FFT and actually sample until there.
+        """
+        return adjust_cutoff_frequency(2.0 * cutoff_frequency, self.frequency)
+
     def get_fft_spectrum(self, cutoff_frequency: float) -> np.ndarray:
         """FFT spectrum of time-domain signal.
 
@@ -110,10 +117,7 @@ class TimeDomainSignal(ABC):
             Highest considered frequency.
 
         """
-        # we double the cutoff_frequency to actually sample until there
-        cutoff_frequency = adjust_cutoff_frequency(
-            2.0 * cutoff_frequency, self.frequency
-        )
+        cutoff_frequency = self.get_adjusted_cutoff_frequency(cutoff_frequency)
         dt = 1.0 / cutoff_frequency
         # required length for frequency
         timesteps = int(cutoff_frequency / self.frequency)
