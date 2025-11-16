@@ -57,9 +57,9 @@ class TestFFT:
             )
 
         original_signal = signal.get_time_domain_signal(dt, timesteps)
-        _, fft_signal = signal.get_fft_spectrum(cutoff_frequency)
+        _, fft_signal, signal_length = signal.get_fft_spectrum(cutoff_frequency)
         _, retrieved_signal = signal.retrieve_time_domain_signal(
-            fft_signal, cutoff_frequency
+            fft_signal, cutoff_frequency, signal_length
         )
         tolerance = 1e-5
         np.testing.assert_allclose(original_signal, retrieved_signal, atol=tolerance)

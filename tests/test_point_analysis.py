@@ -5,10 +5,6 @@ import ossdbs
 from ossdbs.fem import Mesh
 from ossdbs.point_analysis import Lattice, Pathway, VoxelLattice
 from ossdbs.stimulation_signals import FrequencyDomainSignal, RectangleSignal
-from ossdbs.stimulation_signals.utilities import (
-    adjust_cutoff_frequency,
-    get_positive_frequencies,
-)
 from ossdbs.utils.nifti1image import MagneticResonanceImage
 from ossdbs.utils.settings import Settings
 
@@ -95,32 +91,24 @@ class TestPointAnalysis:
         )
         base_frequency = signal.frequency
         cutoff_frequency = 3e4
-
-        # compute original time domain signal td_signal
-        fft_frequencies, fft_coefficients = signal.get_fft_spectrum(cutoff_frequency)
-        signal_length = len(fft_coefficients)
-        dt = 1.0 / adjust_cutoff_frequency(2.0 * cutoff_frequency, base_frequency)
-        td_signal = signal.get_time_domain_signal(dt=dt, timesteps=signal_length)
-
-        frequencies, fourier_coefficients = get_positive_frequencies(
-            fft_frequencies, fft_coefficients
+        fft_frequencies, fft_coefficients, signal_length = signal.get_fft_spectrum(
+            cutoff_frequency
         )
 
         frequency_domain_signal = FrequencyDomainSignal(
-            frequencies=frequencies,
-            amplitudes=fourier_coefficients,
+            frequencies=fft_frequencies,
+            amplitudes=fft_coefficients,
             base_frequency=base_frequency,
             cutoff_frequency=cutoff_frequency,
             signal_length=signal_length,
             current_controlled=False,
         )
-
         mesh = mesh_fixture
         conductivity = conductivity_fixture
         # prepare VCM specific data structure
         pathway.prepare_VCM_specific_evaluation(mesh, conductivity)
         pathway.prepare_frequency_domain_data_structure(
-            frequency_domain_signal.signal_length
+            len(frequency_domain_signal.frequencies)
         )
 
         amplitudes = np.linspace(
@@ -129,14 +117,18 @@ class TestPointAnalysis:
 
         # copy signal (emulates simulations by using different amplitudes)
         for (freq_idx, _), scale_factor in zip(
-            enumerate(frequencies), fourier_coefficients
+            enumerate(fft_frequencies), fft_coefficients
         ):
             pots = np.expand_dims(scale_factor * amplitudes, axis=-1)
             pathway.copy_frequency_domain_solution_from_vcm(freq_idx, pots)
-        # copy time domain
         potentials, _, _, _ = pathway.compute_solutions_in_time_domain(
-            frequency_domain_signal.signal_length, convert_field=False
+            signal_length, convert_field=False
         )
+
+        # compute original time domain signal td_signal
+        cutoff_frequency = signal.get_adjusted_cutoff_frequency(cutoff_frequency)
+        dt = 1.0 / cutoff_frequency
+        td_signal = signal.get_time_domain_signal(dt=dt, timesteps=signal_length)
 
         # go through all lattice points and check that fft yields correct signal at all points
         test_values = []

@@ -34,7 +34,6 @@ from ossdbs.stimulation_signals import (
     TrapezoidSignal,
     TriangleSignal,
 )
-from ossdbs.stimulation_signals.utilities import get_positive_frequencies
 from ossdbs.utils.nifti1image import DiffusionTensorImage, MagneticResonanceImage
 
 _logger = logging.getLogger(__name__)
@@ -414,11 +413,11 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
     current_controlled = signal_settings["CurrentControlled"]
     octave_band_approximation = False
     if signal_type == "Multisine":
-        frequencies = signal_settings["ListOfFrequencies"]
-        fourier_coefficients = np.ones(len(frequencies))
-        base_frequency = frequencies[0]
-        cutoff_frequency = frequencies[0]
-        signal_length = len(frequencies)
+        fft_frequencies = signal_settings["ListOfFrequencies"]
+        fft_coefficients = np.ones(len(fft_frequencies))
+        base_frequency = fft_frequencies[0]
+        cutoff_frequency = fft_frequencies[0]
+        signal_length = len(fft_frequencies)
     else:
         spectrum_mode = signal_settings["SpectrumMode"]
         if spectrum_mode == "OctaveBand":
@@ -427,15 +426,12 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
         signal = generate_signal(settings)
         cutoff_frequency = signal_settings["CutoffFrequency"]
         base_frequency = signal.frequency
-        fft_frequencies, fft_coefficients = signal.get_fft_spectrum(cutoff_frequency)
-        signal_length = len(fft_coefficients)
-        frequencies, fourier_coefficients = get_positive_frequencies(
-            fft_frequencies, fft_coefficients
+        fft_frequencies, fft_coefficients, signal_length = signal.get_fft_spectrum(
+            cutoff_frequency
         )
-
     frequency_domain_signal = FrequencyDomainSignal(
-        frequencies=frequencies,
-        amplitudes=fourier_coefficients,
+        frequencies=fft_frequencies,
+        amplitudes=fft_coefficients,
         current_controlled=current_controlled,
         base_frequency=base_frequency,
         cutoff_frequency=cutoff_frequency,

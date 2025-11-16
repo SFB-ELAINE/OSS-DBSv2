@@ -88,6 +88,9 @@ class Pathway(PointModel):
         self._location = np.full(n_points, "")
         self._coordinates = self._initialize_coordinates()
 
+        # will be set later
+        self._lattice = None
+
     def _create_axons(self, file: h5py.File, group: str) -> list:
         """Create axons based on the input from the .h5 file.
 
@@ -442,6 +445,11 @@ class Pathway(PointModel):
         -----
         No Nifti file is exported for a Pathway model.
         """
+        if self.lattice is None:
+            raise RuntimeError(
+                "Please call first prepare_VCM_specific_evaluation "
+                "to classify pathway points."
+            )
         Ex = self.tmp_Ex_freq_domain[:, frequency_index]
         Ey = self.tmp_Ey_freq_domain[:, frequency_index]
         Ez = self.tmp_Ez_freq_domain[:, frequency_index]
