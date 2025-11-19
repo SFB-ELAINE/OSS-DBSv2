@@ -44,6 +44,7 @@ from .defaults import (
     MicroElectrode,
     MicroProbesRodentElectrode,
     MicroProbesSNEX100,
+    NeuroNexusA1x16_5mm_50_177,
     NeuroPaceDL344_3_5,
     NeuroPaceDL344_10,
     PINSMedicalL301,
@@ -54,6 +55,10 @@ from .defaults import (
     PMTsEEG2102_12,
     PMTsEEG2102_14,
     PMTsEEG2102_16,
+    SceneRay1202,
+    SceneRay1211,
+    SceneRay1212,
+    SceneRay1242,
     default_electrode_parameters,
 )
 from .dixi_microtechniques import (
@@ -74,7 +79,9 @@ from .micro_probes import (
 )
 from .microelectrode import MicroElectrodeModel, MicroElectrodeParameters
 from .neuro_pace import NeuroPaceModel, NeuroPaceParameters
+from .neuronexus import NeuroNexusElectrodeModel, NeuroNexusParameters
 from .pins_medical import PINSMedicalModel, PINSMedicalParameters
+from .sceneray import SceneRay1242Model, SceneRay1242Parameters
 
 ELECTRODES = {
     "AbbottStJudeActiveTip6142_6145": AbbottStJudeActiveTip6142_6145,
@@ -109,6 +116,11 @@ ELECTRODES = {
     "PINSMedicalL301": PINSMedicalL301,
     "PINSMedicalL302": PINSMedicalL302,
     "PINSMedicalL303": PINSMedicalL303,
+    "NeuroNexusA1x16_5mm_50_177": NeuroNexusA1x16_5mm_50_177,
+    "SceneRay1242": SceneRay1242,
+    "SceneRay1202": SceneRay1202,
+    "SceneRay1211": SceneRay1211,
+    "SceneRay1212": SceneRay1212,
 }
 
 ELECTRODE_MODELS = {
@@ -144,6 +156,11 @@ ELECTRODE_MODELS = {
     "PINSMedicalL301Custom": PINSMedicalModel,
     "PINSMedicalL302Custom": PINSMedicalModel,
     "PINSMedicalL303Custom": PINSMedicalModel,
+    "NeuroNexusA1x16_5mm_50_177Custom": NeuroNexusElectrodeModel,
+    "SceneRay1242Custom": SceneRay1242Model,
+    "SceneRay1211Custom": MedtronicModel,
+    "SceneRay1202Custom": BostonScientificVerciseModel,
+    "SceneRay1212Custom": BostonScientificVerciseModel,
 }
 
 
@@ -163,29 +180,30 @@ ELECTRODE_PARAMETERS = {
     "MicroProbesSNEX100Model": MicroProbesSNEX100Parameters,
     "NeuroPaceModel": NeuroPaceParameters,
     "PINSMedicalModel": PINSMedicalParameters,
+    "NeuroNexusElectrodeModel": NeuroNexusParameters,
+    "SceneRay1242Model": SceneRay1242Parameters,
 }
 
 __all__ = (
-    "ElectrodeModel",
     "AbbottStJudeActiveTip6142_6145",
     "AbbottStJudeActiveTip6146_6149",
     "AbbottStJudeActiveTipModel",
+    "AbbottStJudeActiveTipParameters",
     "AbbottStJudeDirected6172",
     "AbbottStJudeDirected6173",
     "AbbottStJudeDirectedModel",
-    "AbbottStJudeActiveTipParameters",
     "AbbottStJudeParameters",
-    "BostonScientificVercise",
-    "BostonScientificVerciseDirected",
-    "BostonScientificVerciseModel",
-    "BostonScientificVerciseDirectedModel",
-    "BostonScientificVerciseParameters",
-    "BostonScientificVerciseDirectedParameters",
-    "BostonScientificCartesiaX",
     "BostonScientificCartesiaHX",
-    "BostonScientificCartesiaXModel",
     "BostonScientificCartesiaHXModel",
     "BostonScientificCartesiaParameters",
+    "BostonScientificCartesiaX",
+    "BostonScientificCartesiaXModel",
+    "BostonScientificVercise",
+    "BostonScientificVerciseDirected",
+    "BostonScientificVerciseDirectedModel",
+    "BostonScientificVerciseDirectedParameters",
+    "BostonScientificVerciseModel",
+    "BostonScientificVerciseParameters",
     "DixiSEEG5",
     "DixiSEEG8",
     "DixiSEEG10",
@@ -194,18 +212,14 @@ __all__ = (
     "DixiSEEG18",
     "DixiSEEGModel",
     "DixiSEEGParameters",
-    "PMTsEEG2102_08",
-    "PMTsEEG2102_10",
-    "PMTsEEG2102_12",
-    "PMTsEEG2102_14",
-    "PMTsEEG2102_16",
+    "ElectrodeModel",
     "Medtronic3387",
     "Medtronic3389",
     "Medtronic3391",
     "MedtronicModel",
-    "MedtronicSenSightB33015",
-    "MedtronicSenSightB33005",
     "MedtronicParameters",
+    "MedtronicSenSightB33005",
+    "MedtronicSenSightB33015",
     "MicroElectrode",
     "MicroElectrodeModel",
     "MicroElectrodeParameters",
@@ -215,6 +229,7 @@ __all__ = (
     "MicroProbesSNEX100",
     "MicroProbesSNEX100Model",
     "MicroProbesSNEX100Parameters",
+    "NeuroNexusParameters",
     "NeuroPaceDL344_3_5",
     "NeuroPaceDL344_10",
     "NeuroPaceModel",
@@ -224,5 +239,14 @@ __all__ = (
     "PINSMedicalL303",
     "PINSMedicalModel",
     "PINSMedicalParameters",
+    "PMTsEEG2102_08",
+    "PMTsEEG2102_10",
+    "PMTsEEG2102_12",
+    "PMTsEEG2102_14",
+    "PMTsEEG2102_16",
+    "SceneRay1202",
+    "SceneRay1211",
+    "SceneRay1212",
+    "SceneRay1242",
     "default_electrode_parameters",
 )

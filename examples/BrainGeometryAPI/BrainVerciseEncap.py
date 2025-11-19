@@ -1,32 +1,34 @@
 """
 Example of a full model geometry
 with one Vercise electrode without
-encapsulation layer
+encapsulation layer.
 """
-import ossdbs
-from ngsolve import Draw, Mesh, TaskManager
+
 from pprint import pprint
 
-settings = \
-    {"Electrodes":
-        [{"Name": "BostonScientificVercise",
-          "Rotation[Degrees]": 0,
-          "Direction": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 1},
-          "TipPosition": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 0},
-          "EncapsulationLayer":
-              {"Thickness[mm]": 1.0,
-               },
-          },
-         ],
-     "MaterialDistribution":
-        {"MRIPath": "segmask.nii.gz"
-         },
-     "BrainRegion":
-        {"Center": {"x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5},
-         "Dimension": {"x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0},
-         "Shape": "Ellipsoid"
-         }
-     }
+from ngsolve import Draw, Mesh, TaskManager
+
+import ossdbs
+
+settings = {
+    "Electrodes": [
+        {
+            "Name": "BostonScientificVercise",
+            "Rotation[Degrees]": 0,
+            "Direction": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 1},
+            "TipPosition": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 0},
+            "EncapsulationLayer": {
+                "Thickness[mm]": 1.0,
+            },
+        },
+    ],
+    "MaterialDistribution": {"MRIPath": "segmask.nii.gz"},
+    "BrainRegion": {
+        "Center": {"x[mm]": 5, "y[mm]": 14, "z[mm]": -4.5},
+        "Dimension": {"x[mm]": 50.0, "y[mm]": 50.0, "z[mm]": 50.0},
+        "Shape": "Ellipsoid",
+    },
+}
 
 model_geometry = ossdbs.generate_model_geometry(settings)
 

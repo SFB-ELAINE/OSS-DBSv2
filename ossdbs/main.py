@@ -165,7 +165,7 @@ def main_run(input_settings: dict):
                 frequency_domain_signal,
                 truncation_time=truncation_time,
             )
-            _logger.info("Volume conductor timings:\n" f"{pprint.pformat(vcm_timings)}")
+            _logger.info(f"Volume conductor timings:\n{pprint.pformat(vcm_timings)}")
         else:
             # mesh was saved already
             settings["Mesh"]["SaveMesh"] = False

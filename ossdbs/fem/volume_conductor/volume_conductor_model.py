@@ -7,7 +7,7 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import List, Optional, Union
+from typing import Optional, Union
 
 import ngsolve
 import numpy as np
@@ -123,7 +123,7 @@ class VolumeConductor(ABC):
         frequency_domain_signal: FrequencyDomainSignal,
         compute_impedance: bool = False,
         export_vtk: bool = False,
-        point_models: Optional[List[PointModel]] = None,
+        point_models: Optional[list[PointModel]] = None,
         activation_threshold: Optional[float] = None,
         dielectric_threshold: float = 0.01,
         out_of_core: bool = False,
@@ -141,8 +141,8 @@ class VolumeConductor(ABC):
             If True, the impedance will be computed at each frequency.
         export_vtk: bool
             VTK export for visualization in ParaView
-        point_models: List[PointModel]
-            List of PointModel to extract solution for VTA / PAM
+        point_models: list[PointModel]
+            list of PointModel to extract solution for VTA / PAM
         activation_threshold: float
             If VTA is estimated by threshold, provide it here.
             Its unit must be V/m!
@@ -384,7 +384,7 @@ class VolumeConductor(ABC):
                         self.mesh, self.conductivity_cf
                     )
                     point_model.prepare_frequency_domain_data_structure(
-                        self.signal.signal_length, out_of_core
+                        len(self.signal.frequencies), out_of_core
                     )
                     _logger.debug(
                         f"Points in point model: {point_model.coordinates.shape}"
@@ -884,13 +884,13 @@ class VolumeConductor(ABC):
             floating_voltages[contact.name] = contact.voltage
         return floating_voltages
 
-    def h1_space(self, boundaries: List[str], is_complex: bool) -> ngsolve.H1:
+    def h1_space(self, boundaries: list[str], is_complex: bool) -> ngsolve.H1:
         """Return a h1 space on the mesh.
 
         Parameters
         ----------
         boundaries : list of str
-            List of boundary names.
+            list of boundary names.
         is_complex: bool
             Whether to use complex arithmetic
 
@@ -999,7 +999,7 @@ class VolumeConductor(ABC):
                     )
 
     def setup_timings_dict(
-        self, export_vtk: bool, point_models: List[PointModel]
+        self, export_vtk: bool, point_models: list[PointModel]
     ) -> dict:
         """Setup dictionary to save execution times estimate."""
         timings = {}
@@ -1013,7 +1013,7 @@ class VolumeConductor(ABC):
         return timings
 
     def _store_solution_at_contacts(
-        self, band_indices: Union[List, np.ndarray]
+        self, band_indices: Union[list, np.ndarray]
     ) -> None:
         """Save voltages / currents at given frequency band for all contacts."""
         if self.current_controlled:
@@ -1046,7 +1046,7 @@ class VolumeConductor(ABC):
 
     def _copy_frequency_domain_solution(
         self,
-        band_indices: Union[List, np.ndarray],
+        band_indices: Union[list, np.ndarray],
         point_model: PointModel,
         potentials: np.ndarray,
         fields: np.ndarray,
@@ -1103,7 +1103,7 @@ class VolumeConductor(ABC):
 
     def _frequency_domain_exports(
         self,
-        point_models: List,
+        point_models: list,
         export_frequency_index: int,
         activation_threshold: float,
     ):
@@ -1115,12 +1115,16 @@ class VolumeConductor(ABC):
             point_model.export_potential_at_frequency(
                 self._export_frequency, export_frequency_index
             )
-            point_model.export_field_at_frequency(
-                self._export_frequency,
-                export_frequency_index,
-                electrode=self.model_geometry.electrodes[0],
-                activation_threshold=activation_threshold,
-            )
+            if point_model._export_field:
+                _logger.info(
+                    f"Exporting electric field at frequency {self._export_frequency}Hz."
+                )
+                point_model.export_field_at_frequency(
+                    self._export_frequency,
+                    export_frequency_index,
+                    electrode=self.model_geometry.electrodes[0],
+                    activation_threshold=activation_threshold,
+                )
             if isinstance(point_model, Lattice):
                 scale_factor = (
                     self._scale_factor * self.signal.amplitudes[export_frequency_index]
@@ -1131,7 +1135,7 @@ class VolumeConductor(ABC):
                 _logger.info(f"VTA volume is: {point_model.VTA_volume:.3f}")
 
     def _process_frequency_domain_solution(
-        self, band_indices: Union[List, np.ndarray], point_models: PointModel
+        self, band_indices: Union[list, np.ndarray], point_models: PointModel
     ):
         """Copy results to points."""
         for point_model in point_models:

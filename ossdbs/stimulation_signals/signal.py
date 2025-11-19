@@ -4,11 +4,11 @@
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.fft import fft, fftfreq
+from scipy.fft import rfft, rfftfreq
 
 from .utilities import adjust_cutoff_frequency, retrieve_time_domain_signal_from_fft
 
@@ -101,6 +101,13 @@ class TimeDomainSignal(ABC):
         """Set frequency of signal."""
         self._frequency = value
 
+    def get_adjusted_cutoff_frequency(self, cutoff_frequency: float) -> float:
+        """Adjust cutoff frequency to signal frequency.
+
+        Double the cutoff frequency to account for FFT and actually sample until there.
+        """
+        return adjust_cutoff_frequency(2.0 * cutoff_frequency, self.frequency)
+
     def get_fft_spectrum(self, cutoff_frequency: float) -> np.ndarray:
         """FFT spectrum of time-domain signal.
 
@@ -110,23 +117,24 @@ class TimeDomainSignal(ABC):
             Highest considered frequency.
 
         """
-        # we double the cutoff_frequency to actually sample until there
-        cutoff_frequency = adjust_cutoff_frequency(
-            2.0 * cutoff_frequency, self.frequency
-        )
+        cutoff_frequency = self.get_adjusted_cutoff_frequency(cutoff_frequency)
         dt = 1.0 / cutoff_frequency
         # required length for frequency
         timesteps = int(cutoff_frequency / self.frequency)
 
         time_domain_signal = self.get_time_domain_signal(dt, timesteps)
-        return fftfreq(len(time_domain_signal), d=dt), fft(time_domain_signal)
+        return (
+            rfftfreq(len(time_domain_signal), d=dt),
+            rfft(time_domain_signal),
+            len(time_domain_signal),
+        )
 
     def retrieve_time_domain_signal(
-        self, fft_signal: np.ndarray, cutoff_frequency: float
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        self, fft_signal: np.ndarray, cutoff_frequency: float, signal_length: int
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Compute time-domain signal by FFT."""
         return retrieve_time_domain_signal_from_fft(
-            fft_signal, cutoff_frequency, self.frequency
+            fft_signal, cutoff_frequency, self.frequency, signal_length
         )
 
     @abstractmethod

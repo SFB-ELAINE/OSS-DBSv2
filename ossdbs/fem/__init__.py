@@ -33,19 +33,19 @@ PRECONDITIONERS = {
 
 
 __all__ = [
-    "LocalPreconditioner",
-    "DirectPreconditioner",
-    "BDDCPreconditioner",
-    "MultigridPreconditioner",
     "AMGPreconditioner",
-    "Solver",
-    "ConductivityCF",
-    "GMRESSolver",
+    "BDDCPreconditioner",
     "CGSolver",
+    "ConductivityCF",
+    "DirectPreconditioner",
     "DirectSolver",
+    "GMRESSolver",
+    "LocalPreconditioner",
     "Mesh",
+    "MultigridPreconditioner",
+    "Solver",
     "VolumeConductor",
-    "VolumeConductorNonFloating",
     "VolumeConductorFloating",
     "VolumeConductorFloatingImpedance",
+    "VolumeConductorNonFloating",
 ]

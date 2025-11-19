@@ -4,7 +4,7 @@
 import json
 import logging
 import os
-from typing import List, Optional
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -339,7 +339,7 @@ def index_for_length(xyz, req_length, along=True):
     return idx, cummulated_lengths[idx]
 
 
-def resample_fibers_to_Ranviers(streamlines: List, node_step: int, n_Ranvier: int):
+def resample_fibers_to_Ranviers(streamlines: list, node_step: int, n_Ranvier: int):
     """Get streamlines resampled by nodes of Ranvier for a specific axonal morphology.
 
     Parameters
@@ -390,7 +390,7 @@ def normalized(vector: np.ndarray, axis: int = -1, order: int = 2):
 
 # ruff: noqa: C901
 def place_axons_on_streamlines(
-    streamlines_resampled: List, n_Ranvier: int, centering_coordinates: List
+    streamlines_resampled: list, n_Ranvier: int, centering_coordinates: list
 ):
     """Allocate axons on streamlines at seeding points given by centering_coordinates.
 

@@ -135,16 +135,20 @@ class TestModelGeometry:
         geometry = modelGeometry[0]
         geometry.update_contact(0, new_properties)
 
-        desired = {True, 2.0, False, 4.0, 100 + 0j}
-        actual = set()
-        actual.add(geometry.contacts[0].active)
-        actual.add(geometry.contacts[0].current)
-        actual.add(geometry.contacts[0].floating)
-        actual.add(geometry.contacts[0].voltage)
+        # convert bool to int for numerical comparison
+        desired = np.array([int(True), 2.0, int(False), 4.0, 100 + 0j])
+        actual = []
+        actual.append(int(geometry.contacts[0].active))
+        actual.append(geometry.contacts[0].current)
+        actual.append(int(geometry.contacts[0].floating))
+        actual.append(geometry.contacts[0].voltage)
         # surface impedance at 100 Hz, independent of frequency here
-        actual.add(geometry.contacts[0].get_surface_impedance(1))
-
-        assert actual == desired
+        # account for area
+        actual.append(
+            geometry.contacts[0].get_surface_impedance(1, is_complex=True)
+            / geometry.contacts[0].area
+        )
+        assert np.all(np.isclose(actual, desired))
 
     def test_get_encapsulation_layer_index(self, modelGeometry):
         """Test encapsulation_layer_index()."""

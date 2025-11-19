@@ -172,7 +172,6 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
                 occ.Axis(p=(0, 0, 0), d=self._direction), rotation_angle
             )
 
-    # ruff: noqa: C901
     def _contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         # unit system
         origin = (0, 0, 0)

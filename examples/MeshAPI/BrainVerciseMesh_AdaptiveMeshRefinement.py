@@ -5,6 +5,7 @@ encapsulation layer.
 The mesh is generated and adaptive
 refinement is used.
 """
+
 import logging
 
 import ngsolve
