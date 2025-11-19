@@ -2,19 +2,24 @@
 Example masking a DTI image based on the material distribution.
 
 Outcome:
-    Returns anisotropy tensors with and without masking for
-    randomly selected points.
-    Note that if MRI or DTI are well aligned or not, either
-    almost none or almost all points will be masked.
+    Returns anisotropy tensors with and without masking for randomly selected points.
+    Additionally the conductivity distributions are saved as VTK files.
+    Import vtk files in ParaView to visualize the difference.
+    The conductivity vtk contains values above 2.0 S/m in the xx, yy, zz components,
+    which is the unscaled default value for CSF.
+    In the masked version values above 2.0 S/m does not exist.
 """
 
+import os
 import random
 
+import ngsolve
 import numpy as np
 
 from ossdbs.api import generate_mesh, prepare_dielectric_properties
 from ossdbs.fem.volume_conductor.conductivity import ConductivityCF
 from ossdbs.utils.nifti1image import DiffusionTensorImage, MagneticResonanceImage
+from ossdbs.utils.vtk_export import FieldSolution
 
 # Load settings for the simulation
 settings = {
@@ -56,6 +61,7 @@ settings = {
         "SaveMesh": False,
     },
     "ExportElectrode": False,
+    "OutputPath": "./",
 }
 
 # Load MRI image and create brain geometry
@@ -86,6 +92,20 @@ conductivity = ConductivityCF(
 )
 conductivity_distribution = conductivity(mesh=mesh, frequency=10000.0)
 
+# Naming convention by ParaView!
+cf_list = (
+    conductivity_distribution[0],  # xx
+    conductivity_distribution[4],  # yy
+    conductivity_distribution[8],  # zz
+    conductivity_distribution[1],  # xy
+    conductivity_distribution[5],  # yz
+    conductivity_distribution[2],  # xz
+)
+conductivity_export = ngsolve.CoefficientFunction(cf_list, dims=(6,))
+FieldSolution(conductivity_export, "conductivity", ngmesh, False).save(
+    os.path.join(settings["OutputPath"], "conductivity")
+)
+
 conductivity_masked = ConductivityCF(
     mri_image=mri_image,
     brain_bounding_box=mri_image.bounding_box,
@@ -95,6 +115,20 @@ conductivity_masked = ConductivityCF(
     wm_masking=True,
 )
 conductivity_distribution_masked = conductivity_masked(mesh=mesh, frequency=10000.0)
+
+# Naming convention by ParaView!
+cf_list = (
+    conductivity_distribution_masked[0],  # xx
+    conductivity_distribution_masked[4],  # yy
+    conductivity_distribution_masked[8],  # zz
+    conductivity_distribution_masked[1],  # xy
+    conductivity_distribution_masked[5],  # yz
+    conductivity_distribution_masked[2],  # xz
+)
+conductivity_export = ngsolve.CoefficientFunction(cf_list, dims=(6,))
+FieldSolution(conductivity_export, "conductivity_masked", ngmesh, False).save(
+    os.path.join(settings["OutputPath"], "conductivity_masked")
+)
 
 # Generate random test points within the brain region
 print("Generating random test points...")
