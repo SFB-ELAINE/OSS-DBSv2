@@ -343,7 +343,7 @@ class VolumeConductor(ABC):
                         self.mesh, self.conductivity_cf
                     )
                     point_model.prepare_frequency_domain_data_structure(
-                        self.signal.signal_length, out_of_core
+                        len(self.signal.frequencies), out_of_core
                     )
 
             # copy solution to point models
