@@ -3,7 +3,7 @@
 
 import logging
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Optional
 
 import numpy as np
 
@@ -83,7 +83,7 @@ class Contact:
 
         # TODO cache this variable
         ecm = ifit.get_equivalent_circuit_model(self.surface_impedance_model)
-        # TODO add surface area to it?
+        # get impedance and turn it into surface impedance
         Z = ecm.eval(omega=2.0 * np.pi * frequency, **self.surface_impedance_parameters)
         surface_Z = complex(Z) * self.area
         if np.isclose(surface_Z, 0.0, atol=1e-6):
@@ -123,7 +123,7 @@ class Contacts:
     detect active, floating and unused contacts.
     """
 
-    def __init__(self, contacts: List[Contact]) -> None:
+    def __init__(self, contacts: list[Contact]) -> None:
         for contact in contacts:
             check_contact(contact)
         self._all_contacts = contacts
@@ -160,7 +160,7 @@ class Contacts:
             self._unused.append(contact)
 
     @property
-    def active(self) -> List[Contact]:
+    def active(self) -> list[Contact]:
         """List of all active contacts.
 
         Returns
@@ -170,7 +170,7 @@ class Contacts:
         return self._active
 
     @property
-    def floating(self) -> List[Contact]:
+    def floating(self) -> list[Contact]:
         """List of all floating contacts.
 
         Returns
@@ -180,7 +180,7 @@ class Contacts:
         return self._floating
 
     @property
-    def unused(self) -> List[Contact]:
+    def unused(self) -> list[Contact]:
         """List of all unused (i.e. not active and not floating) contacts.
 
         Returns

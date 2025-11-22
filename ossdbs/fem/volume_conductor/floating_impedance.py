@@ -121,7 +121,9 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
 
         # add surface impedances
         for ufix, vfix, boundary in zip(
-            trial[1:], test[1:], self._surface_impedance_floating_boundaries
+            trial[1:],
+            test[1:],
+            self._surface_impedance_floating_boundaries,
         ):
             print(1.0 / self._surface_impedances[boundary])
             ys = ngsolve.CoefficientFunction(1.0 / self._surface_impedances[boundary])
@@ -160,7 +162,8 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         floating_values = {
             contact: component.vec[0]
             for (contact, component) in zip(
-                self._surface_impedance_floating_boundaries, components
+                self._surface_impedance_floating_boundaries,
+                components,
             )
         }
         for contact in self.contacts.floating:

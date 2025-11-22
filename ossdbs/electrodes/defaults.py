@@ -42,10 +42,12 @@ from .neuro_pace import (
     NeuroPaceModel,
     NeuroPaceParameters,
 )
+from .neuronexus import NeuroNexusElectrodeModel, NeuroNexusParameters
 from .pins_medical import (
     PINSMedicalModel,
     PINSMedicalParameters,
 )
+from .sceneray import SceneRay1242Model, SceneRay1242Parameters
 
 default_electrode_parameters = {
     "AbbottStJudeActiveTip6146_6149": AbbottStJudeActiveTipParameters(
@@ -287,6 +289,45 @@ default_electrode_parameters = {
         lead_diameter=0.8,
         total_length=400.0,
         n_contacts=16,
+    ),
+    "NeuroNexusA1x16_5mm_50_177": NeuroNexusParameters(
+        shank_thickness=20.0e-3,
+        max_width=125.0e-3,
+        min_width=33.0e-3,
+        total_length=400.0,
+        angle_tip=30.0,
+        tip_length=50.0e-3,
+        contact_spacing=50.0e-3,
+        contact_diameter=30.0e-3,
+    ),
+    "SceneRay1242": SceneRay1242Parameters(
+        tip_length=1.5,
+        contact_length=3.0,
+        first_contact_spacing=2.0,
+        contact_spacing=4.0,
+        lead_diameter=1.27,
+        total_length=400.0,
+    ),
+    "SceneRay1202": BostonScientificVerciseParameters(
+        tip_length=1.5,
+        contact_length=1.5,
+        contact_spacing=0.5,
+        lead_diameter=1.27,
+        total_length=450.0,
+    ),
+    "SceneRay1211": MedtronicParameters(
+        tip_length=1.5,
+        contact_length=1.5,
+        contact_spacing=1.0,
+        lead_diameter=1.27,
+        total_length=400.0,
+    ),
+    "SceneRay1212": BostonScientificVerciseParameters(
+        tip_length=1.5,
+        contact_length=1.5,
+        contact_spacing=1.5,
+        lead_diameter=1.27,
+        total_length=450.0,
     ),
 }
 
@@ -547,3 +588,43 @@ def PMTsEEG2102_16(
     """PMTsEEG2102_16 electrode."""
     parameters = default_electrode_parameters["PMTsEEG2102_16"]
     return DixiSEEGModel(parameters, rotation, direction, position)
+
+
+def NeuroNexusA1x16_5mm_50_177(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """NeuroNexusA1x16_5mm_50_177 electrode."""
+    parameters = default_electrode_parameters["NeuroNexusA1x16_5mm_50_177"]
+    return NeuroNexusElectrodeModel(parameters, rotation, direction, position)
+
+
+def SceneRay1242(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """SceneRay 1242 electrode."""
+    parameters = default_electrode_parameters["SceneRay1242"]
+    return SceneRay1242Model(parameters, rotation, direction, position)
+
+
+def SceneRay1202(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """SceneRay 1202 electrode."""
+    parameters = default_electrode_parameters["SceneRay1202"]
+    return BostonScientificVerciseModel(parameters, rotation, direction, position)
+
+
+def SceneRay1211(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """SceneRay 1211 electrode."""
+    parameters = default_electrode_parameters["SceneRay1211"]
+    return MedtronicModel(parameters, rotation, direction, position)
+
+
+def SceneRay1212(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """SceneRay 1212 electrode."""
+    parameters = default_electrode_parameters["SceneRay1212"]
+    return BostonScientificVerciseModel(parameters, rotation, direction, position)

@@ -96,8 +96,8 @@ class TestMesh:
 class TestConductivity:
     def test_conductivityCF(self, settings_fixture, mri_fixture, geometry_fixture):
         try:
-            mri_image, dti_image = mri_fixture
-            brain_region, electrodes, geometry = geometry_fixture
+            mri_image, _ = mri_fixture
+            brain_region, _, geometry = geometry_fixture
             dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
             materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
 
@@ -119,8 +119,8 @@ class TestVolumeConductorModel:
         self, settings_fixture, mri_fixture, geometry_fixture
     ):
         try:
-            mri_image, dti_image = mri_fixture
-            brain_region, electrodes, geometry = geometry_fixture
+            mri_image, _ = mri_fixture
+            brain_region, _, geometry = geometry_fixture
             dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
             materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
             solver = ossdbs.prepare_solver(settings_fixture)

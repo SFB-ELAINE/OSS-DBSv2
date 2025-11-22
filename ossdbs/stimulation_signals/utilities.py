@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
-from typing import List, Tuple, Union
+from typing import Union
 
 import numpy as np
-from scipy.fft import ifft
+from scipy.fft import irfft
 
 _logger = logging.getLogger(__name__)
 
@@ -26,11 +26,26 @@ def get_timesteps(
 
 
 def retrieve_time_domain_signal_from_fft(
-    fft_signal: np.ndarray, cutoff_frequency: float, base_frequency: float
-) -> Tuple[np.ndarray, np.ndarray]:
-    """Compute time-domain signal via fft."""
+    fft_signal: np.ndarray,
+    cutoff_frequency: float,
+    base_frequency: float,
+    signal_length: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Compute time-domain signal via fft.
+
+    Parameters
+    ----------
+    fft_signal: np.ndarray
+        Frequency-domain signal
+    signal_length: int
+        Length of original time-domain signal
+    cutoff_frequency: float
+        Highest considered frequency
+    base_frequency:float
+        Frequency of time-domain signal (often 130 Hz)
+    """
     # double the cutoff_frequency to actually sample until there
-    signal = ifft(fft_signal).real
+    signal = irfft(fft_signal, n=signal_length)
     timesteps = get_timesteps(cutoff_frequency, base_frequency, len(signal))
     return timesteps, signal
 
@@ -47,25 +62,10 @@ def reconstruct_time_signals(
     signal_length: int
       Length of initial time-domain signal
 
-    Notes
-    -----
-    According to the signal length, the highest frequency is
-    a negative or positive frequency (as it comes from the FFT).
     """
-    # For even signals, highest frequency is not in positive frequencies
-    positive_freqs_part = freq_domain_signal
-    if signal_length % 2 == 0:
-        positive_freqs_part = freq_domain_signal[:-1]
-
-    # Append the reverted signal without the DC frequency
-    tmp_freq_domain = np.append(
-        positive_freqs_part,
-        np.conjugate(np.flip(freq_domain_signal[1:], axis=0)),
-        axis=0,
-    )
-    # run ifft with maximum possible amount of workers
-    result_in_time = ifft(tmp_freq_domain, axis=0, workers=-1)
-    return result_in_time.real
+    # run irfft with maximum possible amount of workers
+    result_in_time = irfft(freq_domain_signal, n=signal_length, axis=0, workers=-1)
+    return result_in_time
 
 
 def get_octave_band_indices(frequencies: np.ndarray) -> np.ndarray:
@@ -87,7 +87,7 @@ def get_maximum_octave_band_index(freq_idx: int) -> int:
 
 def get_indices_in_octave_band(
     freq_idx: int, frequency_indices: list, cutoff_frequency_index: int
-) -> Union[List, np.ndarray]:
+) -> Union[list, np.ndarray]:
     """Get indices of frequencies in octave band.
 
     Notes
@@ -128,3 +128,31 @@ def get_indices_in_octave_band(
     _logger.debug(f"Band indices from {band_indices[0]} to {band_indices[-1]}")
 
     return band_indices
+
+
+def get_positive_frequencies(
+    fft_frequencies, fft_coefficients
+) -> tuple[np.ndarray, np.ndarray]:
+    """Get only positive frequencies and related FFT coefficients.
+
+    Parameters
+    ----------
+    fft_frequencies: np.ndarray
+        Array with frequencies
+    fft_coefficients: np.ndarray
+        Array with complex-valued FFT coefficients
+    """
+    signal_length = len(fft_frequencies)
+    first_negative_freq = np.argwhere(fft_frequencies < 0)[0, 0]
+    frequencies = fft_frequencies[:first_negative_freq]
+    fourier_coefficients = fft_coefficients[:first_negative_freq]
+    # even signal
+    if signal_length % 2 == 0:
+        frequencies = np.append(
+            frequencies, -1.0 * fft_frequencies[first_negative_freq + 1]
+        )
+        fourier_coefficients = np.append(
+            fourier_coefficients,
+            np.conjugate(fft_coefficients[first_negative_freq + 1]),
+        )
+    return frequencies, fourier_coefficients

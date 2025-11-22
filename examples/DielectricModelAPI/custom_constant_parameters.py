@@ -29,5 +29,6 @@ dielectric_properties = ossdbs.prepare_dielectric_properties(settings)
 
 for material in settings["MaterialDistribution"]["MRIMapping"]:
     print(
-        f"Constant complex permittivity of {material} is {dielectric_properties[material].complex_permittivity(130)}"
+        f"Constant complex permittivity of {material} "
+        f"is {dielectric_properties[material].complex_permittivity(130)}"
     )

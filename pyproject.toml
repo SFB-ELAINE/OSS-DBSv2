@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ossdbs"
-version = "0.5"
+version = "0.5.1"
 description = "OSS-DBS v2: faster and modular open-source code for deep brain stimulation"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -23,10 +23,11 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent"
 ]
-dependencies = ["h5py==3.11.0",
+dependencies = ["h5py==3.14.0",
                 "ngsolve==6.2.2501",
                 "nibabel==5.2.1",
                 "pandas",
@@ -34,8 +35,8 @@ dependencies = ["h5py==3.11.0",
 		"matplotlib",
 		# always install NEURON under Linux and Mac
 		# windows has no automated installer
-		"neuron==8.2.6; platform_system=='Linux'", 
-		"neuron==8.2.6; platform_system=='Darwin'", 
+		"neuron==8.2.7; platform_system=='Linux'", 
+		"neuron==8.2.7; platform_system=='Darwin'", 
 		# if Neuron cannot be installed from Pypi
 		# pin the numpy version to < 2
 		"numpy<2; platform_system=='Windows'",
@@ -73,7 +74,7 @@ packages = ["ossdbs", "leaddbsinterface"]
 
 [tool.ruff]
 line-length = 88
-target-version = "py38"
+target-version = "py39"
 lint.extend-select = [
     "E", # style errors
     "W", # style warnings

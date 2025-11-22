@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+
 data = pd.read_csv("Results/stimulation_in_time.csv")
 plt.title("Should be zero")
 plt.plot(data["time"] / 1e-3, data["E1C1"], label="Applied")

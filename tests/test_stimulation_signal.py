@@ -1,4 +1,4 @@
-from typing import ClassVar, List, Tuple
+from typing import ClassVar
 
 import numpy as np
 import pytest
@@ -10,7 +10,7 @@ from ossdbs.stimulation_signals.utilities import adjust_cutoff_frequency
 
 
 class TestFFT:
-    TESTDATA: ClassVar[List[Tuple[str, float, float, float, float, float]]] = [
+    TESTDATA: ClassVar[list[tuple[str, float, float, float, float, float]]] = [
         # signal_type, frequency, pulse_width, counter_pulse_width,
         # inter_pulse_width, cutoff_frequency
         ("Rectangle", 130.0, 60e-6, 120e-6, 120e-6, 1e5),
@@ -57,9 +57,9 @@ class TestFFT:
             )
 
         original_signal = signal.get_time_domain_signal(dt, timesteps)
-        fft_frequencies, fft_signal = signal.get_fft_spectrum(cutoff_frequency)
-        timesteps_retrieved, retrieved_signal = signal.retrieve_time_domain_signal(
-            fft_signal, cutoff_frequency
+        _, fft_signal, signal_length = signal.get_fft_spectrum(cutoff_frequency)
+        _, retrieved_signal = signal.retrieve_time_domain_signal(
+            fft_signal, cutoff_frequency, signal_length
         )
         tolerance = 1e-5
         np.testing.assert_allclose(original_signal, retrieved_signal, atol=tolerance)

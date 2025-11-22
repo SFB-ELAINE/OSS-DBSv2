@@ -97,7 +97,8 @@
   "PointModel": {
     "Pathway": {
       "Active": false,
-      "FileName": ""
+      "FileName": "",
+      "ExportField": false
     },
     "Lattice": {
       "Active": true,
@@ -116,15 +117,26 @@
         "y[mm]": 0,
         "z[mm]": 1
       },
-      "PointDistance[mm]": 0.125 
+      "PointDistance[mm]": 0.125,
+      "CollapseVTA": false,
+      "ExportField": true
+    },
+    "VoxelLattice": {
+      "Active": false,
+      "Shape": {
+        "x": 40,
+        "y": 40,
+        "z": 160
+      },
+      "ExportField": true
     }
   },
   "ActivationThresholdVTA[V-per-m]": 200.0,
-  "CollapseVTA": false,
   "EQSMode": false,
   "FEMOrder": 2,
   "OutputPath": "Results_VTA",
-  "ComputeImpedance": true,
-  "ExportVTK": true,
-  "ExportElectrode": true
+  "ComputeImpedance": false,
+  "ExportVTK": false,
+  "ExportElectrode": false,
+  "OutOfCore": false
 }

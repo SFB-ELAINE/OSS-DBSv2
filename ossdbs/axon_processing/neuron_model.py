@@ -72,11 +72,6 @@ class NeuronSimulator(ABC):
         self.copy_neuron_files()
         self.compile_neuron_files()
 
-        # time-domain solution (not yet loaded)
-        self._td_solution = None
-        # time-domain solution per contact
-        self._td_unit_solutions = None
-        # signal dict will be created when
         # time-domain solution is loaded
         self._signal_dict = None
 
@@ -208,8 +203,15 @@ class NeuronSimulator(ABC):
         ----------
         time_domain_h5_file: str
             Name of file holding time-domain solution
+
+        Returns
+        -------
+        td_solution: h5 dataset
+            Time-domain solution
         """
-        self._td_solution = h5py.File(time_domain_h5_file, "r")
+        td_solution = h5py.File(time_domain_h5_file, "r")
+
+        return td_solution
 
     def load_unit_solutions(self, time_domain_h5_files: list):
         """Load solutions from h5 file for each contact-ground.
@@ -218,82 +220,108 @@ class NeuronSimulator(ABC):
         ----------
         time_domain_h5_files: list
             names of files holding time-domain solution
+
+        Returns
+        -------
+        td_unit_solutions: list
+            unit time-domain solutions for each contact
         """
-        self._td_unit_solutions = []  # list where we store datasets
+        td_unit_solutions = []  # list where we store datasets
         for solution_i in range(len(time_domain_h5_files)):
             td_solution = h5py.File(time_domain_h5_files[solution_i], "r")
-            self._td_unit_solutions.append(td_solution)
+            td_unit_solutions.append(td_solution)
 
-    def superimpose_unit_solutions(self, scaling_vector: list):
+        return td_unit_solutions
+
+    def superimpose_unit_solutions(self, td_unit_solutions, scaling_vector: list):
         """Scale and superimpose solutions obtained for each contact-ground.
         This should be done across all datagroups and datasets.
 
         Parameters
         ----------
+        td_unit_solutions: list
+            unit time-domain solutions for each contact
         scaling_vector: list
             current scaling across contacts
+
+        Returns
+        -------
+        td_solution: h5 dataset
+            Superimposed and scaled time-domain solution
         """
-        # very dumb way to get self._td_solution initialized
-        self._td_solution = h5py.File(
+        # very dumb way to get td_solution initialized
+        td_solution = h5py.File(
             os.path.join(self.output_path, "combined_solution.h5"), mode="w"
         )
-        for obj in self._td_unit_solutions[0].keys():
-            self._td_unit_solutions[0].copy(obj, self._td_solution)
+        for obj in td_unit_solutions[0].keys():
+            td_unit_solutions[0].copy(obj, td_solution)
 
-        pathways = list(self._td_unit_solutions[0].keys())
+        pathways = list(td_unit_solutions[0].keys())
         pathways.remove("TimeSteps[s]")
 
-        for solution_i in range(len(self._td_unit_solutions)):
-            for pathway_idx, pathway_name in enumerate(pathways):
-                pathway_dataset = self._td_unit_solutions[solution_i][pathway_name]
-                # pathway_super_dataset = self._td_solution[solution_i][pathway_name]
-                N_neurons = self.get_N_seeded_neurons(pathway_idx)
-                for neuron_index in range(N_neurons):
-                    if pathway_dataset["Status"][neuron_index] == 0:
-                        # other statuses are the same across solutions
+        for pathway_idx, pathway_name in enumerate(pathways):
+            N_neurons = self.get_N_seeded_neurons(pathway_idx)
 
-                        neuron = pathway_dataset["axon" + str(neuron_index)]
-                        neuron_time_sol = np.array(neuron["Potential[V]"])
+            # Store Status once, assuming it's consistent
+            status_dataset_first_solution = td_unit_solutions[0][pathway_name]["Status"]
 
-                        # scale and superimpose
-                        if solution_i == 0:
-                            self._td_solution[pathway_name]["axon" + str(neuron_index)][
-                                "Potential[V]"
-                            ][...] = neuron_time_sol * scaling_vector[solution_i]
-                        else:
-                            self._td_solution[pathway_name]["axon" + str(neuron_index)][
-                                "Potential[V]"
-                            ][...] = (
-                                self._td_solution[pathway_name][
-                                    "axon" + str(neuron_index)
-                                ]["Potential[V]"][...]
-                                + neuron_time_sol * scaling_vector[solution_i]
-                            )
+            for neuron_index in range(N_neurons):
+                if status_dataset_first_solution[neuron_index] == 0:
+                    neuron_name = "axon" + str(neuron_index)
+
+                    # Read all neuron potentials for this axon across all solutions into a list of arrays
+                    neuron_potentials_all_solutions = []
+                    for solution_i in range(len(td_unit_solutions)):
+                        pathway_dataset = td_unit_solutions[solution_i][pathway_name]
+                        neuron = pathway_dataset[neuron_name]
+                        neuron_potentials_all_solutions.append(
+                            np.array(neuron["Potential[V]"])
+                        )
+
+                    all_potentials_stacked = np.stack(
+                        neuron_potentials_all_solutions, axis=0
+                    )
+
+                    scaling_vector_np = np.array(scaling_vector)
+
+                    # Perform the vectorized scalar multiplication and sum
+                    # (num_solutions, time_points) * (num_solutions,) -> (num_solutions, time_points)
+                    # The multiplication broadcasts scaling_vector_np along axis=1
+                    scaled_potentials = (
+                        all_potentials_stacked
+                        * scaling_vector_np[:, np.newaxis, np.newaxis]
+                    )
+
+                    # Sum along the solutions axis to get the superimposed result
+
+                    td_solution[pathway_name]["axon" + str(neuron_index)][
+                        "Potential[V]"
+                    ][...] = np.sum(scaled_potentials, axis=0)
+
+        return td_solution
 
     def process_pathways(
-        self, scaling: float = 1.0, scaling_index: Optional[int] = None
+        self, td_solution, scaling: float = 1.0, scaling_index: Optional[int] = None
     ):
         """Go through all pathways and compute the activation.
 
         Parameters
         ----------
+        td_solution: h5 dataset
+            time-domain solution
         scaling: float
             scaling factor for the whole solution
         scaling_index: int
             index of the scaling factor or scaling vector
 
-
-        Notes
-        -----
-        TODO Do scaling outside this routine?
         """
-        if self._td_solution is None:
+        if td_solution is None:
             raise ValueError("Need to load time-domain solution from H5 file first.")
-        pathways = list(self._td_solution.keys())
+        pathways = list(td_solution.keys())
         pathways.remove("TimeSteps[s]")
 
         # signal parameters can be extracted from solution
-        TimeSteps = np.array(self._td_solution["TimeSteps[s]"])
+        TimeSteps = np.array(td_solution["TimeSteps[s]"])
 
         self.signal_dict = {
             "time_step": np.round(
@@ -305,13 +333,13 @@ class NeuronSimulator(ABC):
 
         _logger.info("Going through pathways")
         for pathway_idx, pathway_name in enumerate(pathways):
-            pathway_dataset = self._td_solution[pathway_name]
+            pathway_dataset = td_solution[pathway_name]
             self.check_pathway_activation(
                 pathway_dataset, pathway_idx, pathway_name, scaling_index
             )
 
         # close H5 file
-        self._td_solution.close()
+        td_solution.close()
 
     def get_v_ext(self, v_time_sol):
         """Convert potential computed by OSS-DBS to extracellular potential.
