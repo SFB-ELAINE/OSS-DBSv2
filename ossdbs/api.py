@@ -2,6 +2,7 @@
 # Copyright 2023, 2024 Jan Philipp Payonk, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import importlib
 import json
 import logging
 import os
@@ -9,7 +10,6 @@ from typing import Optional
 
 import numpy as np
 
-from ossdbs.axon_processing import MRG2002, McNeal1976
 from ossdbs.dielectric_model import (
     default_dielectric_parameters,
     dielectric_model_parameters,
@@ -37,6 +37,10 @@ from ossdbs.stimulation_signals import (
 from ossdbs.utils.nifti1image import DiffusionTensorImage, MagneticResonanceImage
 
 _logger = logging.getLogger(__name__)
+
+PAM_AVAILABLE = importlib.util.find_spec("neuron") is not None
+if not PAM_AVAILABLE:
+    _logger.warning("NEURON is not installed, disabling PAM analysis!")
 
 
 def create_bounding_box(box_parameters: dict) -> BoundingBox:
@@ -159,8 +163,7 @@ def generate_model_geometry(settings):
         model_geometry = ModelGeometry(brain, electrodes)
     except RuntimeError:
         _logger.warning(
-            "Could not build geometry, trying again after "
-            "rotation of initial geometry"
+            "Could not build geometry, trying again after rotation of initial geometry"
         )
         brain = generate_brain_model(settings, rotate_initial_geo=True)
         model_geometry = ModelGeometry(brain, electrodes)
@@ -410,11 +413,11 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
     current_controlled = signal_settings["CurrentControlled"]
     octave_band_approximation = False
     if signal_type == "Multisine":
-        frequencies = signal_settings["ListOfFrequencies"]
-        fourier_coefficients = np.ones(len(frequencies))
-        base_frequency = frequencies[0]
-        cutoff_frequency = frequencies[0]
-        signal_length = len(frequencies)
+        fft_frequencies = signal_settings["ListOfFrequencies"]
+        fft_coefficients = np.ones(len(fft_frequencies))
+        base_frequency = fft_frequencies[0]
+        cutoff_frequency = fft_frequencies[0]
+        signal_length = len(fft_frequencies)
     else:
         spectrum_mode = signal_settings["SpectrumMode"]
         if spectrum_mode == "OctaveBand":
@@ -423,25 +426,12 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
         signal = generate_signal(settings)
         cutoff_frequency = signal_settings["CutoffFrequency"]
         base_frequency = signal.frequency
-        fft_frequencies, fft_coefficients = signal.get_fft_spectrum(cutoff_frequency)
-        signal_length = len(fft_coefficients)
-        # only use positive frequencies
-        first_negative_freq = np.argwhere(fft_frequencies < 0)[0, 0]
-        frequencies = fft_frequencies[:first_negative_freq]
-        fourier_coefficients = fft_coefficients[:first_negative_freq]
-        # even signal
-        if signal_length % 2 == 0:
-            frequencies = np.append(
-                frequencies, -1.0 * fft_frequencies[first_negative_freq + 1]
-            )
-            fourier_coefficients = np.append(
-                fourier_coefficients,
-                np.conjugate(fft_coefficients[first_negative_freq + 1]),
-            )
-
+        fft_frequencies, fft_coefficients, signal_length = signal.get_fft_spectrum(
+            cutoff_frequency
+        )
     frequency_domain_signal = FrequencyDomainSignal(
-        frequencies=frequencies,
-        amplitudes=fourier_coefficients,
+        frequencies=fft_frequencies,
+        amplitudes=fft_coefficients,
         current_controlled=current_controlled,
         base_frequency=base_frequency,
         cutoff_frequency=cutoff_frequency,
@@ -530,7 +520,7 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             _logger.info(f"Will skip ground contact {contact.name}")
     if ground_contact is None:
         raise ValueError(
-            "No ground contact set. " "Choose one active contact with current -1."
+            "No ground contact set. Choose one active contact with current -1."
         )
     for contact in geometry.contacts:
         if contact.name == ground_contact:
@@ -598,6 +588,10 @@ def load_images(settings):
 
 def run_PAM(settings):
     """Run pathway activation analysis."""
+    if not PAM_AVAILABLE:
+        raise RuntimeError("PAM not available! Please install NEURON!")
+    from ossdbs.axon_processing import get_neuron_model
+
     _logger.info("Running PAM")
     pathway_file = settings["PathwayFile"]
     pathway_solution_dir = settings["OutputPath"]
@@ -608,13 +602,7 @@ def run_PAM(settings):
         pathways_dict = json.load(fp)
 
     model_type = pathways_dict["Axon_Model_Type"]
-
-    if "MRG2002" in model_type:
-        neuron_model = MRG2002(pathways_dict, pathway_solution_dir)
-    elif "McNeal1976" in model_type:
-        neuron_model = McNeal1976(pathways_dict, pathway_solution_dir)
-    else:
-        raise NotImplementedError(f"Model {model_type} not yet implemented.")
+    neuron_model = get_neuron_model(model_type, pathways_dict, pathway_solution_dir)
 
     if settings["StimSets"]["Active"]:
         if "CurrentVector" not in settings:
@@ -650,7 +638,8 @@ def run_PAM(settings):
                     "oss_time_result_PAM.h5",
                 )
             )
-        neuron_model.load_unit_solutions(time_domain_solution_files)
+
+        td_unit_solutions = neuron_model.load_unit_solutions(time_domain_solution_files)
 
         # go through stimulation protocols
         _logger.info("Running stimulation protocols")
@@ -660,22 +649,25 @@ def run_PAM(settings):
             # swap NaNs to zero current and convert to A (StimSets in mA)
             scaling_vector = [0 if np.isnan(x) else 1e-3 * x for x in scaling_vector]
 
-            neuron_model.superimpose_unit_solutions(scaling_vector)
+            td_solution = neuron_model.superimpose_unit_solutions(
+                td_unit_solutions, scaling_vector
+            )
             # when using optimizer, scaling_index is not used
             if (
                 settings["CurrentVector"] is not None
                 and settings["StimSets"]["StimSetsFile"] is None
             ):
                 neuron_model.process_pathways(
-                    scaling=settings["Scaling"], scaling_index=None
+                    td_solution, scaling=settings["Scaling"], scaling_index=None
                 )
             else:
                 neuron_model.process_pathways(
-                    scaling=settings["Scaling"], scaling_index=protocol_i
+                    td_solution, scaling=settings["Scaling"], scaling_index=protocol_i
                 )
     else:
-        neuron_model.load_solution(time_domain_solution)
+        td_solution = neuron_model.load_solution(time_domain_solution)
         neuron_model.process_pathways(
+            td_solution,
             scaling=settings["Scaling"],
             scaling_index=settings["ScalingIndex"],
         )

@@ -41,5 +41,5 @@ for result_directory in result_directories:
         mean_diff = np.mean(difference)
         std_diff = np.std(difference)
         max_diff = np.max(difference)
-        print(f"{pathway}, {mean_activation:.2f}, " f"{mean_diff:.2f}, {max_diff:.2f}")
+        print(f"{pathway}, {mean_activation:.2f}, {mean_diff:.2f}, {max_diff:.2f}")
     print("++++++++++++++")

@@ -48,7 +48,6 @@ class TestModelGeometry:
                         "DielectricModel": "ColeCole4",
                         "MaxMeshSize": 0.5,
                     },
-
                 },
                 {
                     "Name": "AbbottStJudeActiveTip6142_6145",
@@ -98,7 +97,6 @@ class TestModelGeometry:
             brain_vol = 4 / 3 * np.pi * radius**3
         elif brain_shape == "Ellipsoid":
             brain_vol = 4 / 3 * np.pi * x * y * z
-
 
         electrode_vol = 0
         electrodes = modelGeometry[3]

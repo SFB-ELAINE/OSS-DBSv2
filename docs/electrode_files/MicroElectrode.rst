@@ -1,6 +1,6 @@
-=========================
+==========================
 Alpha Omega MicroElectrode
-=========================
+==========================
 
 * **Manufacturer:** `Alpha Omega <https://www.alphaomega-eng.com/>`_  
 * **Products:** MicroElectrode  

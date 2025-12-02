@@ -27,3 +27,4 @@ recursive-include ossdbs *.md
 recursive-include ossdbs *.mod
 recursive-include ossdbs *.txt
 recursive-include ossdbs *.ses
+include *.yaml

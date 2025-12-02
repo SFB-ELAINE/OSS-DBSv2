@@ -1,5 +1,5 @@
 import os
-from typing import ClassVar, List
+from typing import ClassVar
 
 import ngsolve
 import numpy as np
@@ -36,22 +36,23 @@ def get_reference_and_model_geo(electrode_name, idx):
 class TestElectrode:
     """Class for testing electrodes."""
 
-    AbbottStJudeDirected: ClassVar[List[str]] = [
+    AbbottStJudeDirected: ClassVar[list[str]] = [
         "AbbottStJudeDirected6172",
         "AbbottStJudeDirected6173",
     ]
-    Medtronic: ClassVar[List[str]] = ["Medtronic3387", "Medtronic3389", "Medtronic3391"]
-    MedtronicSenSight: ClassVar[List[str]] = [
+    Medtronic: ClassVar[list[str]] = ["Medtronic3387", "Medtronic3389", "Medtronic3391"]
+    MedtronicSenSight: ClassVar[list[str]] = [
         "MedtronicSenSightB33005",
         "MedtronicSenSightB33015",
     ]
-    NeuroPace: ClassVar[List[str]] = ["NeuroPaceDL344_3_5", "NeuroPaceDL344_10"]
-    PINSMedical: ClassVar[List[str]] = [
+    NeuroPace: ClassVar[list[str]] = ["NeuroPaceDL344_3_5", "NeuroPaceDL344_10"]
+    NeuroNexus: ClassVar[list[str]] = ["NeuroNexusA1x16_5mm_50_177"]
+    PINSMedical: ClassVar[list[str]] = [
         "PINSMedicalL301",
         "PINSMedicalL302",
         "PINSMedicalL303",
     ]
-    Dixi: ClassVar[List[str]] = [
+    Dixi: ClassVar[list[str]] = [
         "DixiSEEG5",
         "DixiSEEG8",
         "DixiSEEG10",
@@ -60,13 +61,14 @@ class TestElectrode:
         "DixiSEEG18",
     ]
 
-    PMTsEEG2102: ClassVar[List[str]] = [
+    PMTsEEG2102: ClassVar[list[str]] = [
         "PMTsEEG2102_08",
         "PMTsEEG2102_10",
         "PMTsEEG2102_12",
         "PMTsEEG2102_14",
         "PMTsEEG2102_16",
     ]
+    SceneRay1242: ClassVar[list[str]] = ["SceneRay1242"]
 
     def check_rename_boundaries(self, electrode, electrode_name):
         """Check whether set_contact_names() works."""
@@ -83,10 +85,7 @@ class TestElectrode:
 
         desired = {"RenamedBody", "RenamedContact_1"}
 
-        # if electrode_name == "MicroElectrode":
-        #     desired.add("fillet")
-        # else:
-        desired.update({f"Contact_{i+2}" for i in range(n_contacts - 1)})
+        desired.update({f"Contact_{i + 2}" for i in range(n_contacts - 1)})
 
         assert desired == set(faces)
 
@@ -97,7 +96,7 @@ class TestElectrode:
         faces = [face.name for face in geometry.faces]
 
         desired = {"Body"}
-        desired.update({f"Contact_{i+1}" for i in range(n_contacts)})
+        desired.update({f"Contact_{i + 1}" for i in range(n_contacts)})
 
         # if electrode_name == "MicroElectrode":
         #     desired.add("fillet")
@@ -163,6 +162,33 @@ class TestElectrode:
             )
 
             return body1 + body2 + contact_1 + contact_2
+
+        elif "NeuroNexus" in electrode_name:
+            total_length = electrode._parameters.total_length
+            tip_length = electrode._parameters.tip_length
+            contact_spacing = electrode._parameters.contact_spacing
+            first_contact_position = electrode._parameters.get_center_first_contact()
+            thickness = electrode._parameters.shank_thickness
+            max_width = electrode._parameters.max_width
+            min_width = electrode._parameters.min_width
+            n_contacts = electrode._n_contacts
+            # length of straight part until first contact, where width
+            # is max_width
+            straight_part_length = (
+                total_length - tip_length - (n_contacts - 1) * contact_spacing
+            )
+            shaft_volume = straight_part_length * max_width * thickness
+
+            # surface area until tip, shaped like a trapezoid
+            middle_area = (
+                0.5 * (min_width + max_width) * (n_contacts - 1) * contact_spacing
+            )
+            middle_volume = middle_area * thickness
+
+            # last tip part
+            tip_area = 0.5 * min_width * first_contact_position
+            tip_volume = tip_area * thickness
+            return shaft_volume + middle_volume + tip_volume
 
         else:
             contact_length = electrode._parameters.contact_length
@@ -237,6 +263,7 @@ class TestElectrode:
                 or electrode_name in self.Medtronic
                 or electrode_name in self.NeuroPace
                 or electrode_name in self.PINSMedical
+                or electrode_name in self.SceneRay1242
             ):
                 C1_height = tip_length - lead_radius
                 C1_volume = (4 / 3 * lead_radius**3 * np.pi * 0.5) + (
@@ -255,7 +282,6 @@ class TestElectrode:
                 tip_radius = electrode._parameters.tip_diameter * 0.5
                 filet_val = 0.00114218702387580
                 return (contact_length * tip_radius**2 * np.pi) - filet_val
-
             else:
                 if electrode_name in self.Dixi or electrode_name in self.PMTsEEG2102:
                     C1_height = contact_length - lead_radius
