@@ -123,7 +123,7 @@ class TestDTIMasking:
     def test_DTImasking(self, settings_fixture, mri_fixture, geometry_fixture):
         try:
             mri_image, dti_image = mri_fixture
-            brain_region, electrodes, geometry = geometry_fixture
+            brain_region, _, geometry = geometry_fixture
             dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
             materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
 
