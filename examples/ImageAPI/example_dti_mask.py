@@ -21,9 +21,10 @@ Visualization in ParaView:
 import os
 
 import ngsolve
+import numpy as np
 
 from ossdbs.api import (
-    build_brain_model,
+    create_bounding_box,
     generate_mesh,
     load_images,
     prepare_dielectric_properties,
@@ -81,10 +82,6 @@ mri_image, dti_image = load_images(settings)
 print("Preparing dielectric properties...")
 dielectric_properties = prepare_dielectric_properties(settings)
 
-# Build brain model
-print("Building brain model...")
-brain = build_brain_model(settings, mri_image)
-
 # Generate mesh for the simulation
 print("Generating mesh...")
 mesh = generate_mesh(settings)
@@ -94,7 +91,7 @@ ngmesh = mesh.ngsolvemesh
 print("Creating conductivity distributions...")
 conductivity = ConductivityCF(
     mri_image=mri_image,
-    brain_bounding_box=brain.brain_region,
+    brain_bounding_box=create_bounding_box(settings["BrainRegion"]),
     dielectric_properties=dielectric_properties,
     materials=settings["MaterialDistribution"]["MRIMapping"],
     dti_image=dti_image,
@@ -118,7 +115,7 @@ FieldSolution(conductivity_export, "conductivity", ngmesh, False).save(
 
 conductivity_masked = ConductivityCF(
     mri_image=mri_image,
-    brain_bounding_box=brain.brain_region,
+    brain_bounding_box=create_bounding_box(settings["BrainRegion"]),
     dielectric_properties=dielectric_properties,
     materials=settings["MaterialDistribution"]["MRIMapping"],
     dti_image=dti_image,
@@ -145,3 +142,31 @@ FieldSolution(conductivity.material_distribution(mesh), "material", ngmesh, Fals
 )
 
 print("Stored conductivity distributions in OutputPath.")
+
+test_point = (-14.14, -1.63, -16.99)
+
+sigma = conductivity_distribution(ngmesh(test_point))
+sigma_masked = conductivity_distribution_masked(ngmesh(test_point))
+
+print(
+    "Conductivity at vertices of the element including point",
+    test_point,
+    "without masking:",
+)
+print("WM:\n", np.round(np.array(sigma[0], dtype=float).reshape((3, 3)), 8))
+print("CSF:\n", np.round(np.array(sigma[1], dtype=float).reshape((3, 3)), 8))
+print("GM:\n", np.round(np.array(sigma[2], dtype=float).reshape((3, 3)), 8))
+
+print(
+    "Conductivity at vertices of the element including point",
+    test_point,
+    "with masking:",
+)
+print("WM:\n", np.round(np.array(sigma_masked[0], dtype=float).reshape((3, 3)), 8))
+print("CSF:\n", np.round(np.array(sigma_masked[1], dtype=float).reshape((3, 3)), 8))
+print("GM:\n", np.round(np.array(sigma_masked[2], dtype=float).reshape((3, 3)), 8))
+
+print(
+    "No masking was applied to WM, CSF tensor remains isotropic (masking not needed), "
+    "and masking was applied to GM."
+)
