@@ -1,6 +1,7 @@
 import json
 import os
 
+import numpy as np
 import pytest
 
 import ossdbs
@@ -66,7 +67,11 @@ def settings_fixture():
 @pytest.fixture
 def mri_fixture(settings_fixture):
     settings_fixture["MaterialDistribution"]["MRIPath"] = os.path.join(
-        os.getcwd(), "input_files/homogeneous.nii.gz"
+        os.getcwd(), "input_files/sub-John_Doe/JD_segmask.nii.gz"
+    )
+    settings_fixture["MaterialDistribution"]["DiffusionTensorActive"] = True
+    settings_fixture["MaterialDistribution"]["DTIPath"] = os.path.join(
+        os.getcwd(), "input_files/sub-John_Doe/JD_DTI_NormMapping.nii.gz"
     )
     mri_image, dti_image = ossdbs.load_images(settings_fixture)
     return mri_image, dti_image
@@ -112,6 +117,59 @@ class TestConductivity:
             assert conductivity is not None
         except Exception:
             pytest.fail("Cannot be instantiated.")
+
+
+class TestDTIMasking:
+    def test_DTImasking(self, settings_fixture, mri_fixture, geometry_fixture):
+        try:
+            mri_image, dti_image = mri_fixture
+            brain_region, electrodes, geometry = geometry_fixture
+            dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
+            materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
+
+            # Create ConductivityCF instances
+            conductivity_unmasked = ossdbs.ConductivityCF(
+                mri_image,
+                brain_region,
+                dielectric_model,
+                materials,
+                geometry.encapsulation_layers,
+                complex_data=settings_fixture["EQSMode"],
+                dti_image=dti_image,
+                wm_masking=False,  # No masking
+            )
+
+            conductivity_masked = ossdbs.ConductivityCF(
+                mri_image,
+                brain_region,
+                dielectric_model,
+                materials,
+                geometry.encapsulation_layers,
+                complex_data=settings_fixture["EQSMode"],
+                dti_image=dti_image,
+                wm_masking=True,  # With masking
+            )
+
+            # Evaluate conductivity at a test point
+            test_point = (-14.14, -1.63, -16.99)
+            mesh = ossdbs.generate_mesh(settings_fixture)
+            sigma_unmasked = conductivity_unmasked(mesh=mesh, frequency=10000.0)
+            sigma_masked = conductivity_masked(mesh=mesh, frequency=10000.0)
+
+            # Assert that the conductivity tensors are the same in WM regions
+            assert np.allclose(
+                sigma_unmasked(mesh.ngsolvemesh(test_point))[0],
+                sigma_masked(mesh.ngsolvemesh(test_point))[0],
+            ), "Conductivity tensors should be the same in white matter regions."
+
+            # Assert that the conductivity tensors differ in aniso GM matter region
+            assert not np.allclose(
+                sigma_unmasked(mesh.ngsolvemesh(test_point))[2],
+                sigma_masked(mesh.ngsolvemesh(test_point))[2],
+            ), "Conductivity tensors should differ in aniso GM matter region."
+
+        except Exception as e:
+            pytest.fail(f"Test failed with exception: {e}")
 
 
 class TestVolumeConductorModel:
