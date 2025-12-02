@@ -62,7 +62,7 @@ def generate_electrodes(settings: dict):
     _logger.info("Generate electrode geometries")
 
     hp_refinement = False
-    if "HPRefinement" in settings["Mesh"]:
+    if settings["Mesh"].get("HPRefinement", False):
         hp_refinement = settings["Mesh"]["HPRefinement"]["Active"]
     electrodes = []
     for electrode_parameters in settings["Electrodes"]:
@@ -108,7 +108,7 @@ def generate_electrodes(settings: dict):
             ]["Thickness[mm]"]
         electrodes.append(electrode)
 
-    if settings["ExportElectrode"]:
+    if settings.get("ExportElectrode", False):
         n_electrode = 0
         for electrode in electrodes:
             n_electrode = n_electrode + 1

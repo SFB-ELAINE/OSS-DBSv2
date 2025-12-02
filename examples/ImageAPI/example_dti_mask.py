@@ -1,19 +1,26 @@
 """
 Example masking a DTI image based on the material distribution.
+This option can be selected to make sure that anisotropy tensors
+are only considered in white matter regions.
 
 Outcome:
-    Returns anisotropy tensors with and without masking for randomly selected points.
-    Additionally the conductivity distributions are saved as VTK files.
-    Import vtk files in ParaView to visualize the difference.
-    The conductivity vtk contains values above 2.0 S/m in the xx, yy, zz components,
-    which is the unscaled default value for CSF.
-    In the masked version values above 2.0 S/m does not exist.
+    Exports two conductivity fields as VTK (.vtu) files:
+        conductivity.vtu          # unmasked
+        conductivity_masked.vtu   # masked
+
+Visualization in ParaView:
+    Load both files, select them together, and apply:
+        Filters -> Alphabetical -> Append Attributes
+    Then apply a Python Calculator to the Append Attributes output with:
+        conductivity_masked_real - conductivity_real
+
+    Negative values in the result indicate voxels where the unmasked conductivity
+    had unphysically high/scaled conductivity compared to the masked conductivty.
 """
 
 import os
 
 import ngsolve
-import numpy as np
 
 from ossdbs.api import generate_mesh, prepare_dielectric_properties
 from ossdbs.fem.volume_conductor.conductivity import ConductivityCF
@@ -37,7 +44,7 @@ settings = {
         }
     ],
     "MaterialDistribution": {
-        "MRIPath": "../../input_files/Butenko_segmask.nii.gz",
+        "MRIPath": "../../input_files/sub-John_Doe/JD_segmask.nii.gz",
         "MRIMapping": {
             "Unknown": 0,
             "CSF": 3,
@@ -46,20 +53,19 @@ settings = {
             "Blood": 4,
         },
         "DiffusionTensorActive": True,
-        "DTIPath": "../../input_files/IITMeanTensor_NormMapping.nii.gz",
+        "DTIPath": "../../input_files/sub-John_Doe/JD_DTI_NormMapping.nii.gz",
     },
     "DielectricModel": {"Type": "ColeCole4", "CustomParameters": None},
     "Mesh": {
         "LoadMesh": False,
         "LoadPath": "",
         "MeshingHypothesis": {
-            "Type": "Default",
+            "Type": "Fine",
             "MaxMeshSize": 1000.0,
             "MeshSizeFilename": "",
         },
         "SaveMesh": False,
     },
-    "ExportElectrode": False,
     "OutputPath": "./",
 }
 
@@ -90,7 +96,7 @@ conductivity = ConductivityCF(
     dti_image=dti_image,
     wm_masking=False,
 )
-conductivity_distribution = conductivity(mesh=mesh, frequency=1000000.0)
+conductivity_distribution = conductivity(mesh=mesh, frequency=10000.0)
 
 # Naming convention by ParaView!
 cf_list = (
@@ -125,19 +131,9 @@ cf_list = (
     conductivity_distribution_masked[5],  # yz
     conductivity_distribution_masked[2],  # xz
 )
-conductivity_export = ngsolve.CoefficientFunction(cf_list, dims=(6,))
-FieldSolution(conductivity_export, "conductivity_masked", ngmesh, False).save(
+conductivity_export_masked = ngsolve.CoefficientFunction(cf_list, dims=(6,))
+FieldSolution(conductivity_export_masked, "conductivity_masked", ngmesh, False).save(
     os.path.join(settings["OutputPath"], "conductivity_masked")
 )
 
-# Test point for conductivity values
-test_point = (-14.14, -1.63, -16.99)
-
-sigma = conductivity_distribution(ngmesh(test_point))
-sigma_masked = conductivity_distribution_masked(ngmesh(test_point))
-
-print("Conductivity at point", test_point, "without masking:")
-print("CSF:\n", np.round(np.array(sigma[0], dtype=float).reshape((3, 3)), 8))
-
-print("Conductivity at point", test_point, "with masking:")
-print("CSF:\n", np.round(np.array(sigma_masked[0], dtype=float).reshape((3, 3)), 8))
+print("Stored conductivity distributions in OutputPath.")
