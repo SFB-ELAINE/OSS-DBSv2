@@ -22,9 +22,13 @@ import os
 
 import ngsolve
 
-from ossdbs.api import generate_mesh, prepare_dielectric_properties
+from ossdbs.api import (
+    build_brain_model,
+    generate_mesh,
+    load_images,
+    prepare_dielectric_properties,
+)
 from ossdbs.fem.volume_conductor.conductivity import ConductivityCF
-from ossdbs.utils.nifti1image import DiffusionTensorImage, MagneticResonanceImage
 from ossdbs.utils.vtk_export import FieldSolution
 
 # Load settings for the simulation
@@ -69,17 +73,17 @@ settings = {
     "OutputPath": "./",
 }
 
-# Load MRI image and create brain geometry
-print("Loading MRI image...")
-mri_image = MagneticResonanceImage(settings["MaterialDistribution"]["MRIPath"])
-
-# Loading DTI image
-print("Loading DTI image...")
-dti_image = DiffusionTensorImage(settings["MaterialDistribution"]["DTIPath"])
+# Load images
+print("Load images...")
+mri_image, dti_image = load_images(settings)
 
 # Prepare dielectric properties
 print("Preparing dielectric properties...")
 dielectric_properties = prepare_dielectric_properties(settings)
+
+# Build brain model
+print("Building brain model...")
+brain = build_brain_model(settings, mri_image)
 
 # Generate mesh for the simulation
 print("Generating mesh...")
@@ -90,7 +94,7 @@ ngmesh = mesh.ngsolvemesh
 print("Creating conductivity distributions...")
 conductivity = ConductivityCF(
     mri_image=mri_image,
-    brain_bounding_box=mri_image.bounding_box,
+    brain_bounding_box=brain.brain_region,
     dielectric_properties=dielectric_properties,
     materials=settings["MaterialDistribution"]["MRIMapping"],
     dti_image=dti_image,
@@ -114,7 +118,7 @@ FieldSolution(conductivity_export, "conductivity", ngmesh, False).save(
 
 conductivity_masked = ConductivityCF(
     mri_image=mri_image,
-    brain_bounding_box=mri_image.bounding_box,
+    brain_bounding_box=brain.brain_region,
     dielectric_properties=dielectric_properties,
     materials=settings["MaterialDistribution"]["MRIMapping"],
     dti_image=dti_image,
@@ -134,6 +138,10 @@ cf_list = (
 conductivity_export_masked = ngsolve.CoefficientFunction(cf_list, dims=(6,))
 FieldSolution(conductivity_export_masked, "conductivity_masked", ngmesh, False).save(
     os.path.join(settings["OutputPath"], "conductivity_masked")
+)
+
+FieldSolution(conductivity.material_distribution(mesh), "material", ngmesh, False).save(
+    os.path.join(settings["OutputPath"], "material")
 )
 
 print("Stored conductivity distributions in OutputPath.")
