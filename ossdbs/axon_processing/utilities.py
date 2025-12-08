@@ -4,7 +4,6 @@
 import json
 import logging
 import os
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -98,8 +97,8 @@ def create_leaddbs_outputs(
     output_path: str,
     Axon_Lead_DBS: np.ndarray,
     connectome_name: str,
-    scaling_index: Optional[int] = None,
-    pathway_name: Optional[str] = None,
+    scaling_index: int | None = None,
+    pathway_name: str | None = None,
 ):
     """Export axons with activation state in Lead-DBS supported format.
 
@@ -143,8 +142,8 @@ def create_leaddbs_outputs(
 def create_paraview_outputs(
     output_path: str,
     Axon_Lead_DBS: np.ndarray,
-    scaling_index: Optional[int] = None,
-    pathway_name: Optional[str] = None,
+    scaling_index: int | None = None,
+    pathway_name: str | None = None,
 ):
     """Export axons with activation state in Paraview supported format.
 
@@ -202,8 +201,8 @@ def store_axon_statuses(
     percent_activated: float,
     percent_damaged: float,
     percent_csf: float,
-    scaling_index: Optional[int] = None,
-    pathway_name: Optional[bool] = None,
+    scaling_index: int | None = None,
+    pathway_name: bool | None = None,
 ):
     """Store PAM results.
 

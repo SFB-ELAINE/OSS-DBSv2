@@ -4,7 +4,6 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Optional
 
 import h5py
 import numpy as np
@@ -425,7 +424,7 @@ class Pathway(PointModel):
         frequency: float,
         frequency_index: int,
         electrode=None,
-        activation_threshold: Optional[float] = None,
+        activation_threshold: float | None = None,
     ):
         """Write field values to CSV.
 
