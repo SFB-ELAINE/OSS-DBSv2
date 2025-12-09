@@ -34,7 +34,7 @@ For more details about the first version of OSS-DBS, see [Butenko2019]_.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Modeling Components
+   :caption: Documentation
 
    brain_geometry
    materials

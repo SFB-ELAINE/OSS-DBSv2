@@ -3,15 +3,16 @@
 Examples
 ========
 
-Welcome to the example section of our software documentation! 
-In this section, we provide a variety of examples to help you understand how to use our software for specific applications. 
-Each example includes a detailed walkthrough of the input file, simulation parameters, and output files, 
-along with explanations of the key concepts and algorithms used. 
-Whether you are new to the software or an experienced user, these examples can provide valuable insight and guidance for your own simulations. 
+Different examples are provided with the software to help understand the workflow for common applications. 
+Each example includes the full input file and can be executed directly after installation.
+Below two examples are listed covering human and rodent DBS modeling.
 
 .. toctree::
    :maxdepth: 1
 
-   examples/example_benchmark
+   examples/example_JD
    examples/example_rat
-   examples/example1
+   examples/example_test_cases
+
+.. note::
+   More examples are stored in the ``examples`` and the ``input_test_cases`` directories within the repository.

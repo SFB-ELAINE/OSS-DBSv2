@@ -1,7 +1,8 @@
 Installation
 ============
 
-OSS-DBS can now be easily installed using pip. The software is tested with Python versions 3.8, 3.9, 3.10, and 3.11.
+OSS-DBS can now be easily installed using pip.
+The software runs with Python versions 3.10, 3.11, and 3.12.
 
 Basic Installation
 ------------------
@@ -12,12 +13,13 @@ For most users, simply run the following command:
 
     $ pip install ossdbs
 
-Windows users and Mac users with Python 3.8: Please install NEURON separately before installing OSS-DBS. The instructions can be found here: [https://nrn.readthedocs.io/en/latest/install/install.html].
+On macOS and Windows, the NEURON simulator must be installed separately **before** installing OSS-DBSv2.
+Installation instructions for NEURON are available here: [https://nrn.readthedocs.io/en/latest/install/install.html].
 
 Developer Installation
 ----------------------
 
-To install OSS-DBS for development purposes, clone the repository into a local directory, navigate to the directory, and run:
+To install OSS-DBSv2 from source for development:
 
 .. code-block:: console
 
@@ -28,22 +30,27 @@ To install OSS-DBS for development purposes, clone the repository into a local d
 Additional Installation Options
 --------------------------------
 
-- To run the test suite:
+- Install OSS-DBSv2 together with the test suite:
 
   .. code-block:: console
 
       $ pip install -e ".[test]"
 
-- To develop OSS-DBS:
+- Install OSS-DBSv2 with development dependencies:
 
   .. code-block:: console
 
       $ pip install -e ".[dev]"
 
-- To install all of the above:
+- Install OSS-DBSv2 with *all* optional dependencies:
 
   .. code-block:: console
 
       $ pip install -e ".[all]"
 
-For first steps with OSS-DBS, see the next section of this documentation. Some examples to run can be found in the :ref:`Examples <examples>` section.
+
+Next Steps
+----------
+
+For first steps with OSS-DBSv2, see the :ref:`Tutorial <tutorial>` section.
+Example simulations can be found in :ref:`Examples <examples>`.
