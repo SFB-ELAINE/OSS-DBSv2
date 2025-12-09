@@ -150,23 +150,48 @@ class TestDTIMasking:
                 wm_masking=True,  # With masking
             )
 
-            # Evaluate conductivity at a test point
-            test_point = (-14.14, -1.63, -16.99)
+            # Generate mesh and get underlying NGSolve mesh
             mesh = ossdbs.generate_mesh(settings_fixture)
-            sigma_unmasked = conductivity_unmasked(mesh=mesh, frequency=10000.0)
-            sigma_masked = conductivity_masked(mesh=mesh, frequency=10000.0)
+            ngmesh = mesh.ngsolvemesh
 
-            # Assert that the conductivity tensors are the same in WM regions
+            # Build tensor-valued conductivity fields
+            sigma_unmasked_cf = conductivity_unmasked(mesh=mesh, frequency=10000.0)
+            sigma_masked_cf = conductivity_masked(mesh=mesh, frequency=10000.0)
+
+            # Helper to evaluate sigma at a physical point and return a 3x3 tensor
+            def eval_sigma(cf, point):
+                mp = ngmesh(*point)  # unpack (x, y, z) -> ngmesh(x, y, z)
+                vals = cf(mp)  # 9 components (flattened 3x3)
+                return np.array(vals, dtype=float).reshape((3, 3))
+
+            # Tissue-specific test points (updated by you)
+            test_points = {
+                "GM": (-11.2, -2.5, 5.2),
+                "WM": (-10.9, -2.6, -2.3),
+            }
+
+            # Evaluate tensors
+            sigma_gm_unmasked = eval_sigma(sigma_unmasked_cf, test_points["GM"])
+            sigma_gm_masked = eval_sigma(sigma_masked_cf, test_points["GM"])
+
+            sigma_wm_unmasked = eval_sigma(sigma_unmasked_cf, test_points["WM"])
+            sigma_wm_masked = eval_sigma(sigma_masked_cf, test_points["WM"])
+
+            # WM: masking should not change conductivity (only CSF/GM)
             assert np.allclose(
-                sigma_unmasked(mesh.ngsolvemesh(test_point))[0],
-                sigma_masked(mesh.ngsolvemesh(test_point))[0],
-            ), "Conductivity tensors should be the same in white matter regions."
+                sigma_wm_unmasked,
+                sigma_wm_masked,
+            ), (
+                "Conductivity tensors in white matter should be identical with and without masking."
+            )
 
-            # Assert that the conductivity tensors differ in aniso GM matter region
+            # GM: masking should modify anisotropic GM tensors (become isotropic)
             assert not np.allclose(
-                sigma_unmasked(mesh.ngsolvemesh(test_point))[2],
-                sigma_masked(mesh.ngsolvemesh(test_point))[2],
-            ), "Conductivity tensors should differ in aniso GM matter region."
+                sigma_gm_unmasked,
+                sigma_gm_masked,
+            ), (
+                "Conductivity tensors in anisotropic gray matter should differ with masking applied."
+            )
 
         except Exception as e:
             pytest.fail(f"Test failed with exception: {e}")
