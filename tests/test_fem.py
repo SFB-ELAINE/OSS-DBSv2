@@ -1,6 +1,7 @@
 import json
 import os
 
+import numpy as np
 import pytest
 
 import ossdbs
@@ -66,7 +67,11 @@ def settings_fixture():
 @pytest.fixture
 def mri_fixture(settings_fixture):
     settings_fixture["MaterialDistribution"]["MRIPath"] = os.path.join(
-        os.getcwd(), "input_files/homogeneous.nii.gz"
+        os.getcwd(), "input_files/sub-John_Doe/JD_segmask.nii.gz"
+    )
+    settings_fixture["MaterialDistribution"]["DiffusionTensorActive"] = True
+    settings_fixture["MaterialDistribution"]["DTIPath"] = os.path.join(
+        os.getcwd(), "input_files/sub-John_Doe/JD_DTI_NormMapping.nii.gz"
     )
     mri_image, dti_image = ossdbs.load_images(settings_fixture)
     return mri_image, dti_image
@@ -112,6 +117,84 @@ class TestConductivity:
             assert conductivity is not None
         except Exception:
             pytest.fail("Cannot be instantiated.")
+
+
+class TestDTIMasking:
+    def test_DTImasking(self, settings_fixture, mri_fixture, geometry_fixture):
+        try:
+            mri_image, dti_image = mri_fixture
+            brain_region, _, geometry = geometry_fixture
+            dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
+            materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
+
+            # Create ConductivityCF instances
+            conductivity_unmasked = ossdbs.ConductivityCF(
+                mri_image,
+                brain_region,
+                dielectric_model,
+                materials,
+                geometry.encapsulation_layers,
+                complex_data=settings_fixture["EQSMode"],
+                dti_image=dti_image,
+                wm_masking=False,  # No masking
+            )
+
+            conductivity_masked = ossdbs.ConductivityCF(
+                mri_image,
+                brain_region,
+                dielectric_model,
+                materials,
+                geometry.encapsulation_layers,
+                complex_data=settings_fixture["EQSMode"],
+                dti_image=dti_image,
+                wm_masking=True,  # With masking
+            )
+
+            # Generate mesh and get underlying NGSolve mesh
+            mesh = ossdbs.generate_mesh(settings_fixture)
+            ngmesh = mesh.ngsolvemesh
+
+            # Build tensor-valued conductivity fields
+            sigma_unmasked_cf = conductivity_unmasked(mesh=mesh, frequency=10000.0)
+            sigma_masked_cf = conductivity_masked(mesh=mesh, frequency=10000.0)
+
+            # Helper to evaluate sigma at a physical point and return a 3x3 tensor
+            def eval_sigma(cf, point):
+                mp = ngmesh(*point)  # unpack (x, y, z) -> ngmesh(x, y, z)
+                vals = cf(mp)  # 9 components (flattened 3x3)
+                return np.array(vals, dtype=float).reshape((3, 3))
+
+            # Tissue-specific test points (updated by you)
+            test_points = {
+                "GM": (-11.2, -2.5, 5.2),
+                "WM": (-10.9, -2.6, -2.3),
+            }
+
+            # Evaluate tensors
+            sigma_gm_unmasked = eval_sigma(sigma_unmasked_cf, test_points["GM"])
+            sigma_gm_masked = eval_sigma(sigma_masked_cf, test_points["GM"])
+
+            sigma_wm_unmasked = eval_sigma(sigma_unmasked_cf, test_points["WM"])
+            sigma_wm_masked = eval_sigma(sigma_masked_cf, test_points["WM"])
+
+            # WM: masking should not change conductivity (only CSF/GM)
+            assert np.allclose(
+                sigma_wm_unmasked,
+                sigma_wm_masked,
+            ), (
+                "Conductivity tensors in white matter should be identical with and without masking."
+            )
+
+            # GM: masking should modify anisotropic GM tensors (become isotropic)
+            assert not np.allclose(
+                sigma_gm_unmasked,
+                sigma_gm_masked,
+            ), (
+                "Conductivity tensors in anisotropic gray matter should differ with masking applied."
+            )
+
+        except Exception as e:
+            pytest.fail(f"Test failed with exception: {e}")
 
 
 class TestVolumeConductorModel:

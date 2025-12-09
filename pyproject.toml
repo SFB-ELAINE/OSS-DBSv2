@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ossdbs"
-version = "0.5.2"
+dynamic = ["version"]
 description = "OSS-DBS v2: faster and modular open-source code for deep brain stimulation"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { file = "LICENSE" }
 authors = [{ name = "Julius Zimmermann", email = "julius.zimmermann@uni-rostock.de" },
            { name = "Jan Philipp Payonk", email = "jan.payonk@uni-rostock.de" },
@@ -19,7 +19,6 @@ authors = [{ name = "Julius Zimmermann", email = "julius.zimmermann@uni-rostock.
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -27,6 +26,7 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent"
 ]
+
 dependencies = ["h5py==3.14.0",
                 "ngsolve==6.2.2501",
                 "nibabel==5.2.1",
@@ -44,7 +44,6 @@ dependencies = ["h5py==3.14.0",
                 ]
 
 [project.optional-dependencies]
-
 test = ["pytest", "pytest-cov"]
 
 dev = [
@@ -58,7 +57,7 @@ doc = ["sphinx==6.1.3",
 all = ["ossdbs[test,dev,doc]"]
 
 [project.urls]
-homepage = "https://github.com/SFB-ELAINE/oss-dbsv2"
+homepage = "https://oss-dbsv2.readthedocs.io/en/latest/"
 repository = "https://github.com/SFB-ELAINE/oss-dbsv2"
 
 [project.scripts]
@@ -70,9 +69,12 @@ run_pathway_activation = 'ossdbs.axon_processing.main:main'
 [tool.setuptools]
 packages = ["ossdbs", "leaddbsinterface"]
 
+[tool.setuptools_scm]
+version_file = "ossdbs/_version.py"
+
 [tool.ruff]
 line-length = 88
-target-version = "py39"
+target-version = "py310"
 lint.extend-select = [
     "E", # style errors
     "W", # style warnings
@@ -112,6 +114,7 @@ exclude_lines = [
     "raise NotImplementedError()",
     "except PackageNotFoundError:",
 ]
+
 [tool.coverage.run]
 source = ["ossdbs"]
 
@@ -123,5 +126,6 @@ ignore = [
     ".ruff_cache/**/*",
     "setup.py",
     "tests/**/*",
-    "examples/ConvergenceStudy/**/*"
+    "examples/ConvergenceStudy/**/*",
+    "ossdbs/_version.py"  # auto-generated, not in VCS
 ]

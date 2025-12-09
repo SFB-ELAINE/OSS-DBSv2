@@ -3,7 +3,6 @@
 
 import json
 import logging
-from typing import Optional
 
 import nibabel
 import numpy as np
@@ -62,7 +61,7 @@ class Lattice(PointModel):
         self._vta_volume = None
 
     @property
-    def VTA_volume(self) -> Optional[float]:
+    def VTA_volume(self) -> float | None:
         """Return VTA volume in mm^3."""
         return self._vta_volume
 
@@ -121,7 +120,7 @@ class Lattice(PointModel):
         scalar_field: np.ndarray,
         filename: str,
         binarize: bool = False,
-        activation_threshold: Optional[float] = None,
+        activation_threshold: float | None = None,
     ):
         """Save scalar field in abstract orthogonal space in nifti format.
 

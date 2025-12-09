@@ -120,6 +120,7 @@ def main_run(input_settings: dict):
         geometry.encapsulation_layers,
         complex_data=settings["EQSMode"],
         dti_image=dti_image,
+        wm_masking=settings["MaterialDistribution"]["WMMasking"],
     )
 
     time_1 = time.time()
