@@ -143,30 +143,33 @@ FieldSolution(conductivity.material_distribution(mesh), "material", ngmesh, Fals
 
 print("Stored conductivity distributions in OutputPath.")
 
-test_point = (-14.14, -1.63, -16.99)
+# Inspect conductivity tensors at 3 example tissue locations:
+test_points = {
+    "CSF": (-14.14, -1.63, -16.99),
+    "GM": (-11.2, -2.5, 5.2),
+    "WM": (-10.9, -2.6, -2.3),
+}
 
-sigma = conductivity_distribution(ngmesh(test_point))
-sigma_masked = conductivity_distribution_masked(ngmesh(test_point))
+for tissue, pt in test_points.items():
+    try:
+        print("\n=== Tissue:", tissue, "point:", pt, "===")
 
-print(
-    "Conductivity at vertices of the element including point",
-    test_point,
-    "without masking:",
-)
-print("WM:\n", np.round(np.array(sigma[0], dtype=float).reshape((3, 3)), 8))
-print("CSF:\n", np.round(np.array(sigma[1], dtype=float).reshape((3, 3)), 8))
-print("GM:\n", np.round(np.array(sigma[2], dtype=float).reshape((3, 3)), 8))
+        # get mip
+        mp = ngmesh(*pt)
 
-print(
-    "Conductivity at vertices of the element including point",
-    test_point,
-    "with masking:",
-)
-print("WM:\n", np.round(np.array(sigma_masked[0], dtype=float).reshape((3, 3)), 8))
-print("CSF:\n", np.round(np.array(sigma_masked[1], dtype=float).reshape((3, 3)), 8))
-print("GM:\n", np.round(np.array(sigma_masked[2], dtype=float).reshape((3, 3)), 8))
+        # evaluate conductivity (unmasked)
+        sigma_vals = conductivity_distribution(mp)
+        sigma_tensor = np.array(sigma_vals, dtype=float).reshape((3, 3))
 
-print(
-    "No masking was applied to WM, CSF tensor remains isotropic (masking not needed), "
-    "and masking was applied to GM."
-)
+        # evaluate conductivity (masked)
+        sigma_masked_vals = conductivity_distribution_masked(mp)
+        sigma_tensor_masked = np.array(sigma_masked_vals, dtype=float).reshape((3, 3))
+
+        print("Unmasked:")
+        print(np.round(sigma_tensor, 8))
+
+        print("Masked:")
+        print(np.round(sigma_tensor_masked, 8))
+
+    except Exception as e:
+        print("Error evaluating", tissue, "at", pt, ":", e)
