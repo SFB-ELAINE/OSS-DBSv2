@@ -560,7 +560,7 @@ class LeadSettings:
         default_parameters = default_electrode_parameters[oss_electrode_name]
         stretched_parameters = {}
         for parameter, value in zip(
-            asdict(default_parameters), asdict(default_parameters).values()
+            asdict(default_parameters), asdict(default_parameters).values(), strict=True
         ):
             if parameter in stretch_list:
                 stretched_parameters[parameter] = value * stretch_factor
