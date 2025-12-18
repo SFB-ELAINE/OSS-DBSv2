@@ -13,7 +13,7 @@ authors = [{ name = "Julius Zimmermann", email = "julius.zimmermann@uni-rostock.
            { name = "Jan Philipp Payonk", email = "jan.payonk@uni-rostock.de" },
            { name = "Tom Reincke", email = "tom.reincke@uni-rostock.de"},
            { name = "Johannes Reding", email = "johannes.reding@uni-rostock.de"},
-     	   { name = "Konstantin Butenko", email = "kbutenko@bwh.harvard.edu"},
+     	   { name = "Konstantin Butenko", email = "konstantinmgtu@gmail.com"},
      	   { name = "Shruthi Chakravarthy", email = "shruthi.chakravarthy@uni-rostock.de"}
 ]
 classifiers = [
@@ -35,8 +35,8 @@ dependencies = ["h5py==3.14.0",
 		"matplotlib",
 		# always install NEURON under Linux and Mac
 		# windows has no automated installer
-		"neuron==8.2.7; platform_system=='Linux'", 
-		"neuron==8.2.7; platform_system=='Darwin'", 
+		"neuron==9.0.1; platform_system=='Linux'", 
+		"neuron==9.0.1; platform_system=='Darwin'", 
 		# if Neuron cannot be installed from Pypi
 		# pin the numpy version to < 2
 		"numpy<2; platform_system=='Windows'",
