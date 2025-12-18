@@ -34,8 +34,10 @@ Rodent Electrodes
 In addition to clinical DBS electrodes, OSS-DBSv2 includes dedicated electrode models for small rodent studies.
 A complete list is available in the :ref:`electrode documentation <electrodes>`.
 
-In this example, the electrode is implanted cranially into the region of the subthalamic nucleus (STN).
-This electrode has a single contact, which we activate at 1 V.
+In this example, a SNEX100 electrode is implanted cranially into the region of the subthalamic nucleus (STN).
+The electrode has two contacts, so either bipolar or monopolar stimulation can be used.
+Below a configuration for monopolar stimulation with 1 V at contact 1 is shown.
+As simplification, the outer boundary of the brain region is treated as ground.
 Since most rodent electrodes do not feature directional contacts, no orientation needs to be specified.
 
 .. code-block:: json
@@ -43,25 +45,55 @@ Since most rodent electrodes do not feature directional contacts, no orientation
     "Electrodes": [
       {
         "Name": "MicroProbesSNEX100",
-        "Rotation": 0,
-        "Direction": [2.2314, 5.0661, 3.990],
-        "Translation": [14.5884, -14.7434, -9.0634],
-        "Contact_1": {
-          "Active": true,
-          "Value": 1.0
-        }
+        "Rotation[Degrees]": 0,
+        "Direction": {"x[mm]": 2.23, "y[mm]": 5.07, "z[mm]": 3.99},
+        "TipPosition": {"x[mm]": 14.59, "y[mm]": -14.74, "z[mm]": -9.06},
+        "Contacts": [
+            {
+              "Contact_ID": 1,
+              "Active": true,
+              "Voltage[V]": 1.0,
+              "Floating": false
+            },
+                            {
+                    "Contact_ID": 2,
+                    "Active": false,
+                    "Voltage[V]": 0.0,
+                    "Floating": true,
+                }
+
+        ]
       }
     ]
+    "Surfaces": [
+        {
+            "Name": "BrainSurface",
+            "Active": true,
+            "Voltage[V]": 0.0,
+            "Floating": false
+        }
+    ],
 
-Boundary Condition (Ground)
+Estimate Stimulation Volume
 ---------------------------
 
-As a simplification, we treat the skull of the animal as ground (0 V).
-This is acceptable because the distance between the electrode tip and skull is relatively large, and the electric field decays rapidly with distance.
+To the stimulation volume a point model around the electrode tip is created.
+Therefore, the ``Lattice`` option is activated and the location and number of points specified.
 
 .. code-block:: json
 
-    "BrainSurface": {
-      "Active": true,
-      "Value": 0
+  "PointModel": {
+    "Pathway": {
+      "Active": false,
+      "FileName": ""
     },
+    "Lattice": {
+      "Active": true,
+      "Center":  {"x[mm]": 14.59, "y[mm]": -14.74, "z[mm]": -9.06},
+      "Shape": {"x": 20, "y": 20, "z": 20},
+      "Direction": {"x[mm]": 2.23, "y[mm]": 5.07, "z[mm]": 3.99},
+      "PointDistance[mm]": 0.5
+    }
+  },
+
+The results are stored in the specified ``OutputPath`` directory after running the simulation.

@@ -142,7 +142,7 @@ Execute the simulation from the command line:
 
 .. code-block:: bash
 
-    ossdbs input_human.json
+    ossdbs input.json
 
 A logfile and the result files (VTK, impedance, and optional outputs) will be written to the ``Results/`` folder.
 
