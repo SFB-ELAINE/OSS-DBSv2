@@ -2,7 +2,7 @@
 
 import json
 import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import h5py
 import numpy as np
@@ -16,6 +16,8 @@ from leaddbsinterface.default_settings import (
 
 # Mock heavy dependencies before importing leaddbsinterface.lead_settings
 # These are CAD/FEM libraries not needed for testing the interface
+# Note: Using unittest.mock.MagicMock here since this is module-level
+# (before mocker fixture is available)
 mock_ngsolve = MagicMock()
 mock_netgen = MagicMock()
 
@@ -149,13 +151,13 @@ class TestLeadSettingsMocked:
     """Test LeadSettings class with mocked h5py file."""
 
     @pytest.fixture
-    def mock_h5_file(self):
+    def mock_h5_file(self, mocker):
         """Create a mock h5py file with minimal required data."""
-        mock_file = MagicMock(spec=h5py.File)
-        mock_settings = MagicMock()
+        mock_file = mocker.MagicMock(spec=h5py.File)
+        mock_settings = mocker.MagicMock()
 
         # Mock current control
-        mock_cur_ctrl = MagicMock()
+        mock_cur_ctrl = mocker.MagicMock()
         mock_cur_ctrl.T = [np.array([1.0, 1.0])]
         mock_settings.__getitem__.return_value = mock_cur_ctrl
 
@@ -163,45 +165,45 @@ class TestLeadSettingsMocked:
         def getitem_side_effect(key):
             if key == "current_control":
                 return mock_cur_ctrl
-            return MagicMock()
+            return mocker.MagicMock()
 
         mock_settings.__getitem__.side_effect = getitem_side_effect
         mock_file.__getitem__.return_value = mock_settings
 
         return mock_file
 
-    def test_lead_settings_initialization_h5(self, mock_h5_file):
+    def test_lead_settings_initialization_h5(self, mocker, mock_h5_file):
         """Test LeadSettings initialization with h5 file."""
-        with patch("h5py.File", return_value=mock_h5_file):
-            ls = LeadSettings("test.mat")
-            assert ls._h5 is True
-            assert ls.NUM_ELECS == 1
+        mocker.patch("h5py.File", return_value=mock_h5_file)
+        ls = LeadSettings("test.mat")
+        assert ls._h5 is True
+        assert ls.NUM_ELECS == 1
 
-    def test_lead_settings_initialization_non_h5_raises_error(self):
+    def test_lead_settings_initialization_non_h5_raises_error(self, mocker):
         """Test that non-h5 files raise ValueError with helpful message."""
-        with patch("h5py.File", side_effect=ValueError("Not HDF5")):
-            with pytest.raises(ValueError):
-                LeadSettings("test.mat")
+        mocker.patch("h5py.File", side_effect=ValueError("Not HDF5"))
+        with pytest.raises(ValueError):
+            LeadSettings("test.mat")
 
-    def test_lead_settings_same_current_voltage_ok(self):
+    def test_lead_settings_same_current_voltage_ok(self, mocker):
         """Test that same CC or VC for both hemispheres is OK."""
-        mock_file = MagicMock(spec=h5py.File)
-        mock_settings = MagicMock()
-        mock_cur_ctrl = MagicMock()
+        mock_file = mocker.MagicMock(spec=h5py.File)
+        mock_settings = mocker.MagicMock()
+        mock_cur_ctrl = mocker.MagicMock()
         # Both CC or both VC - should be OK
         mock_cur_ctrl.T = [np.array([1.0, 1.0])]  # Both CC
 
         def getitem_side_effect(key):
             if key == "current_control":
                 return mock_cur_ctrl
-            return MagicMock()
+            return mocker.MagicMock()
 
         mock_settings.__getitem__.side_effect = getitem_side_effect
         mock_file.__getitem__.return_value = mock_settings
 
-        with patch("h5py.File", return_value=mock_file):
-            ls = LeadSettings("test.mat")
-            assert ls.NUM_ELECS == 1
+        mocker.patch("h5py.File", return_value=mock_file)
+        ls = LeadSettings("test.mat")
+        assert ls.NUM_ELECS == 1
 
 
 class TestLeadSettingsWithRealH5File:

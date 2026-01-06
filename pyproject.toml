@@ -44,7 +44,7 @@ dependencies = ["h5py==3.14.0",
                 ]
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-cov"]
+test = ["pytest", "pytest-cov", "pytest-mock"]
 
 dev = [
     "ruff",
