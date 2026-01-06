@@ -223,12 +223,21 @@ class TestLeadSettingsWithRealH5File:
             settings.create_dataset("current_control", data=np.array([[1.0, 1.0]]))
 
             # Add minimal required fields for make_oss_settings
+            # Store as (3, 2) so after .T it becomes (2, 3) for [hemisphere, coordinate]
             settings.create_dataset(
-                "Implantation_coordinate", data=np.array([[0, 0, 0]])
+                "Implantation_coordinate",
+                data=np.array([[0, 0], [0, 0], [0, 0]]),  # [[x_hemi0, x_hemi1], [y0, y1], [z0, z1]]
             )
-            settings.create_dataset("Second_coordinate", data=np.array([[0, 0, 10]]))
-            settings.create_dataset("Phi_vector", data=np.array([[1.0, 0, 0, 0]]))
-            settings.create_dataset("Case_grounding", data=np.array([[0]]))
+            settings.create_dataset(
+                "Second_coordinate",
+                data=np.array([[0, 0], [0, 0], [10, 10]]),  # [[x_hemi0, x_hemi1], [y0, y1], [z0, z1]]
+            )
+            # Phi_vector needs to be (4, 2) for contact voltages/currents per hemisphere
+            settings.create_dataset(
+                "Phi_vector",
+                data=np.array([[1.0, 1.0], [0, 0], [0, 0], [0, 0]]),
+            )
+            settings.create_dataset("Case_grounding", data=np.array([[0, 0]]))
 
             # String fields (stored as ASCII in h5)
             electrode_type = "Medtronic 3389"
@@ -274,27 +283,38 @@ class TestLeadSettingsWithRealH5File:
             settings.create_dataset("Estimate_In_Template", data=np.array([[0]]))
             settings.create_dataset("calcAxonActivation", data=np.array([[0]]))
             settings.create_dataset("removeElectrode", data=np.array([[0]]))
-            settings.create_dataset("Activation_threshold_VTA", data=np.array([[0.2]]))
+            # Shape should be (1, 2) for two hemispheres
+            settings.create_dataset(
+                "Activation_threshold_VTA", data=np.array([[0.2, 0.25]])
+            )
             settings.create_dataset("outOfCore", data=np.array([[0]]))
             settings.create_dataset("stimSetMode", data=np.array([[0]]))
 
             # Array fields for electrode positioning
-            # Shape should be (2, 3) for two hemispheres with x,y,z coordinates
-            settings.create_dataset("headNative", data=np.array([[0, 0, 0], [0, 0, 0]]))
+            # Store as (3, 2) so after .T it becomes (2, 3) for [hemisphere, coordinate]
             settings.create_dataset(
-                "yMarkerNative", data=np.array([[0, 1, 0], [0, 1, 0]])
+                "headNative", data=np.array([[0, 0], [0, 0], [0, 0]])
             )
             settings.create_dataset(
-                "stim_center", data=np.array([[np.nan, np.nan, np.nan]])
+                "yMarkerNative", data=np.array([[0, 0], [1, 1], [0, 0]])
+            )
+            settings.create_dataset(
+                "stim_center",
+                data=np.array([[np.nan, np.nan], [np.nan, np.nan], [np.nan, np.nan]]),
             )
 
             # Contact locations (reference to another dataset)
-            contact_coords = f.create_dataset(
+            # Need contact locations for both hemispheres
+            contact_coords_0 = f.create_dataset(
                 "contact_coords_0", data=np.array([[0, 0, 0], [0, 0, 5], [0, 0, 10]])
             )
+            contact_coords_1 = f.create_dataset(
+                "contact_coords_1", data=np.array([[0, 0, 0], [0, 0, 5], [0, 0, 10]])
+            )
+            # Store as (2, 1) so [hemis_idx, 0] works for both hemispheres
             settings.create_dataset(
                 "contactLocation",
-                data=np.array([[contact_coords.ref]]),
+                data=np.array([[contact_coords_0.ref], [contact_coords_1.ref]]),
                 dtype=h5py.ref_dtype,
             )
 
@@ -343,6 +363,49 @@ class TestLeadSettingsWithRealH5File:
         contact_locs = ls.get_cntct_loc(0)
         assert contact_locs.shape[0] == 3  # x, y, z
         assert contact_locs.shape[1] == 3  # 3 contacts
+
+    def test_make_oss_settings_hemisphere_0(self, minimal_h5_file):
+        """Test make_oss_settings for hemisphere 0 (right).
+
+        This tests the full conversion pipeline including line 218 where
+        get_act_thresh_vta()[hemis_idx] is called.
+        """
+        ls = LeadSettings(minimal_h5_file)
+        settings = ls.make_oss_settings(hemis_idx=0, output_path="/tmp/test_output")
+
+        # Verify the result is a dict
+        assert isinstance(settings, dict)
+
+        # Check that line 218 worked - ActivationThresholdVTA was set correctly
+        assert "ActivationThresholdVTA[V-per-m]" in settings
+        assert settings["ActivationThresholdVTA[V-per-m]"] == 0.2
+
+        # Check other key fields that use array indexing
+        assert "BrainRegion" in settings
+        assert "Center" in settings["BrainRegion"]
+        assert "Electrodes" in settings
+        assert isinstance(settings["Electrodes"], list)
+        assert len(settings["Electrodes"]) > 0
+
+    def test_make_oss_settings_hemisphere_1(self, minimal_h5_file):
+        """Test make_oss_settings for hemisphere 1 (left).
+
+        This specifically tests that array indexing works for the second
+        hemisphere, catching potential IndexError bugs.
+        """
+        ls = LeadSettings(minimal_h5_file)
+        settings = ls.make_oss_settings(hemis_idx=1, output_path="/tmp/test_output")
+
+        # Verify the result is a dict
+        assert isinstance(settings, dict)
+
+        # Check that line 218 worked with hemis_idx=1
+        assert "ActivationThresholdVTA[V-per-m]" in settings
+        assert settings["ActivationThresholdVTA[V-per-m]"] == 0.25
+
+        # This would fail with IndexError if the array shapes are wrong
+        assert "BrainRegion" in settings
+        assert "Electrodes" in settings
 
 
 class TestNumpyCompatibility:

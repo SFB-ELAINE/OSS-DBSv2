@@ -215,7 +215,7 @@ class LeadSettings:
             "StimulationSignal": {"CurrentControlled": current_controlled},
             "CalcAxonActivation": bool(self.get_calc_axon_act()),
             "ActivationThresholdVTA[V-per-m]": float(
-                self.get_act_thresh_vta()[hemis_idx]
+                self.get_act_thresh_vta()[hemis_idx, 0]
             ),
             "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATH),
             "FailFlag": side,
@@ -629,7 +629,7 @@ class LeadSettings:
         """
         # get grid center for lattice / voxel lattice model
         if np.any(np.isnan(self.get_stim_center()[hemis_idx, :])):
-            self.grid_center = (
+            grid_center = (
                 self.get_imp_coord()[hemis_idx, :]
                 + unit_directions[hemis_idx, :] * specs_array_length / 2
             )
