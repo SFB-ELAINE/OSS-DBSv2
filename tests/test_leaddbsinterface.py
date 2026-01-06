@@ -221,7 +221,9 @@ class TestLeadSettingsWithRealH5File:
             settings.create_dataset("current_control", data=np.array([[1.0, 1.0]]))
 
             # Add minimal required fields for make_oss_settings
-            settings.create_dataset("Implantation_coordinate", data=np.array([[0, 0, 0]]))
+            settings.create_dataset(
+                "Implantation_coordinate", data=np.array([[0, 0, 0]])
+            )
             settings.create_dataset("Second_coordinate", data=np.array([[0, 0, 10]]))
             settings.create_dataset("Phi_vector", data=np.array([[1.0, 0, 0, 0]]))
             settings.create_dataset("Case_grounding", data=np.array([[0]]))
@@ -235,7 +237,8 @@ class TestLeadSettingsWithRealH5File:
 
             mri_name = "/tmp/test.nii"
             settings.create_dataset(
-                "MRI_data_name", data=np.array([ord(c) for c in mri_name]).reshape(-1, 1)
+                "MRI_data_name",
+                data=np.array([ord(c) for c in mri_name]).reshape(-1, 1),
             )
 
             dti_name = ""
