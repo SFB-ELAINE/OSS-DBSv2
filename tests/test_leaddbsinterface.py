@@ -226,11 +226,15 @@ class TestLeadSettingsWithRealH5File:
             # Store as (3, 2) so after .T it becomes (2, 3) for [hemisphere, coordinate]
             settings.create_dataset(
                 "Implantation_coordinate",
-                data=np.array([[0, 0], [0, 0], [0, 0]]),  # [[x_hemi0, x_hemi1], [y0, y1], [z0, z1]]
+                data=np.array(
+                    [[0, 0], [0, 0], [0, 0]]
+                ),  # [[x_hemi0, x_hemi1], [y0, y1], [z0, z1]]
             )
             settings.create_dataset(
                 "Second_coordinate",
-                data=np.array([[0, 0], [0, 0], [10, 10]]),  # [[x_hemi0, x_hemi1], [y0, y1], [z0, z1]]
+                data=np.array(
+                    [[0, 0], [0, 0], [10, 10]]
+                ),  # [[x_hemi0, x_hemi1], [y0, y1], [z0, z1]]
             )
             # Phi_vector needs to be (4, 2) for contact voltages/currents per hemisphere
             settings.create_dataset(
