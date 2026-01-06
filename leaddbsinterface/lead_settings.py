@@ -139,7 +139,13 @@ class LeadSettings:
         # use a conductivity model from the GUI
         cond_model = self.get_cond_model()
 
-        # MAKE THE DICTIONARY
+        # Extract scalar value from array (similar to add_stimsignal_params fix)
+        act_thresh_array = self.get_act_thresh_vta()
+        if act_thresh_array.ndim > 1:
+            act_thresh_value = float(act_thresh_array[hemis_idx, 0])
+        else:
+            act_thresh_value = float(act_thresh_array[hemis_idx])
+
         partial_dict = {
             "ModelSide": 0,  # hardcoded for now, always keep to 0
             "BrainRegion": {
@@ -218,9 +224,7 @@ class LeadSettings:
             },
             "StimulationSignal": {"CurrentControlled": current_controlled},
             "CalcAxonActivation": bool(self.get_calc_axon_act()),
-            "ActivationThresholdVTA[V-per-m]": float(
-                self.get_act_thresh_vta()[hemis_idx, 0]
-            ),
+            "ActivationThresholdVTA[V-per-m]": act_thresh_value,
             "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATH),
             "FailFlag": side,
             "TemplateSpace": self.get_est_in_temp(),
