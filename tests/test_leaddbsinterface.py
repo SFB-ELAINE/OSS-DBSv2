@@ -329,16 +329,13 @@ class TestLeadSettingsWithRealH5File:
         electrode_type = ls.get_elec_type()
         assert electrode_type == "Medtronic 3389"
 
-    @pytest.mark.filterwarnings("ignore::RuntimeWarning")
     def test_get_rot_z(self, minimal_h5_file):
-        """Test rotation calculation.
-
-        Note: Suppresses RuntimeWarning for divide by zero since test data
-        may create edge cases in numerical calculations.
-        """
+        """Test rotation calculation."""
         ls = LeadSettings(minimal_h5_file)
         rot_z = ls.get_rot_z(0)
         assert isinstance(rot_z, (float, np.floating))
+        # With zero-norm handling, should return 0.0
+        assert rot_z == 0.0
 
     def test_get_cntct_loc(self, minimal_h5_file):
         """Test getting contact locations."""

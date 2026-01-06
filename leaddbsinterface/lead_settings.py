@@ -412,7 +412,14 @@ class LeadSettings:
         else:
             head_nat = self.get_head_nat()[index_side, :]
             y = self.get_y_mark_nat()[index_side, :] - head_nat
-        y_postop = y / np.linalg.norm(y)
+
+        norm_y = np.linalg.norm(y)
+        if norm_y < 1e-10:
+            # If norm is too small, use zero vector (rotation angle will be 0)
+            y_postop = np.zeros_like(y)
+        else:
+            y_postop = y / norm_y
+
         phi = np.arctan2(-y_postop[0], y_postop[1])
         return phi * 180.0 / np.pi
 
