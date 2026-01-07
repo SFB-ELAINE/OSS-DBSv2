@@ -366,7 +366,9 @@ class LeadSettings:
 
         # Avoid division by zero
         if specs_array_length < 1e-10:
-            return 1.0
+            raise ValueError(
+                "The distance between first and last contact is too small."
+            )
 
         return el_array_length / specs_array_length
 
@@ -803,6 +805,7 @@ class LeadSettings:
 
         return elec_dict, unit_directions, specs_array_length
 
+    # ruff: noqa C901
     def import_stimulation_settings(self, hemis_idx, current_controlled, elec_dict):
         """Convert Lead-DBS stim settings to OSS-DBS parameters,
         update electrode dictionary.
