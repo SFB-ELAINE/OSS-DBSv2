@@ -36,3 +36,6 @@ examples/StimulationSignalAPI/*.pdf
 x86_64/
 
 meshsizes.txt
+
+# Auto-generated version file
+ossdbs/_version.py

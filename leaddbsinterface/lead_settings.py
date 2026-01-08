@@ -65,6 +65,10 @@ class LeadSettings:
         -------
         dict
         """
+        # Validate hemis_idx
+        if hemis_idx not in [0, 1]:
+            raise ValueError(f"hemis_idx must be 0 or 1, got {hemis_idx}")
+
         # Constants
         # OSS strings used for tissue types
         UNK, CSF, GM, WM, BLOOD = [
@@ -135,7 +139,13 @@ class LeadSettings:
         # use a conductivity model from the GUI
         cond_model = self.get_cond_model()
 
-        # MAKE THE DICTIONARY
+        # Extract scalar value from array (similar to add_stimsignal_params fix)
+        act_thresh_array = self.get_act_thresh_vta()
+        if act_thresh_array.ndim > 1:
+            act_thresh_value = float(act_thresh_array[hemis_idx, 0])
+        else:
+            act_thresh_value = float(act_thresh_array[hemis_idx])
+
         partial_dict = {
             "ModelSide": 0,  # hardcoded for now, always keep to 0
             "BrainRegion": {
@@ -214,9 +224,7 @@ class LeadSettings:
             },
             "StimulationSignal": {"CurrentControlled": current_controlled},
             "CalcAxonActivation": bool(self.get_calc_axon_act()),
-            "ActivationThresholdVTA[V-per-m]": float(
-                self.get_act_thresh_vta()[hemis_idx]
-            ),
+            "ActivationThresholdVTA[V-per-m]": act_thresh_value,
             "OutputPath": os.path.join(output_path, HEMIS_OUTPUT_PATH),
             "FailFlag": side,
             "TemplateSpace": self.get_est_in_temp(),
@@ -355,6 +363,13 @@ class LeadSettings:
             + (C1_coords[1] - C_last_coords[1]) ** 2
             + (C1_coords[2] - C_last_coords[2]) ** 2
         )
+
+        # Avoid division by zero
+        if specs_array_length < 1e-10:
+            raise ValueError(
+                "The distance between first and last contact is too small."
+            )
+
         return el_array_length / specs_array_length
 
     def get_cntct_loc(self, hemis_idx):
@@ -412,7 +427,14 @@ class LeadSettings:
         else:
             head_nat = self.get_head_nat()[index_side, :]
             y = self.get_y_mark_nat()[index_side, :] - head_nat
-        y_postop = y / np.linalg.norm(y)
+
+        norm_y = np.linalg.norm(y)
+        if norm_y < 1e-10:
+            # If norm is too small, use zero vector (rotation angle will be 0)
+            y_postop = np.zeros_like(y)
+        else:
+            y_postop = y / norm_y
+
         phi = np.arctan2(-y_postop[0], y_postop[1])
         return phi * 180.0 / np.pi
 
@@ -522,14 +544,17 @@ class LeadSettings:
         partial_dict["StimulationSignal"]["Type"] = self.get_signal_type()
         if partial_dict["StimulationSignal"]["Type"] == "Train":
             partial_dict["StimulationSignal"]["Type"] = "Rectangle"
-        partial_dict["StimulationSignal"]["PulseWidth[us]"] = float(
-            self.get_pulse_width()[hemi_idx]
-        )
+
+        # Extract scalar value from array (similar to line 218 fix)
+        pulse_width_array = self.get_pulse_width()
+        if pulse_width_array.ndim > 1:
+            pulse_width = float(pulse_width_array[hemi_idx, 0])
+        else:
+            pulse_width = float(pulse_width_array[hemi_idx])
+        partial_dict["StimulationSignal"]["PulseWidth[us]"] = pulse_width
 
         if self.check_biphasic():
-            partial_dict["StimulationSignal"]["CounterPulseWidth[us]"] = float(
-                self.get_pulse_width()[hemi_idx]
-            )
+            partial_dict["StimulationSignal"]["CounterPulseWidth[us]"] = pulse_width
 
         # hardwired for now
         partial_dict["StimulationSignal"]["Frequency[Hz]"] = 130.0
@@ -588,7 +613,14 @@ class LeadSettings:
         imp_coords = np.array(self.get_imp_coord())
         sec_coords = np.array(self.get_sec_coord())
         directions = sec_coords - imp_coords
-        unit_directions = directions / np.linalg.norm(directions, axis=1)[:, np.newaxis]
+
+        # Compute norms and handle zero-length directions
+        norms = np.linalg.norm(directions, axis=1)[:, np.newaxis]
+        # Avoid division by zero - use identity direction if norm is too small
+        unit_directions = np.where(
+            norms < 1e-10, np.array([[0, 0, 1]]), directions / norms
+        )
+
         specs_array_length = self.get_specs_array_length(oss_elec_name)
         stretch_factor = self.get_stretch_factor(specs_array_length, hemi_idx)
 
@@ -622,7 +654,7 @@ class LeadSettings:
         """
         # get grid center for lattice / voxel lattice model
         if np.any(np.isnan(self.get_stim_center()[hemis_idx, :])):
-            self.grid_center = (
+            grid_center = (
                 self.get_imp_coord()[hemis_idx, :]
                 + unit_directions[hemis_idx, :] * specs_array_length / 2
             )
@@ -633,6 +665,13 @@ class LeadSettings:
         # coarser resolution for large span electrodes
         # and large amplitudes (>5 mA or 5 V)
         phi_vector = self.get_phi_vec()[hemis_idx, :]
+        phi_vector_valid = phi_vector[~np.isnan(phi_vector)]
+
+        # Check for large amplitude (avoid error with empty array)
+        has_large_amplitude = (
+            len(phi_vector_valid) > 0 and np.max(np.abs(phi_vector_valid)) > 5.0
+        )
+
         if (
             electrode_name == "BostonScientificVercise"
             or electrode_name == "BostonScientificVerciseCustom"
@@ -642,7 +681,7 @@ class LeadSettings:
             or electrode_name == "SceneRay1212Custom"
             or electrode_name == "SceneRay1242"
             or electrode_name == "SceneRay1242Custom"
-            or np.max(np.abs(phi_vector[~np.isnan(phi_vector)])) > 5.0
+            or has_large_amplitude
         ):
             grid_resolution = 0.4
         else:
@@ -766,6 +805,7 @@ class LeadSettings:
 
         return elec_dict, unit_directions, specs_array_length
 
+    # ruff: noqa C901
     def import_stimulation_settings(self, hemis_idx, current_controlled, elec_dict):
         """Convert Lead-DBS stim settings to OSS-DBS parameters,
         update electrode dictionary.
@@ -813,7 +853,13 @@ class LeadSettings:
                 case_grounding = np.sum(pulse_amp[~np.isnan(pulse_amp)]) != 0
             else:
                 # for VC, case grounding is defined explicitly
-                case_grounding = bool(self.get_case_grnd()[index_side])
+                # Extract scalar from array (similar to line 218 fix)
+                case_grnd_array = self.get_case_grnd()
+                if case_grnd_array.ndim > 1:
+                    case_grnd_value = case_grnd_array[index_side, 0]
+                else:
+                    case_grnd_value = case_grnd_array[index_side]
+                case_grounding = bool(case_grnd_value)
 
                 # shift all voltages if bipolar case
                 # to have 0V and cathodes (as in the stimulators)
