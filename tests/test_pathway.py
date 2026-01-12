@@ -9,27 +9,28 @@ def create_one_pop_dummy_h5(filepath):
     with h5py.File(filepath, "w") as f:
         grp1 = f.create_group("pop1")
         ax0 = grp1.create_dataset("axon0", data=np.array([[0, 0, 0], [1, 1, 1]]))
-        ax0.attrs['inx'] = 0
+        ax0.attrs["inx"] = 0
         ax1 = grp1.create_dataset("axon1", data=np.array([[2, 2, 2], [300, 3, 3]]))
-        ax1.attrs['inx'] = 1
+        ax1.attrs["inx"] = 1
+
 
 def create_two_pop_dummy_h5(filepath):
     with h5py.File(filepath, "w") as f:
         # First population: 2 axons
         grp1 = f.create_group("pop1")
         ax0_grp1 = grp1.create_dataset("axon0", data=np.array([[0, 0, 0], [1, 1, 1]]))
-        ax0_grp1.attrs['inx'] = 0
+        ax0_grp1.attrs["inx"] = 0
         ax1_grp1 = grp1.create_dataset("axon1", data=np.array([[2, 2, 2], [3, 3, 3]]))
-        ax1_grp1.attrs['inx'] = 1
-        
+        ax1_grp1.attrs["inx"] = 1
+
         # Second population: 3 axons
         grp2 = f.create_group("pop2")
         ax0_grp2 = grp2.create_dataset("axon0", data=np.array([[4, 4, 4], [5, 5, 5]]))
-        ax0_grp2.attrs['inx'] = 0
+        ax0_grp2.attrs["inx"] = 0
         ax1_grp2 = grp2.create_dataset("axon1", data=np.array([[6, 6, 6], [7, 7, 7]]))
-        ax1_grp2.attrs['inx'] = 1
+        ax1_grp2.attrs["inx"] = 1
         ax2_grp2 = grp2.create_dataset("axon2", data=np.array([[8, 8, 8], [9, 9, 9]]))
-        ax2_grp2.attrs['inx'] = 2
+        ax2_grp2.attrs["inx"] = 2
 
 
 @pytest.fixture
