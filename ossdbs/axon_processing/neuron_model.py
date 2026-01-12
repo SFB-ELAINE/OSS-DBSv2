@@ -1,7 +1,8 @@
 import fileinput
 import logging
 import multiprocessing as mp
-mp.set_start_method('fork', force=True)
+
+mp.set_start_method("fork", force=True)
 import os
 import shutil
 import subprocess
@@ -521,7 +522,7 @@ class NeuronSimulator(ABC):
                     neuron_index * n_segments_actual : (neuron_index + 1)
                     * n_segments_actual,
                     3,
-                ] = neuron.attrs['inx']  # "original" axon index
+                ] = neuron.attrs["inx"]  # "original" axon index
 
                 # check which neurons were flagged with CSF and electrode intersection
                 # skip probing of those

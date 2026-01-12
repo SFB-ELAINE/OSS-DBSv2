@@ -81,7 +81,7 @@ def convert_fibers_to_streamlines(fibers: np.ndarray):
     i_previous = 0
     for i in range(N_streamlines):
         loc_counter = 0
-        while (i + 1) == fibers[3, k]:  
+        while (i + 1) == fibers[3, k]:
             # this is not optimal, you need to extract a pack by np.count?
             k += 1
             loc_counter += 1
@@ -341,7 +341,9 @@ def index_for_length(xyz, req_length, along=True):
     return idx, cummulated_lengths[idx]
 
 
-def resample_fibers_to_Ranviers(streamlines: list, node_step: int, n_Ranvier: int, inx_orig: list):
+def resample_fibers_to_Ranviers(
+    streamlines: list, node_step: int, n_Ranvier: int, inx_orig: list
+):
     """Get streamlines resampled by nodes of Ranvier for a specific axonal morphology.
 
     Parameters

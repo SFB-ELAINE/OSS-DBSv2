@@ -1022,10 +1022,12 @@ class AxonModels:
                 inx_axn + 1
             )  # because in Matlab they start from 1
 
-            dst = g.create_dataset("axon" + str(inx_axn), data=axon_array[:, :, inx_axn])
-            
+            dst = g.create_dataset(
+                "axon" + str(inx_axn), data=axon_array[:, :, inx_axn]
+            )
+
             # store "the original" index of the axon
-            dst.attrs['inx'] = inx_orig_resampled[inx_axn]
+            dst.attrs["inx"] = inx_orig_resampled[inx_axn]
 
             glob_ind = glob_ind + axon_morphology.n_segments
 
