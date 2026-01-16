@@ -1,8 +1,6 @@
 import fileinput
 import logging
 import multiprocessing as mp
-
-mp.set_start_method("fork", force=True)
 import os
 import shutil
 import subprocess
@@ -20,6 +18,8 @@ from .utilities import (
     create_paraview_outputs,
     store_axon_statuses,
 )
+
+mp.set_start_method("fork", force=True)
 
 _logger = logging.getLogger(__name__)
 
