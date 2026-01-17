@@ -19,6 +19,8 @@ from .utilities import (
     store_axon_statuses,
 )
 
+mp.set_start_method("fork", force=True)
+
 _logger = logging.getLogger(__name__)
 
 
@@ -520,7 +522,7 @@ class NeuronSimulator(ABC):
                     neuron_index * n_segments_actual : (neuron_index + 1)
                     * n_segments_actual,
                     3,
-                ] = neuron_index + 1  # because Lead-DBS numbering starts from 1
+                ] = neuron.attrs["inx"]  # "original" axon index
 
                 # check which neurons were flagged with CSF and electrode intersection
                 # skip probing of those
