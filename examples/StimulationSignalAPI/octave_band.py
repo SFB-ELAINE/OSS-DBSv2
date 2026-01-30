@@ -14,23 +14,29 @@ inter_pulse_width = 0.0
 counter_pulse_width = 0.0
 
 cutoff_frequency = 1e4
-cutoff_frequency = 10010
 
 signal = RectangleSignal(frequency, pulse_width, inter_pulse_width, counter_pulse_width)
-fft_frequencies, fft_signal = signal.get_fft_spectrum(cutoff_frequency)
+fft_frequencies, fft_signal, signal_length = signal.get_fft_spectrum(cutoff_frequency)
 print(fft_frequencies.shape)
 print(fft_signal.shape)
 signal_length = len(fft_signal)
 
 # Full spectrum
 timesteps, signal_retrieved = signal.retrieve_time_domain_signal(
-    fft_signal, cutoff_frequency
+    fft_signal, cutoff_frequency, signal_length
 )
 plt.plot(timesteps / 1e-3, signal_retrieved, label="Full spectrum ideal")
 
 
 # only use positive frequencies
-first_negative_freq = np.argwhere(fft_frequencies < 0)[0, 0]
+# Ensure fft_frequencies contains negative frequencies
+negative_freq_indices = np.argwhere(fft_frequencies < 0)
+if negative_freq_indices.size == 0:
+    raise ValueError(
+        "No negative frequencies found. Check cutoff_frequency or FFT computation."
+    )
+
+first_negative_freq = negative_freq_indices[0, 0]
 frequencies = fft_frequencies[:first_negative_freq]
 print(fft_frequencies.shape)
 fourier_coefficients = fft_signal[:first_negative_freq]
@@ -64,7 +70,7 @@ for idx, idx_freq in enumerate(frequency_indices):
         )
 # convert to time domain
 timesteps, result_in_time = retrieve_time_domain_signal_from_fft(
-    tmp_freq_domain, cutoff_frequency, frequency
+    tmp_freq_domain, cutoff_frequency, frequency, signal_length
 )
 
 plt.plot(timesteps / 1e-3, result_in_time, ls="-", label="Full spectrum")
@@ -110,7 +116,7 @@ for idx, idx_freq in enumerate(frequency_indices):
         )
 # convert to time domain
 timesteps, result_in_time = retrieve_time_domain_signal_from_fft(
-    tmp_freq_domain, cutoff_frequency, frequency
+    tmp_freq_domain, cutoff_frequency, frequency, signal_length
 )
 
 plt.plot(timesteps / 1e-3, result_in_time, ls="dotted", label="Octave band")
