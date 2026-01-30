@@ -1,0 +1,36 @@
+cff-version: 1.2.0
+title: >-
+  Open-Source Simulation platform for Deep Brain Stimulation OSS-DBSv2
+message: >-
+  If you use this software, please cite it using the metadata from this file.
+type: software
+
+authors:
+  - given-names: Julius
+    family-names: Zimmermann
+    email: julius.zimmermann@uni-rostock.de
+  - given-names: Jan Philipp
+    family-names: Payonk
+    email: jan.payonk@uni-rostock.de
+  - given-names: Tom
+    family-names: Reincke
+    email: tom.reincke@uni-rostock.de
+  - given-names: Johannes
+    family-names: Reding
+    email: johannes.reding@uni-rostock.de
+  - given-names: Shruthi
+    family-names: Chakravarthy
+    email: shruthi.chakravarthy@uni-rostock.de
+  - given-names: Konstantin
+    family-names: Butenko
+    email: konstantin.butenko@charite.de
+
+funding:
+  - name: "Deutsche Forschungsgemeinschaft (DFG, German Research Foundation)"
+    identifier: "https://doi.org/10.13039/501100001659"
+    award: "SFB 1270/1,2 – 299150580"
+
+repository-code: "https://github.com/SFB-ELAINE/OSS-DBSv2"
+repository-artifact: "https://github.com/SFB-ELAINE/OSS-DBS"
+url: "https://oss-dbsv2.readthedocs.io/en/latest/"
+license: GPL-3.0
