@@ -572,7 +572,9 @@ class AxonModels:
     def axon_model(self, value):
         valid_models = ["MRG2002", "MRG2002_DS", "McNeal1976"]
         if value not in valid_models:
-            ValueError(f"The NEURON model is not valid, use one of {valid_models}.")
+            raise ValueError(
+                f"The NEURON model is not valid, use one of {valid_models}."
+            )
         self._axon_model = value
 
     @property
