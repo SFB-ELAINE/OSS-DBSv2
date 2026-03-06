@@ -17,7 +17,13 @@ _logger = logging.getLogger(__name__)
 
 
 def compare_pathways(pam_df: pd.DataFrame, pam_df_to_compare: pd.DataFrame) -> dict:
-    """Use data loaded from CSV files to compare axon activation."""
+    """Use data loaded from CSV files to compare axon activation.
+
+    # TODO: Revisit sklearn dependency - consider either:
+    # 1. Adding sklearn as optional dependency in pyproject.toml
+    # 2. Implementing basic metrics (confusion matrix, precision/recall) without sklearn
+    # 3. Moving this function to a separate analysis module
+    """
     try:
         import sklearn.metrics as metrics
     except ImportError as exc:
@@ -279,6 +285,19 @@ def resample_streamline_for_Ranvier(streamline_array, estim_axon_length, n_Ranvi
     # after this index we cut the streamline
     # (do not mix up with truncation to the actual axon!)
     cut_index, cummulated_length = index_for_length(streamline_array, estim_axon_length)
+
+    # Handle edge case: ensure we have enough points in the streamline
+    # We need at least cut_index + 3 points to access streamline_array[cut_index + 2]
+    n_points = len(streamline_array)
+    if cut_index + 2 >= n_points:
+        # Clamp cut_index to ensure valid array access
+        cut_index = max(0, n_points - 3)
+        if cut_index == 0 and n_points < 3:
+            # Streamline too short - just resample what we have
+            _logger.warning(
+                f"Streamline has only {n_points} points, resampling directly"
+            )
+            return set_number_of_points(streamline_array, nb_points=n_Ranvier)
 
     # Don't mix up sums and positions.
     # +1 for the last Ranvier node, +1 for the sum, +1 for index
