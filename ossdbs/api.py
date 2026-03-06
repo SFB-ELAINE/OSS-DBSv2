@@ -262,12 +262,34 @@ def generate_mesh(settings):
         mesh.load_mesh(mesh_settings["LoadPath"])
         return mesh
 
-    if "MeshingHypothesis" not in mesh_settings:
-        mesh_settings["MeshingHypothesis"] = {"Type": "Default"}
+    mesh_settings.setdefault("MeshingHypothesis", {"Type": "Default"})
     mesh.generate_mesh(mesh_settings)
     if mesh_settings["SaveMesh"]:
         mesh.save(mesh_settings["SavePath"])
     return mesh
+
+
+def validate_solver_settings(settings: dict, model_geometry: ModelGeometry) -> None:
+    """Validate and adjust solver settings based on model configuration.
+
+    Notes
+    -----
+    BDDC preconditioner does not work well with complex-valued systems
+    (EQS mode) combined with FloatingImpedance formulation. This function
+    enforces the use of 'local' preconditioner in such cases.
+    """
+    floating_mode = model_geometry.get_floating_mode()
+    is_eqs_mode = settings.get("EQSMode", False)
+    preconditioner = settings["Solver"].get("Preconditioner", "bddc")
+
+    if floating_mode == "FloatingImpedance" and is_eqs_mode:
+        if preconditioner == "bddc":
+            _logger.warning(
+                "BDDC preconditioner is not compatible with FloatingImpedance "
+                "formulation in EQS mode. Switching to 'local' preconditioner."
+            )
+            settings["Solver"]["Preconditioner"] = "local"
+            settings["Solver"]["PreconditionerKwargs"] = {}
 
 
 def prepare_solver(settings):
@@ -454,21 +476,15 @@ def run_volume_conductor_model(
     _logger.info("Run volume conductor model")
 
     out_of_core = settings["OutOfCore"]
-    compute_impedance = False
-    if "ComputeImpedance" in settings:
-        if settings["ComputeImpedance"]:
-            _logger.info("Will compute impedance at each frequency")
-            compute_impedance = True
-    if "ExportVTK" in settings:
-        export_vtk = settings["ExportVTK"]
-        if export_vtk:
-            _logger.info("Will export solution to VTK")
-    else:
-        export_vtk = False
-    if "ExportFrequency" in settings:
-        export_frequency = settings["ExportFrequency"]
-        if export_frequency is not None:
-            _logger.info(f"Set custom export frequency to {export_frequency}.")
+    compute_impedance = settings.get("ComputeImpedance", False)
+    if compute_impedance:
+        _logger.info("Will compute impedance at each frequency")
+    export_vtk = settings.get("ExportVTK", False)
+    if export_vtk:
+        _logger.info("Will export solution to VTK")
+    export_frequency = settings.get("ExportFrequency")
+    if export_frequency is not None:
+        _logger.info(f"Set custom export frequency to {export_frequency}.")
 
     point_models = generate_point_models(settings)
 
@@ -604,8 +620,7 @@ def run_PAM(settings):
     neuron_model = get_neuron_model(model_type, pathways_dict, pathway_solution_dir)
 
     if settings["StimSets"]["Active"]:
-        if "CurrentVector" not in settings:
-            settings["CurrentVector"] = None
+        settings.setdefault("CurrentVector", None)
         # files to load individual solutions from
         time_domain_solution_files = []
 

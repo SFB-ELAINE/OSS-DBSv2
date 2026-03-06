@@ -24,6 +24,7 @@ from ossdbs.api import (
     run_stim_sets,
     run_volume_conductor_model,
     set_contact_and_encapsulation_layer_properties,
+    validate_solver_settings,
 )
 from ossdbs.fem import ConductivityCF
 from ossdbs.model_geometry import ModelGeometry
@@ -104,6 +105,9 @@ def main_run(input_settings: dict):
     timings["ContactProperties"] = time_1 - time_0
     time_0 = time_1
 
+    # Validate solver settings for FloatingImpedance + EQS mode
+    validate_solver_settings(settings, geometry)
+
     dielectric_properties = prepare_dielectric_properties(settings)
 
     time_1 = time.time()
@@ -120,7 +124,6 @@ def main_run(input_settings: dict):
         geometry.encapsulation_layers,
         complex_data=settings["EQSMode"],
         dti_image=dti_image,
-        wm_masking=settings["MaterialDistribution"]["WMMasking"],
     )
 
     time_1 = time.time()
