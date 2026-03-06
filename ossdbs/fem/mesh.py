@@ -89,16 +89,18 @@ class Mesh:
 
     def get_meshing_parameters(self, mesh_parameters: dict):
         """Prepare NGSolve meshing parameters deviating from default."""
-        meshing_hypothesis = {}
-        if "MaxMeshSize" in mesh_parameters:
-            meshing_hypothesis["maxh"] = mesh_parameters["MaxMeshSize"]
-        if "CurvatureSafety" in mesh_parameters:
-            meshing_hypothesis["curvaturesafety"] = mesh_parameters["CurvatureSafety"]
-        if "Grading" in mesh_parameters:
-            meshing_hypothesis["grading"] = mesh_parameters["Grading"]
-        if "MeshSizeFilename" in mesh_parameters:
-            meshing_hypothesis["meshsizefilename"] = mesh_parameters["MeshSizeFilename"]
-        return meshing_hypothesis
+        # Map input parameter names to NGSolve parameter names
+        param_mapping = {
+            "MaxMeshSize": "maxh",
+            "CurvatureSafety": "curvaturesafety",
+            "Grading": "grading",
+            "MeshSizeFilename": "meshsizefilename",
+        }
+        return {
+            ngsolve_key: mesh_parameters[input_key]
+            for input_key, ngsolve_key in param_mapping.items()
+            if input_key in mesh_parameters
+        }
 
     @property
     def order(self) -> int:

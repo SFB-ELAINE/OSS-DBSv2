@@ -23,6 +23,7 @@ from ossdbs.stimulation_signals import (
     get_timesteps,
     reconstruct_time_signals,
 )
+from ossdbs.utils import have_dielectric_properties_changed
 from ossdbs.utils.vtk_export import FieldSolution
 
 from .conductivity import ConductivityCF
@@ -77,7 +78,8 @@ class VolumeConductor(ABC):
         # or current (voltage-controlled) stimulation
         self._free_stimulation_variable = None
         self._stimulation_variable = None
-        self._floatings_potentials = None
+        self._floating_potentials = None
+        self._surface_impedances = None
 
         # set output path
         self.output_path = output_path
@@ -122,11 +124,13 @@ class VolumeConductor(ABC):
         export_vtk: bool = False,
         point_models: list[PointModel] | None = None,
         activation_threshold: float | None = None,
+        dielectric_threshold: float = 0.01,
         out_of_core: bool = False,
         export_frequency: float | None = None,
         adaptive_mesh_refinement_settings: dict | None = None,
         material_mesh_refinement_steps: int = 0,
         truncation_time: float | None = None,
+        estimate_currents: bool | None = False,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -141,6 +145,8 @@ class VolumeConductor(ABC):
         activation_threshold: float
             If VTA is estimated by threshold, provide it here.
             Its unit must be V/m!
+        dielectric_threshold: float
+            Threshold for accuracy of dielectric properties
         out_of_core: bool
             Indicate whether point model shall be done out-of-core
         export_frequency: float
@@ -154,6 +160,8 @@ class VolumeConductor(ABC):
             How often should elements with more than one material be refined
         truncation_time: float
             Time until which result will be written to hard drive
+        estimate_currents: bool
+            Get current estimate per contact by integration of normal component
 
         Notes
         -----
@@ -217,7 +225,8 @@ class VolumeConductor(ABC):
                 shape=(len(self.signal.frequencies), len(self.contacts.active)),
                 dtype=complex,
             )
-            self._floatings_potentials = np.zeros(
+        if len(self.contacts.floating) > 0:
+            self._floating_potentials = np.zeros(
                 shape=(len(self.signal.frequencies), len(self.contacts.floating)),
                 dtype=complex,
             )
@@ -226,6 +235,13 @@ class VolumeConductor(ABC):
             self._impedances = np.ndarray(
                 shape=(len(self.signal.frequencies)), dtype=dtype
             )
+
+        if estimate_currents:
+            self._currents = {}
+            for contact in self.contacts:
+                self._currents[contact.name] = np.ndarray(
+                    shape=(len(self.signal.frequencies)), dtype=dtype
+                )
 
         _logger.info(
             f"Number of elements before material refinement:{self.mesh.ngsolvemesh.ne}"
@@ -254,12 +270,20 @@ class VolumeConductor(ABC):
                 band_indices = [freq_idx]
 
             # check if conductivity has changed
-            sigma_has_changed = self._has_sigma_changed(freq_idx)
+            sigma_has_changed = self._has_sigma_changed(
+                computing_idx, frequency_indices, threshold=dielectric_threshold
+            )
             if sigma_has_changed:
                 self.compute_solution(frequency)
                 if compute_impedance:
                     impedance = self.compute_impedance()
                     self._impedances[band_indices] = impedance
+                if estimate_currents:
+                    estimated_currents = self.estimate_currents()
+                    for contact in self.contacts:
+                        self._currents[contact.name][band_indices] = estimated_currents[
+                            contact.name
+                        ]
 
                 # refine only at first frequency
                 if computing_idx == 0 and _do_AMR:
@@ -300,6 +324,11 @@ class VolumeConductor(ABC):
                     if compute_impedance:
                         # overwrite impedance values
                         self._impedances[band_indices] = impedance
+                    if estimate_currents:
+                        for contact in self.contacts:
+                            self._currents[contact.name][band_indices] = (
+                                estimated_currents[contact.name]
+                            )
 
                     _logger.info(
                         "Number of elements after refinement:"
@@ -316,12 +345,24 @@ class VolumeConductor(ABC):
                     # copy from previous frequency
                     impedance = self._impedances[computing_idx - 1]
                     self._impedances[band_indices] = impedance
+                if estimate_currents:
+                    for contact in self.contacts:
+                        self._currents[contact.name][band_indices] = self._currents[
+                            contact.name
+                        ][computing_idx - 1]
             # scale factor: is one for VC and depends on impedance for other case
             self._scale_factor = self.get_scale_factor(freq_idx)
             _logger.debug(f"Scale factor: {self._scale_factor}")
 
             if not multisine_mode:
                 self._store_solution_at_contacts(band_indices)
+            else:
+                for contact_idx, contact in enumerate(self.contacts.floating):
+                    scale_factor = self.signal.amplitudes[freq_idx]
+                    self._floating_potentials[freq_idx, contact_idx] = (
+                        scale_factor * contact.voltage
+                    )
+
             if _logger.getEffectiveLevel() == logging.DEBUG:
                 estimated_currents = self.estimate_currents()
                 _logger.debug(
@@ -343,6 +384,9 @@ class VolumeConductor(ABC):
                     )
                     point_model.prepare_frequency_domain_data_structure(
                         len(self.signal.frequencies), out_of_core
+                    )
+                    _logger.debug(
+                        f"Points in point model: {point_model.coordinates.shape}"
                     )
 
             # copy solution to point models
@@ -368,6 +412,8 @@ class VolumeConductor(ABC):
                 timings["FieldExport"] = time_1 - time_0
                 time_0 = time_1
 
+            # reset surface impedances
+            self._surface_impedances = None
         # save impedance at all frequencies to file!
         if compute_impedance:
             _logger.info("Saving impedance")
@@ -379,6 +425,33 @@ class VolumeConductor(ABC):
                 }
             )
             df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
+        if estimate_currents:
+            df = pd.DataFrame(
+                {
+                    "freq": self.signal.frequencies,
+                }
+            )
+            for contact in self.contacts:
+                df[f"{contact.name}_real"] = self._currents[contact.name].real
+                df[f"{contact.name}_imag"] = self._currents[contact.name].imag
+            df.to_csv(os.path.join(self.output_path, "currents.csv"), index=False)
+        # export floating voltages
+        if self._floating_potentials is not None:
+            df = pd.DataFrame(
+                {
+                    "freq": self.signal.frequencies,
+                }
+            )
+            for contact_idx, contact in enumerate(self.contacts.floating):
+                df[f"{contact.name}_real"] = self._floating_potentials[
+                    :, contact_idx
+                ].real
+                df[f"{contact.name}_imag"] = self._floating_potentials[
+                    :, contact_idx
+                ].imag
+            df.to_csv(
+                os.path.join(self.output_path, "floating_potentials.csv"), index=False
+            )
 
         # export time domain solution if a proper signal has been passed
         _logger.info("Launching reconstruction of time domain")
@@ -469,7 +542,7 @@ class VolumeConductor(ABC):
         floating_at_contact = {}
         floating_at_contact["time"] = timesteps
         floating_potentials_in_time = reconstruct_time_signals(
-            self._floatings_potentials, self.signal.signal_length
+            self._floating_potentials, self.signal.signal_length
         )
         for contact_idx, contact in enumerate(self.contacts.floating):
             floating_at_contact[contact.name] = floating_potentials_in_time[
@@ -629,7 +702,7 @@ class VolumeConductor(ABC):
     def current_density(self) -> ngsolve.GridFunction:
         """Return current density in A/mm^2."""
         # scale to account for mm as length unit (not yet contained in conductivity)
-        return 1e-3 * self.conductivity * self.electric_field
+        return self.conductivity * self.electric_field
 
     @property
     def electric_field(self) -> ngsolve.GridFunction:
@@ -669,12 +742,26 @@ class VolumeConductor(ABC):
         """
         if len(self.contacts.active) == 2:
             power = self.compute_power()
-            # TODO integrate surface impedance by thin layer
-            voltage = 0
+            voltage_diff = 0
             for idx, contact in enumerate(self.contacts.active):
-                voltage += (-1) ** idx * contact.voltage
-            _logger.debug(f"Voltage drop for impedance: {voltage}")
-            return voltage * np.conj(voltage) / power
+                voltage = contact.voltage
+                voltage_diff += (-1) ** idx * contact.voltage
+                if contact.surface_impedance_model is not None:
+                    interface_addmittance = ngsolve.CF(
+                        1.0 / self._surface_impedances[contact.name]
+                    )
+                    diff = (
+                        self.mesh.boundary_coefficients({contact.name: voltage})
+                        - self.potential
+                    )
+                    power += ngsolve.Integrate(
+                        interface_addmittance * diff * ngsolve.Conj(diff),
+                        mesh=self.mesh.ngsolvemesh,
+                        definedon=self.mesh.ngsolvemesh.Boundaries(contact.name),
+                    )
+            _logger.debug(f"Voltage drop for impedance: {voltage_diff}")
+            _logger.debug(f"Power after surface imp: {power}")
+            return voltage_diff * np.conj(voltage_diff) / power
         else:
             # TODO implement meaningful way to access contribution of individual
             # electrode to impedance
@@ -860,7 +947,8 @@ class VolumeConductor(ABC):
         -----
         In voltage-controlled mode,
         only the amplitude of the Fourier coefficient is used.
-        In current-controlled mode, TODO
+        In current-controlled mode without using floating conductors,
+        the impedance is also considered.
         """
         scale_factor = 1.0
         if self.current_controlled:
@@ -949,7 +1037,7 @@ class VolumeConductor(ABC):
         for contact_idx, contact in enumerate(self.contacts.floating):
             for freq_idx in band_indices:
                 scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
-                self._floatings_potentials[freq_idx, contact_idx] = (
+                self._floating_potentials[freq_idx, contact_idx] = (
                     scale_factor * contact.voltage
                 )
 
@@ -985,43 +1073,23 @@ class VolumeConductor(ABC):
         # Integrate to get volume
         return ngsolve.Integrate(threshold_cf, mesh=mesh)
 
-    def _has_sigma_changed(self, freq_idx, threshold=0.01) -> bool:
+    def _has_sigma_changed(
+        self, freq_idx: int, frequency_indices: np.ndarray, threshold: float = 0.01
+    ) -> bool:
         """Check if conductivity has changed."""
         if self._sigma is None:
             return True
         else:
-            max_error = 0.0
-            for _material, model in self._conductivity_cf.dielectric_properties.items():
-                if self.is_complex:
-                    old_value = model.complex_conductivity(
-                        (freq_idx - 1) * self.signal.base_frequency
-                    )
-                    new_value = model.complex_conductivity(
-                        freq_idx * self.signal.base_frequency
-                    )
-                    error_real = np.abs(old_value.real - new_value.real)
-                    # to catch zero-case
-                    if not np.isclose(old_value.real, 0.0):
-                        error_real /= old_value.real
-                    error_imag = np.abs(old_value.imag - new_value.imag)
-                    # to catch zero-case
-                    if not np.isclose(old_value.imag, 0.0):
-                        error_imag /= old_value.imag
-
-                    error = np.maximum(error_real, error_imag)
-                else:
-                    old_value = model.conductivity(
-                        (freq_idx - 1) * self.signal.base_frequency
-                    )
-                    new_value = model.conductivity(
-                        freq_idx * self.signal.base_frequency
-                    )
-                    error = np.abs((old_value - new_value) / old_value)
-                if error > max_error:
-                    max_error = error
-            if max_error > threshold:
-                return True
-            return False
+            dielectric_properties = self._conductivity_cf.dielectric_properties
+            old_frequency = frequency_indices[freq_idx - 1] * self.signal.base_frequency
+            new_frequency = frequency_indices[freq_idx] * self.signal.base_frequency
+            return have_dielectric_properties_changed(
+                dielectric_properties,
+                self.is_complex,
+                old_frequency,
+                new_frequency,
+                threshold,
+            )
 
     def _add_surface_impedance(self) -> bool:
         """Decide if surface impedance should be added to active contacts."""
