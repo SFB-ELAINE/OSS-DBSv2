@@ -71,16 +71,32 @@ Also check out the `examples` directory and the documentation.
 Development
 -----------
 
-The code uses the `input_files` and `tests` directories to check the functionality
-upon each commit. If you add a new feature, please add a test to `tests`.
-Make sure that the test does not run long and does not consume much memory.
-It shall be rather a unit test than a full simulation run.
-Likewise, only change `input_files` after opening an issue.
-
-The `examples` directory is meant for users to understand what has been implemented.
-Place heavy and/or experimental code there (e.g., code that may crash or consume many resources).
-
 The code development follows different coding styles that are checked
 by git pre-commit hooks.
 Install `pre-commit` via `pip install pre-commit` and run
-`pre-commit install` to activate it. 
+`pre-commit install` to activate it.
+
+### Testing
+
+OSS-DBS has two types of tests:
+
+**Unit Tests** (`tests/`): Fast, isolated tests that run on every push/PR.
+```bash
+pytest                    # Run all unit tests
+pytest --cov              # With coverage
+```
+
+**Simulation Tests** (`input_test_cases/`): Full simulation tests that validate the complete pipeline. These run only on pull requests to avoid slowing down regular development.
+```bash
+pytest input_test_cases/test_simulations.py -m simulation      # All simulation tests
+pytest input_test_cases/test_simulations.py -m "simulation and not slow"  # Fast only
+```
+
+See [`input_test_cases/README.md`](input_test_cases/README.md) for detailed documentation on the simulation test suite, including how to add new tests.
+
+### Directory Structure
+
+- `tests/` - Unit tests (run on every commit)
+- `input_test_cases/` - Simulation tests (run on PR only)
+- `input_files/` - Reference input files
+- `examples/` - Example code for users (may be resource-intensive) 

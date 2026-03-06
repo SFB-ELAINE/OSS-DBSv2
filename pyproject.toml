@@ -44,7 +44,7 @@ dependencies = ["h5py==3.14.0",
                 ]
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-cov", "pytest-mock"]
+test = ["pytest", "pytest-cov", "pytest-mock", "pyyaml"]
 
 dev = [
     "ruff",
@@ -67,7 +67,7 @@ prepareaxonmodel = 'leaddbsinterface.allocate_axons:main'
 run_pathway_activation = 'ossdbs.axon_processing.main:main'
 
 [tool.setuptools]
-packages = ["ossdbs", "leaddbsinterface"]
+packages = ["ossdbs", "ossdbs.testing", "leaddbsinterface"]
 
 [tool.setuptools_scm]
 version_file = "ossdbs/_version.py"
@@ -117,6 +117,22 @@ exclude_lines = [
 
 [tool.coverage.run]
 source = ["ossdbs"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Markers for test categorization
+markers = [
+    "simulation: marks tests as full simulation tests (run on PR only, deselect with '-m not simulation')",
+    "slow: marks tests as slow-running (> 1 minute)",
+    "requires_neuron: marks tests that require NEURON installation",
+    "vta: marks VTA-related tests",
+    "pam: marks Pathway Activation Modeling tests",
+    "floating: marks floating contact tests",
+    "surface_impedance: marks surface impedance tests",
+]
+# By default, exclude simulation tests from regular pytest runs
+# They are only run on PR via separate CI workflow
+addopts = "-m 'not simulation'"
 
 # Files that should not be in the release
 [tool.check-manifest]
