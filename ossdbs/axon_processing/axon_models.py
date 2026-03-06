@@ -23,6 +23,25 @@ from .utilities import (
 _logger = logging.getLogger(__name__)
 
 
+def _decode_matlab_string(array) -> str:
+    """Decode MATLAB character array to Python string.
+
+    MATLAB stores strings as arrays of ASCII codes. This function
+    converts such arrays to Python strings.
+
+    Parameters
+    ----------
+    array : numpy.ndarray
+        Array from HDF5 file containing ASCII character codes
+
+    Returns
+    -------
+    str
+        Decoded Python string
+    """
+    return "".join(chr(int(c[0])) for c in array)
+
+
 class AxonMorphology(ABC):
     """Axon morphology class."""
 
@@ -614,22 +633,18 @@ class AxonModels:
 
         # try to read from .mat
         if "neuronModel" in file_inp["settings"]:
-            array_ascii = file_inp["settings"]["neuronModel"][:]
-            list_ascii = []
-            for i in range(array_ascii.shape[0]):
-                list_ascii.append(array_ascii[i][0])
-            self.axon_model = "".join(chr(i) for i in list_ascii)
+            self.axon_model = _decode_matlab_string(
+                file_inp["settings"]["neuronModel"][:]
+            )
             _logger.debug(f"Use {self.axon_model}")
         else:
             _logger.debug("Use McNeal1976 model by default")
             self.axon_model = "McNeal1976"
 
         # connectome name within Lead-DBS (e.g. 'Multi-Tract: PetersenLUIC')
-        array_ascii = file_inp["settings"]["connectome"][:]
-        list_ascii = []
-        for i in range(array_ascii.shape[0]):
-            list_ascii.append(array_ascii[i][0])
-        self.connectome_name = "".join(chr(i) for i in list_ascii)
+        self.connectome_name = _decode_matlab_string(
+            file_inp["settings"]["connectome"][:]
+        )
 
         # 'Multi-tract' connectomes contain multiple pathways
         # (projections) in separate .mat files
@@ -648,10 +663,7 @@ class AxonModels:
                 ext_string = file_inp[
                     file_inp["settings"]["connectomeTractNames"][0][i]
                 ]
-                list_ascii = []
-                for j in range(ext_string.shape[0]):
-                    list_ascii.append(ext_string[j][0])
-                projection_name = "".join(chr(i) for i in list_ascii)
+                projection_name = _decode_matlab_string(ext_string)
                 self.projection_names.append(projection_name)
         else:
             self.projection_names = ["default"]
