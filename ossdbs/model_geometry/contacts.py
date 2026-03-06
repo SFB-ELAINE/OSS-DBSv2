@@ -4,6 +4,8 @@
 import logging
 from dataclasses import dataclass
 
+import numpy as np
+
 _logger = logging.getLogger(__name__)
 
 
@@ -19,6 +21,7 @@ class Contact:
     General property:
 
         * `name`: Will be set during the geometry creation process.
+        * `area`: Will be set during the geometry creation process.
 
     Mesh related properties:
 
@@ -31,17 +34,20 @@ class Contact:
         * `floating`: Whether the voltage shall be fixed but unknown.
         * `current`: Assigned or computed current value.
         * `voltage`: Assigned or computed voltage value.
-        * `surface_impedance`: Assigned surface impedance value.
+        * `surface_impedance_model`: Assigned surface impedance model.
+        * `surface_impedance_parameters`: Parameters for surface impedance model.
     """
 
     name: str
+    area: float | None = None
     max_h: float = 1e10  # Netgen default
     edge_max_h: float = 1e10
     active: bool = False
     floating: bool = False
     current: float = 0.0
     voltage: float = 0.0
-    surface_impedance: complex = 0.0j
+    surface_impedance_model: str | None = None
+    surface_impedance_parameters: dict | None = None
 
     def __str__(self):
         """Write properties to string."""
@@ -52,8 +58,38 @@ class Contact:
         contact_str += f"\nFloating: {self.floating}"
         contact_str += f"\nCurrent: {self.current}"
         contact_str += f"\nVoltage: {self.voltage}"
-        contact_str += f"\nSurface impedance: {self.surface_impedance}\n"
+        if self.surface_impedance_model is not None:
+            contact_str += (
+                f"\nSurface impedance model: {self.surface_impedance_model}\n"
+            )
+            contact_str += (
+                f"\nSurface impedance parameters: {self.surface_impedance_parameters}\n"
+            )
         return contact_str
+
+    def get_surface_impedance(
+        self, frequency: float, is_complex: bool
+    ) -> float | complex:
+        """Return surface impedance at fixed frequency."""
+        try:
+            import impedancefitter as ifit
+        except ImportError as err:
+            raise ImportError(
+                "Please install impedancefitter to compute the surface impedance."
+                "Ensure that impedancefitter and its dependencies were correctly "
+                "installed."
+            ) from err
+
+        # TODO cache this variable
+        ecm = ifit.get_equivalent_circuit_model(self.surface_impedance_model)
+        # get impedance and turn it into surface impedance
+        Z = ecm.eval(omega=2.0 * np.pi * frequency, **self.surface_impedance_parameters)
+        surface_Z = complex(Z) * self.area
+        if np.isclose(surface_Z, 0.0, atol=1e-6):
+            raise ValueError(f"Surface impedance on contact {self.name} almost zero.")
+        if not is_complex:
+            return np.abs(surface_Z)
+        return surface_Z
 
 
 def check_contact(contact: Contact):
@@ -64,6 +100,17 @@ def check_contact(contact: Contact):
             Please make sure that contacts are either active,
             floating or none of the two."""
         )
+    if contact.surface_impedance_model is not None:
+        if contact.surface_impedance_parameters is None:
+            raise ValueError(
+                "Surface impedance model was provided without parameter dictionary."
+            )
+    else:
+        if contact.surface_impedance_parameters is not None:
+            _logger.warning(
+                "Surface impedance parameter dictionary was provided without model. "
+                "It will not be taken into account."
+            )
 
 
 class Contacts:
@@ -93,6 +140,13 @@ class Contacts:
             for contact in self._all_contacts
             if not contact.floating and not contact.active
         ]
+        # if a contact has a surface impedance model,
+        # set the surface impedance to active
+        self._surface_impedance_active = False
+        for contact in self._all_contacts:
+            if contact.surface_impedance_model is not None:
+                self._surface_impedance_active = True
+                break
 
     def append(self, contact: Contact) -> None:
         """Add another contact."""
@@ -133,6 +187,11 @@ class Contacts:
         list of Contacts
         """
         return self._unused
+
+    @property
+    def surface_impedance_active(self) -> bool:
+        """Get status of surface impedance."""
+        return self._surface_impedance_active
 
     @property
     def currents(self) -> dict:
@@ -185,31 +244,19 @@ class Contacts:
             if contact.name in voltage_values:
                 contact.voltage = voltage_values[contact.name]
 
-    @property
-    def surface_impedances(self) -> dict:
-        """Returns the floating impedance values of each contact.
+    def get_surface_impedances(self, frequency: float, is_complex: bool) -> dict:
+        """Returns the floating impedance values of each contact at a fixed frequency.
 
         Returns
         -------
         dict
         """
         return {
-            contact.name: contact.surface_impedance for contact in self._all_contacts
+            contact.name: contact.get_surface_impedance(frequency, is_complex)
+            if contact.surface_impedance_model is not None
+            else None
+            for contact in self._all_contacts
         }
-
-    @surface_impedances.setter
-    def surface_impedances(self, impedance_values: dict) -> None:
-        """Set surface impedance value contacts.
-
-        Parameters
-        ----------
-        impedance_values : dict
-            Surface impedance values. Not all contacts have to be present in the
-            dictionary.
-        """
-        for contact in self._all_contacts:
-            if contact.name in impedance_values:
-                contact.impedance = impedance_values[contact.name]
 
     def update_contact(self, name, floating=None, active=None):
         """Change type of contact."""

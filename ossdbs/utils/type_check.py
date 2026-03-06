@@ -24,6 +24,7 @@ class TypeChecker:
         "AdaptiveMeshRefinement": bool,
         # TODO add more tests
         "PathwayFile": (type(None), str),
+        "DielectricAccuracy": float,
         "ActivationThresholdVTA[V-per-m]": (type(None), float),
         "Contacts": {"MaxMeshSize": float, "MaxMeshSizeEdge": float},
         "EncapsulationLayer": {
@@ -31,13 +32,13 @@ class TypeChecker:
             "Material": str,
             "MaxMeshSize": (int, float),
         },
+        "InterfaceImpedance": {"Model": (type(None), str), "Parameters": dict},
         "EQSMode": bool,
         "FEMOrder": int,
         "MaterialDistribution": {
             "MRIPath": str,
             "DiffusionTensorActive": bool,
             "DTIPath": str,
-            "WMMasking": bool,
         },
         "Mesh": {
             "LoadMesh": bool,
@@ -132,7 +133,7 @@ class TypeChecker:
         "Current[A]": (int, float),
         "Voltage[V]": (int, float),
         "Floating": bool,
-        "SurfaceImpedance[Ohmm]": {"real": (int, float), "imag": (int, float)},
+        "SurfaceImpedance": {"Model": (type(None), str), "Parameters": dict},
     }
 
     @classmethod
