@@ -106,10 +106,20 @@ class Pathway(PointModel):
         axons: list
             Returns list of all axons within one group.
         """
-        return [
-            self.Axon(sub_group, np.array(file[group][sub_group]), 0)
-            for sub_group in file[group].keys()
-        ]
+        axons = []
+        for idx, sub_group in enumerate(file[group].keys()):
+            # Use 'inx' attribute if present (from streamline_indexing),
+            # otherwise default to index + 1 for backwards compatibility
+            orig_inx = file[group][sub_group].attrs.get("inx", idx + 1)
+            axons.append(
+                self.Axon(
+                    sub_group,
+                    np.array(file[group][sub_group]),
+                    0,
+                    orig_inx,
+                )
+            )
+        return axons
 
     def _initialize_coordinates(self) -> np.ndarray:
         return np.concatenate(

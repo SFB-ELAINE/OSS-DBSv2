@@ -39,6 +39,7 @@ class ModelGeometry:
         self._encapsulation_layers = []
 
         self._geometry = self._construct_geometry(self._brain, self._electrodes)
+        self.update_contact_areas()
 
     @property
     def geometry(self) -> netgen.occ.OCCGeometry:
@@ -87,9 +88,11 @@ class ModelGeometry:
             if not built_correctly:
                 raise RuntimeError("Geometry could not be built.")
 
+        # add brain surface
         brain_surfaces = brain.get_surface_names()
+        surface_areas = brain.get_surface_areas()
         for surface in brain_surfaces:
-            self._contacts.append(Contact(name=surface))
+            self._contacts.append(Contact(name=surface, area=surface_areas[surface]))
         try:
             return netgen.occ.OCCGeometry(brain_geo)
         except netgen.occ.OCCException:
@@ -99,6 +102,20 @@ class ModelGeometry:
                 "or remove the encapsulation layer."
             )
             raise
+
+    def update_contact_areas(self) -> None:
+        """Update contact areas."""
+        for contact in self.contacts:
+            area_set = False
+            for surface in self.geometry.shape.faces:
+                if contact.name == surface.name:
+                    if area_set:
+                        _logger.warning(f"Trying to set area twice for {contact.name}")
+                    area = surface.mass
+                    area_set = True
+                    contact.area = area
+            if not area_set:
+                raise RuntimeError(f"Area for {contact.name} not set")
 
     def check_brain_geo(
         self, brain_geo: netgen.occ.Solid, electrode: ElectrodeModel
@@ -167,8 +184,13 @@ class ModelGeometry:
                 contact.floating = value
             elif setting == "Voltage[V]":
                 contact.voltage = value
-            elif setting == "SurfaceImpedance[Ohmm]":
-                contact.surface_impedance = value["real"] + 1j * value["imag"]
+            elif setting == "SurfaceImpedance":
+                if "Model" not in value:
+                    raise ValueError("No surface impedance model provided.")
+                if "Parameters" not in value:
+                    raise ValueError("No surface impedance model parameters provided.")
+                contact.surface_impedance_model = value["Model"]
+                contact.surface_impedance_parameters = value["Parameters"]
             elif setting == "MaxMeshSize":
                 contact.max_h = value
                 self.set_face_mesh_sizes({contact.name: value})
@@ -239,17 +261,10 @@ class ModelGeometry:
         for contact in self.contacts:
             if contact.floating:
                 floating_mode = "Floating"
-                if not np.isclose(contact.surface_impedance, 0.0):
+                # if we find one surface with a floating impedance, break
+                if contact.surface_impedance_model is not None:
                     floating_mode = "FloatingImpedance"
                 break
-        if floating_mode == "FloatingImpedance":
-            for contact in self.contacts:
-                if not np.isclose(contact.surface_impedance, 0.0):
-                    _logger.warning(
-                        f"""Mode has been set to Floating but there
-                        is a nonzero surface impedance on contact {contact.name}"""
-                    )
-
         return floating_mode
 
     def set_mesh_sizes(self, mesh_sizes: dict) -> None:
