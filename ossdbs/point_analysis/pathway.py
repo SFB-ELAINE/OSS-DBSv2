@@ -41,6 +41,7 @@ class Pathway(PointModel):
         name: str
         points: np.ndarray
         status: int  # 0 - normal, -1 - outside domain/encap, -2 - csf
+        orig_inx: int  # "original" indices of streamlines
 
     @dataclass
     class Population:
@@ -106,20 +107,15 @@ class Pathway(PointModel):
         axons: list
             Returns list of all axons within one group.
         """
-        axons = []
-        for idx, sub_group in enumerate(file[group].keys()):
-            # Use 'inx' attribute if present (from streamline_indexing),
-            # otherwise default to index + 1 for backwards compatibility
-            orig_inx = file[group][sub_group].attrs.get("inx", idx + 1)
-            axons.append(
-                self.Axon(
-                    sub_group,
-                    np.array(file[group][sub_group]),
-                    0,
-                    orig_inx,
-                )
+        return [
+            self.Axon(
+                sub_group,
+                np.array(file[group][sub_group]),
+                0,
+                file[group][sub_group].attrs["inx"],
             )
-        return axons
+            for sub_group in file[group].keys()
+        ]
 
     def _initialize_coordinates(self) -> np.ndarray:
         return np.concatenate(
@@ -163,6 +159,7 @@ class Pathway(PointModel):
         status_list = []
         for axon in sorted(population.axons, key=lambda x: int(x.name[4:])):
             sub_group = group.create_group(axon.name)
+            sub_group.attrs["inx"] = axon.orig_inx
             sub_group.create_dataset("Points[mm]", data=axon.points)
             location = self._location[
                 idx * len(axon.points) : (idx + 1) * len(axon.points)

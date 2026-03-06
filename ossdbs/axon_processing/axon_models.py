@@ -954,11 +954,11 @@ class AxonModels:
                     )
 
         # covert fiber table to nibabel streamlines
-        streamlines = convert_fibers_to_streamlines(fiber_array)
+        streamlines, inx_orig = convert_fibers_to_streamlines(fiber_array)
 
         # resample streamlines to nodes of Ranvier
-        streamlines_resampled, _ = resample_fibers_to_Ranviers(
-            streamlines, axon_morphology.node_step, axon_morphology.n_Ranvier
+        streamlines_resampled, _, inx_orig_resampled = resample_fibers_to_Ranviers(
+            streamlines, axon_morphology.node_step, axon_morphology.n_Ranvier, inx_orig
         )
 
         # truncate streamlines to match selected axon length
@@ -1022,7 +1022,12 @@ class AxonModels:
                 inx_axn + 1
             )  # because in Matlab they start from 1
 
-            g.create_dataset("axon" + str(inx_axn), data=axon_array[:, :, inx_axn])
+            dst = g.create_dataset(
+                "axon" + str(inx_axn), data=axon_array[:, :, inx_axn]
+            )
+
+            # store "the original" index of the axon
+            dst.attrs["inx"] = inx_orig_resampled[inx_axn]
 
             glob_ind = glob_ind + axon_morphology.n_segments
 

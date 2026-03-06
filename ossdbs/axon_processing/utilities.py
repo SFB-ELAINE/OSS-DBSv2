@@ -67,9 +67,12 @@ def convert_fibers_to_streamlines(fibers: np.ndarray):
     list
         streamlines stored as ArraySequence(),
         i.e. list that describes each fiber in a sublist
+    list
+        original indices of these streamlines
 
     """
     streamlines = ArraySequence()
+    inx_orig = []
 
     # yes, indexing starts with one in those .mat files
     N_streamlines = int(fibers[3, :].max())
@@ -78,19 +81,19 @@ def convert_fibers_to_streamlines(fibers: np.ndarray):
     i_previous = 0
     for i in range(N_streamlines):
         loc_counter = 0
-        while (i + 1) == fibers[
-            3, k
-        ]:  # this is not optimal, you need to extract a pack by np.count?
+        while (i + 1) == fibers[3, k]:
+            # this is not optimal, you need to extract a pack by np.count?
             k += 1
             loc_counter += 1
             if k == fibers[3, :].shape[0]:
                 break
 
         stream_line = fibers[:3, i_previous : i_previous + loc_counter].T
+        inx_orig.append(int(fibers[3, i_previous]))
         i_previous = k
         streamlines.append(stream_line)
 
-    return streamlines
+    return streamlines, inx_orig
 
 
 def create_leaddbs_outputs(
@@ -338,7 +341,9 @@ def index_for_length(xyz, req_length, along=True):
     return idx, cummulated_lengths[idx]
 
 
-def resample_fibers_to_Ranviers(streamlines: list, node_step: int, n_Ranvier: int):
+def resample_fibers_to_Ranviers(
+    streamlines: list, node_step: int, n_Ranvier: int, inx_orig: list
+):
     """Get streamlines resampled by nodes of Ranvier for a specific axonal morphology.
 
     Parameters
@@ -349,15 +354,19 @@ def resample_fibers_to_Ranviers(streamlines: list, node_step: int, n_Ranvier: in
         Length from a node of Ranvier to the next
     n_Ranvier: int
         Number of nodes of Ranvier
+    inx_orig: list
+        original indices of the streamlines
 
     Returns
     -------
     list, resampled streamlines, stored as ArraySequence()
+    list, original indices of the resampled streamlines
 
     """
     # resampling to nodes of Ranvier for arbitrary fiber length
     lengths_streamlines_filtered = list(map(dipy_length, streamlines))
     streamlines_resampled = ArraySequence()
+    inx_orig_resampled = []
 
     excluded_streamlines = []
     # total_points = 0
@@ -371,13 +380,15 @@ def resample_fibers_to_Ranviers(streamlines: list, node_step: int, n_Ranvier: in
             n_Ranvier_this_axon,
         )
         if len(streamline_resampled) < n_Ranvier:
-            _logger.info(f"Streamline {streamline_index} is too short")
+            streamline_orig_inx = inx_orig[streamline_index]
+            _logger.info(f"Streamline {streamline_orig_inx} is too short")
             excluded_streamlines.append(streamline_index)
         else:
             streamlines_resampled.append(streamline_resampled)
             # total_points = total_points + len(streamline_resampled)
+            inx_orig_resampled.append(inx_orig[streamline_index])
 
-    return streamlines_resampled, excluded_streamlines
+    return streamlines_resampled, excluded_streamlines, inx_orig_resampled
 
 
 def normalized(vector: np.ndarray, axis: int = -1, order: int = 2):
