@@ -48,6 +48,7 @@ from .pins_medical import (
     PINSMedicalParameters,
 )
 from .sceneray import SceneRay1242Model, SceneRay1242Parameters
+from .behnke_fried import BehnkeFriedSEEGModel, BehnkeFriedSEEGParameters
 
 default_electrode_parameters = {
     "AbbottStJudeActiveTip6146_6149": AbbottStJudeActiveTipParameters(
@@ -329,6 +330,15 @@ default_electrode_parameters = {
         lead_diameter=1.27,
         total_length=450.0,
     ),
+    "BehnkeFried_sEEG_8": BehnkeFriedSEEGParameters(
+        tip_length=1.25/2,
+        contact_length=1.6,
+        contact_spacing=3.5,
+        first_contact_spacing=1.4,  
+        lead_diameter=1.25,
+        total_length=400.0,
+        n_contacts=8,
+    ),    
 }
 
 
@@ -628,3 +638,12 @@ def SceneRay1212(
     """SceneRay 1212 electrode."""
     parameters = default_electrode_parameters["SceneRay1212"]
     return BostonScientificVerciseModel(parameters, rotation, direction, position)
+
+
+def BehnkeFried_sEEG_8(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """"BehnkeFried_sEEG_8 electrode."""
+    parameters = default_electrode_parameters["BehnkeFried_sEEG_8"]
+    return BehnkeFriedSEEGModel(parameters, rotation, direction, position)
+

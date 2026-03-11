@@ -59,6 +59,7 @@ from .defaults import (
     SceneRay1211,
     SceneRay1212,
     SceneRay1242,
+    BehnkeFried_sEEG_8,
     default_electrode_parameters,
 )
 from .dixi_microtechniques import (
@@ -82,6 +83,7 @@ from .neuro_pace import NeuroPaceModel, NeuroPaceParameters
 from .neuronexus import NeuroNexusElectrodeModel, NeuroNexusParameters
 from .pins_medical import PINSMedicalModel, PINSMedicalParameters
 from .sceneray import SceneRay1242Model, SceneRay1242Parameters
+from .behnke_fried import BehnkeFriedSEEGModel, BehnkeFriedSEEGParameters
 
 ELECTRODES = {
     "AbbottStJudeActiveTip6142_6145": AbbottStJudeActiveTip6142_6145,
@@ -121,6 +123,7 @@ ELECTRODES = {
     "SceneRay1202": SceneRay1202,
     "SceneRay1211": SceneRay1211,
     "SceneRay1212": SceneRay1212,
+    "BehnkeFried_sEEG_8": BehnkeFried_sEEG_8,
 }
 
 ELECTRODE_MODELS = {
@@ -161,6 +164,7 @@ ELECTRODE_MODELS = {
     "SceneRay1211Custom": MedtronicModel,
     "SceneRay1202Custom": BostonScientificVerciseModel,
     "SceneRay1212Custom": BostonScientificVerciseModel,
+    "BehnkeFried_sEEG_8Custom": BehnkeFriedSEEGModel,
 }
 
 
@@ -182,6 +186,7 @@ ELECTRODE_PARAMETERS = {
     "PINSMedicalModel": PINSMedicalParameters,
     "NeuroNexusElectrodeModel": NeuroNexusParameters,
     "SceneRay1242Model": SceneRay1242Parameters,
+    "BehnkeFriedSEEGModel": BehnkeFriedSEEGParameters
 }
 
 __all__ = (
@@ -248,5 +253,8 @@ __all__ = (
     "SceneRay1211",
     "SceneRay1212",
     "SceneRay1242",
+    "BehnkeFried_sEEG_8Custom",
+    "BehnkeFriedSEEGModel",
+    "BehnkeFriedSEEGParameters",
     "default_electrode_parameters",
 )
