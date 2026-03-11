@@ -59,7 +59,12 @@ from .defaults import (
     SceneRay1211,
     SceneRay1212,
     SceneRay1242,
-    BehnkeFried_sEEG_8,
+    BF08R_SP21X_0C3,
+    BF10R_SP21X_0C3,
+    BF12R_SP21X_0C3,
+    BF08R_SP05X_0BH,
+    BF10R_SP05X_0BH,
+    BF12R_SP05X_0BH,
     default_electrode_parameters,
 )
 from .dixi_microtechniques import (
@@ -123,7 +128,12 @@ ELECTRODES = {
     "SceneRay1202": SceneRay1202,
     "SceneRay1211": SceneRay1211,
     "SceneRay1212": SceneRay1212,
-    "BehnkeFried_sEEG_8": BehnkeFried_sEEG_8,
+    "BF08R_SP21X_0C3": BF08R_SP21X_0C3,
+    "BF10R_SP21X_0C3": BF10R_SP21X_0C3,
+    "BF12R_SP21X_0C3": BF12R_SP21X_0C3,
+    "BF08R_SP05X_0BH": BF08R_SP05X_0BH,
+    "BF10R_SP05X_0BH": BF10R_SP05X_0BH,
+    "BF12R_SP05X_0BH": BF12R_SP05X_0BH,
 }
 
 ELECTRODE_MODELS = {
@@ -164,7 +174,12 @@ ELECTRODE_MODELS = {
     "SceneRay1211Custom": MedtronicModel,
     "SceneRay1202Custom": BostonScientificVerciseModel,
     "SceneRay1212Custom": BostonScientificVerciseModel,
-    "BehnkeFried_sEEG_8Custom": BehnkeFriedSEEGModel,
+    "BF08R_SP21X_0C3Custom": BehnkeFriedSEEGModel,
+    "BF10R_SP21X_0C3Custom": BehnkeFriedSEEGModel,
+    "BF12R_SP21X_0C3Custom": BehnkeFriedSEEGModel,
+    "BF08R_SP05X_0BHCustom": BehnkeFriedSEEGModel,
+    "BF10R_SP05X_0BHCustom": BehnkeFriedSEEGModel,
+    "BF12R_SP05X_0BHCustom": BehnkeFriedSEEGModel,
 }
 
 
@@ -253,7 +268,12 @@ __all__ = (
     "SceneRay1211",
     "SceneRay1212",
     "SceneRay1242",
-    "BehnkeFried_sEEG_8Custom",
+    "BF08R_SP21X_0C3Custom",
+    "BF10R_SP21X_0C3Custom",
+    "BF12R_SP21X_0C3Custom",
+    "BF08R_SP05X_0BHCustom",
+    "BF10R_SP05X_0BHCustom",
+    "BF12R_SP05X_0BHCustom",
     "BehnkeFriedSEEGModel",
     "BehnkeFriedSEEGParameters",
     "default_electrode_parameters",
