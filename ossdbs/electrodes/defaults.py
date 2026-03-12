@@ -357,7 +357,7 @@ default_electrode_parameters = {
         total_length=400.0,
         n_contacts=12,
     ),         
-    "BF8R_SP05X_0BH": BehnkeFriedSEEGParameters(
+    "BF08R_SP05X_0BH": BehnkeFriedSEEGParameters(
         tip_length=1.28/2,
         contact_length=1.57,
         contact_spacing=3.43,
