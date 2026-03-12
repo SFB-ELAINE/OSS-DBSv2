@@ -28,7 +28,7 @@ classifiers = [
 ]
 
 dependencies = ["h5py==3.14.0",
-                "ngsolve==6.2.2602",
+                "ngsolve==6.2.2506",
                 "nibabel==5.2.1",
                 "pandas",
                 "scipy",
