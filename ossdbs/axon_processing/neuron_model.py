@@ -8,6 +8,7 @@ import sys
 from abc import ABC, abstractmethod
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from importlib.resources import files
+from pathlib import PureWindowsPath, PurePosixPath
 
 import h5py
 import neuron
@@ -20,7 +21,7 @@ from .utilities import (
     store_axon_statuses,
 )
 
-mp.set_start_method("fork", force=True)
+#mp.set_start_method("fork", force=True)
 
 _logger = logging.getLogger(__name__)
 
@@ -100,8 +101,14 @@ def _run_neuron_simulation(
 
         # Load HOC file
         hoc_path = os.path.join(neuron_workdir, hoc_file)
-        neuron.h(f'{{load_file("{hoc_path}")}}')
+        if sys.platform == "win32":
+            win_path = PureWindowsPath(hoc_path)
+            unix_hoc_path = PurePosixPath(win_path) 
+        else:
+            unix_hoc_path = hoc_path
 
+        neuron.h(f'{{load_file("{unix_hoc_path}")}}')
+        
         if extra_initialization:
             neuron.h.deletenodes()
             neuron.h.createnodes()
