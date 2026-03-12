@@ -331,7 +331,7 @@ default_electrode_parameters = {
         total_length=450.0,
     ),
     "BF08R_SP21X_0C3": BehnkeFriedSEEGParameters(
-        tip_length=1.28/2,
+        tip_length=1.28,
         contact_length=1.57,
         contact_spacing=3.93,
         first_contact_spacing=1.43,  
@@ -340,7 +340,7 @@ default_electrode_parameters = {
         n_contacts=8,
     ), 
     "BF10R_SP21X_0C3": BehnkeFriedSEEGParameters(
-        tip_length=1.28/2,
+        tip_length=1.28,
         contact_length=1.57,
         contact_spacing=3.93,
         first_contact_spacing=1.43,  
@@ -349,7 +349,7 @@ default_electrode_parameters = {
         n_contacts=10,
     ),     
     "BF12R_SP21X_0C3": BehnkeFriedSEEGParameters(
-        tip_length=1.28/2,
+        tip_length=1.28,
         contact_length=1.57,
         contact_spacing=3.93,
         first_contact_spacing=1.43,  
@@ -358,7 +358,7 @@ default_electrode_parameters = {
         n_contacts=12,
     ),         
     "BF08R_SP05X_0BH": BehnkeFriedSEEGParameters(
-        tip_length=1.28/2,
+        tip_length=1.28,
         contact_length=1.57,
         contact_spacing=3.43,
         first_contact_spacing=3.43,  
@@ -367,7 +367,7 @@ default_electrode_parameters = {
         n_contacts=8,
     ),     
     "BF10R_SP05X_0BH": BehnkeFriedSEEGParameters(
-        tip_length=1.28/2,
+        tip_length=1.28,
         contact_length=1.57,
         contact_spacing=3.43,
         first_contact_spacing=3.43,  
@@ -376,7 +376,7 @@ default_electrode_parameters = {
         n_contacts=10,
     ),  
     "BF12R_SP05X_0BH": BehnkeFriedSEEGParameters(
-        tip_length=1.28/2,
+        tip_length=1.28,
         contact_length=1.57,
         contact_spacing=3.43,
         first_contact_spacing=3.43,  
