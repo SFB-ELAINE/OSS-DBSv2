@@ -13,3 +13,5 @@ Whether you are new to the software or an experienced user, these examples can p
    :maxdepth: 1
 
    examples/example_benchmark
+   examples/example_rat
+   examples/example1

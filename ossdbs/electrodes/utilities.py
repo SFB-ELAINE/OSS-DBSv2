@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
-from typing import Union
 
 import netgen.occ as occ
 import numpy as np
@@ -33,7 +32,7 @@ def get_highest_edge(contact: occ.Face) -> occ.Edge:
 
 def get_signed_angle(
     v_in: np.ndarray, v_out: np.ndarray, rotation_axis: np.ndarray
-) -> Union[None, float]:
+) -> None | float:
     """Get signed angle between two vectors.
 
     Parameters

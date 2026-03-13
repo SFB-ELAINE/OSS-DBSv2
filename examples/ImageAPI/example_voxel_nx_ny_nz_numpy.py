@@ -18,7 +18,7 @@ Outcome:
 
 import netgen.occ as occ
 import numpy as np
-from ngsolve import H1, Draw, GridFunction, Mesh, VoxelCoefficient, sqrt
+from ngsolve import H1, Draw, GridFunction, Mesh, VoxelCoefficient
 
 Origin = (-1, -0.5, -0.25)
 EndOfBox = (1, 0.5, 0.25)
@@ -50,7 +50,7 @@ for i in range(nx):
                 Origin[2] + k / (nz - 1) * edge_length[2],
             )
             # level set function of ellipsoid
-            data[i][j][k] = 1.0 - sqrt(px**2 / rx**2 + py**2 / ry**2 + pz**2 / rz**2)
+            data[i][j][k] = 1.0 - np.sqrt(px**2 / rx**2 + py**2 / ry**2 + pz**2 / rz**2)
 data = np.swapaxes(data, 0, 2)
 
 # cf = VoxelCoefficient(Origin, EndOfBox, data, linear=False)

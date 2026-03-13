@@ -42,3 +42,6 @@ examples/ConvergenceStudy/**/*.svg
 examples/ConvergenceStudy/**/*.pdf
 
 nohup.out
+
+# Auto-generated version file
+ossdbs/_version.py

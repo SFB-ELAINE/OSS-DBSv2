@@ -5,7 +5,6 @@
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
-from typing import Optional
 
 import netgen
 import netgen.occ as occ
@@ -104,7 +103,7 @@ class ElectrodeModel(ABC):
             )
         self._encapsulation_thickness = thickness
 
-    def encapsulation_geometry(self, thickness: float) -> Optional[netgen.occ.Solid]:
+    def encapsulation_geometry(self, thickness: float) -> netgen.occ.Solid | None:
         """Generate geometry of encapsulation layer around electrode.
 
         Parameters

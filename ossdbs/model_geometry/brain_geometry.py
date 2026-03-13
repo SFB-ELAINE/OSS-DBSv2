@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
-from typing import List
 
 import netgen.occ
 import numpy as np
@@ -86,7 +85,7 @@ class BrainGeometry:
                 surface_areas[face.name] += face.mass
         return surface_areas
 
-    def get_surface_names(self) -> List[str]:
+    def get_surface_names(self) -> list[str]:
         """Get names of surfaces in geometry."""
         surface_list = []
         for face in self.geometry.faces:

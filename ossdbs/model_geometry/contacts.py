@@ -3,7 +3,6 @@
 
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 
@@ -40,15 +39,15 @@ class Contact:
     """
 
     name: str
-    area: Optional[float] = None
+    area: float | None = None
     max_h: float = 1e10  # Netgen default
     edge_max_h: float = 1e10
     active: bool = False
     floating: bool = False
     current: float = 0.0
     voltage: float = 0.0
-    surface_impedance_model: Optional[str] = None
-    surface_impedance_parameters: Optional[dict] = None
+    surface_impedance_model: str | None = None
+    surface_impedance_parameters: dict | None = None
 
     def __str__(self):
         """Write properties to string."""

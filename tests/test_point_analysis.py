@@ -117,7 +117,7 @@ class TestPointAnalysis:
 
         # copy signal (emulates simulations by using different amplitudes)
         for (freq_idx, _), scale_factor in zip(
-            enumerate(fft_frequencies), fft_coefficients
+            enumerate(fft_frequencies), fft_coefficients, strict=True
         ):
             pots = np.expand_dims(scale_factor * amplitudes, axis=-1)
             pathway.copy_frequency_domain_solution_from_vcm(freq_idx, pots)
@@ -132,7 +132,7 @@ class TestPointAnalysis:
 
         # go through all lattice points and check that fft yields correct signal at all points
         test_values = []
-        for amplitude, potential in zip(amplitudes, potentials):
+        for amplitude, potential in zip(amplitudes, potentials, strict=True):
             test_values.append(np.all(np.isclose(potential, amplitude * td_signal)))
         assert all(test_values)
 

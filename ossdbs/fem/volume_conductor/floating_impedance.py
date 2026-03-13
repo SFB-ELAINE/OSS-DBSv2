@@ -124,6 +124,7 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
             trial[1:],
             test[1:],
             self._surface_impedance_floating_boundaries,
+            strict=True,
         ):
             print(1.0 / self._surface_impedances[boundary])
             ys = ngsolve.CoefficientFunction(1.0 / self._surface_impedances[boundary])
@@ -137,7 +138,6 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         # enforces that sum of potentials is zero
         bilinear_form += sum_u * test[-1] * ngsolve.dx
         bilinear_form += sum_v * trial[-1] * ngsolve.dx
-
         return bilinear_form
 
     def __linear_form(self, space) -> ngsolve.LinearForm:
@@ -162,8 +162,7 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         floating_values = {
             contact: component.vec[0]
             for (contact, component) in zip(
-                self._surface_impedance_floating_boundaries,
-                components,
+                self._surface_impedance_floating_boundaries, components, strict=True
             )
         }
         for contact in self.contacts.floating:

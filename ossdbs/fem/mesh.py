@@ -227,7 +227,7 @@ class Mesh:
         grid_function.Set(cf)
         flags = grid_function.vec.FV().NumPy()
 
-        for element, flag in zip(self._mesh.Elements(ngsolve.VOL), flags):
+        for element, flag in zip(self._mesh.Elements(ngsolve.VOL), flags, strict=True):
             self._mesh.SetRefinementFlag(ei=element, refine=flag)
         self.refine()
 
