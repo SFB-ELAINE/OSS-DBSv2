@@ -44,4 +44,11 @@ cd input_case8
 echo $PWD
 ossdbs input_pathway.json
 ossdbs input_pathway_out_of_core.json
+ossdbs input_pathway_adaptive.json
+cd ..
+
+cd input_case9
+echo $PWD
+ossdbs input_pathway.json
+
 cd ..

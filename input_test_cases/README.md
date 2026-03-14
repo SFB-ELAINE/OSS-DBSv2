@@ -1,164 +1,69 @@
-# OSS-DBS v2.0 Test Cases
+OSS-DBS v2.0 Test Cases
+=======================
 
-This folder contains simulation test cases for validating OSS-DBS v2.0 functionality.
-
-## Directory Structure
-
-```
-input_test_cases/
-├── tests/                      # Test input configurations
-│   ├── brain_material/         # Tissue property tests
-│   ├── custom_parameters/      # Custom electrode/material tests
-│   ├── case_grounding/         # Case grounding tests
-│   ├── current_controlled/     # Current-controlled stimulation tests
-│   ├── stimulation_signals/    # Signal processing tests
-│   ├── floating_contacts/      # Floating conductor tests
-│   ├── vta/                    # Volume of Tissue Activated tests
-│   ├── pathway_activation/     # Pathway Activation Modeling tests
-│   └── surface_impedance/      # Surface impedance tests
-├── fixtures/                   # Shared test data
-│   └── base_config.json        # Common default configuration
-├── expected_outputs/           # Reference outputs for validation
-├── manifest.yaml               # Test metadata and registry
-├── conftest.py                 # Pytest configuration
-├── test_simulations.py         # Pytest-based test runner
-└── input_case*/                # Legacy test structure (deprecated)
-```
-
-## Running Tests
-
-### Quick Start
+This folder contains various test cases showcasing the functionality of OSS-DBS v2.0. To execute different cases, use the command line as follows:
 
 ```bash
-# Run all simulation tests (on PR only by default)
-pytest input_test_cases/test_simulations.py -m simulation
-
-# Run only fast tests
-pytest input_test_cases/test_simulations.py -m "simulation and not slow"
-
-# Run specific category
-pytest input_test_cases/test_simulations.py -k "brain_material"
-
-# Run with verbose output
-pytest input_test_cases/test_simulations.py -v --tb=short
+ossdbs path_to_folder/input_file.json
 ```
 
-### Test Markers
+The command line displays a dialog while the software is running. Upon completion, all outputs are stored in a new folder, which is, by default, inside the folder where the input.json is stored.
 
-Tests are tagged with markers for selective execution:
+The output folder contains different files, depending on the chosen studies. Also, the exporting of various files can be determined at the end of the input.json file. The following results can be stored:
 
-| Marker | Description |
-|--------|-------------|
-| `simulation` | Full simulation tests (excluded from regular CI) |
-| `slow` | Tests taking > 1 minute |
-| `requires_neuron` | Tests requiring NEURON installation |
-| `vta` | VTA computation tests |
-| `pam` | Pathway Activation Modeling tests |
-| `floating` | Floating contact tests |
-| `surface_impedance` | Surface impedance tests |
+### Results:
 
-### CI/CD Integration
+* Material and conductivity distribution as `.vtk` file,
+* Electric potential and field distribution as `.vtk` file,
+* Probed electric potential and field as `.h5` file,
+* Volume of tissue activated as `.nii` file,
+* Used electrodes as `.vtk` file,
+* Create mesh as `.vol.gz` file,
+* Estimated impedance as `.csv` file.
 
-- **Regular CI (push/PR)**: Runs unit tests only (`pytest` without simulation marker)
-- **PR-only workflow**: Runs full simulation tests via `.github/workflows/simulation-tests.yml`
+Case 1: Brain Material
+----------------------
 
-## Test Categories
+Our first test case contains two input dictionaries to demonstrate the use of inhomogeneous and anisotropic tissue properties. The first one uses a homogeneous MRI image but no diffusion tensor image (DTI), whereas the other input file uses an MRI scan of a human brain.
+A Boston Scientific Vercise electrode (`BostonScientificVercise`) is used and implanted at the subthalamic nucleus (STN). A unit amplitude with 1V on the lowest contact and grounding on the second contact is modeled. The tissue properties are estimated based on the ColeCole4 model at a single frequency of 10kHz. The quasi-static (QS) approximation of Maxwell's equation is solved, and the outputs are stored in the results folder.
 
-### Brain Material (Case 1)
-Tests homogeneous and inhomogeneous tissue models with ColeCole4 dielectric properties.
-- Electrode: BostonScientificVercise
-- Validates: Impedance computation
+Case 2: Custom Parameters
+-------------------------
 
-### Custom Parameters (Case 2)
-Demonstrates custom electrode geometries and material models.
-- Tests: Modified contact lengths, constant dielectric model
-- Electrode: BostonScientificVerciseDirected with encapsulation
+The second test case shows how to use custom parameters for electrode geometries or material models. Here, the directed Boston Scientific Vercise electrode (`BostonScientificVerciseDirected`) is placed at the STN with an encapsulation layer of 0.2 mm surrounding the electrode. The encapsulation layer is assumed to consist of gray matter but can be changed to any provided tissue type. In the `input_custom_electrode.json`, we demonstrate how to modify an electrode by slightly varying the length of the contacts. In the second input dictionary, we change the material model to a constant value for all tissue types, where the corresponding values for the conductivity and permittivity are defined in the inputs.
 
-### Case Grounding (Case 3)
-Tests monopolar stimulation with outer boundary grounding.
-- Electrode: MicroProbesRodentElectrode
-- Variants: QS mode, EQS mode
+Case 3: Case Grounding
+----------------------
 
-### Current Controlled (Case 4)
-Tests current-controlled stimulation.
-- Electrode: AbbottStJudeDirected6172
-- Tests: Single contact, multi-contact current distribution
+In this case, we use a custom-designed monopolar electrode by MicroProbes (`MicroProbesRodentElectrode`), which is used for DBS in rodents. The electrode is implanted in the STN within the same MRI as used before. The stimulation amplitude of the only contact is 1V, and the outer boundary of the brain region is assumed to be the grounding. In the case of a custom brain shape, specified regions can also be used as grounding in the same way.
 
-### Stimulation Signals (Case 5)
-Tests frequency-domain signal processing.
-- Signal: Rectangular pulse at 130 Hz
-- Electrode: MedtronicSenSightB33005
-- Uses OctaveBand spectrum approximation
 
-### Floating Contacts (Case 6)
-Tests floating conductor boundary conditions.
-- Electrode: PINSMedicalL303
-- Configuration: Active + floating + ground contacts
+Case 4: Current Controlled Stimulation
+--------------------------------------
 
-### VTA (Case 7)
-Tests Volume of Tissue Activated computation.
-- Electrode: DixiSEEG10
-- Output: NIfTI format VTA
-- Variants: Standard, out-of-core
+To conduct current-controlled stimulations, a fixed current for the stimulation amplitude can be provided in the settings. In this example, an electrode from Abbott St. Jude (`AbbottStJudeDirected6172`) is used with 0.1mA on the first and -0.1mA on the second contact. Also, current-controlled stimulation on multiple contacts is possible. To do so, we specify the amplitudes as follows: `C1: -3mA, C2: 1mA, C3: 1mA, C4: 1mA`.
 
-### Pathway Activation (Case 8)
-Tests neural pathway activation modeling.
-- Electrode: Medtronic3387
-- Requires: NEURON installation
-- Input: HDF5 axon coordinates
+Case 5: Stimulation Signals
+---------------------------
 
-### Surface Impedance (Case 9)
-Tests FloatingImpedance formulation with electrode-tissue interface.
-- Uses impedancefitter models (CPE, R)
-- Mode: EQS with complex conductivity
+The Medtronic SenSight electrode (`MedtronicSenSightB33005`) is used to simulate a stimulation with a rectangular signal with a base frequency of 130 Hz and 60 us pulse width. After transforming the time signal into the frequency domain and solving in the frequency domain, the results are transferred back into the time domain. In this test case, the OcatveBand method is used to reduce the number of computed frequencies.
 
-## Adding New Tests
+Case 6: Floating Contacts
+-------------------------
 
-1. Create a JSON configuration in the appropriate `tests/<category>/` directory
-2. Add test metadata to `manifest.yaml`
-3. Add expected outputs to `expected_outputs/<category>/`
-4. Run the test to verify: `pytest input_test_cases/test_simulations.py -k "your_test_id"`
+To demonstrate the use of floating contacts, a new `.json` is created using the PINS Medical electrode (`PINSMedicalL303`). The first contact uses a 1V stimulation amplitude, and the third contact is used as ground. The second contact is modeled as a floating conductor.
 
-### Minimal Test Configuration
+Case 7: Volume of Tissue Activated (VTA)
+----------------------------------------
 
-Test files only need to specify what differs from `fixtures/base_config.json`:
+The contained input dictionary uses a uniform grid around the active contact of the DIXI SEEG electrode (`DixiSEEG10`) to estimate the electric field at those points and threshold it by a specified value. As a result, the estimated VTA is stored in Nifty format. As an additional option, the electrode can virtually be removed from the VTA to collapse it inside the electrode's trajectory.
 
-```json
-{
-  "_comment": "Description of test",
-  "_test_id": "unique_test_id",
-  "Electrodes": [
-    {
-      "Name": "ElectrodeName",
-      "Contacts": [
-        {"Contact_ID": 1, "Active": true, "Voltage[V]": 1.0}
-      ]
-    }
-  ]
-}
-```
+Case 8: Pathway Activation Modelling (PAM)
+------------------------------------------
 
-## Migration from Legacy Structure
+Using a DBS electrode from Medtronic (`Medtronic3387`) placed in the STN, the electric field is evaluated along the points of an axon. Therefore, the coordinates are given in a structured `.h5`  file, and the path to the file is provided in the inputs. The `.h5` file needs to be structured in groups (e.g., pathways), where each group can contain multiple datasets (e.g., axons). Each axon includes an array of 3D coordinates and needs to follow the naming convention (axon0, axon1, axon2, etc.). The results are stored in the output folder in the same structure in `.h5` format.
 
-To migrate old `input_case*` directories:
+Case 9: StimSets
+----------------
 
-```bash
-python migrate_tests.py --dry-run  # Preview changes
-python migrate_tests.py            # Execute migration
-```
-
-## Output Types
-
-Simulation tests validate these output types:
-
-| Output | File | Comparison Method |
-|--------|------|-------------------|
-| Impedance | `impedance.csv` | Numerical tolerance |
-| VTA | `VTA_solution_Lattice.nii` | Dice coefficient |
-| Floating Potentials | `floating_potentials.csv` | Numerical tolerance |
-
-## Environment Variables
-
-| Variable | Description |
-|----------|-------------|
-| `OSSDBS_KEEP_TEST_OUTPUTS` | Set to `true` to preserve test outputs |
+Run simulation at multiple contacts. Detailed documentation will follow.

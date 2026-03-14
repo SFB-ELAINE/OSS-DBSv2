@@ -41,10 +41,26 @@ settings = {
                     "MaxMeshSizeEdge": 0.05,
                 },
                 {
+                    "Contact_ID": 4,
+                    "MaxMeshSizeEdge": 0.1,
+                },
+                {
                     "Contact_ID": 5,
                     "Active": False,
                     "Voltage[V]": 0.0,
                     "MaxMeshSize": 0.1,
+                },
+                {
+                    "Contact_ID": 6,
+                    "MaxMeshSizeEdge": 0.1,
+                },
+                {
+                    "Contact_ID": 7,
+                    "MaxMeshSizeEdge": 0.1,
+                },
+                {
+                    "Contact_ID": 8,
+                    "MaxMeshSizeEdge": 0.1,
                 },
             ],
         }

@@ -1,0 +1,10 @@
+{
+    "n_Ranvier": [23, 23, 23],
+    "axon_diams": [3.0, 3.0, 3.0],
+    "Axon_Model_Type": "McNeal1976",
+    "Name_prepared_neuron_array": "Allocated_axons.h5",
+    "Neuron_model_array_prepared": true,
+    "N_seeded_neurons": [300, 300, 43],
+    "N_orig_neurons": [300, 300, 43],
+    "connectome_name": "Multi-Tract: DTA_DS"
+}

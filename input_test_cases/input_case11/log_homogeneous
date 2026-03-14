@@ -1,0 +1,249 @@
+nohup: ignoring input
+Warning: no DISPLAY environment variable.
+--No graphics will be displayed.
+INFO:ossdbs.main:Loading settings from input file
+INFO:ossdbs.api:Load MRI image
+INFO:ossdbs.api:Generate electrode geometries
+INFO:ossdbs.main:Generate full model geometry
+INFO:ossdbs.electrodes.electrode_model_template:Boundary names updated
+INFO:ossdbs.api:Set values on contacts and encapsulation layers
+INFO:ossdbs.api:Prepare dielectric model
+INFO:ossdbs.main:Prepare conductivity coefficient function
+INFO:ossdbs.fem.volume_conductor.conductivity:Remove material Blood because not present in MRI.
+INFO:ossdbs.fem.volume_conductor.conductivity:Remove material White matter because not present in MRI.
+INFO:ossdbs.fem.volume_conductor.conductivity:Remove material CSF because not present in MRI.
+INFO:ossdbs.fem.volume_conductor.conductivity:Remove material Unknown because not present in MRI.
+INFO:ossdbs.api:Preparing solver
+INFO:ossdbs.api:Generate volume conductor model
+INFO:ossdbs.api:Output path set to: Results_homogeneous_NoInterface
+WARNING:ossdbs.model_geometry.contacts:Surface impedance parameter dictionary was provided without model. It will not be taken into account.
+WARNING:ossdbs.model_geometry.contacts:Surface impedance parameter dictionary was provided without model. It will not be taken into account.
+INFO:ossdbs.api:Run volume conductor model
+INFO:ossdbs.api:Will compute impedance at each frequency
+INFO:ossdbs.api:Will estimate currents at each frequency
+INFO:ossdbs.api:Will export solution to VTK
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Set export frequency to 109.854114
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements before material refinement:234672
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements after material refinement:234672
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 1.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 1.20679264
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Skipped computation at 1.20679264 Hz
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 1.45634848
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 1.75751062
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 2.12095089
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 2.55954792
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 3.0888436
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 3.72759372
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 4.49843267
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 5.42867544
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 6.55128557
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 7.90604321
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 9.54095476
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 11.513954
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 13.8949549
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 16.7683294
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 20.2358965
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 24.4205309
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 29.470517
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 35.5648031
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 42.9193426
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 51.7947468
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 62.5055193
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 75.4312006
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 91.0298178
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 109.854114
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting at 109.854114
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting results at 109.854114 Hz.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 132.571137
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 159.985872
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 193.069773
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 232.995181
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 281.17687
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 339.322177
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 409.491506
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 494.171336
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 596.362332
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 719.685673
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 868.511374
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 1048.11313
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 1264.85522
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 1526.41797
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 1842.06997
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 2222.99648
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 2682.6958
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 3237.45754
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 3906.93994
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 4714.86636
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 5689.86603
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Skipped computation at 5689.86603 Hz
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 6866.48845
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Skipped computation at 6866.48845 Hz
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 8286.42773
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Skipped computation at 8286.42773 Hz
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Skipped computation at 10000.0 Hz
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Saving impedance
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Launching reconstruction of time domain
+INFO:ossdbs.main:Volume conductor timings:
+{'ComputeSolution': [1.8760335445404053,
+                     0.0005583763122558594,
+                     1.7822792530059814,
+                     1.7043943405151367,
+                     1.846855640411377,
+                     1.7140238285064697,
+                     1.7819280624389648,
+                     1.828019142150879,
+                     1.8942220211029053,
+                     1.7101953029632568,
+                     1.8041975498199463,
+                     1.777946949005127,
+                     1.6828980445861816,
+                     1.7445380687713623,
+                     1.6995625495910645,
+                     1.7459158897399902,
+                     1.7781693935394287,
+                     1.7556235790252686,
+                     1.7475807666778564,
+                     1.6872832775115967,
+                     1.677900791168213,
+                     1.7371461391448975,
+                     1.7240631580352783,
+                     1.7298624515533447,
+                     1.7390809059143066,
+                     1.726449966430664,
+                     1.7546892166137695,
+                     1.7341649532318115,
+                     1.6898407936096191,
+                     1.7485055923461914,
+                     1.728034257888794,
+                     1.735224962234497,
+                     1.6960396766662598,
+                     1.6910874843597412,
+                     1.7318994998931885,
+                     1.735311508178711,
+                     1.7073593139648438,
+                     1.7069735527038574,
+                     1.6899681091308594,
+                     1.694481372833252,
+                     1.7529089450836182,
+                     1.786745309829712,
+                     1.7086553573608398,
+                     1.7901246547698975,
+                     1.7293791770935059,
+                     1.748814344406128,
+                     0.0006227493286132812,
+                     0.00027441978454589844,
+                     0.0002598762512207031,
+                     0.0002491474151611328],
+ 'CopyValues': [0.0002913475036621094,
+                8.082389831542969e-05,
+                0.00023984909057617188,
+                0.001300811767578125,
+                0.0006091594696044922,
+                0.0002486705780029297,
+                0.0015571117401123047,
+                0.0003809928894042969,
+                0.0006587505340576172,
+                0.0013315677642822266,
+                0.000484466552734375,
+                0.00040602684020996094,
+                0.0004794597625732422,
+                0.00037980079650878906,
+                0.00026679039001464844,
+                0.0015499591827392578,
+                0.00031304359436035156,
+                0.0002560615539550781,
+                0.0014379024505615234,
+                0.0003075599670410156,
+                0.00025272369384765625,
+                0.0015380382537841797,
+                0.0002918243408203125,
+                0.0005207061767578125,
+                0.0014421939849853516,
+                0.0004963874816894531,
+                0.00024247169494628906,
+                0.00040268898010253906,
+                0.0012941360473632812,
+                0.0003120899200439453,
+                0.0004305839538574219,
+                0.00029921531677246094,
+                0.0002758502960205078,
+                0.00031256675720214844,
+                0.0003669261932373047,
+                0.0013005733489990234,
+                0.00022840499877929688,
+                0.0004150867462158203,
+                0.0012807846069335938,
+                0.00023818016052246094,
+                0.0003750324249267578,
+                0.0003573894500732422,
+                0.0002989768981933594,
+                0.0003859996795654297,
+                0.0004611015319824219,
+                0.0012993812561035156,
+                7.081031799316406e-05,
+                6.67572021484375e-05,
+                6.198883056640625e-05,
+                6.437301635742188e-05],
+ 'FieldExport': 0.00031495094299316406,
+ 'VTKExport': [4.707021474838257]}
+INFO:ossdbs.main:Timings:
+ {'ConductivityCF': 0.005423069000244141,
+ 'ContactProperties': 0.0009143352508544922,
+ 'DielectricModel': 9.894371032714844e-05,
+ 'Electrodes': 0.04220128059387207,
+ 'MRI': 0.025137901306152344,
+ 'ModelGeometry': 1.8796424865722656,
+ 'Settings': 0.00037550926208496094,
+ 'VolumeConductor': 93.42641830444336}
+INFO:ossdbs.main:Process Completed
