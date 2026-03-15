@@ -40,10 +40,7 @@
           "Current[A]": 0.125,
           "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
+          "SurfaceImpedance": {"Model": null, "Parameters": {}},
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         },
@@ -53,10 +50,7 @@
           "Current[A]": 0.125,
           "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
+          "SurfaceImpedance": {"Model": null, "Parameters": {}},
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         },
@@ -66,10 +60,7 @@
           "Current[A]": 0.125,
           "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
+          "SurfaceImpedance": {"Model": null, "Parameters": {}},
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         },
@@ -79,10 +70,7 @@
           "Current[A]": 0.125,
           "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
+          "SurfaceImpedance": {"Model": null, "Parameters": {}},
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         },
@@ -92,10 +80,7 @@
           "Current[A]": 0.125,
           "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
+          "SurfaceImpedance": {"Model": null, "Parameters": {}},
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         },
@@ -105,10 +90,7 @@
           "Current[A]": 0.125,
           "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
+          "SurfaceImpedance": {"Model": null, "Parameters": {}},
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         },
@@ -118,10 +100,7 @@
           "Current[A]": 0.125,
           "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
+          "SurfaceImpedance": {"Model": null, "Parameters": {}},
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         },
@@ -131,10 +110,7 @@
           "Current[A]": 0.125,
           "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
+          "SurfaceImpedance": {"Model": null, "Parameters": {}},
           "MaxMeshSize": 1000000.0,
           "MaxMeshSizeEdge": 1000000.0
         }

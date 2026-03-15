@@ -32,7 +32,7 @@
                     "Current[A]": 0.0,
                     "Voltage[V]": 0.0,
                     "Floating": true,
-                    "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0}
+                    "SurfaceImpedance": {"Model": null, "Parameters": {}}
                 },
                 {
                     "Contact_ID": 2,
@@ -40,7 +40,7 @@
                     "Current[A]": 0.012,
                     "Voltage[V]": 0.0,
                     "Floating": true,
-                    "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0}
+                    "SurfaceImpedance": {"Model": null, "Parameters": {}}
                 },
                 {
                     "Contact_ID": 3,
@@ -48,7 +48,7 @@
                     "Current[A]": -0.004,
                     "Voltage[V]": 0.0,
                     "Floating": true,
-                    "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0}
+                    "SurfaceImpedance": {"Model": null, "Parameters": {}}
                 },
                 {
                     "Contact_ID": 4,
@@ -56,7 +56,7 @@
                     "Current[A]": -0.008,
                     "Voltage[V]": 0.0,
                     "Floating": true,
-                    "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0}
+                    "SurfaceImpedance": {"Model": null, "Parameters": {}}
                 }
             ]
         }
