@@ -584,22 +584,43 @@ class VolumeConductor(ABC):
         self._signal = new_signal
 
     def _check_signal(self, new_signal: FrequencyDomainSignal) -> None:
+        """Check the provided signal."""
+        sum_currents = 0
+        # check that floating conditions have been imposed correctly
+        floating_with_surface_impedance = 0
+        for contact in self.contacts.floating:
+            if contact.surface_impedance_model is not None:
+                floating_with_surface_impedance += 1
+            sum_currents += contact.current
+        if floating_with_surface_impedance > 0 and not new_signal.current_controlled:
+            raise ValueError(
+                "Surface impedance floating mode requires "
+                "current-controlled stimulation."
+            )
+
         if new_signal.current_controlled:
-            sum_currents = 0.0
             voltages_active = np.zeros(len(self.contacts.active))
             for idx, contact in enumerate(self.contacts.active):
                 sum_currents += contact.current
                 voltages_active[idx] = contact.voltage
-            for contact in self.contacts.floating:
-                active_contacts_grounded = np.isclose(voltages_active, 0.0)
-                if len(np.where(active_contacts_grounded)[0]) != 1:
-                    raise ValueError(
-                        "In multipolar current-controlled mode, "
-                        "only one active contact has to be grounded!"
-                    )
-                sum_currents += contact.current
             if not np.isclose(sum_currents, 0):
                 raise ValueError("The sum of all currents is not zero!")
+
+            if len(self.contacts.floating) > 0:
+                if floating_with_surface_impedance > 0:
+                    if len(self.contacts.floating) > floating_with_surface_impedance:
+                        raise ValueError(
+                            "You have some floating contacts with a "
+                            "surface impedance model and some without."
+                            " This case has not yet been covered"
+                        )
+                else:
+                    active_contacts_grounded = np.isclose(voltages_active, 0.0)
+                    if len(np.where(active_contacts_grounded)[0]) > 1:
+                        raise ValueError(
+                            "In multipolar current-controlled mode, "
+                            "only one active contact has to be grounded!"
+                        )
 
     @property
     def current_controlled(self) -> bool:
@@ -1065,7 +1086,7 @@ class VolumeConductor(ABC):
         """Determine volume of E-field above threshold at current frequency."""
         field = scale_factor * self.electric_field
         # convert to V/m
-        field_magnitude = 1000.0 * ngsolve.sqrt(ngsolve.InnerProduct(field, field))
+        field_magnitude = ngsolve.sqrt(ngsolve.InnerProduct(field, field))
         # subtract threshold from electric field,
         # all positive values are 1, negative values 0
         threshold_cf = ngsolve.IfPos(field_magnitude - activation_threshold, 1, 0)

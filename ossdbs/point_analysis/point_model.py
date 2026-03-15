@@ -330,9 +330,13 @@ class PointModel(ABC):
         material_distribution = conductivity_cf.material_distribution(mesh)
         ngmesh = mesh.ngsolvemesh
         x, y, z = self.lattice.T
-        return np.isclose(
-            material_distribution(ngmesh(x, y, z)), conductivity_cf.materials["CSF"]
-        )
+        # always false (no CSF detected)
+        csf_index = -1
+        # only do real check when CSF is defined
+        if "CSF" in conductivity_cf.materials:
+            csf_index = conductivity_cf.materials["CSF"]
+
+        return np.isclose(material_distribution(ngmesh(x, y, z)), csf_index)
 
     @property
     def output_path(self):

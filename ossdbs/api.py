@@ -476,15 +476,26 @@ def run_volume_conductor_model(
     _logger.info("Run volume conductor model")
 
     out_of_core = settings["OutOfCore"]
-    compute_impedance = settings.get("ComputeImpedance", False)
-    if compute_impedance:
-        _logger.info("Will compute impedance at each frequency")
-    export_vtk = settings.get("ExportVTK", False)
-    if export_vtk:
-        _logger.info("Will export solution to VTK")
-    export_frequency = settings.get("ExportFrequency")
-    if export_frequency is not None:
-        _logger.info(f"Set custom export frequency to {export_frequency}.")
+    compute_impedance = False
+    if "ComputeImpedance" in settings:
+        if settings["ComputeImpedance"]:
+            _logger.info("Will compute impedance at each frequency")
+            compute_impedance = True
+    compute_currents = False
+    if "ComputeCurrents" in settings:
+        if settings["ComputeCurrents"]:
+            _logger.info("Will estimate currents at each frequency")
+            compute_currents = True
+    if "ExportVTK" in settings:
+        export_vtk = settings["ExportVTK"]
+        if export_vtk:
+            _logger.info("Will export solution to VTK")
+    else:
+        export_vtk = False
+    if "ExportFrequency" in settings:
+        export_frequency = settings["ExportFrequency"]
+        if export_frequency is not None:
+            _logger.info(f"Set custom export frequency to {export_frequency}.")
 
     point_models = generate_point_models(settings)
 
@@ -494,11 +505,13 @@ def run_volume_conductor_model(
         export_vtk,
         point_models=point_models,
         activation_threshold=settings["ActivationThresholdVTA[V-per-m]"],
+        dielectric_threshold=settings.get("DielectricAccuracy", 0.01),
         out_of_core=out_of_core,
         export_frequency=export_frequency,
         adaptive_mesh_refinement_settings=settings["Mesh"]["AdaptiveMeshRefinement"],
         material_mesh_refinement_steps=settings["Mesh"]["MaterialRefinementSteps"],
         truncation_time=truncation_time,
+        estimate_currents=compute_currents,
     )
     return vcm_timings
 

@@ -29,7 +29,7 @@ class TestModelGeometry:
                             "Current[A]": 0.0,
                             "Voltage[V]": 1.0,
                             "Floating": False,
-                            "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
+                            "SurfaceImpedance": {"Model": None, "Parameters": {}},
                             "MaxMeshSizeEdge": 0.01,
                         },
                         {
@@ -38,7 +38,7 @@ class TestModelGeometry:
                             "Current[A]": 0.0,
                             "Voltage[V]": 0.0,
                             "Floating": False,
-                            "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
+                            "SurfaceImpedance": {"Model": None, "Parameters": {}},
                             "MaxMeshSizeEdge": 0.01,
                         },
                     ],
@@ -130,20 +130,18 @@ class TestModelGeometry:
             "Current[A]": 2.0,
             "Floating": False,
             "Voltage[V]": 4.0,
-            "SurfaceImpedance[Ohmm]": {"real": 1, "imag": 1},
+            "SurfaceImpedance": {"Model": "CPE_dl", "Parameters": {"dl_k": 1.5e6}},
         }
         geometry = modelGeometry[0]
         geometry.update_contact(0, new_properties)
 
-        desired = {True, 2.0, False, 4.0, (1 + 1j)}
-        actual = set()
-        actual.add(geometry.contacts[0].active)
-        actual.add(geometry.contacts[0].current)
-        actual.add(geometry.contacts[0].floating)
-        actual.add(geometry.contacts[0].voltage)
-        actual.add(geometry.contacts[0].surface_impedance)
-
-        assert actual == desired
+        contact = geometry.contacts[0]
+        assert contact.active is True
+        assert contact.current == 2.0
+        assert contact.floating is False
+        assert contact.voltage == 4.0
+        assert contact.surface_impedance_model == "CPE_dl"
+        assert contact.surface_impedance_parameters == {"dl_k": 1.5e6}
 
     def test_get_encapsulation_layer_index(self, modelGeometry):
         """Test encapsulation_layer_index()."""
