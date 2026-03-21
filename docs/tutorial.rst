@@ -1,41 +1,55 @@
 Tutorial
 ========
 
-This tutorial is intended to help getting started with OSS-DBSv2.
-It provides step-by-step instructions on how to set up your data, run simulations, and evaluate the results.
-If you are looking for a specific topic, please refer to the relevant documentation sections below.
+This tutorial is intended to get a new user from installation to a first
+successful simulation as quickly as possible. It focuses on the standalone
+command-line workflow and uses the example files shipped with the repository.
 
-Related Documentation
----------------------
+Quickstart
+----------
 
-- :doc:`Brain geometry <brain_geometry>`
-- :doc:`Materials <materials>`
-- :doc:`Stimulation signals <stimulation_signals>`
-- :doc:`Electrodes <electrodes>`
-- :doc:`Point analysis <point_analysis>`
-- :doc:`Axon models <axon_models>`
-- :doc:`Volume conductor model <volume_conductor_model>`
-- :doc:`Utilities <utils>`
+OSS-DBSv2 runs from a JSON input file. The repository already includes a
+working example in ``input_files/inputTest.json``.
 
-Getting Started
----------------
-
-To run simulations using OSS-DBSv2 an input file in JSON format must be provided.
-In this file, stimulation parameters and paths for input and output can be specified.
-Using the example file ``inputTest.json`` from the ``input_files`` folder, a simulation can be run as follows:
+After installation, move into the example directory and start the simulation:
 
 .. code-block:: bash
 
-    $ ossdbs /absolute/path/to/inputTest.json
+    $ cd input_files
+    $ ossdbs inputTest.json
 
-Progress updates will be displayed in the console, and output and log files are stored in the specified directory.
+Progress information is printed to the console. Output files are written to the
+directory specified by ``OutputPath`` in the JSON file. In the provided example,
+that directory is ``Results`` inside ``input_files``.
 
-OSS-DBSv2 can be used standalone or directly with reconstruction results from Lead-DBS.
+If the run finishes successfully, you should see a results directory with log
+files and exported simulation outputs. That is enough for a first sanity check
+before you start changing inputs.
 
-Creating an Input File
-----------------------
+What the example run contains
+-----------------------------
 
-This section defines the brain region of interest for the simulation.
+The example input file demonstrates a basic voltage-controlled simulation with:
+
+- a spherical brain region centered around the electrode
+- one Boston Scientific Vercise electrode
+- MRI-based tissue labeling from ``Butenko_segmask.nii.gz``
+- a Cole-Cole dielectric model
+- a finite-element solve with configurable mesh and solver settings
+
+This makes it a good starting point for understanding the structure of an
+OSS-DBSv2 simulation before adapting it to new subjects or experiments.
+
+Core input sections
+-------------------
+
+The JSON file is organized into a few main blocks. These are the most important
+ones to inspect first.
+
+Brain region
+^^^^^^^^^^^^
+
+This section defines the size and location of the simulated domain:
 
 .. code-block:: json
 
@@ -53,7 +67,11 @@ This section defines the brain region of interest for the simulation.
       "Shape": "Sphere"
     },
 
-This section defines the electrode and contact properties.
+Electrode and contacts
+^^^^^^^^^^^^^^^^^^^^^^
+
+This section defines the electrode model, implantation direction, tip position,
+and contact-level activation settings:
 
 .. code-block:: json
 
@@ -90,12 +108,11 @@ This section defines the electrode and contact properties.
       }
     ],
 
-Provide Imaging Data
---------------------
+Imaging data and tissue mapping
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Segmented MRI and normalized DTI data in NIfTI format can be used to account for the non-uniform distribution of brain tissue.
-These files can be stored anywhere, but their paths must be specified in the input JSON.
-Additionally, the dielectric model can be specified to define the electrical properties of the tissue.
+Segmented MRI and optional DTI data in NIfTI format define the spatial material
+distribution. The dielectric model specifies how tissue properties are computed.
 
 .. code-block:: json
 
@@ -115,10 +132,21 @@ Additionally, the dielectric model can be specified to define the electrical pro
       "Type": "ColeCole4"
     },
 
-Stimulation Signal
-------------------
+Mesh, solver, and outputs
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The stimulation signal used in the simulation can be defined as follows:
+Numerical settings define how the problem is discretized and solved. The output
+section determines where results are written and which exports are enabled.
+
+Typical fields to look for are:
+
+- ``Mesh`` for mesh generation and refinement
+- ``Solver`` for the linear solver and preconditioner
+- ``StimulationSignal`` for the excitation model
+- ``OutputPath`` for results
+- ``ExportVTK`` and ``ExportElectrode`` for additional exports
+
+A stimulation signal block can look like this:
 
 .. code-block:: json
 
@@ -126,57 +154,55 @@ The stimulation signal used in the simulation can be defined as follows:
       "Type": "Rectangle",
       "Frequency[Hz]": 130.0,
       "PulseWidth[us]": 60.0,
-      "PulseTopWidth[us]": 0.0,
-      "CounterPulseWidth[us]": 0.0,
-      "InterPulseWidth[us]": 0.0,
-      "SpectrumMode": "OctaveBand",
-      "CounterAmplitude": 1.0,
-      "CutoffFrequency": 250000.0,
       "CurrentControlled": true
     },
 
-Further Simulation Parameters
------------------------------
+At this stage, it is usually best to keep the default mesh and solver settings
+and first confirm that your geometry, imaging paths, and stimulation settings
+are correct.
 
-More technical options, such as meshing and solver settings, can be adjusted as follows:
+Adapting the example to your own data
+-------------------------------------
 
-.. code-block:: json
+When moving from the example dataset to your own setup, the usual order is:
 
-    "Mesh": {
-      "LoadMesh": false,
-      "MeshElementOrder": 2,
-      "MeshingHypothesis": {
-        "Type": "Fine",
-        "MaxMeshSize": 100
-      },
-      "SaveMesh": false
-    },
-    "EQSMode": false,
-    "FEMOrder": 2,
-    "Solver": {
-      "Type": "CG",
-      "Preconditioner": "bddc",
-      "PreconditionerKwargs": {},
-      "PrintRates": true,
-      "MaximumSteps": 200,
-      "Precision": 1e-9
-    }
+1. Replace ``MRIPath`` and, if needed, ``DTIPath``.
+2. Update ``MRIMapping`` so label values match your segmentation.
+3. Change the ``BrainRegion`` center and dimensions.
+4. Replace the example electrode with the implanted model and correct position.
+5. Adjust contact activation and stimulation settings.
+6. Run the simulation once with conservative defaults before tuning the mesh or solver.
 
-.. note::
-   While the stimulation parameters and the paths to the imaging data are crucial, the technical parameters are safely covered by default settings.
+Standalone and Lead-DBS workflows
+---------------------------------
 
-Evaluating Simulation Results
-------------------------------
+OSS-DBSv2 can be used directly or through Lead-DBS:
 
-To review and analyze your simulation results, navigate to the output folder specified in the input JSON.
-Which outputs are generated can be configured as follows:
+- Use standalone mode when you want explicit control over settings, automation,
+  scripting, or method development.
+- Use Lead-DBS when you want image preprocessing, electrode reconstruction, and
+  tight GUI integration.
 
-.. code-block:: json
+If you already work in Lead-DBS, continue with :doc:`lead_dbs`.
 
-    "OutputPath": "Results",
-    "ComputeImpedance": true,
-    "ExportVTK": true,
-    "ExportElectrode": true
+Next steps
+----------
 
-Additionally, the stimulation volume or pathway activation can be estimated using the implemented point models.
-More details can be found in the :doc:`Point analysis <point_analysis>` and :doc:`Axon models <axon_models>` sections of the documentation.
+After your first successful run, the most useful follow-up pages are:
+
+- :doc:`input_settings`
+- :doc:`examples`
+- :doc:`electrodes`
+- :doc:`volume_conductor_model`
+
+Related Documentation
+---------------------
+
+- :doc:`Brain geometry <brain_geometry>`
+- :doc:`Materials <materials>`
+- :doc:`Stimulation signals <stimulation_signals>`
+- :doc:`Electrodes <electrodes>`
+- :doc:`Point analysis <point_analysis>`
+- :doc:`Axon models <axon_models>`
+- :doc:`Volume conductor model <volume_conductor_model>`
+- :doc:`Utilities <utils>`

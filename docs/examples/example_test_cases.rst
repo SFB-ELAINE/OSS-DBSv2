@@ -76,9 +76,8 @@ This case demonstrates stimulation in **current-controlled** mode.
 
 - An Abbott St. Jude directed electrode is used.
 - Two example configurations are provided:
-  - A bipolar configuration with ±0.1 mA.
-  - A multi-contact example:
-    ``C1: –3 mA, C2: 1 mA, C3: 1 mA, C4: 1 mA``
+- A bipolar configuration with ±0.1 mA.
+- A multi-contact example with ``C1: -3 mA, C2: 1 mA, C3: 1 mA, C4: 1 mA``.
 
 Multiple current-driven contacts can be stimulated simultaneously.
 
@@ -135,4 +134,3 @@ Case 9: StimSets
 ----------------
 
 WIP – will demonstrate batch simulations of the same electrode configuration across varying stimulation settings.
-
