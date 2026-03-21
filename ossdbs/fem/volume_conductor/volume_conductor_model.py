@@ -7,7 +7,6 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from typing import Optional, Union
 
 import ngsolve
 import numpy as np
@@ -121,13 +120,13 @@ class VolumeConductor(ABC):
         frequency_domain_signal: FrequencyDomainSignal,
         compute_impedance: bool = False,
         export_vtk: bool = False,
-        point_models: Optional[list[PointModel]] = None,
-        activation_threshold: Optional[float] = None,
+        point_models: list[PointModel] | None = None,
+        activation_threshold: float | None = None,
         out_of_core: bool = False,
-        export_frequency: Optional[float] = None,
-        adaptive_mesh_refinement_settings: Optional[dict] = None,
+        export_frequency: float | None = None,
+        adaptive_mesh_refinement_settings: dict | None = None,
         material_mesh_refinement_steps: int = 0,
-        truncation_time: Optional[float] = None,
+        truncation_time: float | None = None,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -924,9 +923,7 @@ class VolumeConductor(ABC):
             timings[f"ReconstructTimeSignals_PointModel_{point_model_idx}"] = 0.0
         return timings
 
-    def _store_solution_at_contacts(
-        self, band_indices: Union[list, np.ndarray]
-    ) -> None:
+    def _store_solution_at_contacts(self, band_indices: list | np.ndarray) -> None:
         """Save voltages / currents at given frequency band for all contacts."""
         if self.current_controlled:
             for contact_idx, contact in enumerate(self.contacts.active):
@@ -958,7 +955,7 @@ class VolumeConductor(ABC):
 
     def _copy_frequency_domain_solution(
         self,
-        band_indices: Union[list, np.ndarray],
+        band_indices: list | np.ndarray,
         point_model: PointModel,
         potentials: np.ndarray,
         fields: np.ndarray,
@@ -1067,7 +1064,7 @@ class VolumeConductor(ABC):
                 _logger.info(f"VTA volume is: {point_model.VTA_volume:.3f}")
 
     def _process_frequency_domain_solution(
-        self, band_indices: Union[list, np.ndarray], point_models: PointModel
+        self, band_indices: list | np.ndarray, point_models: PointModel
     ):
         """Copy results to points."""
         for point_model in point_models:

@@ -1,7 +1,6 @@
 # Copyright 2023, 2024 Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Optional
 
 import numpy as np
 
@@ -31,8 +30,8 @@ class TrapezoidSignal(TimeDomainSignal):
         pulse_width: float,
         inter_pulse_width: float,
         top_width: float,
-        counter_pulse_width: Optional[float] = None,
-        counter_pulse_amplitude: Optional[float] = 1.0,
+        counter_pulse_width: float | None = None,
+        counter_pulse_amplitude: float | None = 1.0,
     ) -> None:
         self._top_width = top_width
         super().__init__(

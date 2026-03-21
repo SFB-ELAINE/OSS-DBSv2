@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import logging
-from typing import Union
 
 import numpy as np
 from scipy.fft import irfft
@@ -87,7 +86,7 @@ def get_maximum_octave_band_index(freq_idx: int) -> int:
 
 def get_indices_in_octave_band(
     freq_idx: int, frequency_indices: list, cutoff_frequency_index: int
-) -> Union[list, np.ndarray]:
+) -> list | np.ndarray:
     """Get indices of frequencies in octave band.
 
     Notes

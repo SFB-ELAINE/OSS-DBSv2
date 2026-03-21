@@ -6,8 +6,9 @@ import shutil
 import subprocess
 import sys
 from abc import ABC, abstractmethod
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from importlib.resources import files
-from typing import Optional
+from pathlib import PurePosixPath, PureWindowsPath
 
 import h5py
 import neuron
@@ -20,10 +21,123 @@ from .utilities import (
     store_axon_statuses,
 )
 
+# mp.set_start_method("fork", force=True)
+
 _logger = logging.getLogger(__name__)
 
+# Use 'spawn' context for multiprocessing to ensure clean NEURON state in children.
+# This avoids issues with fork() inheriting corrupted global NEURON interpreter state.
+_mp_context = mp.get_context("spawn")
+
+# Timeout for individual NEURON simulation processes (in seconds)
+NEURON_PROCESS_TIMEOUT = 30
 
 NEURON_DIR = "neuron_model"
+
+# MRG2002 segment structure constants (from McIntyre et al. 2002)
+# For large fibers (diameter >= 5.7 µm):
+#   Full model: 11 segments per internode (node-para1-para2-6*inter-para2-para1-node)
+#   Downsampled: 3 segments per internode (node-inter-inter-node)
+MRG2002_SEGMENTS_PER_INTERNODE_LARGE = 11
+MRG2002_DOWNSAMPLED_SEGMENTS_LARGE = 3
+
+# For small fibers (diameter < 5.7 µm):
+#   Full model: 8 segments per internode (node-para1-para2-3*inter-para2-para1-node)
+#   Downsampled: 2 segments per internode (node-inter-node)
+MRG2002_SEGMENTS_PER_INTERNODE_SMALL = 8
+MRG2002_DOWNSAMPLED_SEGMENTS_SMALL = 2
+
+# Track if mechanisms are loaded in this process (for worker processes)
+_mechanisms_loaded = False
+
+
+def _run_neuron_simulation(
+    neuron_index: int,
+    v_ext: np.ndarray,
+    neuron_workdir: str,
+    hoc_file: str,
+    signal_dict: dict,
+    extra_initialization: bool,
+    v_init: float,
+) -> tuple:
+    """Worker function to run a single NEURON simulation.
+
+    This is a standalone function (not a method) so it can be pickled
+    and used with ProcessPoolExecutor.
+
+    Parameters
+    ----------
+    neuron_index : int
+        Index of the neuron being simulated.
+    v_ext : np.ndarray
+        Extracellular potential distribution in mV (N segments x M time steps).
+    neuron_workdir : str
+        Path to directory containing NEURON files.
+    hoc_file : str
+        Name of the HOC file to load.
+    signal_dict : dict
+        Dictionary with 'time_step' and 'N_time_steps'.
+    extra_initialization : bool
+        Whether to run extra initialization (deletenodes/createnodes).
+    v_init : float
+        Initial membrane potential.
+
+    Returns
+    -------
+    tuple
+        (neuron_index, activated) or (neuron_index, None, error_message)
+    """
+    global _mechanisms_loaded
+
+    try:
+        # Load mechanisms once per worker process
+        if not _mechanisms_loaded:
+            try:
+                neuron.load_mechanisms(neuron_workdir)
+            except RuntimeError:
+                # Mechanisms already loaded (can happen if pool reuses process)
+                pass
+            _mechanisms_loaded = True
+
+        # Load HOC file
+        hoc_path = os.path.join(neuron_workdir, hoc_file)
+        if sys.platform == "win32":
+            win_path = PureWindowsPath(hoc_path)
+            unix_hoc_path = PurePosixPath(win_path)
+        else:
+            unix_hoc_path = hoc_path
+
+        neuron.h(f'{{load_file("{unix_hoc_path}")}}')
+
+        if extra_initialization:
+            neuron.h.deletenodes()
+            neuron.h.createnodes()
+            neuron.h.dependent_var()
+            neuron.h.initialize()
+
+        neuron.h.setupAPWatcher_0()
+        neuron.h.setupAPWatcher_1()
+
+        time_step = signal_dict["time_step"]
+        run_time = signal_dict["N_time_steps"] * signal_dict["time_step"]
+
+        neuron.h.dt = time_step
+        neuron.h.tstop = run_time
+        neuron.h.n_pulse = 1
+        neuron.h.v_init = v_init
+
+        # Feed potential to NEURON model
+        for i in range(v_ext.shape[0]):
+            neuron.h.wf[i] = neuron.h.Vector(v_ext[i, :])
+
+        neuron.h.stimul()
+        neuron.h.run()
+
+        activated = bool(neuron.h.stoprun)
+        return (neuron_index, activated)
+
+    except Exception as e:
+        return (neuron_index, None, str(e))
 
 
 class NeuronSimulator(ABC):
@@ -46,7 +160,7 @@ class NeuronSimulator(ABC):
         self,
         pathways_dict: dict,
         output_path: str,
-        scaling_vector: Optional[list] = None,
+        scaling_vector: list | None = None,
     ):
         self._neuron_executable = "nrnivmodl"
         # executable named different on Windows
@@ -177,12 +291,14 @@ class NeuronSimulator(ABC):
     def compile_neuron_files(self):
         """Compile a NEURON file."""
         _logger.info("Compile NEURON executable")
+        # On Windows, .BAT files need shell=True to run via subprocess
         subprocess.run(
             self.neuron_executable,
             # do not change! causes OSError
             stdout=subprocess.DEVNULL,
             stderr=subprocess.STDOUT,
             cwd=os.path.abspath(self._neuron_workdir),
+            shell=(sys.platform == "win32"),
         )
         _logger.info("Load mechanisms into environment")
         # TODO should be written in a safer way
@@ -301,7 +417,7 @@ class NeuronSimulator(ABC):
         return td_solution
 
     def process_pathways(
-        self, td_solution, scaling: float = 1.0, scaling_index: Optional[int] = None
+        self, td_solution, scaling: float = 1.0, scaling_index: int | None = None
     ):
         """Go through all pathways and compute the activation.
 
@@ -385,12 +501,17 @@ class NeuronSimulator(ABC):
 
         Returns
         -------
-        list, neuron index in the pathway and its activation status (1 or 0)
+        list, neuron index in the pathway and its activation status (1 or 0),
+        or [neuron_index, None, error_message] if an error occurred.
 
         """
-        v_ext = self.get_v_ext(v_time_sol)
-        spike = self.run_NEURON(v_ext, self._extra_initialization)
-        return output.put([neuron_index, spike])
+        try:
+            v_ext = self.get_v_ext(v_time_sol)
+            spike = self.run_NEURON(v_ext, self._extra_initialization)
+            return output.put([neuron_index, spike])
+        except Exception as e:
+            # Return error info so parent can handle it
+            return output.put([neuron_index, None, str(e)])
 
     def run_NEURON(
         self,
@@ -469,8 +590,8 @@ class NeuronSimulator(ABC):
         in Lead-DBS and Paraview, respectively.
         Also stores summary statistics in 'Pathway_status_*.json'
         """
-        # use half of CPUs
-        N_proc = mp.cpu_count() / 2
+        # use half of CPUs (minimum 1)
+        N_proc = max(1, mp.cpu_count() // 2)
 
         # get parameters
         N_neurons = self.get_N_seeded_neurons(pathway_idx)
@@ -489,101 +610,136 @@ class NeuronSimulator(ABC):
         else:
             n_segments_actual = axon_morphology.n_segments
         stepsPerMs = int(1.0 / self.signal_dict["time_step"])
-        # edit hoc file locally to change parameters
+
+        # Modify HOC file BEFORE any multiprocessing starts
         self.modify_hoc_file(n_Ranvier, stepsPerMs, axon_morphology)
 
-        # check pre-status
-        pre_status = pathway_dataset["Status"]
+        # Pre-extract all data from H5 before multiprocessing
+        # This avoids H5 file access during parallel execution
+        pre_status = np.array(pathway_dataset["Status"])
 
-        # initialize outputs
+        # Initialize outputs
         Axon_Lead_DBS = np.zeros((N_neurons * n_segments_actual, 5), float)
-        List_of_activated = []
-        List_of_not_activated = []
+        # Use sets for O(1) lookup instead of lists with O(n) lookup
+        activated_neurons = set()
+        not_activated_neurons = set()
         Activated_models = 0
 
-        neuron_index = 0
-        while neuron_index < N_neurons:
-            # run parallel processing
-            proc = []
-            j_proc = 0  # counter for processes
-            output = mp.Queue()
-            while j_proc < N_proc and neuron_index < N_neurons:
-                # get neuron geometry and field solution
-                neuron = pathway_dataset["axon" + str(neuron_index)]
-                Axon_Lead_DBS[
-                    neuron_index * n_segments_actual : (neuron_index + 1)
-                    * n_segments_actual,
-                    :3,
-                ] = np.array(neuron["Points[mm]"])
-
-                # add index
-                Axon_Lead_DBS[
-                    neuron_index * n_segments_actual : (neuron_index + 1)
-                    * n_segments_actual,
-                    3,
-                ] = neuron_index + 1  # because Lead-DBS numbering starts from 1
-
-                # check which neurons were flagged with CSF and electrode intersection
-                # skip probing of those
-                if pre_status[neuron_index] != 0:
-                    Axon_Lead_DBS[
-                        neuron_index * n_segments_actual : (neuron_index + 1)
-                        * n_segments_actual,
-                        4,
-                    ] = pre_status[neuron_index]
-                    neuron_index += 1
-                    continue
-
-                neuron_time_sol = np.array(neuron["Potential[V]"])
-                # upsample, TODO maybe move inside mp.Process
-                if self.downsampled:
-                    _logger.debug(f"Before upsampling: {neuron_time_sol.shape}")
-                    neuron_time_sol = self.upsample_voltage(
-                        neuron_time_sol, axon_diam, axon_morphology
-                    )
-                    _logger.debug(f"After upsampling: {neuron_time_sol.shape}")
-
-                processes = mp.Process(
-                    target=self.get_axon_status_multiprocessing,
-                    args=(neuron_index, neuron_time_sol, output),
-                )
-                proc.append(processes)
-
-                j_proc += 1
-                neuron_index += 1
-
-            for p in proc:
-                p.start()
-            for p in proc:
-                p.join()
-
-            # check the status of batch processed neurons
-            neurons_idxs_stat = [output.get() for p in proc]
-            # n_idx_stat is a list[neuron index, status (1 or 0)]
-            for n_idx_stat in neurons_idxs_stat:
-                if n_idx_stat[1] == 1:
-                    Activated_models += 1
-                    List_of_activated.append(n_idx_stat[0])
-                else:
-                    List_of_not_activated.append(n_idx_stat[0])
-
-        # iterate over all neurons initially placed by OSS-DBS and assign their statuses
+        # Pre-extract neuron data and prepare simulation tasks
+        _logger.info(f"Pre-extracting data for {N_neurons} neurons...")
+        simulation_tasks = []  # List of (neuron_index, v_ext)
         for neuron_index in range(N_neurons):
-            if neuron_index in List_of_activated:
+            neuron_data = pathway_dataset["axon" + str(neuron_index)]
+
+            # Store geometry data
+            Axon_Lead_DBS[
+                neuron_index * n_segments_actual : (neuron_index + 1)
+                * n_segments_actual,
+                :3,
+            ] = np.array(neuron_data["Points[mm]"])
+
+            # Add "original" axon index from streamline tracking
+            Axon_Lead_DBS[
+                neuron_index * n_segments_actual : (neuron_index + 1)
+                * n_segments_actual,
+                3,
+            ] = neuron_data.attrs["inx"]
+
+            # Skip neurons flagged with CSF or electrode intersection
+            if pre_status[neuron_index] != 0:
+                Axon_Lead_DBS[
+                    neuron_index * n_segments_actual : (neuron_index + 1)
+                    * n_segments_actual,
+                    4,
+                ] = pre_status[neuron_index]
+                continue
+
+            # Extract and prepare potential data
+            neuron_time_sol = np.array(neuron_data["Potential[V]"])
+            if self.downsampled:
+                _logger.debug(f"Before upsampling: {neuron_time_sol.shape}")
+                neuron_time_sol = self.upsample_voltage(
+                    neuron_time_sol, axon_diam, axon_morphology
+                )
+                _logger.debug(f"After upsampling: {neuron_time_sol.shape}")
+
+            # Convert to extracellular potential (mV)
+            v_ext = self.get_v_ext(neuron_time_sol)
+            simulation_tasks.append((neuron_index, v_ext))
+
+        _logger.info(f"Running {len(simulation_tasks)} NEURON simulations...")
+
+        # Run simulations using ProcessPoolExecutor
+        if simulation_tasks:
+            with ProcessPoolExecutor(
+                max_workers=N_proc, mp_context=_mp_context
+            ) as executor:
+                # Submit all tasks
+                future_to_idx = {}
+                for neuron_index, v_ext in simulation_tasks:
+                    future = executor.submit(
+                        _run_neuron_simulation,
+                        neuron_index,
+                        v_ext,
+                        self._neuron_workdir,
+                        self.hoc_file,
+                        self.signal_dict,
+                        self._extra_initialization,
+                        self._v_init,
+                    )
+                    future_to_idx[future] = neuron_index
+
+                # Collect results with timeout
+                for future in as_completed(
+                    future_to_idx,
+                    timeout=NEURON_PROCESS_TIMEOUT * len(simulation_tasks),
+                ):
+                    try:
+                        result = future.result(timeout=NEURON_PROCESS_TIMEOUT)
+                        neuron_idx = result[0]
+
+                        if len(result) > 2 and result[1] is None:
+                            # Error occurred
+                            _logger.warning(
+                                f"NEURON simulation failed for neuron {neuron_idx}: "
+                                f"{result[2]}"
+                            )
+                            not_activated_neurons.add(neuron_idx)
+                        elif result[1]:
+                            Activated_models += 1
+                            activated_neurons.add(neuron_idx)
+                        else:
+                            not_activated_neurons.add(neuron_idx)
+
+                    except TimeoutError:
+                        neuron_idx = future_to_idx[future]
+                        _logger.warning(
+                            f"NEURON simulation timed out for neuron {neuron_idx}"
+                        )
+                        not_activated_neurons.add(neuron_idx)
+                    except Exception as e:
+                        neuron_idx = future_to_idx[future]
+                        _logger.warning(
+                            f"NEURON simulation error for neuron {neuron_idx}: {e}"
+                        )
+                        not_activated_neurons.add(neuron_idx)
+
+        # Assign final statuses to output array
+        # Using sets for O(1) membership lookup
+        for neuron_index in range(N_neurons):
+            if neuron_index in activated_neurons:
                 Axon_Lead_DBS[
                     neuron_index * n_segments_actual : (neuron_index + 1)
                     * n_segments_actual,
                     4,
                 ] = 1
-            elif neuron_index in List_of_not_activated:
+            elif neuron_index in not_activated_neurons:
                 Axon_Lead_DBS[
                     neuron_index * n_segments_actual : (neuron_index + 1)
                     * n_segments_actual,
                     4,
                 ] = 0
-            else:
-                # the status was already assigned
-                continue
+            # else: status was already assigned (pre_status != 0)
 
         create_leaddbs_outputs(
             self.output_path,
@@ -734,9 +890,9 @@ class MRG2002(NeuronSimulator):
         TODO refactor code
         """
         _logger.debug("Upsampling voltage")
-        # let's interpolate voltage between node - center_l - center_r - node
-        # assume 11 segments
-        # n_segments_ds = ((n_segments_full - 1) / 11) * 3 +1
+        # Interpolate voltage from downsampled to full resolution
+        # Large fibers: 11 segments/internode, downsampled to 3
+        # Small fibers: 8 segments/internode, downsampled to 2
 
         n_segments_actual = axon_morphology.n_segments
         _logger.debug(
@@ -746,18 +902,21 @@ class MRG2002(NeuronSimulator):
         v_time_sol_full = np.zeros((n_segments_actual, v_time_sol.shape[1]), float)
 
         if axonDiam >= 5.7:
+            n_seg = MRG2002_SEGMENTS_PER_INTERNODE_LARGE  # 11
+            n_ds = MRG2002_DOWNSAMPLED_SEGMENTS_LARGE  # 3
+
             # fill out nodes first
-            for k in np.arange(0, n_segments_actual, 11):
-                z = int(k / 11) * 3
+            for k in np.arange(0, n_segments_actual, n_seg):
+                z = int(k / n_seg) * n_ds
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
-            # now two segments in between
-            for k in np.arange(3, n_segments_actual, 11):
-                z = int(k / 11) * 3 + 1
+            # now two segments in between (at positions 3 and 8 within internode)
+            for k in np.arange(3, n_segments_actual, n_seg):
+                z = int(k / n_seg) * n_ds + 1
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
-            for k in np.arange(8, n_segments_actual, 11):
-                z = int(k / 11) * 3 + 2
+            for k in np.arange(8, n_segments_actual, n_seg):
+                z = int(k / n_seg) * n_ds + 2
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
             # node -- -- intern -- -- -- -- intern -- -- node ->
@@ -794,7 +953,7 @@ class MRG2002(NeuronSimulator):
                 [9, 10],
             ]  # local indices of interpolated segments
             for interv in range(len(list_interp)):
-                for j in np.arange(0, n_segments_actual - 1, 11):
+                for j in np.arange(0, n_segments_actual - 1, n_seg):
                     if interv == 0:
                         v_time_sol_full[j + 1, :] = (1 - ratio_1) * v_time_sol_full[
                             j, :
@@ -820,23 +979,25 @@ class MRG2002(NeuronSimulator):
                     else:
                         v_time_sol_full[j + 9, :] = (
                             ratio_2 * v_time_sol_full[j + 8, :]
-                            + (1 - ratio_2) * v_time_sol_full[j + 11, :]
+                            + (1 - ratio_2) * v_time_sol_full[j + n_seg, :]
                         )
                         v_time_sol_full[j + 10, :] = (
                             ratio_1 * v_time_sol_full[j + 8, :]
-                            + (1 - ratio_1) * v_time_sol_full[j + 11, :]
+                            + (1 - ratio_1) * v_time_sol_full[j + n_seg, :]
                         )
         else:
-            # let's interpolate voltage between node - center - node
-            # assume 8 segments
+            # Small fiber: interpolate voltage between node - center - node
+            n_seg = MRG2002_SEGMENTS_PER_INTERNODE_SMALL  # 8
+            n_ds = MRG2002_DOWNSAMPLED_SEGMENTS_SMALL  # 2
+
             # fill out nodes first
-            for k in np.arange(0, n_segments_actual, 8):
-                z = int(k / 8) * 2
+            for k in np.arange(0, n_segments_actual, n_seg):
+                z = int(k / n_seg) * n_ds
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
-            # now the center between nodes
-            for k in np.arange(4, n_segments_actual, 8):
-                z = int(k / 8) * 2 + 1
+            # now the center between nodes (at position 4 within internode)
+            for k in np.arange(4, n_segments_actual, n_seg):
+                z = int(k / n_seg) * n_ds + 1
                 v_time_sol_full[k, :] = v_time_sol[z, :]
 
             # node -- -- -- internodal -- -- -- node  ->  node-para1-para2-intern-intern-intern-para2-para1-node
@@ -870,7 +1031,7 @@ class MRG2002(NeuronSimulator):
                 [5, 6, 7],
             ]  # local indices of interpolated segments
             for interv in range(len(list_interp)):
-                for j in np.arange(0, axon_morphology.n_segments - 1, 8):
+                for j in np.arange(0, axon_morphology.n_segments - 1, n_seg):
                     if interv == 0:  # ratios based on intercompartment distances
                         v_time_sol_full[j + 1, :] = (1 - ratio_1) * v_time_sol_full[
                             j, :
@@ -884,13 +1045,13 @@ class MRG2002(NeuronSimulator):
                     else:
                         v_time_sol_full[j + 5, :] = (ratio_3) * v_time_sol_full[
                             j + 4, :
-                        ] + (1 - ratio_3) * v_time_sol_full[j + 8, :]
+                        ] + (1 - ratio_3) * v_time_sol_full[j + n_seg, :]
                         v_time_sol_full[j + 6, :] = (ratio_2) * v_time_sol_full[
                             j + 4, :
-                        ] + (1 - ratio_2) * v_time_sol_full[j + 8, :]
+                        ] + (1 - ratio_2) * v_time_sol_full[j + n_seg, :]
                         v_time_sol_full[j + 7, :] = (ratio_1) * v_time_sol_full[
                             j + 4, :
-                        ] + (1 - ratio_1) * v_time_sol_full[j + 8, :]
+                        ] + (1 - ratio_1) * v_time_sol_full[j + n_seg, :]
 
         return v_time_sol_full
 

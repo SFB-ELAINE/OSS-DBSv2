@@ -1,9 +1,9 @@
 """
-Example of reading in a DTI image and using get_component function for xy and zy
+Example of reading in a DTI image and using get_component function for xy and zy.
 Tests function for randomly generated 100 voxel points.
 
 Outcome:
-    get_component returns 3D array for each component with correct values
+    get_component returns 3D array for each component with correct values.
 """
 
 import random
@@ -14,7 +14,9 @@ from ossdbs.utils.nifti1image import DiffusionTensorImage
 
 
 # Loading DTI image
-dti_image = DiffusionTensorImage("IITMeanTensor_NormMapping.nii.gz")
+dti_image = DiffusionTensorImage(
+    "../../input_files/sub-John_Doe/JD_DTI_NormMapping.nii.gz"
+)
 dti_data_all = dti_image.data
 diffusion_xx = dti_image.get_component("xx")
 diffusion_xy = dti_image.get_component("xy")

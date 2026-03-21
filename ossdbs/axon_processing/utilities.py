@@ -4,7 +4,6 @@
 import json
 import logging
 import os
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -18,7 +17,13 @@ _logger = logging.getLogger(__name__)
 
 
 def compare_pathways(pam_df: pd.DataFrame, pam_df_to_compare: pd.DataFrame) -> dict:
-    """Use data loaded from CSV files to compare axon activation."""
+    """Use data loaded from CSV files to compare axon activation.
+
+    # TODO: Revisit sklearn dependency - consider either:
+    # 1. Adding sklearn as optional dependency in pyproject.toml
+    # 2. Implementing basic metrics (confusion matrix, precision/recall) without sklearn
+    # 3. Moving this function to a separate analysis module
+    """
     try:
         import sklearn.metrics as metrics
     except ImportError as exc:
@@ -68,9 +73,12 @@ def convert_fibers_to_streamlines(fibers: np.ndarray):
     list
         streamlines stored as ArraySequence(),
         i.e. list that describes each fiber in a sublist
+    list
+        original indices of these streamlines
 
     """
     streamlines = ArraySequence()
+    inx_orig = []
 
     # yes, indexing starts with one in those .mat files
     N_streamlines = int(fibers[3, :].max())
@@ -79,27 +87,27 @@ def convert_fibers_to_streamlines(fibers: np.ndarray):
     i_previous = 0
     for i in range(N_streamlines):
         loc_counter = 0
-        while (i + 1) == fibers[
-            3, k
-        ]:  # this is not optimal, you need to extract a pack by np.count?
+        while (i + 1) == fibers[3, k]:
+            # this is not optimal, you need to extract a pack by np.count?
             k += 1
             loc_counter += 1
             if k == fibers[3, :].shape[0]:
                 break
 
         stream_line = fibers[:3, i_previous : i_previous + loc_counter].T
+        inx_orig.append(int(fibers[3, i_previous]))
         i_previous = k
         streamlines.append(stream_line)
 
-    return streamlines
+    return streamlines, inx_orig
 
 
 def create_leaddbs_outputs(
     output_path: str,
     Axon_Lead_DBS: np.ndarray,
     connectome_name: str,
-    scaling_index: Optional[int] = None,
-    pathway_name: Optional[str] = None,
+    scaling_index: int | None = None,
+    pathway_name: str | None = None,
 ):
     """Export axons with activation state in Lead-DBS supported format.
 
@@ -143,8 +151,8 @@ def create_leaddbs_outputs(
 def create_paraview_outputs(
     output_path: str,
     Axon_Lead_DBS: np.ndarray,
-    scaling_index: Optional[int] = None,
-    pathway_name: Optional[str] = None,
+    scaling_index: int | None = None,
+    pathway_name: str | None = None,
 ):
     """Export axons with activation state in Paraview supported format.
 
@@ -202,8 +210,8 @@ def store_axon_statuses(
     percent_activated: float,
     percent_damaged: float,
     percent_csf: float,
-    scaling_index: Optional[int] = None,
-    pathway_name: Optional[bool] = None,
+    scaling_index: int | None = None,
+    pathway_name: bool | None = None,
 ):
     """Store PAM results.
 
@@ -278,6 +286,19 @@ def resample_streamline_for_Ranvier(streamline_array, estim_axon_length, n_Ranvi
     # (do not mix up with truncation to the actual axon!)
     cut_index, cummulated_length = index_for_length(streamline_array, estim_axon_length)
 
+    # Handle edge case: ensure we have enough points in the streamline
+    # We need at least cut_index + 3 points to access streamline_array[cut_index + 2]
+    n_points = len(streamline_array)
+    if cut_index + 2 >= n_points:
+        # Clamp cut_index to ensure valid array access
+        cut_index = max(0, n_points - 3)
+        if cut_index == 0 and n_points < 3:
+            # Streamline too short - just resample what we have
+            _logger.warning(
+                f"Streamline has only {n_points} points, resampling directly"
+            )
+            return set_number_of_points(streamline_array, nb_points=n_Ranvier)
+
     # Don't mix up sums and positions.
     # +1 for the last Ranvier node, +1 for the sum, +1 for index
     streamline_array_Ranvier = np.zeros((cut_index + 1 + 1 + 1, 3), float)
@@ -339,7 +360,9 @@ def index_for_length(xyz, req_length, along=True):
     return idx, cummulated_lengths[idx]
 
 
-def resample_fibers_to_Ranviers(streamlines: list, node_step: int, n_Ranvier: int):
+def resample_fibers_to_Ranviers(
+    streamlines: list, node_step: int, n_Ranvier: int, inx_orig: list
+):
     """Get streamlines resampled by nodes of Ranvier for a specific axonal morphology.
 
     Parameters
@@ -350,15 +373,19 @@ def resample_fibers_to_Ranviers(streamlines: list, node_step: int, n_Ranvier: in
         Length from a node of Ranvier to the next
     n_Ranvier: int
         Number of nodes of Ranvier
+    inx_orig: list
+        original indices of the streamlines
 
     Returns
     -------
     list, resampled streamlines, stored as ArraySequence()
+    list, original indices of the resampled streamlines
 
     """
     # resampling to nodes of Ranvier for arbitrary fiber length
     lengths_streamlines_filtered = list(map(dipy_length, streamlines))
     streamlines_resampled = ArraySequence()
+    inx_orig_resampled = []
 
     excluded_streamlines = []
     # total_points = 0
@@ -372,13 +399,15 @@ def resample_fibers_to_Ranviers(streamlines: list, node_step: int, n_Ranvier: in
             n_Ranvier_this_axon,
         )
         if len(streamline_resampled) < n_Ranvier:
-            _logger.info(f"Streamline {streamline_index} is too short")
+            streamline_orig_inx = inx_orig[streamline_index]
+            _logger.info(f"Streamline {streamline_orig_inx} is too short")
             excluded_streamlines.append(streamline_index)
         else:
             streamlines_resampled.append(streamline_resampled)
             # total_points = total_points + len(streamline_resampled)
+            inx_orig_resampled.append(inx_orig[streamline_index])
 
-    return streamlines_resampled, excluded_streamlines
+    return streamlines_resampled, excluded_streamlines, inx_orig_resampled
 
 
 def normalized(vector: np.ndarray, axis: int = -1, order: int = 2):

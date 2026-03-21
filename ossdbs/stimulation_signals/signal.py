@@ -4,7 +4,6 @@
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -51,9 +50,9 @@ class TimeDomainSignal(ABC):
         self,
         frequency: float,
         pulse_width: float,
-        inter_pulse_width: Optional[float] = 0.0,
-        counter_pulse_width: Optional[float] = 0.0,
-        counter_pulse_amplitude: Optional[float] = 1.0,
+        inter_pulse_width: float | None = 0.0,
+        counter_pulse_width: float | None = 0.0,
+        counter_pulse_amplitude: float | None = 1.0,
     ) -> None:
         if np.isclose(frequency, 0):
             raise ValueError("Frequency must be greater than zero.")

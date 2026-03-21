@@ -4,7 +4,6 @@
 import logging
 import os
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import h5py
 import ngsolve
@@ -117,7 +116,7 @@ class PointModel(ABC):
         scalar_field: np.ndarray,
         filename: str,
         binarize: bool = False,
-        activation_threshold: Optional[float] = None,
+        activation_threshold: float | None = None,
     ):
         """Save scalar field in abstract orthogonal space in nifti format.
 
@@ -285,7 +284,7 @@ class PointModel(ABC):
             )
 
     def copy_frequency_domain_solution_from_vcm(
-        self, freq_idx: int, potentials: np.ndarray, fields: Optional[np.ndarray] = None
+        self, freq_idx: int, potentials: np.ndarray, fields: np.ndarray | None = None
     ) -> None:
         """Copy potentials and fields from volume conductor model."""
         self.tmp_potential_freq_domain[:, freq_idx] = potentials[:, 0]
@@ -391,7 +390,7 @@ class PointModel(ABC):
         frequency: float,
         frequency_index: int,
         electrode=None,
-        activation_threshold: Optional[float] = None,
+        activation_threshold: float | None = None,
     ):
         """Write field values to CSV and Nifti (if defined).
 
@@ -527,10 +526,10 @@ class PointModel(ABC):
         self,
         timesteps: np.ndarray,
         potential_in_time: np.ndarray,
-        Ex_in_time: Optional[np.ndarray] = None,
-        Ey_in_time: Optional[np.ndarray] = None,
-        Ez_in_time: Optional[np.ndarray] = None,
-        truncation_index: Optional[int] = None,
+        Ex_in_time: np.ndarray | None = None,
+        Ey_in_time: np.ndarray | None = None,
+        Ez_in_time: np.ndarray | None = None,
+        truncation_index: int | None = None,
     ) -> TimeResult:
         """Prepare time result and save it to file.
 

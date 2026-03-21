@@ -6,7 +6,6 @@ import importlib
 import json
 import logging
 import os
-from typing import Optional
 
 import numpy as np
 
@@ -66,7 +65,7 @@ def generate_electrodes(settings: dict):
     _logger.info("Generate electrode geometries")
 
     hp_refinement = False
-    if "HPRefinement" in settings["Mesh"]:
+    if settings["Mesh"].get("HPRefinement", False):
         hp_refinement = settings["Mesh"]["HPRefinement"]["Active"]
     electrodes = []
     for electrode_parameters in settings["Electrodes"]:
@@ -112,7 +111,7 @@ def generate_electrodes(settings: dict):
             ]["Thickness[mm]"]
         electrodes.append(electrode)
 
-    if settings["ExportElectrode"]:
+    if settings.get("ExportElectrode", False):
         n_electrode = 0
         for electrode in electrodes:
             n_electrode = n_electrode + 1
@@ -172,7 +171,7 @@ def generate_model_geometry(settings):
 
 def build_brain_model(
     settings,
-    mri_image: Optional[MagneticResonanceImage] = None,
+    mri_image: MagneticResonanceImage | None = None,
     rotate_initial_geo: bool = False,
 ) -> BrainGeometry:
     """Build geometry model of brain."""
