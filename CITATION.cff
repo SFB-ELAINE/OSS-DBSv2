@@ -4,6 +4,12 @@ title: >-
 message: >-
   If you use this software, please cite it using the metadata from this file.
 type: software
+version: 0.5.2
+keywords:
+  - deep brain stimulation
+  - computational modeling
+  - neurostimulation
+  - finite element method
 
 authors:
   - given-names: Julius
@@ -31,6 +37,6 @@ funding:
     award: "SFB 1270/1,2 – 299150580"
 
 repository-code: "https://github.com/SFB-ELAINE/OSS-DBSv2"
-repository-artifact: "https://github.com/SFB-ELAINE/OSS-DBS"
+repository-artifact: "https://pypi.org/project/ossdbs/"
 url: "https://oss-dbsv2.readthedocs.io/en/latest/"
-license: GPL-3.0
+license: GPL-3.0-or-later
