@@ -14,7 +14,8 @@ For most users, simply run the following command:
     $ pip install ossdbs
 
 On macOS and Windows, the NEURON simulator must be installed separately **before** installing OSS-DBSv2.
-Installation instructions for NEURON are available here: [https://nrn.readthedocs.io/en/latest/install/install.html].
+Installation instructions for NEURON are available at
+`the NEURON installation guide <https://nrn.readthedocs.io/en/latest/install/install.html>`_.
 
 Developer Installation
 ----------------------
@@ -28,7 +29,7 @@ To install OSS-DBSv2 from source for development:
     $ pip install -e .
 
 Additional Installation Options
---------------------------------
+-------------------------------
 
 - Install OSS-DBSv2 together with the test suite:
 
@@ -49,8 +50,14 @@ Additional Installation Options
       $ pip install -e ".[all]"
 
 
+Checking the installation
+-------------------------
+
+After installation, a simple first check is to run one of the shipped example
+input files as described in :doc:`tutorial`.
+
 Next Steps
 ----------
 
-For first steps with OSS-DBSv2, see the :ref:`Tutorial <tutorial>` section.
-Example simulations can be found in :ref:`Examples <examples>`.
+For first steps with OSS-DBSv2, see :doc:`tutorial`.
+Example simulations can be found in :doc:`examples`.
