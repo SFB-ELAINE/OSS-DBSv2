@@ -39,3 +39,7 @@ meshsizes.txt
 
 # Auto-generated version file
 ossdbs/_version.py
+
+# Other generated files
+*.spec
+tmpclaude*

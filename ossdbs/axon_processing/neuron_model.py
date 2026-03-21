@@ -21,7 +21,8 @@ from .utilities import (
     store_axon_statuses,
 )
 
-# mp.set_start_method("fork", force=True)
+# for PyInstaller support
+mp.freeze_support()
 
 _logger = logging.getLogger(__name__)
 

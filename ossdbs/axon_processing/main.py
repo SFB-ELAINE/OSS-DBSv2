@@ -52,3 +52,7 @@ def main() -> None:
     input_settings["CurrentVector"] = None
 
     run_PAM(input_settings)
+
+
+if __name__ == "__main__":
+    main()
