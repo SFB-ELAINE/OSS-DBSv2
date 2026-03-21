@@ -6,7 +6,8 @@ Overview
 --------
 
 Lead-DBS is the main entry point for most users of OSS-DBSv2.
-It handles image preprocessing, atlas registration, and electrode reconstruction via its graphical user interface.
+It handles image preprocessing, atlas registration, and electrode reconstruction
+via its graphical user interface.
 OSS-DBSv2 acts as a backend field solver and activation model that Lead-DBS calls in the background.
 
 For an average Lead-DBS user, no separate OSS-DBSv2 setup is required.
@@ -41,9 +42,14 @@ This file contains the complete stimulation configuration in a format that can b
 
 .. code-block:: bash
 
-   leaddbs2ossdbs path/to/stimparameters.mat
+   leaddbs2ossdbs path/to/stimparameters.mat --hemi_side 0
+
+Use ``--hemi_side 0`` for the right hemisphere and ``--hemi_side 1`` for the
+left hemisphere. You can also add ``--output_path`` if the generated JSON file
+and subsequent OSS-DBSv2 results should be written to a specific directory.
 
 This command generates an OSS-DBSv2 configuration file in JSON format that can be used as input for simulations, as described in the tutorial.
 
-Lead-DBS still provides all image and electrode information, while OSS-DBSv2 is controlled explicitly from the command line or from scripts for large-scale or customized simulations.
-
+This standalone route is useful when you want to keep the anatomical and
+electrode information prepared by Lead-DBS but run larger batches, parameter
+sweeps, or custom scripts directly in OSS-DBSv2.
