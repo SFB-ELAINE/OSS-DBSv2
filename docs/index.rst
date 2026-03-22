@@ -1,79 +1,89 @@
-.. OSS_DBS documentation master file, created by
-   sphinx-quickstart on Fri Oct 21 11:27:48 2022.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Welcome to OSS-DBSv2
+====================
 
-Welcome to OSS-DBS's documentation!
-===================================
-.. note::
-   This page is still under construction.
+OSS-DBSv2 is an open-source simulation toolbox for deep brain stimulation (DBS).
+It is designed for researchers and developers who want to model electric fields,
+stimulation volumes, and pathway activation in patient-specific or experimental
+setups.
 
-=========
-Overview
-=========
-Deep Brain Stimulation (DBS) is a widely used treatment for several motor and non-motor disorders.
-Since the mechanism of action are not fully understood, computational models help us to predict the
-outcome of different treatments and optimize them.
+The software can be used in two main ways:
 
+- through `Lead-DBS <lead_dbs.html>`_ for a GUI-driven clinical and research workflow
+- as a standalone Python and command-line toolbox for custom simulations,
+  scripting, parameter sweeps, and method development
 
-OSS-DBS is a comprehensive tool to performe several DBS specific studies for humans, but also for animal studies in a highly automated workflow.
-Therefore, the user can provide data like MRI and DTI data or use the data from the example files.
-Further, there is a set of predifined DBS electrodes which contains the most common electrode types,
-but you can add addidtional electrodes easily.
+For most new users, the simplest path is to start with the standalone tutorial
+or, if you already work in Lead-DBS, with the Lead-DBS integration page.
 
-The software performs calculations of the electric field within the inhomogenius and anisotropic brain
-tissue based on the given data and parameters.
+What OSS-DBSv2 can be used for
+------------------------------
 
-In the steps of postprocessing the software calculates the volume of activated tissue (VAT) or the
-activation of specific axons and realistic fiber tracts to performe detailed pathway activation
-modeling (PAM).
+OSS-DBSv2 supports several common DBS modeling tasks:
 
-A detailed overview over the implemented concepts can be find in the related sections of this
-documentation. For more details about the first version of OSS-DBS you can refer to [Butenko2019]_.
+- building model geometries from a simplified brain region or imaging data
+- placing predefined or custom electrode models in the simulation domain
+- assigning dielectric properties to tissue compartments
+- solving the volume conductor problem in isotropic or anisotropic media
+- evaluating fields on lattices, voxel grids, or pathway trajectories
+- integrating with Lead-DBS for stimulation volume and pathway activation studies
 
-============
-Installation
-============
-In near future, the software OSS-DBS can be easily installed using pip:
+Typical inputs
+--------------
 
-.. code-block:: console
+A simulation is typically defined by:
 
-    $ pip install ossdbs
+- a JSON input file describing geometry, electrodes, solver settings, and outputs
+- segmented MRI data, optionally combined with DTI data
+- a stimulation configuration with active contacts and signal settings
+- an output directory for logs, meshes, and simulation results
 
-For now, please use:
+Typical outputs
+---------------
 
-.. code-block:: console
+Depending on the workflow, OSS-DBSv2 can produce:
 
-    $ git clone https://github.com/SFB-ELAINE/OSS-DBSv2.git 
-    $ pip install . 
+- electric field and potential solutions
+- impedance estimates
+- exported electrode and field data for visualization
+- lattice- or pathway-based post-processing results
+- log files and status files for reproducible batch runs
 
+Where to start
+--------------
 
-For first steps with OSS-DBS see the next section of this documentation.
-Some examples to run you can find in the :ref:`Examples <examples>` section.
+If you are new to the project, the recommended path is:
 
-For Developers
-==============
+1. :doc:`installation`
+2. :doc:`tutorial`
+3. :doc:`input_settings`
+4. :doc:`examples`
 
-Install 
+If you already use Lead-DBS, go directly to :doc:`lead_dbs`.
 
-.. code-block:: console
+Documentation structure
+-----------------------
 
-   $ pip install -e ".[dev]"
+The documentation is split into a user-oriented guide and a set of subsystem
+reference pages. Start with the user guide if your goal is to run simulations.
+Use the reference pages when you want more detail about geometry, materials,
+signals, point analysis, or the solver stack.
 
-Or if you want to update the Sphinx documentation locally install
+For more details about the first version of OSS-DBS, see [Butenko2019]_.
 
-.. code-block:: console
-
-   $ pip install -e ".[all]"
-
-=================
-Table of contents
-=================
 .. toctree::
    :maxdepth: 1
+   :caption: User Guide
 
-   start
+   installation
+   input_settings
+   lead_dbs
+   tutorial
    examples
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Documentation
+
    brain_geometry
    materials
    stimulation_signals
@@ -83,12 +93,13 @@ Table of contents
    volume_conductor_model
    utils
 
-
-Indices and tables
-==================
+Indices and Tables
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
-* :ref:`search`
 
-.. [Butenko2019] K. Butenko, C. Bahls, M. Schröder, R. Köhling and U. van Rienen, OSS-DBS: Open-source simulation platform for deep brain stimulation with a comprehensive automated modeling, PLoS Comput Biol 16(7): e1008023. https://doi.org/10.1371/journal.pcbi.1008023.
+.. [Butenko2019] K. Butenko, C. Bahls, M. Schröder, R. Köhling and U. van Rienen,
+   OSS-DBS: Open-source simulation platform for deep brain stimulation with a comprehensive automated modeling,
+   PLoS Comput Biol 16(7): e1008023.
+   https://doi.org/10.1371/journal.pcbi.1008023

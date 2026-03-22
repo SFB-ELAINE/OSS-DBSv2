@@ -1,41 +1,51 @@
-# Ignore folder
+# Ignore Python-related files and folders
 __pycache__/
+*.pyc
+*.egg-info/
 .env/
 venv/
 .tox/
-.vscode/
-htmlcov/
-build/
-dist/
-*.egg-info/
-_build/
-docs/._*
-Results*/
-.idea/
-.ipynb_checkpoints/
-
-# Ignore file
-*.vol.gz
-*.pyc
-.coverage
-.coveragerc
-*.vtu
-.DS_Store
-ng.ini
-*.swp
-impedance.csv
-*checkpoints.ipynb
-*.nii.gz
-*.nii
-success_*.txt
-fail_*.txt
-test_input_cases_results.csv
-*.stp
-ngmesh.ini
-examples/StimulationSignalAPI/*.pdf
-x86_64/
-
-meshsizes.txt
 
 # Auto-generated version file
 ossdbs/_version.py
+
+# Ignore IDE/editor-specific files
+.vscode/
+.idea/
+*.swp
+
+# Ignore build and coverage files
+build/
+dist/
+htmlcov/
+.coverage
+.coveragerc
+
+# Ignore documentation build artifacts
+_build/
+docs/._*
+
+# Ignore results and temporary files
+Results*/
+.ipynb_checkpoints/
+test_input_cases_results.csv
+impedance.csv
+success_*.txt
+fail_*.txt
+meshsizes.txt
+
+# Ignore specific file types
+*.vol.gz
+*.vtu
+*.nii.gz
+*.nii
+*.stp
+*.png
+*.eps
+*.pdf
+.DS_Store
+
+# Ignore miscellaneous files
+ng.ini
+ngmesh.ini
+x86_64/

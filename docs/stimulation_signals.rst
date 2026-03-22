@@ -1,19 +1,57 @@
 Stimulation signals
 ===================
 
-Signal types
-------------
+OSS-DBSv2 separates the stimulation waveform from the geometric and material
+model. This makes it possible to study how different pulse definitions affect
+the frequency-domain solve and the reconstructed time-domain results.
 
-There are different types of signals.
-Currently, only mono- and biphasic rectangular pulses are tested/usable.
+Signal concepts
+---------------
+
+The code distinguishes between:
+
+- time-domain signal definitions such as rectangular, trapezoidal, or triangular
+  pulses
+- a frequency-domain representation used by the volume conductor solver
+
+This separation is useful because the solver can evaluate the field at selected
+frequencies and then reconstruct the signal in time when needed.
+
+Supported signal classes
+------------------------
+
+The package currently includes rectangular, trapezoidal, and triangular signal
+classes. In practice, rectangular DBS pulses are the most mature and are the
+best starting point for external users.
+
+Typical settings
+----------------
+
+Common signal-related settings include:
+
+- signal type
+- stimulation frequency
+- pulse width
+- counter-pulse or inter-pulse settings when applicable
+- whether the stimulation is current-controlled or voltage-controlled
 
 API reference
 -------------
 
-Rectangular pulses
-^^^^^^^^^^^^^^^^^^
+Signal classes
+^^^^^^^^^^^^^^
 
-.. automodule:: ossdbs.stimulation_signals.RectangleSignal
+.. automodule:: ossdbs.stimulation_signals.rectangle_signal
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: ossdbs.stimulation_signals.trapezoid_signal
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+.. automodule:: ossdbs.stimulation_signals.triangle_signal
     :members:
     :undoc-members:
     :show-inheritance:
@@ -21,20 +59,14 @@ Rectangular pulses
 Base classes
 ^^^^^^^^^^^^
 
-.. automodule:: ossdbs.stimulation_signals.TimeDomainSignal
+.. automodule:: ossdbs.stimulation_signals.signal
     :members:
     :undoc-members:
     :show-inheritance:
 
-.. autoclass:: ossdbs.stimulation_signals.FrequencyDomainSignal
-
 Helper functions
 ^^^^^^^^^^^^^^^^
 
-.. automethod:: ossdbs.stimulation_signals.retrieve_time_domain_signal_from_fft
-.. automethod:: ossdbs.stimulation_signals.reconstruct_time_signals
-.. automethod:: ossdbs.stimulation_signals.get_octave_band_indices
-.. automethod:: ossdbs.stimulation_signals.get_indices_in_octave_band
-.. automethod:: ossdbs.stimulation_signals.get_minimum_octave_band_index
-.. automethod:: ossdbs.stimulation_signals.get_maximum_octave_band_index
-.. automethod:: ossdbs.stimulation_signals.get_timesteps
+.. automodule:: ossdbs.stimulation_signals.utilities
+    :members:
+    :undoc-members:
