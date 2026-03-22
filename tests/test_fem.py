@@ -1,8 +1,11 @@
 import json
+import math
 import os
 
+import ngsolve
 import numpy as np
 import pytest
+from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Z
 
 import ossdbs
 from ossdbs.fem.mesh import Mesh
@@ -238,3 +241,59 @@ class TestVolumeConductorModel:
             assert volume_conductor is not None
         except Exception:
             pytest.fail("Cannot be instantiated.")
+
+
+class TestHPRefineCurvedBoundaryIntegration:
+    """Regression test for NGSolve bug in 6.2.2602:
+    Integrate on curved boundaries returns NaN inside TaskManager
+    after RefineHP + Curve applied outside TaskManager.
+    """
+
+    @pytest.fixture
+    def hp_refined_mesh(self):
+        box = Box(Pnt(-2, -2, -2), Pnt(2, 2, 2))
+        cyl = Cylinder(Pnt(0, 0, -1), Z, r=0.5, h=2)
+        cyl.faces.Max(Z).name = "contact_top"
+        cyl.faces.Min(Z).name = "contact_bottom"
+        box.faces.name = "outer"
+        geo = OCCGeometry(box - cyl)
+
+        with ngsolve.TaskManager():
+            mesh = ngsolve.Mesh(geo.GenerateMesh(maxh=0.5))
+            mesh.Curve(2)
+
+        mesh.RefineHP(levels=2, factor=0.125)
+        mesh.Curve(2)
+        return mesh
+
+    def test_curved_boundary_integration_not_nan(self, hp_refined_mesh):
+        """Curved boundary integration inside TaskManager must not return NaN."""
+        with ngsolve.TaskManager():
+            val = ngsolve.Integrate(
+                ngsolve.CF(1.0) * ngsolve.ds("contact_top"), hp_refined_mesh
+            )
+        assert not math.isnan(val), (
+            "Integrate on curved boundary 'contact_top' returned NaN inside TaskManager. "
+            "This is a known NGSolve 6.2.2602 regression."
+        )
+
+    def test_curved_boundary_area_accuracy(self, hp_refined_mesh):
+        """Curved boundary area must be close to the analytical value."""
+        expected_area = math.pi * 0.5**2  # disk of radius 0.5
+        with ngsolve.TaskManager():
+            val = ngsolve.Integrate(
+                ngsolve.CF(1.0) * ngsolve.ds("contact_top"), hp_refined_mesh
+            )
+        assert abs(val - expected_area) < 0.02, (
+            f"Integrate on 'contact_top' = {val}, expected ~{expected_area:.4f}"
+        )
+
+    def test_flat_boundary_integration_inside_taskmanager(self, hp_refined_mesh):
+        """Flat boundary integration inside TaskManager should work regardless."""
+        expected_area = 4.0 * 4.0 * 6  # 6 faces of a 4x4x4 box
+        with ngsolve.TaskManager():
+            val = ngsolve.Integrate(
+                ngsolve.CF(1.0) * ngsolve.ds("outer"), hp_refined_mesh
+            )
+        assert not math.isnan(val)
+        assert abs(val - expected_area) < 0.1
