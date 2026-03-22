@@ -5,6 +5,8 @@ __pycache__/
 .env/
 venv/
 .tox/
+
+# Auto-generated version file
 ossdbs/_version.py
 
 # Ignore IDE/editor-specific files

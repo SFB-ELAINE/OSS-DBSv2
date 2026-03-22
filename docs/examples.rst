@@ -12,9 +12,10 @@ Recommended starting points
 
 If you are new to OSS-DBSv2, start here:
 
-- ``input_files/inputTest.json`` for a first standalone simulation
-- ``example_JD`` for a documented human DBS example
-- ``example_rat`` for a rodent example
+- :doc:`tutorial` for a first standalone simulation based on the shipped example
+  input file
+- :doc:`examples/example_JD` for a documented human DBS example
+- :doc:`examples/example_rat` for a rodent example
 
 Additional repository examples
 ------------------------------

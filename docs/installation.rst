@@ -2,7 +2,7 @@ Installation
 ============
 
 OSS-DBS can now be easily installed using pip.
-The software runs with Python versions 3.10, 3.11, and 3.12.
+The software runs with Python versions 3.10, 3.11, 3.12, and 3.13.
 
 Basic Installation
 ------------------
@@ -13,7 +13,7 @@ For most users, simply run the following command:
 
     $ pip install ossdbs
 
-On macOS and Windows, the NEURON simulator must be installed separately **before** installing OSS-DBSv2.
+On Windows, the NEURON simulator must be installed separately **before** installing OSS-DBSv2.
 Installation instructions for NEURON are available at
 `the NEURON installation guide <https://nrn.readthedocs.io/en/latest/install/install.html>`_.
 
