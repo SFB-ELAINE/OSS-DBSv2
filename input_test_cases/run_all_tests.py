@@ -394,4 +394,7 @@ if __name__ == "__main__":
     tests_df = run_test()
     all_tests_passed = check_tests(tests_df)
     if not all_tests_passed:
-        open("fail_oss.txt", "w").close()
+        with open("fail_oss.txt", "w", encoding="utf-8") as file:
+            file.write("OSS-DBS input test cases failed.\n")
+            file.write(tests_df.to_string(index=False))
+            file.write("\n")
