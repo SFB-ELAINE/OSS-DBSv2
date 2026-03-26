@@ -1,6 +1,7 @@
 import json
 import math
 import os
+from copy import deepcopy
 
 import ngsolve
 import numpy as np
@@ -90,6 +91,55 @@ def geometry_fixture(settings_fixture):
     brain = ossdbs.BrainGeometry(settings["BrainRegion"]["Shape"], brain_region)
     geometry = ossdbs.ModelGeometry(brain, electrodes)
     return brain_region, electrodes, geometry
+
+
+def _build_volume_conductor_with_solver(
+    settings: dict,
+    solver,
+):
+    """Build a volume conductor for a given solver on the stable case-1 setup."""
+    local_settings = deepcopy(settings)
+    local_settings["MaterialDistribution"]["MRIPath"] = os.path.join(
+        os.getcwd(), "input_files/sub-John_Doe/JD_segmask.nii.gz"
+    )
+    local_settings["MaterialDistribution"]["DiffusionTensorActive"] = True
+    local_settings["MaterialDistribution"]["DTIPath"] = os.path.join(
+        os.getcwd(), "input_files/sub-John_Doe/JD_DTI_NormMapping.nii.gz"
+    )
+    mri_image, _ = ossdbs.load_images(local_settings)
+    brain_region = ossdbs.create_bounding_box(local_settings["BrainRegion"])
+    electrodes = ossdbs.generate_electrodes(local_settings)
+    brain = ossdbs.BrainGeometry(local_settings["BrainRegion"]["Shape"], brain_region)
+    geometry = ossdbs.ModelGeometry(brain, electrodes)
+    ossdbs.set_contact_and_encapsulation_layer_properties(local_settings, geometry)
+
+    dielectric_model = ossdbs.prepare_dielectric_properties(local_settings)
+    materials = local_settings["MaterialDistribution"]["MRIMapping"]
+    conductivity = ossdbs.ConductivityCF(
+        mri_image,
+        brain_region,
+        dielectric_model,
+        materials,
+        geometry.encapsulation_layers,
+        complex_data=local_settings["EQSMode"],
+    )
+
+    floating_mode = geometry.get_floating_mode()
+    volume_conductor_classes = {
+        "Floating": VolumeConductorFloating,
+        "FloatingImpedance": VolumeConductorFloatingImpedance,
+        "NonFloating": VolumeConductorNonFloating,
+    }
+    volume_conductor_class = volume_conductor_classes.get(
+        floating_mode, VolumeConductorNonFloating
+    )
+    return volume_conductor_class(
+        geometry,
+        conductivity,
+        solver,
+        local_settings["FEMOrder"],
+        local_settings["Mesh"],
+    )
 
 
 class TestMesh:
@@ -298,6 +348,46 @@ class TestCustomizedLocalPreconditioner:
         )
         assert not np.allclose(sol, 0.0), (
             "Customized local preconditioner produced a trivial zero solution."
+        )
+
+    def test_customized_local_impedance_matches_native_local(
+        self, settings_fixture
+    ) -> None:
+        local_solver = CGSolver(
+            precond_par=LocalPreconditioner(),
+            maxsteps=200,
+            precision=1e-10,
+        )
+        customized_solver = CGSolver(
+            precond_par=CustomizedLocalPreconditioner(),
+            maxsteps=200,
+            precision=1e-10,
+        )
+
+        local_volume_conductor = _build_volume_conductor_with_solver(
+            settings_fixture, local_solver
+        )
+        customized_volume_conductor = _build_volume_conductor_with_solver(
+            settings_fixture, customized_solver
+        )
+
+        local_volume_conductor.compute_solution(10000.0)
+        customized_volume_conductor.compute_solution(10000.0)
+
+        local_impedance = local_volume_conductor.compute_impedance()
+        customized_impedance = customized_volume_conductor.compute_impedance()
+
+        assert np.isfinite(local_impedance), "Native local impedance is not finite."
+        assert np.isfinite(customized_impedance), (
+            "Customized local impedance is not finite."
+        )
+
+        relative_difference = abs(customized_impedance - local_impedance) / abs(
+            local_impedance
+        )
+        assert relative_difference < 1e-2, (
+            "Customized local impedance deviates too much from native local "
+            f"({relative_difference:.3%})."
         )
 
 
