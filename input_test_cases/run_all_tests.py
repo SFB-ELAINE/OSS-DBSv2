@@ -141,6 +141,9 @@ def run_test() -> pd.DataFrame:
                 impedance_test_passed = _test_impedance(
                     data["output_csv"], data["desired_csv"]
                 )
+                abs_error, rel_error = _impedance_error_metrics(
+                    data["output_csv"], data["desired_csv"]
+                )
                 test_results.append(
                     {
                         "input_file": data["input_json"],
@@ -148,6 +151,8 @@ def run_test() -> pd.DataFrame:
                         if impedance_test_passed
                         else "Failed",
                         "VTA_test": "-",
+                        "impedance_abs_error": abs_error,
+                        "impedance_rel_error_percent": rel_error * 100.0,
                     }
                 )
                 tests_appended = True
@@ -240,6 +245,30 @@ def _test_impedance(output_csv: str, desired_csv: str) -> bool:
     with open(desired_csv) as csv_file:
         desired = pd.read_csv(csv_file).to_numpy()
     return np.allclose(actual, desired, atol=IMPEDANCE_ATOL)
+
+
+def _impedance_error_metrics(output_csv: str, desired_csv: str) -> tuple[float, float]:
+    """Return max absolute and relative impedance errors."""
+    with open(output_csv) as csv_file:
+        actual = pd.read_csv(csv_file).to_numpy(dtype=float)
+
+    with open(desired_csv) as csv_file:
+        desired = pd.read_csv(csv_file).to_numpy(dtype=float)
+
+    abs_error = float(np.max(np.abs(actual - desired)))
+    nonzero_desired = np.abs(desired) > np.finfo(float).eps
+    if np.any(nonzero_desired):
+        rel_error = float(
+            np.max(
+                np.abs(
+                    (actual[nonzero_desired] - desired[nonzero_desired])
+                    / desired[nonzero_desired]
+                )
+            )
+        )
+    else:
+        rel_error = 0.0
+    return abs_error, rel_error
 
 
 def _test_VTA(output_nii: str, desired_nii: str) -> bool:
@@ -347,10 +376,16 @@ def check_tests(df: pd.DataFrame) -> bool:
     failed = df[(df["impedance_test"] == "Failed") | (df["VTA_test"] == "Failed")]
     if not failed.empty:
         for _, row in failed.iterrows():
-            logging.error(
-                f"Test {row.get('input_file', row.get('input_file', ''))} failed | "
+            message = (
+                f"Test {row.get('input_file', '')} failed | "
                 f"Impedance: {row.get('impedance_test')} | VTA: {row.get('VTA_test')}"
             )
+            if not pd.isna(row.get("impedance_abs_error", np.nan)):
+                message += (
+                    f" | abs_err={row.get('impedance_abs_error'):.6g}"
+                    f" | rel_err={row.get('impedance_rel_error_percent'):.6g}%"
+                )
+            logging.error(message)
         return False
     return True
 
