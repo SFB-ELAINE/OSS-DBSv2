@@ -156,6 +156,25 @@ def _log_native_preconditioner_state(
     _logger.debug("<pre*r, r> = %s", tmp_pre.InnerProduct(residual))
 
 
+def _check_native_local_preconditioner(
+    preconditioner, residual, precond_type: str
+) -> bool:
+    """Return whether the native local preconditioner is finite on the residual."""
+    if precond_type != "local":
+        return True
+
+    tmp_pre = residual.CreateVector()
+    tmp_pre.data = preconditioner * residual
+    if not np.isfinite(tmp_pre.FV().NumPy()).all():
+        _logger.warning(
+            "Native NGSolve 'local' preconditioner produced non-finite values "
+            "on the initial residual. Try changing "
+            '"Preconditioner": "local" to "customized_local" in the JSON input.'
+        )
+        return False
+    return True
+
+
 def _warn_local_preconditioner_issue(
     precond_type: str,
     iterations: int,
@@ -321,6 +340,15 @@ class CGSolver(Solver):
                 debug_enabled=debug_enabled,
             )
         else:
+            if not _check_native_local_preconditioner(
+                preconditioner,
+                residual,
+                self._precond_par.get("type"),
+            ):
+                raise RuntimeError(
+                    "Native NGSolve 'local' preconditioner produced non-finite "
+                    "values on the initial residual."
+                )
             _log_native_preconditioner_state(preconditioner, residual, debug_enabled)
         solver = ngsolve.krylovspace.CGSolver(
             bilinear_form.mat,
@@ -402,6 +430,15 @@ class GMRESSolver(Solver):
                 debug_enabled=debug_enabled,
             )
         else:
+            if not _check_native_local_preconditioner(
+                preconditioner,
+                residual,
+                self._precond_par.get("type"),
+            ):
+                raise RuntimeError(
+                    "Native NGSolve 'local' preconditioner produced non-finite "
+                    "values on the initial residual."
+                )
             _log_native_preconditioner_state(preconditioner, residual, debug_enabled)
         solver = ngsolve.krylovspace.GMResSolver(
             mat=bilinear_form.mat,
