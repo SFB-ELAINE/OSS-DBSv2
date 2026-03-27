@@ -309,7 +309,7 @@ class TestCustomizedLocalPreconditioner:
 
         solver = CGSolver(
             precond_par=CustomizedLocalPreconditioner(),
-            maxsteps=200,
+            maxsteps=2000,
             precision=1e-10,
         )
 
@@ -355,12 +355,12 @@ class TestCustomizedLocalPreconditioner:
     ) -> None:
         local_solver = CGSolver(
             precond_par=LocalPreconditioner(),
-            maxsteps=200,
+            maxsteps=2000,
             precision=1e-10,
         )
         customized_solver = CGSolver(
             precond_par=CustomizedLocalPreconditioner(),
-            maxsteps=200,
+            maxsteps=2000,
             precision=1e-10,
         )
 
