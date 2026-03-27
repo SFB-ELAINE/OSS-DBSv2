@@ -239,12 +239,14 @@ def _finalize_krylov_solve(
     )
 
     if solver.iterations >= maxsteps:
+        final_residual = solver.residuals[-1] if solver.residuals else "unknown"
         message = (
-            "Did not converge after %s iterations with precision %s. Increase "
-            "the maximum number of steps, or try a looser solver precision."
+            "Did not converge after %s iterations with precision %s. Final "
+            "residual was %s. Increase the maximum number of steps, or try a "
+            "looser solver precision."
         )
-        _logger.warning(message, solver.iterations, solver.tol)
-        raise RuntimeError(message % (solver.iterations, solver.tol))
+        _logger.warning(message, solver.iterations, solver.tol, final_residual)
+        raise RuntimeError(message % (solver.iterations, solver.tol, final_residual))
 
 
 class Solver(ABC):
