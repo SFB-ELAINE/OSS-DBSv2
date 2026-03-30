@@ -3,6 +3,7 @@
 
 import logging
 from abc import ABC, abstractmethod
+from typing import Any
 
 import ngsolve
 import numpy as np
@@ -16,15 +17,42 @@ from ossdbs.fem.preconditioner import (
 _logger = logging.getLogger(__name__)
 
 
-def _is_finite_scalar(value) -> bool:
-    """Return whether a scalar or complex scalar is finite."""
+def _is_finite_scalar(value: Any) -> bool:
+    """Return whether a scalar-like value is finite.
+
+    Parameters
+    ----------
+    value : Any
+        Scalar or complex scalar returned by an NGSolve inner product.
+
+    Returns
+    -------
+    bool
+        ``True`` if both real and imaginary parts are finite, otherwise
+        ``False``.
+    """
     return np.isfinite(value.real) and np.isfinite(value.imag)
 
 
 def _test_matrix_on_freedofs(
-    matrix, template_vector, freedofs, ntests: int = 3
+    matrix: Any, template_vector: Any, freedofs: Any, ntests: int = 3
 ) -> None:
-    """Log symmetry and SPD checks on the free DOFs only."""
+    """Log basic symmetry and definiteness diagnostics on the free DOFs.
+
+    The checks are intentionally lightweight and only run in debug mode.
+    They help detect obviously broken matrices before the Krylov solver starts.
+
+    Parameters
+    ----------
+    matrix : Any
+        Assembled system matrix.
+    template_vector : Any
+        Vector used to allocate temporary NGSolve vectors with matching layout.
+    freedofs : Any
+        Boolean free-DOF mask from the finite-element space.
+    ntests : int, optional
+        Number of random probe vectors used for the diagnostic checks.
+    """
     projector = ngsolve.Projector(freedofs, True)
 
     _logger.debug("Testing matrix symmetry/SPD on free DOFs")
@@ -61,8 +89,25 @@ def _test_matrix_on_freedofs(
             return
 
 
-def _build_jacobi_inverse_diag(matrix, freedofs) -> np.ndarray:
-    """Build inverse diagonal for a Jacobi preconditioner on free DOFs only."""
+def _build_jacobi_inverse_diag(matrix: Any, freedofs: Any) -> np.ndarray:
+    """Build the inverse diagonal used by the customized Jacobi preconditioner.
+
+    Only entries on free degrees of freedom are inverted. Constrained entries and
+    zero diagonal entries are left at zero so they do not contribute during the
+    preconditioner application.
+
+    Parameters
+    ----------
+    matrix : Any
+        Assembled system matrix in COO-accessible form.
+    freedofs : Any
+        Boolean free-DOF mask from the finite-element space.
+
+    Returns
+    -------
+    np.ndarray
+        Dense vector containing the inverse diagonal entries.
+    """
     rows, cols, vals = matrix.COO()
     rows = np.array(rows, dtype=int)
     cols = np.array(cols, dtype=int)
@@ -79,8 +124,22 @@ def _build_jacobi_inverse_diag(matrix, freedofs) -> np.ndarray:
     return inv_diag
 
 
-def _apply_jacobi_preconditioner(dst, src, inv_diag: np.ndarray, freedofs) -> None:
-    """Apply a diagonal Jacobi inverse to a vector on the free DOFs only."""
+def _apply_jacobi_preconditioner(
+    dst: Any, src: Any, inv_diag: np.ndarray, freedofs: Any
+) -> None:
+    """Apply the customized Jacobi inverse to one residual-like vector.
+
+    Parameters
+    ----------
+    dst : Any
+        Destination vector receiving the preconditioned values.
+    src : Any
+        Source vector to which the inverse diagonal is applied.
+    inv_diag : np.ndarray
+        Inverse diagonal assembled by :func:`_build_jacobi_inverse_diag`.
+    freedofs : Any
+        Boolean free-DOF mask from the finite-element space.
+    """
     src_np = src.FV().NumPy()
     dst_np = dst.FV().NumPy()
     dst_np[:] = inv_diag * src_np
@@ -88,13 +147,39 @@ def _apply_jacobi_preconditioner(dst, src, inv_diag: np.ndarray, freedofs) -> No
 
 
 def _create_customized_local_preconditioner(
-    matrix,
-    freedofs,
-    template_vec,
-    residual=None,
+    matrix: Any,
+    freedofs: Any,
+    template_vec: Any,
+    residual: Any | None = None,
     debug_enabled: bool = False,
 ) -> JacobiPreconditioner:
-    """Create a custom Jacobi preconditioner and optionally log diagnostics."""
+    """Create the customized replacement for NGSolve's native ``local`` preconditioner.
+
+    The implementation is a Jacobi-style inverse built from the assembled matrix
+    diagonal on free degrees of freedom. When debug logging is enabled, the
+    function also reports simple diagnostics for the inverse diagonal and its
+    action on the initial residual.
+
+    Parameters
+    ----------
+    matrix : Any
+        Assembled system matrix.
+    freedofs : Any
+        Boolean free-DOF mask from the finite-element space.
+    template_vec : Any
+        Template vector used by the custom preconditioner for allocations.
+    residual : Any | None, optional
+        Initial residual. When provided and debug logging is active, the
+        function logs the norm of the preconditioned residual.
+    debug_enabled : bool, optional
+        Whether detailed diagnostic logging should be emitted.
+
+    Returns
+    -------
+    JacobiPreconditioner
+        Customized diagonal preconditioner used in place of the native
+        ``local`` preconditioner.
+    """
     inv_diag = _build_jacobi_inverse_diag(matrix, freedofs)
     if debug_enabled:
         _logger.debug(
@@ -111,7 +196,14 @@ def _create_customized_local_preconditioner(
 
 
 def _get_debug_mode() -> tuple[bool, bool]:
-    """Return whether debug logging is enabled and whether rates should print."""
+    """Return the logging flags used by the Krylov solver helpers.
+
+    Returns
+    -------
+    tuple[bool, bool]
+        Pair ``(debug_enabled, printrates)`` where both values mirror whether
+        the module logger currently runs in debug mode.
+    """
     debug_enabled = _logger.isEnabledFor(logging.DEBUG)
     printrates = debug_enabled
     return debug_enabled, printrates
@@ -123,8 +215,27 @@ def _log_initial_system_state(
     grid_function: ngsolve.GridFunction,
     debug_enabled: bool,
     solver_name: str,
-):
-    """Build and optionally log the initial residual information."""
+) -> Any:
+    """Assemble and log the initial residual state before the Krylov solve.
+
+    Parameters
+    ----------
+    bilinear_form : ngsolve.BilinearForm
+        Assembled left-hand-side bilinear form.
+    linear_form : ngsolve.LinearForm
+        Assembled right-hand-side linear form.
+    grid_function : ngsolve.GridFunction
+        Current iterate whose residual is evaluated.
+    debug_enabled : bool
+        Whether detailed diagnostics should be logged.
+    solver_name : str
+        Human-readable solver label used in debug messages.
+
+    Returns
+    -------
+    Any
+        Residual vector compatible with the current finite-element space.
+    """
     if debug_enabled:
         _logger.debug("Linear form norm = %s", linear_form.vec.Norm())
         _test_matrix_on_freedofs(
@@ -145,9 +256,19 @@ def _log_initial_system_state(
 
 
 def _log_native_preconditioner_state(
-    preconditioner, residual, debug_enabled: bool
+    preconditioner: Any, residual: Any, debug_enabled: bool
 ) -> None:
-    """Log the native preconditioner action on the initial residual."""
+    """Log how a native NGSolve preconditioner acts on the initial residual.
+
+    Parameters
+    ----------
+    preconditioner : Any
+        Native NGSolve preconditioner instance.
+    residual : Any
+        Initial residual vector.
+    debug_enabled : bool
+        Whether detailed diagnostics should be logged.
+    """
     if not debug_enabled:
         return
     tmp_pre = residual.CreateVector()
@@ -157,9 +278,25 @@ def _log_native_preconditioner_state(
 
 
 def _check_native_local_preconditioner(
-    preconditioner, residual, precond_type: str
+    preconditioner: Any, residual: Any, precond_type: str
 ) -> bool:
-    """Return whether the native local preconditioner is finite on the residual."""
+    """Check whether the native ``local`` preconditioner produces finite values.
+
+    Parameters
+    ----------
+    preconditioner : Any
+        Native NGSolve preconditioner instance.
+    residual : Any
+        Initial residual vector.
+    precond_type : str
+        Configured preconditioner type from the solver settings.
+
+    Returns
+    -------
+    bool
+        ``True`` if the preconditioner is either not ``local`` or if applying it
+        to the residual yields only finite values.
+    """
     if precond_type != "local":
         return True
 
@@ -178,12 +315,28 @@ def _check_native_local_preconditioner(
 def _warn_local_preconditioner_issue(
     precond_type: str,
     iterations: int,
-    residual,
-    correction,
-    final_residual,
+    residual: Any,
+    correction: Any,
+    final_residual: Any | None,
     debug_enabled: bool,
 ) -> None:
-    """Warn when the native local preconditioner exits suspiciously fast."""
+    """Warn about suspiciously early exits with the native ``local`` preconditioner.
+
+    Parameters
+    ----------
+    precond_type : str
+        Configured preconditioner type from the solver settings.
+    iterations : int
+        Number of Krylov iterations performed.
+    residual : Any
+        Residual before the solve.
+    correction : Any
+        Correction computed by the Krylov solver.
+    final_residual : Any | None
+        Residual after the solve when available in debug mode.
+    debug_enabled : bool
+        Whether detailed diagnostics were computed.
+    """
     if precond_type != "local":
         return
 
@@ -206,18 +359,46 @@ def _warn_local_preconditioner_issue(
 
 
 def _finalize_krylov_solve(
-    solver,
+    solver: Any,
     bilinear_form: ngsolve.BilinearForm,
     linear_form: ngsolve.LinearForm,
     grid_function: ngsolve.GridFunction,
-    residual,
-    correction,
+    residual: Any,
+    correction: Any,
     debug_enabled: bool,
     solver_name: str,
     maxsteps: int,
     precond_type: str | None = None,
 ) -> None:
-    """Apply the correction, log final diagnostics, and emit warnings."""
+    """Finalize a Krylov solve and emit post-solve diagnostics.
+
+    The helper applies the computed correction to the grid function, logs final
+    residual information in debug mode, warns about suspicious ``local``
+    preconditioner behaviour, and raises if the iteration budget was exhausted.
+
+    Parameters
+    ----------
+    solver : Any
+        NGSolve Krylov solver instance.
+    bilinear_form : ngsolve.BilinearForm
+        Assembled left-hand-side bilinear form.
+    linear_form : ngsolve.LinearForm
+        Assembled right-hand-side linear form.
+    grid_function : ngsolve.GridFunction
+        Solution vector updated in-place.
+    residual : Any
+        Initial residual before the solve.
+    correction : Any
+        Solver correction vector.
+    debug_enabled : bool
+        Whether detailed diagnostics should be logged.
+    solver_name : str
+        Human-readable solver label used in log messages.
+    maxsteps : int
+        Maximum allowed number of iterations.
+    precond_type : str | None, optional
+        Configured preconditioner type from the solver settings.
+    """
     grid_function.vec.data += correction
 
     residual_after = None
@@ -342,7 +523,7 @@ class CGSolver(Solver):
                 residual=residual,
                 debug_enabled=debug_enabled,
             )
-        else:
+        elif self._precond_par.get("type") == "local":
             if not _check_native_local_preconditioner(
                 preconditioner,
                 residual,
@@ -432,7 +613,7 @@ class GMRESSolver(Solver):
                 residual=residual,
                 debug_enabled=debug_enabled,
             )
-        else:
+        elif self._precond_par.get("type") == "local":
             if not _check_native_local_preconditioner(
                 preconditioner,
                 residual,
