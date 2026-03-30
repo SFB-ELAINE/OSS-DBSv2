@@ -7,7 +7,9 @@ recursive-include docs *.svg
 recursive-include docs *.txt
 recursive-include docs Makefile
 recursive-include examples *.ipynb
+recursive-include examples *.h5
 recursive-include examples *.json
+recursive-include examples *.gz
 recursive-include examples *.md
 recursive-include examples *.py
 recursive-include examples *.sh
