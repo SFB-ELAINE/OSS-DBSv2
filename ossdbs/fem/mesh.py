@@ -30,6 +30,7 @@ class Mesh:
         self._geometry = geometry
         self._order = order
         self._mesh = None
+        self._pending_hp_refinement = None
 
     def generate_mesh(self, meshing_parameters: dict) -> None:
         """Generate NGSolve mesh."""
@@ -45,11 +46,11 @@ class Mesh:
             "HPRefinement" in meshing_parameters
             and meshing_parameters["HPRefinement"]["Active"]
         ):
-            _logger.info("Applying HP Refinement")
-            self._mesh.RefineHP(
-                levels=meshing_parameters["HPRefinement"]["Levels"],
-                factor=meshing_parameters["HPRefinement"]["Factor"],
-            )
+            if meshing_parameters.get("MaterialRefinementSteps", 0) > 0:
+                _logger.info("Deferring HP Refinement until after material refinement")
+                self._pending_hp_refinement = meshing_parameters["HPRefinement"].copy()
+            else:
+                self.apply_hp_refinement_from_settings(meshing_parameters["HPRefinement"])
         self._mesh.Curve(order=self.order)
 
     def load_mesh(self, filename: str) -> None:
@@ -194,6 +195,38 @@ class Mesh:
         """
         self._order = order
         self._mesh.Curve(order=order)
+
+
+    def apply_hp_refinement_from_settings(self, hp_settings: dict) -> bool:
+        """Apply HP refinement from settings using JSON-style keys."""
+        return self.apply_hp_refinement(
+            active=hp_settings["Active"],
+            levels=hp_settings["Levels"],
+            factor=hp_settings["Factor"],
+        )
+
+    def apply_hp_refinement(
+        self,
+        active: bool = True,
+        levels: int | None = None,
+        factor: float | None = None,
+    ) -> bool:
+        """Apply deferred HP refinement if configured."""
+        if not active:
+            self._pending_hp_refinement = None
+            return False
+
+        if levels is None or factor is None:
+            if self._pending_hp_refinement is None:
+                return False
+            levels = self._pending_hp_refinement["Levels"]
+            factor = self._pending_hp_refinement["Factor"]
+
+        _logger.info("Applying HP Refinement")
+        self._mesh.RefineHP(levels=levels, factor=factor)
+        self._mesh.Curve(order=self._order)
+        self._pending_hp_refinement = None
+        return True
 
     def save(self, file_name: str) -> None:
         """Save netgen mesh.

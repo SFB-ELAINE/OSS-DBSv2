@@ -235,6 +235,8 @@ class VolumeConductor(ABC):
             f"Number of elements after material refinement:{self.mesh.ngsolvemesh.ne}"
         )
 
+        hp_refinement_pending = True
+
         for computing_idx, freq_idx in enumerate(frequency_indices):
             frequency = self.signal.frequencies[freq_idx]
             _logger.info(f"Computing at frequency: {frequency}")
@@ -310,6 +312,18 @@ class VolumeConductor(ABC):
                         f"{refinements} refinement steps with an "
                         f"error in the impedance of {error:.3f}%"
                     )
+
+                if hp_refinement_pending:
+                    hp_refinement_pending = False
+                    if self.mesh.apply_hp_refinement():
+                        _logger.info(
+                            f"Number of elements after HP refinement:{self.mesh.ngsolvemesh.ne}"
+                        )
+                        self.update_space()
+                        self.compute_solution(frequency)
+                        if compute_impedance:
+                            impedance = self.compute_impedance()
+                            self._impedances[band_indices] = impedance
             else:
                 _logger.info(f"Skipped computation at {frequency} Hz")
                 if compute_impedance:
