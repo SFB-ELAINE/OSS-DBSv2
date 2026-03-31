@@ -19,6 +19,7 @@ from ossdbs.fem import (
     PRECONDITIONERS,
     SOLVERS,
     Mesh,
+    Solver,
     VolumeConductor,
     VolumeConductorFloating,
     VolumeConductorFloatingImpedance,
@@ -506,14 +507,29 @@ def run_volume_conductor_model(
 
 
 def run_stim_sets(
-    settings, geometry, conductivity, solver, frequency_domain_signal, mesh: Mesh | None = None
-):
-    """TODO document.
+    settings: dict,
+    geometry: ModelGeometry,
+    conductivity,
+    solver: Solver,
+    frequency_domain_signal: FrequencyDomainSignal,
+    mesh: Mesh | None = None,
+) -> None:
+    """Run StimSets by computing one unit solution per non-ground contact.
 
-    Notes
-    -----
-    Run at all frequencies.
-    If the mode is multisine, a provided list of frequencies is used.
+    Parameters
+    ----------
+    settings : dict
+        OSS-DBS settings dictionary.
+    geometry : ModelGeometry
+        Model geometry used to create the volume conductor model.
+    conductivity : ConductivityCF
+        Conductivity model used by the volume conductor.
+    solver : Solver
+        Linear solver used for each unit-contact run.
+    frequency_domain_signal : FrequencyDomainSignal
+        Frequency-domain representation of the stimulation waveform.
+    mesh : Mesh | None, optional
+        Base mesh to clone for each unit-contact solve.
     """
     _logger.info("Run StimSets volume conductor model")
 
@@ -521,8 +537,9 @@ def run_stim_sets(
     if not frequency_domain_signal.current_controlled:
         _logger.warning(
             "StimSets requires current-controlled stimulation"
-            ", thus the setting was switched on"
+            ", switching the frequency-domain signal to current-controlled mode"
         )
+        frequency_domain_signal.current_controlled = True
     # no vtk export
     export_vtk = settings["ExportVTK"]
     # no intermediate exports
@@ -532,19 +549,30 @@ def run_stim_sets(
     # prepare point model
     point_models = generate_point_models(settings)
 
-    ground_contact = None
+    ground_contacts = []
     for contact in geometry.contacts:
         if np.isclose(contact.current, -1) and contact.active:
-            ground_contact = contact.name
-            _logger.info(f"Will skip ground contact {contact.name}")
-    if ground_contact is None:
+            ground_contacts.append(contact.name)
+    if not ground_contacts:
         raise ValueError(
             "No ground contact set. Choose one active contact with current -1."
         )
+    if len(ground_contacts) > 1:
+        raise ValueError(
+            "StimSets requires exactly one ground contact with current -1."
+        )
+    ground_contact = ground_contacts[0]
+    _logger.info(f"Will skip ground contact {ground_contact}")
+
+    stimulated_contacts = [
+        contact.name for contact in geometry.contacts if contact.name != ground_contact
+    ]
+    if not stimulated_contacts:
+        raise ValueError("StimSets requires at least one non-ground contact.")
     for contact in geometry.contacts:
         if contact.name == ground_contact:
             continue
-        # set current contact active, all other passive
+        # Keep the ground fixed and solve one unit-current case per remaining contact.
         for upd_contact in geometry.contacts:
             # reset all voltages
             contact_idx = geometry.get_contact_index(upd_contact.name)
