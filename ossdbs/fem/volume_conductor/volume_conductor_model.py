@@ -57,6 +57,7 @@ class VolumeConductor(ABC):
         order: int,
         meshing_parameters: dict,
         output_path: str = "Results",
+        mesh: Mesh | None = None,
     ) -> None:
         self._solver = solver
         self._order = order
@@ -83,14 +84,17 @@ class VolumeConductor(ABC):
         self.output_path = output_path
 
         # generate the mesh
-        self._mesh = Mesh(self._model_geometry.geometry, self._order)
-        if meshing_parameters["LoadMesh"]:
-            self.mesh.load_mesh(meshing_parameters["LoadPath"])
-        else:
-            self.mesh.generate_mesh(meshing_parameters)
+        if mesh is None:
+            self._mesh = Mesh(self._model_geometry.geometry, self._order)
+            if meshing_parameters["LoadMesh"]:
+                self.mesh.load_mesh(meshing_parameters["LoadPath"])
+            else:
+                self.mesh.generate_mesh(meshing_parameters)
 
-        if meshing_parameters["SaveMesh"]:
-            self.mesh.save(meshing_parameters["SavePath"])
+            if meshing_parameters["SaveMesh"]:
+                self.mesh.save(meshing_parameters["SavePath"])
+        else:
+            self._mesh = mesh.copy()
 
         # to save previous solution and do post-processing
         self._frequency = None

@@ -378,7 +378,7 @@ def generate_signal(settings) -> TimeDomainSignal:
 
 
 def prepare_volume_conductor_model(
-    settings, model_geometry, conductivity, solver
+    settings, model_geometry, conductivity, solver, mesh: Mesh | None = None
 ) -> VolumeConductor:
     """Prepare the volume conductor model."""
     _logger.info("Generate volume conductor model")
@@ -391,17 +391,35 @@ def prepare_volume_conductor_model(
     if floating_mode == "Floating":
         _logger.debug("Floating mode selected")
         return VolumeConductorFloating(
-            model_geometry, conductivity, solver, order, mesh_parameters, output_path
+            model_geometry,
+            conductivity,
+            solver,
+            order,
+            mesh_parameters,
+            output_path,
+            mesh,
         )
 
     elif floating_mode == "FloatingImpedance":
         _logger.debug("FloatingImpedance mode selected")
         return VolumeConductorFloatingImpedance(
-            model_geometry, conductivity, solver, order, mesh_parameters, output_path
+            model_geometry,
+            conductivity,
+            solver,
+            order,
+            mesh_parameters,
+            output_path,
+            mesh,
         )
     _logger.debug("Non floating mode selected")
     return VolumeConductorNonFloating(
-        model_geometry, conductivity, solver, order, mesh_parameters, output_path
+        model_geometry,
+        conductivity,
+        solver,
+        order,
+        mesh_parameters,
+        output_path,
+        mesh,
     )
 
 
@@ -487,7 +505,9 @@ def run_volume_conductor_model(
     return vcm_timings
 
 
-def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_signal):
+def run_stim_sets(
+    settings, geometry, conductivity, solver, frequency_domain_signal, mesh: Mesh | None = None
+):
     """TODO document.
 
     Notes
@@ -535,12 +555,15 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             active = False
             floating = True
             current = 0.0
-            voltage = False
+            voltage = 0.0
             if contact.name == upd_contact.name:
-                active = True
-                floating = False
+                # Use the same current-controlled formulation as the direct PAM path:
+                # only the ground is active, while the stimulated contact remains
+                # floating and carries the unit current source.
+                active = False
+                floating = True
                 current = 1.0
-                voltage = 1.0
+                voltage = 0.0
             # write new contact settings
             geometry.update_contact(
                 contact_idx,
@@ -552,7 +575,7 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
                 },
             )
         volume_conductor = prepare_volume_conductor_model(
-            settings, geometry, conductivity, solver
+            settings, geometry, conductivity, solver, mesh=mesh
         )
         _logger.info(f"Running with contacts:\n{volume_conductor.contacts}")
 

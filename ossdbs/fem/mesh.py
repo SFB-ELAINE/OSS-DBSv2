@@ -205,6 +205,16 @@ class Mesh:
         """
         self._mesh.ngmesh.Save(file_name)
 
+    def copy(self) -> "Mesh":
+        """Return an independent copy of the mesh.
+
+        This is used by StimSets so each contact solve can start from the same
+        base mesh without sharing later refinement steps.
+        """
+        mesh_copy = Mesh(self._geometry, self._order)
+        mesh_copy._mesh = ngsolve.Mesh(self._mesh.ngmesh.Copy())
+        return mesh_copy
+
     def refine_at_voxel(self, start: tuple, end: tuple, data: np.ndarray) -> None:
         """Refine the mesh at the marked locations.
 

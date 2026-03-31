@@ -143,12 +143,6 @@ def main_run(input_settings: dict):
 
     # save Mesh for StimSets
     if settings["StimSets"]["Active"]:
-        settings["Mesh"]["SaveMesh"] = True
-        settings["Mesh"]["SavePath"] = os.path.join(settings["OutputPath"], "tmp_mesh")
-        settings["Mesh"]["LoadPath"] = os.path.join(
-            settings["OutputPath"], "tmp_mesh.vol.gz"
-        )
-        settings["Mesh"]["LoadMesh"] = False
         # because of floating
         settings["Solver"]["Preconditioner"] = "local"
         settings["Solver"]["PreconditionerKwargs"] = {}
@@ -168,11 +162,13 @@ def main_run(input_settings: dict):
             )
             _logger.info(f"Volume conductor timings:\n{pprint.pformat(vcm_timings)}")
         else:
-            # mesh was saved already
-            settings["Mesh"]["SaveMesh"] = False
-            settings["Mesh"]["LoadMesh"] = True
             run_stim_sets(
-                settings, geometry, conductivity, solver, frequency_domain_signal
+                settings,
+                geometry,
+                conductivity,
+                solver,
+                frequency_domain_signal,
+                mesh=volume_conductor.mesh,
             )
 
     time_1 = time.time()

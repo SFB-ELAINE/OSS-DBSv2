@@ -25,9 +25,10 @@ class VolumeConductorNonFloating(VolumeConductor):
         order: int,
         meshing_parameters: dict,
         output_path: str = "Results",
+        mesh=None,
     ) -> None:
         super().__init__(
-            geometry, conductivity, solver, order, meshing_parameters, output_path
+            geometry, conductivity, solver, order, meshing_parameters, output_path, mesh
         )
         boundaries = [contact.name for contact in self.contacts.active]
         self._space = self.h1_space(boundaries=boundaries, is_complex=self.is_complex)

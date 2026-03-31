@@ -21,9 +21,10 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         order: int,
         meshing_parameters: dict,
         output_path: str = "Results",
+        mesh=None,
     ) -> None:
         super().__init__(
-            geometry, conductivity, solver, order, meshing_parameters, output_path
+            geometry, conductivity, solver, order, meshing_parameters, output_path, mesh
         )
         self._floating_values = {}
         self.update_space()
