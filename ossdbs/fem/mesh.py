@@ -50,7 +50,9 @@ class Mesh:
                 _logger.info("Deferring HP Refinement until after material refinement")
                 self._pending_hp_refinement = meshing_parameters["HPRefinement"].copy()
             else:
-                self.apply_hp_refinement_from_settings(meshing_parameters["HPRefinement"])
+                self.apply_hp_refinement_from_settings(
+                    meshing_parameters["HPRefinement"]
+                )
         self._mesh.Curve(order=self.order)
 
     def load_mesh(self, filename: str) -> None:
@@ -195,7 +197,6 @@ class Mesh:
         """
         self._order = order
         self._mesh.Curve(order=order)
-
 
     def apply_hp_refinement_from_settings(self, hp_settings: dict) -> bool:
         """Apply HP refinement from settings using JSON-style keys."""
