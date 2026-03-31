@@ -317,7 +317,8 @@ class VolumeConductor(ABC):
                     hp_refinement_pending = False
                     if self.mesh.apply_hp_refinement():
                         _logger.info(
-                            f"Number of elements after HP refinement:{self.mesh.ngsolvemesh.ne}"
+                            "Number of elements after HP refinement:"
+                            f"{self.mesh.ngsolvemesh.ne}"
                         )
                         self.update_space()
                         self.compute_solution(frequency)
