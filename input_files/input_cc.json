@@ -30,15 +30,15 @@
       "Contacts": [
         {
           "Contact_ID": 1,
-          "Active": true,
+          "Active": false,
           "Current[A]": 0.004,
           "Voltage[V]": 0.0,
-          "Floating": false,
+          "Floating": true,
           "SurfaceImpedance[Ohmm]": {
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.05
+          "MaxMeshSizeEdge": 0.1
         },
         {
           "Contact_ID": 2,
@@ -50,7 +50,7 @@
             "real": 0.0,
             "imag": 0.0
           },
-          "MaxMeshSizeEdge": 0.05
+          "MaxMeshSizeEdge": 0.1
         }
       ],
       "EncapsulationLayer": {
@@ -80,8 +80,8 @@
     "LoadMesh": false,
     "MeshElementOrder": 2,
     "MeshingHypothesis": {
-      "Type": "Fine",
-      "MaxMeshSize": 1
+      "Type": "Default",
+      "MaxMeshSize": 100.0
     },
     "MeshSize": {
       "Edges": {},
@@ -101,7 +101,7 @@
   },
   "Solver": {
     "Type": "CG",
-    "Preconditioner": "bddc",
+    "Preconditioner": "local",
     "PreconditionerKwargs": {},
     "PrintRates": true,
     "MaximumSteps": 200,
@@ -133,7 +133,7 @@
     }
   },
   "OutputPath": "ResultsCC",
-  "ComputeImpedance": true,
+  "ComputeImpedance": false,
   "ExportVTK": true,
   "ExportElectrode": true
 }
