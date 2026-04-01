@@ -127,5 +127,9 @@ ignore = [
     "setup.py",
     "tests/**/*",
     "examples/ConvergenceStudy/**/*",
+    "examples/**/*.h5",
+    "examples/**/*.gz",
+    "input_files/**/*.h5",
+    "input_files/**/*.gz",
     "ossdbs/_version.py"  # auto-generated, not in VCS
 ]
