@@ -104,8 +104,8 @@
     "Preconditioner": "local",
     "PreconditionerKwargs": {},
     "PrintRates": true,
-    "MaximumSteps": 200,
-    "Precision": 1e-8
+    "MaximumSteps": 1000,
+    "Precision": 1e-9
   },
   "PointModel": {
     "Pathway": {
