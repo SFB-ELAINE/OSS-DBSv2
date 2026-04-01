@@ -506,6 +506,34 @@ def run_volume_conductor_model(
     return vcm_timings
 
 
+def _set_unit_contact_state(
+    geometry: ModelGeometry, stimulated_contacts: list, active_contact_name: str
+) -> None:
+    """Configure contacts for a single unit-current StimSets solve.
+
+    Iterates only over ``stimulated_contacts`` (ground already excluded).
+    The contact named ``active_contact_name`` is assigned a unit current source
+    (current=1A); all others are reset to floating/passive with zero current.
+    The ground contact is untouched — it stays active at 0V as required by the
+    current-controlled formulation.
+    """
+    for contact in stimulated_contacts:
+        contact_idx = geometry.get_contact_index(contact.name)
+        # Use the same current-controlled formulation as the direct approach:
+        # only the ground is active, while the stimulated contact remains
+        # floating and carries the unit current source.
+        current = 1.0 if contact.name == active_contact_name else 0.0
+        geometry.update_contact(
+            contact_idx,
+            {
+                "Floating": True,
+                "Active": False,
+                "Current[A]": current,
+                "Voltage[V]": 0.0,
+            },
+        )
+
+
 def run_stim_sets(
     settings: dict,
     geometry: ModelGeometry,
@@ -565,43 +593,14 @@ def run_stim_sets(
     _logger.info(f"Will skip ground contact {ground_contact}")
 
     stimulated_contacts = [
-        contact.name for contact in geometry.contacts if contact.name != ground_contact
+        contact for contact in geometry.contacts if contact.name != ground_contact
     ]
     if not stimulated_contacts:
         raise ValueError("StimSets requires at least one non-ground contact.")
-    for contact in geometry.contacts:
-        if contact.name == ground_contact:
-            continue
-        # Keep the ground fixed and solve one unit-current case per remaining contact.
-        for upd_contact in geometry.contacts:
-            # reset all voltages
-            contact_idx = geometry.get_contact_index(upd_contact.name)
-            geometry.update_contact(contact_idx, {"Voltage[V]": 0.0})
-            # don't change ground
-            if upd_contact.name == ground_contact:
-                continue
-            active = False
-            floating = True
-            current = 0.0
-            voltage = 0.0
-            if contact.name == upd_contact.name:
-                # Use the same current-controlled formulation as the direct PAM path:
-                # only the ground is active, while the stimulated contact remains
-                # floating and carries the unit current source.
-                active = False
-                floating = True
-                current = 1.0
-                voltage = 0.0
-            # write new contact settings
-            geometry.update_contact(
-                contact_idx,
-                {
-                    "Floating": floating,
-                    "Active": active,
-                    "Current[A]": current,
-                    "Voltage[V]": voltage,
-                },
-            )
+    for contact in stimulated_contacts:
+        _set_unit_contact_state(
+            geometry, stimulated_contacts, active_contact_name=contact.name
+        )
         volume_conductor = prepare_volume_conductor_model(
             settings, geometry, conductivity, solver, mesh=mesh
         )
