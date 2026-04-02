@@ -239,8 +239,15 @@ def main() -> None:
     input_settings["StimulationFolder"] = os.path.dirname(
         os.path.abspath(args.input_dictionary)
     )
-
-    main_run(input_settings)
+    try:
+        main_run(input_settings)
+    finally:
+        for handler in logging.getLogger("ossdbs").handlers:
+            try:
+                handler.flush()
+            except Exception:
+                pass
+        logging.shutdown()
 
 
 if __name__ == "__main__":

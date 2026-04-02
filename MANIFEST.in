@@ -1,3 +1,15 @@
+prune tests
+prune examples
+prune input_files
+prune input_test_cases
+prune .github
+
+exclude .gitignore
+exclude .gitlab-ci.yml
+exclude .pre-commit-config.yaml
+exclude .readthedocs.yaml
+exclude setup.py
+
 recursive-include docs *.dia
 recursive-include docs *.ipynb
 recursive-include docs *.md
@@ -6,20 +18,7 @@ recursive-include docs *.rst
 recursive-include docs *.svg
 recursive-include docs *.txt
 recursive-include docs Makefile
-recursive-include examples *.ipynb
-recursive-include examples *.json
-recursive-include examples *.md
-recursive-include examples *.py
-recursive-include examples *.sh
-recursive-include input_files *.gz
-recursive-include input_files *.h5
-recursive-include input_files *.json
-recursive-include input_test_cases *.json
-recursive-include input_test_cases *.md
-recursive-include input_test_cases *.sh
-recursive-include input_test_cases *.py
-recursive-include input_test_cases *.csv
-recursive-include input_test_cases *.nii
+
 recursive-include ossdbs *.py
 recursive-include ossdbs *.hoc
 recursive-include ossdbs *.html
@@ -27,5 +26,9 @@ recursive-include ossdbs *.md
 recursive-include ossdbs *.mod
 recursive-include ossdbs *.txt
 recursive-include ossdbs *.ses
-include *.yaml
+recursive-include leaddbsinterface *.py
+
+include README.md
+include LICENSE
+include pyproject.toml
 include *.cff
