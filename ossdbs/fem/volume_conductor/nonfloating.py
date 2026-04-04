@@ -36,7 +36,8 @@ class VolumeConductorNonFloating(VolumeConductor):
 
     def update_space(self):
         """Update space (e.g., if mesh changes)."""
-        # only GridFunction needs to be updated
+        boundaries = [contact.name for contact in self.contacts.active]
+        self._space = self.h1_space(boundaries=boundaries, is_complex=self.is_complex)
         self._potential = ngsolve.GridFunction(space=self._space)
 
     def compute_solution(self, frequency: float) -> ngsolve.comp.GridFunction:
