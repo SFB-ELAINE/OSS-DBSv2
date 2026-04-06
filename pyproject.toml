@@ -28,7 +28,7 @@ classifiers = [
 ]
 
 dependencies = ["h5py==3.14.0",
-                "ngsolve==6.2.2602",
+                "ngsolve==6.2.2601",
                 "nibabel==5.2.1",
                 "pandas",
                 "scipy",
@@ -69,7 +69,8 @@ prepareaxonmodel = 'leaddbsinterface.allocate_axons:main'
 run_pathway_activation = 'ossdbs.axon_processing.main:main'
 
 [tool.setuptools]
-packages = ["ossdbs", "ossdbs.testing", "leaddbsinterface"]
+packages = ["ossdbs", "leaddbsinterface"]
+# packages = ["ossdbs", "ossdbs.testing", "leaddbsinterface"]
 
 [tool.setuptools_scm]
 version_file = "ossdbs/_version.py"

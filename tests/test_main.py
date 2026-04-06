@@ -101,6 +101,8 @@ class TestMainRun:
                 "LoadMesh": False,
                 "SaveMesh": False,
                 "MeshingHypothesis": {"Type": "Default"},
+                "MaterialRefinementSteps": 0,
+                "AdaptiveMeshRefinement": {"Active": False},
             },
             "Solver": {
                 "Type": "CG",

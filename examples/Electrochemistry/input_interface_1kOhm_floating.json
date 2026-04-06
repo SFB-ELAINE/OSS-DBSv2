@@ -33,17 +33,17 @@
           "Current[A]": 2e-3,
           "Voltage[V]": 0.0,
           "Floating": true,
-	  "SurfaceImpedance":
-	  {"Model": "R", "Parameters": {"R": 1e2}}
-       },
+          "SurfaceImpedance":
+          {"Model": "R", "Parameters": {"R": 1e3}}
+        },
         {
           "Contact_ID": 8,
           "Active": false,
           "Current[A]": -2e-3,
           "Voltage[V]": 0.0,
           "Floating": true,
-	  "SurfaceImpedance":
-	  {"Model": "R", "Parameters": {"R": 1e2}}
+          "SurfaceImpedance":
+          {"Model": "R", "Parameters": {"R": 1e3}}
         }
       ]
     }
@@ -108,7 +108,7 @@
     "Preconditioner": "local",
     "PreconditionerKwargs": {},
     "PrintRates": true,
-    "MaximumSteps": 500,
+    "MaximumSteps": 10000,
     "Precision": 1e-8
   },
   "PointModel": {

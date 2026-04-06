@@ -3,6 +3,13 @@
 
 """Open-source software for deep brain stimulation."""
 
+import os
+
+# Suppress thread pools from OpenBLAS (numpy) and MKL
+# so that ngsolve.SetNumThreads / TaskManager is the sole thread controller.
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+
 import logging
 
 import ngsolve

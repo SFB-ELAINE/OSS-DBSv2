@@ -177,47 +177,55 @@ class TestModelGeometry:
         test_val = 0.002
         # First edge whose name is not None
         test_edge = next(
-            edge.name
-            for edge in geometry._geometry.shape.edges
-            if edge.name is not None
+            edge.name for edge in geometry._shape.edges if edge.name is not None
         )
         geometry.set_edge_mesh_sizes({test_edge: test_val})
 
-        count = sum(
-            1 for edge in geometry._geometry.shape.edges if edge.name == test_edge
-        )
+        count = sum(1 for edge in geometry._shape.edges if edge.name == test_edge)
         desired = np.array([test_val for i in range(count)])
         actual = np.array(
-            [
-                edge.maxh
-                for edge in geometry._geometry.shape.edges
-                if edge.name == test_edge
-            ]
+            [edge.maxh for edge in geometry._shape.edges if edge.name == test_edge]
         )
 
         return np.testing.assert_equal(actual, desired)
+
+    def test_edge_mesh_sizes_affect_mesh(self, modelGeometry):
+        """Edge mesh sizes must produce a finer mesh."""
+        from ossdbs.fem import Mesh
+
+        _, settings, brain_region, electrodes = modelGeometry
+        mesh_params = settings["Mesh"]
+        shape = settings["BrainRegion"]["Shape"]
+        brain = ossdbs.BrainGeometry(shape, brain_region)
+
+        # Reference mesh without edge refinement
+        geo_ref = ossdbs.ModelGeometry(brain, electrodes)
+        m_ref = Mesh(geo_ref.geometry, order=2)
+        m_ref.generate_mesh(mesh_params)
+
+        # Refined mesh: set small maxh on a contact edge
+        brain2 = ossdbs.BrainGeometry(shape, brain_region)
+        geo_fine = ossdbs.ModelGeometry(brain2, electrodes)
+        test_edge = next(e.name for e in geo_fine._shape.edges if e.name is not None)
+        geo_fine.set_edge_mesh_sizes({test_edge: 0.01})
+        m_fine = Mesh(geo_fine.geometry, order=2)
+        m_fine.generate_mesh(mesh_params)
+
+        assert m_fine.ngsolvemesh.ne > m_ref.ngsolvemesh.ne
 
     def test_set_face_mesh_sizes(self, modelGeometry):
         """Test set_face_mesh_sizes()."""
         geometry = modelGeometry[0]
         test_val = 0.2
         test_face = next(
-            face.name
-            for face in geometry._geometry.shape.faces
-            if face.name is not None
+            face.name for face in geometry._shape.faces if face.name is not None
         )
         geometry.set_face_mesh_sizes({test_face: test_val})
 
-        count = sum(
-            1 for face in geometry._geometry.shape.faces if face.name == test_face
-        )
+        count = sum(1 for face in geometry._shape.faces if face.name == test_face)
         desired = np.array([test_val for i in range(count)])
         actual = np.array(
-            [
-                face.maxh
-                for face in geometry._geometry.shape.faces
-                if face.name == test_face
-            ]
+            [face.maxh for face in geometry._shape.faces if face.name == test_face]
         )
 
         return np.testing.assert_equal(actual, desired)
@@ -227,20 +235,16 @@ class TestModelGeometry:
         geometry = modelGeometry[0]
         test_val = 1.2
         test_volume = next(
-            solid.name
-            for solid in geometry._geometry.shape.solids
-            if solid.name is not None
+            solid.name for solid in geometry._shape.solids if solid.name is not None
         )
         geometry.set_volume_mesh_sizes({test_volume: test_val})
 
-        count = sum(
-            1 for solid in geometry._geometry.shape.solids if solid.name == test_volume
-        )
+        count = sum(1 for solid in geometry._shape.solids if solid.name == test_volume)
         desired = np.array([test_val for i in range(count)])
         actual = np.array(
             [
                 solid.maxh
-                for solid in geometry._geometry.shape.solids
+                for solid in geometry._shape.solids
                 if solid.name == test_volume
             ]
         )

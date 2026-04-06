@@ -30,6 +30,8 @@ class Mesh:
         self._geometry = geometry
         self._order = order
         self._mesh = None
+        self._hp_refinement_params = None
+        self._hp_refinement_applied = False
 
     def generate_mesh(self, meshing_parameters: dict) -> None:
         """Generate NGSolve mesh."""
@@ -45,12 +47,33 @@ class Mesh:
             "HPRefinement" in meshing_parameters
             and meshing_parameters["HPRefinement"]["Active"]
         ):
+            # Store HP refinement parameters for deferred application.
+            # HP refinement must be applied after any bisection-based
+            # refinement (e.g. material refinement), because RefineHP
+            # introduces element types that Netgen's bisection cannot handle.
+            self._hp_refinement_params = meshing_parameters["HPRefinement"]
+        self._mesh.Curve(order=self.order)
+
+    @property
+    def hp_refinement_applied(self) -> bool:
+        """Whether HP refinement has been applied to this mesh."""
+        return self._hp_refinement_applied
+
+    def apply_hp_refinement(self) -> None:
+        """Apply deferred HP refinement.
+
+        Must be called after all bisection-based refinement steps
+        (e.g. material refinement) are complete.
+        """
+        if self._hp_refinement_params is not None:
             _logger.info("Applying HP Refinement")
             self._mesh.RefineHP(
-                levels=meshing_parameters["HPRefinement"]["Levels"],
-                factor=meshing_parameters["HPRefinement"]["Factor"],
+                levels=self._hp_refinement_params["Levels"],
+                factor=self._hp_refinement_params["Factor"],
             )
-        self._mesh.Curve(order=self.order)
+            self._mesh.Curve(order=self._order)
+            self._hp_refinement_params = None
+            self._hp_refinement_applied = True
 
     def load_mesh(self, filename: str) -> None:
         """Load NGSolve mesh from file."""

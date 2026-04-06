@@ -4,15 +4,15 @@ import os
 
 import pandas as pd
 
-best_PAM_result_directory = "Results_PAM_best"
+best_NF_result_directory = "Results_NF_best"
 pathway_files = glob.glob(
-    os.path.join(best_PAM_result_directory, "Pathway_status*.json")
+    os.path.join(best_NF_result_directory, "Pathway_status*.json")
 )
 pathway_files = [
-    p.replace(best_PAM_result_directory + os.sep, "") for p in pathway_files
+    p.replace(best_NF_result_directory + os.sep, "") for p in pathway_files
 ]
 pam_best = {}
-with open(os.path.join(best_PAM_result_directory, "VCM_report.json")) as fp:
+with open(os.path.join(best_NF_result_directory, "VCM_report.json")) as fp:
     vcm_info = json.load(fp)
 best_dofs = vcm_info["DOF"]
 best_time = 0.0
@@ -21,7 +21,7 @@ for t in vcm_info["Timings"]["ComputeSolution"]:
 info_str = f"{vcm_info['DOF']}"
 results_dict = {}
 for pathway in pathway_files:
-    with open(os.path.join(best_PAM_result_directory, pathway)) as fp:
+    with open(os.path.join(best_NF_result_directory, pathway)) as fp:
         pam_best[pathway] = json.load(fp)
     info_str += " "
     info_str += f"{pam_best[pathway]['percent_activated']}"
@@ -34,30 +34,30 @@ for category in categories:
 
 
 result_directories = [
-    "Results_PAM_default",
-    "Results_PAM_default_meshsize",
-    "Results_PAM_fine",
-    "Results_PAM_very_fine",
-    "Results_PAM_edge_refinement",
-    "Results_PAM_fine_edge_refinement",
-    "Results_PAM_very_fine_edge_refinement",
-    "Results_PAM_edge_voxel_refinement",
-    "Results_PAM_edge_meshsize",
-    "Results_PAM_material_refinement",
-    "Results_PAM_edge_single_material_refinement",
-    "Results_PAM_edge_double_material_refinement",
-    "Results_PAM_fine_edge_single_material_refinement",
-    "Results_PAM_fine_edge_double_material_refinement",
-    "Results_PAM_hp_refinement",
-    "Results_PAM_hp_material_refinement",
+    "Results_NF_default",
+    "Results_NF_default_meshsize",
+    "Results_NF_fine",
+    "Results_NF_very_fine",
+    "Results_NF_edge_refinement",
+    "Results_NF_fine_edge_refinement",
+    "Results_NF_very_fine_edge_refinement",
+    "Results_NF_edge_voxel_refinement",
+    "Results_NF_edge_meshsize",
+    "Results_NF_material_refinement",
+    "Results_NF_edge_single_material_refinement",
+    "Results_NF_edge_double_material_refinement",
+    "Results_NF_fine_edge_single_material_refinement",
+    "Results_NF_fine_edge_double_material_refinement",
+    "Results_NF_hp_refinement",
+    "Results_NF_hp_material_refinement",
 ]
 
 
 print("DOF", pathway_files)
-print("Results_PAM_best")
+print("Results_NF_best")
 print(info_str)
 for idx, result_dir in enumerate(result_directories):
-    info_str = result_dir.replace("Results_PAM_", "")
+    info_str = result_dir.replace("Results_NF_", "")
     with open(os.path.join(result_dir, "VCM_report.json")) as fp:
         vcm_info = json.load(fp)
     info_str += " & "
@@ -82,7 +82,7 @@ for idx, result_dir in enumerate(result_directories):
     time = 0.0
     for t in vcm_info["Timings"]["ComputeSolution"]:
         time += t
-    study_name = result_dir.replace("Results_PAM_", "")
+    study_name = result_dir.replace("Results_NF_", "")
     results_dict["roman"].append(r"\rom{" f"{idx + 1}" "}")
     results_dict["dofs"].append(dofs)
     results_dict["time"].append(time)
@@ -93,4 +93,4 @@ df["best_dofs"] = best_dofs
 
 for pathway in pathway_files:
     df[f"{pathway}_activated_best"] = pam_best[pathway]["percent_activated"]
-df.to_csv("pam_results_summary.csv", index=False)
+df.to_csv("nf_results_summary.csv", index=False)

@@ -38,25 +38,39 @@ class ModelGeometry:
         self._contacts = []
         self._encapsulation_layers = []
 
-        self._geometry = self._construct_geometry(self._brain, self._electrodes)
+        self._shape = self._construct_shape(self._brain, self._electrodes)
+        self._geometry = None  # built lazily after mesh sizes are set
         self.update_contact_areas()
 
     @property
     def geometry(self) -> netgen.occ.OCCGeometry:
         """Return netgen geometry of the model.
 
+        The OCCGeometry is built lazily so that mesh size properties
+        (maxh on faces/edges) are captured by the constructor.
+
         Returns
         -------
         netgen.occ.OCCGeometry
         """
+        if self._geometry is None:
+            try:
+                self._geometry = netgen.occ.OCCGeometry(self._shape)
+            except netgen.occ.OCCException:
+                _logger.error(
+                    "The geometry couldn't be constructed. "
+                    "Tip: reduce the size of the brain geometry "
+                    "or remove the encapsulation layer."
+                )
+                raise
         return self._geometry
 
-    def _construct_geometry(self, brain, electrodes) -> netgen.occ.OCCGeometry:
-        """Create a netgen geometry of this brain model.
+    def _construct_shape(self, brain, electrodes):
+        """Create the OCC shape of this brain model.
 
-        Returns
-        -------
-        netgen.occ.OCCGeometry
+        Returns the raw OCC shape (not yet wrapped in OCCGeometry)
+        so that mesh size properties can be set before OCCGeometry
+        construction captures them.
         """
         brain_geo = brain.geometry
         for idx, electrode in enumerate(electrodes, start=1):
@@ -93,21 +107,13 @@ class ModelGeometry:
         surface_areas = brain.get_surface_areas()
         for surface in brain_surfaces:
             self._contacts.append(Contact(name=surface, area=surface_areas[surface]))
-        try:
-            return netgen.occ.OCCGeometry(brain_geo)
-        except netgen.occ.OCCException:
-            _logger.error(
-                "The geometry couldn't be constructed. "
-                "Tip: reduce the size of the brain geometry "
-                "or remove the encapsulation layer."
-            )
-            raise
+        return brain_geo
 
     def update_contact_areas(self) -> None:
         """Update contact areas."""
         for contact in self.contacts:
             area_set = False
-            for surface in self.geometry.shape.faces:
+            for surface in self._shape.faces:
                 if contact.name == surface.name:
                     if area_set:
                         _logger.warning(f"Trying to set area twice for {contact.name}")
@@ -278,18 +284,25 @@ class ModelGeometry:
 
     def set_edge_mesh_sizes(self, mesh_sizes: dict) -> None:
         """Set mesh sizes on edges."""
-        for edge in self._geometry.shape.edges:
+        for edge in self._shape.edges:
             if edge.name in mesh_sizes:
                 edge.maxh = mesh_sizes[edge.name]
+        self._invalidate_geometry()
 
     def set_face_mesh_sizes(self, mesh_sizes) -> None:
         """Set mesh sizes on faces."""
-        for face in self._geometry.shape.faces:
+        for face in self._shape.faces:
             if face.name in mesh_sizes:
                 face.maxh = mesh_sizes[face.name]
+        self._invalidate_geometry()
 
     def set_volume_mesh_sizes(self, mesh_sizes: dict) -> None:
         """Set mesh sizes on volumes."""
-        for solid in self._geometry.shape.solids:
+        for solid in self._shape.solids:
             if solid.name in mesh_sizes:
                 solid.maxh = mesh_sizes[solid.name]
+        self._invalidate_geometry()
+
+    def _invalidate_geometry(self) -> None:
+        """Reset cached OCCGeometry so it is rebuilt with updated mesh sizes."""
+        self._geometry = None

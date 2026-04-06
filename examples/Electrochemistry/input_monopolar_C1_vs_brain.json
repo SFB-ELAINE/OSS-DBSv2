@@ -1,0 +1,107 @@
+{
+  "BrainRegion": {
+    "Center": {
+      "x[mm]": -9.476,
+      "y[mm]": 11.605,
+      "z[mm]": 10
+    },
+    "Dimension": {
+      "x[mm]": 40.0,
+      "y[mm]": 40.0,
+      "z[mm]": 70.0
+    },
+    "Shape": "Ellipsoid"
+  },
+  "Electrodes": [
+    {
+      "Name": "BostonScientificVercise",
+      "Rotation[Degrees]": 0,
+      "Direction": {
+        "x[mm]": 0.0,
+        "y[mm]": 0.0,
+        "z[mm]": 1.0
+      },
+      "TipPosition": {
+        "x[mm]": -9.476,
+        "y[mm]": 11.605,
+        "z[mm]": 4.676
+      },
+      "Contacts": [
+        {
+          "Contact_ID": 1,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 1.0,
+          "Floating": false,
+          "MaxMeshSizeEdge": 0.05
+        }
+      ],
+      "EncapsulationLayer": {
+        "Thickness[mm]": 0.0,
+        "Material": "Blood",
+        "DielectricModel": "ColeCole4",
+        "MaxMeshSize": 0.1
+      }
+    }
+  ],
+  "Surfaces": [
+    {
+      "Name": "BrainSurface",
+      "Active": true,
+      "Voltage[V]": 0.0
+    }
+  ],
+  "MaterialDistribution": {
+    "MRIPath": "../../input_files/Butenko_segmask.nii.gz",
+    "MRIMapping": {
+      "Gray matter": 1,
+      "White matter": 2,
+      "CSF": 3,
+      "Blood": 4,
+      "Unknown": 0
+    },
+    "DiffusionTensorActive": false,
+    "DTIPath": ""
+  },
+  "DielectricModel": {
+    "Type": "Constant",
+    "CustomParameters": {
+      "Gray matter": {"permittivity": 0, "conductivity": 0.1},
+      "Unknown": {"permittivity": 0, "conductivity": 0.1},
+      "White matter": {"permittivity": 0, "conductivity": 0.1},
+      "CSF": {"permittivity": 0, "conductivity": 2.0},
+      "Blood": {"permittivity": 0, "conductivity": 0.1}
+    }
+  },
+  "StimulationSignal": {
+    "CurrentControlled": false,
+    "Type": "Multisine",
+    "ListOfFrequencies": [130.0]
+  },
+  "Mesh": {
+    "LoadMesh": false,
+    "MeshElementOrder": 2,
+    "MeshingHypothesis": {"Type": "Moderate", "MaxMeshSize": 2},
+    "HPRefinement": {"Active": true, "Levels": 2, "Factor": 0.125},
+    "MeshSize": {"Edges": {}, "Faces": {}, "Volumes": {}},
+    "SaveMesh": false
+  },
+  "Solver": {
+    "Type": "CG",
+    "Preconditioner": "bddc",
+    "PreconditionerKwargs": {"coarsetype": "local"},
+    "PrintRates": true,
+    "MaximumSteps": 500,
+    "Precision": 1e-8
+  },
+  "PointModel": {
+    "Pathway": {"Active": false, "FileName": ""},
+    "Lattice": {"Active": false}
+  },
+  "EQSMode": false,
+  "FEMOrder": 2,
+  "OutputPath": "Results_monopolar_C1_vs_brain",
+  "ComputeImpedance": true,
+  "ExportVTK": false,
+  "ExportElectrode": false
+}

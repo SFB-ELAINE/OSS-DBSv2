@@ -1,10 +1,20 @@
-# Convergence study: mesh refinement strategies for PAM
+# Convergence study: nonfloating (voltage-controlled) reference
+#
+# Same mesh strategies as run_convergence_study.py but with
+# voltage-controlled contacts (Dirichlet BCs) instead of
+# current-controlled floating contacts. This uses the nonfloating
+# volume conductor path which is unaffected by the 1e-3 area
+# scaling issue in floating.py.
+#
+# Contact setup:
+#   E1C2/3/4 =  1 V (cathodes, active)
+#   E1C8     =  0 V (anode/ground, active)
+#   Others   = floating, no current
 #
 # Usage:
-#   python run_convergence_study.py                    # run all sequentially
-#   python run_convergence_study.py hp_refinement      # run one strategy
-#   python run_convergence_study.py XV XVI best        # mix names and numerals
-#   python run_convergence_study.py --list             # show available strategies
+#   python run_convergence_study_nonfloating.py
+#   python run_convergence_study_nonfloating.py hp_refinement
+#   python run_convergence_study_nonfloating.py --list
 
 import argparse
 import json
@@ -54,7 +64,7 @@ def run_strategy(input_dict, logger):
 
 
 def setup_base_config():
-    """Load base configuration and precompute shared values."""
+    """Load base configuration and convert to voltage-controlled."""
     electrode_name = "BostonScientificVerciseDirected"
 
     with open("../../oss-dbs_parameters.json") as fp:
@@ -72,6 +82,27 @@ def setup_base_config():
     # for PAM
     base["Scaling"] = 1.0
     base["ScalingIndex"] = None
+
+    # --- Convert to voltage-controlled (nonfloating) ---
+    base["StimulationSignal"]["CurrentControlled"] = False
+    for contact in base["Electrodes"][0]["Contacts"]:
+        cid = contact["Contact_ID"]
+        contact["Current[A]"] = 0.0
+        if cid in (2, 3, 4):
+            # cathodes: -1 V
+            contact["Active"] = True
+            contact["Floating"] = False
+            contact["Voltage[V]"] = 3.5
+        elif cid == 8:
+            # anode / ground: 0 V
+            contact["Active"] = True
+            contact["Floating"] = False
+            contact["Voltage[V]"] = 0.0
+        else:
+            # inactive contacts float freely
+            contact["Active"] = False
+            contact["Floating"] = True
+            contact["Voltage[V]"] = 0.0
 
     # clean base state
     base["Mesh"]["AdaptiveMeshRefinement"] = {"Active": False}
@@ -108,13 +139,13 @@ def _set_edge_size(cfg, edge_size):
 
 # --- Strategy configuration functions ---
 # Each returns a fully-configured deepcopy of the base config.
-# No strategy depends on state left by a previous one.
+# Output paths use NF_ prefix to distinguish from floating results.
 
 
 def configure_default(base, mri_image, perimeter):
     """Default mesh."""
     cfg = deepcopy(base)
-    cfg["OutputPath"] = "Results_PAM_default"
+    cfg["OutputPath"] = "Results_NF_default"
     return cfg
 
 
@@ -122,7 +153,7 @@ def configure_default_meshsize(base, mri_image, perimeter):
     """Default + pathway meshsize."""
     cfg = deepcopy(base)
     cfg["Mesh"]["MeshingHypothesis"]["MeshSizeFilename"] = "meshsizes.txt"
-    cfg["OutputPath"] = "Results_PAM_default_meshsize"
+    cfg["OutputPath"] = "Results_NF_default_meshsize"
     return cfg
 
 
@@ -130,7 +161,7 @@ def configure_fine(base, mri_image, perimeter):
     """Fine mesh."""
     cfg = deepcopy(base)
     cfg["Mesh"]["MeshingHypothesis"]["Type"] = "Fine"
-    cfg["OutputPath"] = "Results_PAM_fine"
+    cfg["OutputPath"] = "Results_NF_fine"
     return cfg
 
 
@@ -138,7 +169,7 @@ def configure_very_fine(base, mri_image, perimeter):
     """VeryFine mesh."""
     cfg = deepcopy(base)
     cfg["Mesh"]["MeshingHypothesis"]["Type"] = "VeryFine"
-    cfg["OutputPath"] = "Results_PAM_very_fine"
+    cfg["OutputPath"] = "Results_NF_very_fine"
     return cfg
 
 
@@ -147,7 +178,7 @@ def configure_material_refinement(base, mri_image, perimeter):
     cfg = deepcopy(base)
     cfg["Mesh"]["MeshingHypothesis"]["Type"] = "VeryFine"
     cfg["Mesh"]["MaterialRefinementSteps"] = 2
-    cfg["OutputPath"] = "Results_PAM_material_refinement"
+    cfg["OutputPath"] = "Results_NF_material_refinement"
     return cfg
 
 
@@ -155,7 +186,7 @@ def configure_edge_refinement(base, mri_image, perimeter):
     """Edge refinement (perimeter/20)."""
     cfg = deepcopy(base)
     _set_edge_size(cfg, perimeter / 20.0)
-    cfg["OutputPath"] = "Results_PAM_edge_refinement"
+    cfg["OutputPath"] = "Results_NF_edge_refinement"
     return cfg
 
 
@@ -163,7 +194,7 @@ def configure_fine_edge_refinement(base, mri_image, perimeter):
     """Fine edge refinement (perimeter/50)."""
     cfg = deepcopy(base)
     _set_edge_size(cfg, perimeter / 50.0)
-    cfg["OutputPath"] = "Results_PAM_fine_edge_refinement"
+    cfg["OutputPath"] = "Results_NF_fine_edge_refinement"
     return cfg
 
 
@@ -174,7 +205,7 @@ def configure_edge_voxel_refinement(base, mri_image, perimeter):
     max_mesh_size = 10.0 * min(mri_image.voxel_sizes)
     print(f"Imposing max mesh size of: {max_mesh_size:.2f}")
     cfg["Mesh"]["MeshingHypothesis"]["MaxMeshSize"] = max_mesh_size
-    cfg["OutputPath"] = "Results_PAM_edge_voxel_refinement"
+    cfg["OutputPath"] = "Results_NF_edge_voxel_refinement"
     return cfg
 
 
@@ -183,7 +214,7 @@ def configure_edge_single_material_refinement(base, mri_image, perimeter):
     cfg = deepcopy(base)
     _set_edge_size(cfg, perimeter / 50.0)
     cfg["Mesh"]["MaterialRefinementSteps"] = 1
-    cfg["OutputPath"] = "Results_PAM_edge_single_material_refinement"
+    cfg["OutputPath"] = "Results_NF_edge_single_material_refinement"
     return cfg
 
 
@@ -192,7 +223,7 @@ def configure_edge_double_material_refinement(base, mri_image, perimeter):
     cfg = deepcopy(base)
     _set_edge_size(cfg, perimeter / 50.0)
     cfg["Mesh"]["MaterialRefinementSteps"] = 2
-    cfg["OutputPath"] = "Results_PAM_edge_double_material_refinement"
+    cfg["OutputPath"] = "Results_NF_edge_double_material_refinement"
     return cfg
 
 
@@ -200,7 +231,7 @@ def configure_very_fine_edge_refinement(base, mri_image, perimeter):
     """Very fine edge refinement (perimeter/75)."""
     cfg = deepcopy(base)
     _set_edge_size(cfg, perimeter / 75.0)
-    cfg["OutputPath"] = "Results_PAM_very_fine_edge_refinement"
+    cfg["OutputPath"] = "Results_NF_very_fine_edge_refinement"
     return cfg
 
 
@@ -209,7 +240,7 @@ def configure_edge_meshsize(base, mri_image, perimeter):
     cfg = deepcopy(base)
     _set_edge_size(cfg, perimeter / 75.0)
     cfg["Mesh"]["MeshingHypothesis"]["MeshSizeFilename"] = "meshsizes.txt"
-    cfg["OutputPath"] = "Results_PAM_edge_meshsize"
+    cfg["OutputPath"] = "Results_NF_edge_meshsize"
     return cfg
 
 
@@ -218,7 +249,7 @@ def configure_fine_edge_single_material_refinement(base, mri_image, perimeter):
     cfg = deepcopy(base)
     _set_edge_size(cfg, perimeter / 75.0)
     cfg["Mesh"]["MaterialRefinementSteps"] = 1
-    cfg["OutputPath"] = "Results_PAM_fine_edge_single_material_refinement"
+    cfg["OutputPath"] = "Results_NF_fine_edge_single_material_refinement"
     return cfg
 
 
@@ -227,7 +258,7 @@ def configure_fine_edge_double_material_refinement(base, mri_image, perimeter):
     cfg = deepcopy(base)
     _set_edge_size(cfg, perimeter / 75.0)
     cfg["Mesh"]["MaterialRefinementSteps"] = 2
-    cfg["OutputPath"] = "Results_PAM_fine_edge_double_material_refinement"
+    cfg["OutputPath"] = "Results_NF_fine_edge_double_material_refinement"
     return cfg
 
 
@@ -239,7 +270,7 @@ def configure_hp_refinement(base, mri_image, perimeter):
         "Levels": 2,
         "Factor": 0.125,
     }
-    cfg["OutputPath"] = "Results_PAM_hp_refinement"
+    cfg["OutputPath"] = "Results_NF_hp_refinement"
     return cfg
 
 
@@ -252,7 +283,7 @@ def configure_hp_material_refinement(base, mri_image, perimeter):
         "Factor": 0.125,
     }
     cfg["Mesh"]["MaterialRefinementSteps"] = 1
-    cfg["OutputPath"] = "Results_PAM_hp_material_refinement"
+    cfg["OutputPath"] = "Results_NF_hp_material_refinement"
     return cfg
 
 
@@ -263,12 +294,11 @@ def configure_best(base, mri_image, perimeter):
     cfg["Mesh"]["MaterialRefinementSteps"] = 1
     _set_edge_size(cfg, 1e6)
     cfg["Mesh"]["AdaptiveMeshRefinement"]["Active"] = True
-    cfg["OutputPath"] = "Results_PAM_best"
+    cfg["OutputPath"] = "Results_NF_best"
     return cfg
 
 
-# Strategy registry: (name, configure_function)
-# Execution order matches the original sequential script.
+# Strategy registry
 STRATEGIES = [
     ("default", configure_default),
     ("default_meshsize", configure_default_meshsize),
@@ -308,7 +338,6 @@ STRATEGIES = [
 ]
 STRATEGY_MAP = dict(STRATEGIES)
 
-# Roman numeral lookup (I..XVII → strategy name)
 _ROMAN = [
     "I",
     "II",
@@ -344,7 +373,10 @@ def resolve_strategy_name(token):
 def main():
     """Run selected convergence strategies sequentially."""
     parser = argparse.ArgumentParser(
-        description=("Run PAM convergence study strategies sequentially."),
+        description=(
+            "Run nonfloating (voltage-controlled) PAM "
+            "convergence study strategies sequentially."
+        ),
     )
     parser.add_argument(
         "strategies",

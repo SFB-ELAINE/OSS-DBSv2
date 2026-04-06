@@ -42,3 +42,10 @@ ossdbs/_version.py
 
 # CLAUDE files
 tmpclaude*
+
+# Runtime artifacts
+nohup.out
+*.log
+
+# Generated figures
+figures/

@@ -29,21 +29,17 @@
       "Contacts": [
         {
           "Contact_ID": 1,
-          "Active": false,
-          "Current[A]": 2e-3,
-          "Voltage[V]": 0.0,
-          "Floating": true,
-	  "SurfaceImpedance":
-	  {"Model": "CPE", "Parameters": {"k": 1e5, "alpha": 0.5}}
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 1.0,
+          "Floating": false
        },
         {
           "Contact_ID": 8,
-          "Active": false,
-          "Current[A]": -2e-3,
+          "Active": true,
+          "Current[A]": 0.0,
           "Voltage[V]": 0.0,
-          "Floating": true,
-	  "SurfaceImpedance":
-	  {"Model": "CPE", "Parameters": {"k": 1e5, "alpha": 0.5}}
+          "Floating": false
         }
       ]
     }
@@ -79,10 +75,10 @@
     }
   },
   "StimulationSignal": {
-    "CurrentControlled": true,
+    "CurrentControlled": false,
     "Type": "Multisine",
     "ListOfFrequencies": [
-	    1.0e+3
+	    1.0e+2
     ]
   },
   "Mesh": {
@@ -105,10 +101,10 @@
   },
   "Solver": {
     "Type": "CG",
-    "Preconditioner": "local",
+    "Preconditioner": "bddc",
     "PreconditionerKwargs": {},
     "PrintRates": true,
-    "MaximumSteps": 10000,
+    "MaximumSteps": 200,
     "Precision": 1e-8
   },
   "PointModel": {
@@ -140,8 +136,8 @@
   "CollapseVTA": false,
   "EQSMode": true,
   "FEMOrder": 2,
-  "OutputPath": "Results_1kOhm_EQS_floating",
-  "ComputeImpedance": false,
+  "OutputPath": "Results_no_interface_EQS",
+  "ComputeImpedance": true,
   "ComputeCurrents": true,
   "ExportVTK": true,
   "ExportElectrode": false

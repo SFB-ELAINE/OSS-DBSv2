@@ -395,7 +395,7 @@ class TestOctaveBandFunctions:
         result = get_indices_in_octave_band(
             freq_idx, frequency_indices, cutoff_frequency_index
         )
-        assert isinstance(result, (list, np.ndarray))
+        assert isinstance(result, list | np.ndarray)
         assert len(result) > 0
 
     def test_get_indices_in_octave_band_first_band(self):

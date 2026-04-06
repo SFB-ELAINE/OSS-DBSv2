@@ -264,6 +264,9 @@ def generate_mesh(settings):
 
     mesh_settings.setdefault("MeshingHypothesis", {"Type": "Default"})
     mesh.generate_mesh(mesh_settings)
+    # Apply HP refinement immediately for standalone mesh generation
+    # (no subsequent bisection-based refinement expected)
+    mesh.apply_hp_refinement()
     if mesh_settings["SaveMesh"]:
         mesh.save(mesh_settings["SavePath"])
     return mesh
@@ -509,7 +512,6 @@ def run_volume_conductor_model(
         out_of_core=out_of_core,
         export_frequency=export_frequency,
         adaptive_mesh_refinement_settings=settings["Mesh"]["AdaptiveMeshRefinement"],
-        material_mesh_refinement_steps=settings["Mesh"]["MaterialRefinementSteps"],
         truncation_time=truncation_time,
         estimate_currents=compute_currents,
     )
@@ -583,6 +585,9 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
         volume_conductor = prepare_volume_conductor_model(
             settings, geometry, conductivity, solver
         )
+        volume_conductor.prepare_mesh_refinements(
+            settings["Mesh"]["MaterialRefinementSteps"]
+        )
         _logger.info(f"Running with contacts:\n{volume_conductor.contacts}")
 
         volume_conductor.output_path = settings["OutputPath"] + contact.name
@@ -596,7 +601,6 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             adaptive_mesh_refinement_settings=settings["Mesh"][
                 "AdaptiveMeshRefinement"
             ],
-            material_mesh_refinement_steps=settings["Mesh"]["MaterialRefinementSteps"],
         )
         _logger.info(f"Timing for contact {contact.name}: {vcm_timings}")
 

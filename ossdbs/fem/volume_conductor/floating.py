@@ -96,9 +96,8 @@ class VolumeConductorFloating(VolumeConductor):
         contacts.extend(contacts_floating)
         f = ngsolve.LinearForm(space=self._space)
         for contact in contacts:
-            # account for mm as length unit
             length = ngsolve.Integrate(
-                ngsolve.CoefficientFunction(1e-3) * ngsolve.ds(contact.name),
+                ngsolve.CoefficientFunction(1.0) * ngsolve.ds(contact.name),
                 self.mesh.ngsolvemesh,
             )
             f += contact.current / length * v * ngsolve.ds(contact.name)

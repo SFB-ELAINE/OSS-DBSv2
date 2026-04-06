@@ -112,7 +112,9 @@ class Pathway(PointModel):
                 sub_group,
                 np.array(file[group][sub_group]),
                 0,
-                file[group][sub_group].attrs["inx"],
+                file[group][sub_group].attrs.get(
+                    "inx", int(sub_group.replace("axon", ""))
+                ),
             )
             for sub_group in file[group].keys()
         ]

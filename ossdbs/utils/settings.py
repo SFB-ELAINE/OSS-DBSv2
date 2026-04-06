@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
+from copy import deepcopy
 from typing import ClassVar
 
 from .materials import MATERIALS
@@ -148,8 +149,8 @@ class Settings:
 
     def complete_settings(self) -> dict:
         """Complete dictionary provided by user with default settings."""
-        settings = self.CUSTOM_SETTING.copy()
-        settings.update(self.SETTING.copy())
+        settings = deepcopy(self.CUSTOM_SETTING)
+        settings.update(deepcopy(self.SETTING))
         self._update(settings, self._partial_settings)
         self._update_electrodes(settings)
         return settings

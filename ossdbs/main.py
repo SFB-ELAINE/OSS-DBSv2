@@ -162,6 +162,9 @@ def main_run(input_settings: dict):
         volume_conductor = prepare_volume_conductor_model(
             settings, geometry, conductivity, solver
         )
+        volume_conductor.prepare_mesh_refinements(
+            settings["Mesh"]["MaterialRefinementSteps"]
+        )
         frequency_domain_signal = prepare_stimulation_signal(settings)
         if not settings["StimSets"]["Active"]:
             vcm_timings = run_volume_conductor_model(

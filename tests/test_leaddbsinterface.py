@@ -357,7 +357,7 @@ class TestLeadSettingsWithRealH5File:
         """Test rotation calculation."""
         ls = LeadSettings(minimal_h5_file)
         rot_z = ls.get_rot_z(0)
-        assert isinstance(rot_z, (float, np.floating))
+        assert isinstance(rot_z, float | np.floating)
         # With zero-norm handling, should return 0.0
         assert rot_z == 0.0
 
