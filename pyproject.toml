@@ -8,7 +8,8 @@ dynamic = ["version"]
 description = "OSS-DBS v2: faster and modular open-source code for deep brain stimulation"
 readme = "README.md"
 requires-python = ">=3.10"
-license = { file = "LICENSE" }
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"] 
 authors = [{ name = "Julius Zimmermann", email = "julius.zimmermann@uni-rostock.de" },
            { name = "Jan Philipp Payonk", email = "jan.payonk@uni-rostock.de" },
            { name = "Tom Reincke", email = "tom.reincke@uni-rostock.de"},
@@ -23,7 +24,6 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Operating System :: OS Independent"
 ]
 
@@ -140,11 +140,15 @@ addopts = "-m 'not simulation'"
 # Files that should not be in the release
 [tool.check-manifest]
 ignore = [
+    ".gitignore",
     ".gitlab-ci.yml",
     ".pre-commit-config.yaml",
+    ".readthedocs.yaml",
     ".ruff_cache/**/*",
     "setup.py",
     "tests/**/*",
-    "examples/ConvergenceStudy/**/*",
+    "examples/**/*",
+    "input_files/**/*",
+    "input_test_cases/**/*",
     "ossdbs/_version.py"  # auto-generated, not in VCS
 ]

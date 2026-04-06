@@ -44,26 +44,40 @@ _logger.addHandler(logging.NullHandler())
 def log_to_file(output_file: str, level=logging.INFO):
     """Write logging output also to file."""
     # overwrite the previous log
-    fh = logging.FileHandler(output_file, mode="w")
+    root_logger = logging.getLogger()
+
+    fh = logging.FileHandler(output_file, mode="w", encoding="utf-8")
     fh.setLevel(level)
     fh.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
-    _logger.addHandler(fh)
+
+    root_logger.addHandler(fh)
 
 
 def set_logger(level=logging.INFO):
     """Set log level."""
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
     _logger.setLevel(level)
+
     if level == logging.DEBUG:
         ngsolve.ngsglobals.msg_level = 10
-    # to avoid multiple output in Jupyter notebooks
-    if len(_logger.handlers) == 1:
+
+    has_stream = any(
+        isinstance(handler, logging.StreamHandler)
+        and not isinstance(handler, logging.FileHandler)
+        for handler in root_logger.handlers
+    )
+
+    if not has_stream:
         ch = logging.StreamHandler()
         ch.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
         ch.setLevel(level)
-        _logger.addHandler(ch)
+        root_logger.addHandler(ch)
     else:
-        for handler in _logger.handlers:
-            if isinstance(handler, logging.StreamHandler):
+        for handler in root_logger.handlers:
+            if isinstance(handler, logging.StreamHandler) and not isinstance(
+                handler, logging.FileHandler
+            ):
                 handler.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
                 handler.setLevel(level)
 

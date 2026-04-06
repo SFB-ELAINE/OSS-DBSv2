@@ -135,7 +135,7 @@
   "EQSMode": false,
   "FEMOrder": 2,
   "OutputPath": "Results_VTA",
-  "ComputeImpedance": false,
+  "ComputeImpedance": true,
   "ExportVTK": false,
   "ExportElectrode": false,
   "OutOfCore": false

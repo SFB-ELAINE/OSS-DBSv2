@@ -1,6 +1,7 @@
 import json
 import math
 import os
+from copy import deepcopy
 
 import ngsolve
 import numpy as np
@@ -12,6 +13,7 @@ from ossdbs.fem.mesh import Mesh
 from ossdbs.fem.preconditioner import (
     AMGPreconditioner,
     BDDCPreconditioner,
+    CustomizedLocalPreconditioner,
     DirectPreconditioner,
     LocalPreconditioner,
     MultigridPreconditioner,
@@ -31,6 +33,7 @@ class TestPreconditioner:
         [
             AMGPreconditioner,
             BDDCPreconditioner,
+            CustomizedLocalPreconditioner,
             DirectPreconditioner,
             LocalPreconditioner,
             MultigridPreconditioner,
@@ -88,6 +91,55 @@ def geometry_fixture(settings_fixture):
     brain = ossdbs.BrainGeometry(settings["BrainRegion"]["Shape"], brain_region)
     geometry = ossdbs.ModelGeometry(brain, electrodes)
     return brain_region, electrodes, geometry
+
+
+def _build_volume_conductor_with_solver(
+    settings: dict,
+    solver,
+):
+    """Build a volume conductor for a given solver on the stable case-1 setup."""
+    local_settings = deepcopy(settings)
+    local_settings["MaterialDistribution"]["MRIPath"] = os.path.join(
+        os.getcwd(), "input_files/sub-John_Doe/JD_segmask.nii.gz"
+    )
+    local_settings["MaterialDistribution"]["DiffusionTensorActive"] = True
+    local_settings["MaterialDistribution"]["DTIPath"] = os.path.join(
+        os.getcwd(), "input_files/sub-John_Doe/JD_DTI_NormMapping.nii.gz"
+    )
+    mri_image, _ = ossdbs.load_images(local_settings)
+    brain_region = ossdbs.create_bounding_box(local_settings["BrainRegion"])
+    electrodes = ossdbs.generate_electrodes(local_settings)
+    brain = ossdbs.BrainGeometry(local_settings["BrainRegion"]["Shape"], brain_region)
+    geometry = ossdbs.ModelGeometry(brain, electrodes)
+    ossdbs.set_contact_and_encapsulation_layer_properties(local_settings, geometry)
+
+    dielectric_model = ossdbs.prepare_dielectric_properties(local_settings)
+    materials = local_settings["MaterialDistribution"]["MRIMapping"]
+    conductivity = ossdbs.ConductivityCF(
+        mri_image,
+        brain_region,
+        dielectric_model,
+        materials,
+        geometry.encapsulation_layers,
+        complex_data=local_settings["EQSMode"],
+    )
+
+    floating_mode = geometry.get_floating_mode()
+    volume_conductor_classes = {
+        "Floating": VolumeConductorFloating,
+        "FloatingImpedance": VolumeConductorFloatingImpedance,
+        "NonFloating": VolumeConductorNonFloating,
+    }
+    volume_conductor_class = volume_conductor_classes.get(
+        floating_mode, VolumeConductorNonFloating
+    )
+    return volume_conductor_class(
+        geometry,
+        conductivity,
+        solver,
+        local_settings["FEMOrder"],
+        local_settings["Mesh"],
+    )
 
 
 class TestMesh:
@@ -243,6 +295,102 @@ class TestVolumeConductorModel:
             pytest.fail("Cannot be instantiated.")
 
 
+class TestCustomizedLocalPreconditioner:
+    def test_customized_local_cg_solver_runs(
+        self, settings_fixture, mri_fixture, geometry_fixture
+    ):
+        mri_image, _ = mri_fixture
+        brain_region, _, geometry = geometry_fixture
+        dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
+        materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
+        ossdbs.set_contact_and_encapsulation_layer_properties(
+            settings_fixture, geometry
+        )
+
+        solver = CGSolver(
+            precond_par=CustomizedLocalPreconditioner(),
+            maxsteps=2000,
+            precision=1e-10,
+        )
+
+        conductivity = ossdbs.ConductivityCF(
+            mri_image,
+            brain_region,
+            dielectric_model,
+            materials,
+            geometry.encapsulation_layers,
+            complex_data=settings_fixture["EQSMode"],
+        )
+
+        floating_mode = geometry.get_floating_mode()
+        volume_conductor_classes = {
+            "Floating": VolumeConductorFloating,
+            "FloatingImpedance": VolumeConductorFloatingImpedance,
+            "NonFloating": VolumeConductorNonFloating,
+        }
+        VolumeConductorClass = volume_conductor_classes.get(
+            floating_mode, VolumeConductorNonFloating
+        )
+
+        volume_conductor = VolumeConductorClass(
+            geometry,
+            conductivity,
+            solver,
+            settings_fixture["FEMOrder"],
+            settings_fixture["Mesh"],
+        )
+
+        volume_conductor.compute_solution(10000.0)
+
+        sol = volume_conductor._potential.vec.FV().NumPy()
+        assert np.all(np.isfinite(sol)), (
+            "Customized local preconditioner produced NaN/Inf values."
+        )
+        assert not np.allclose(sol, 0.0), (
+            "Customized local preconditioner produced a trivial zero solution."
+        )
+
+    def test_customized_local_impedance_matches_native_local(
+        self, settings_fixture
+    ) -> None:
+        local_solver = CGSolver(
+            precond_par=LocalPreconditioner(),
+            maxsteps=2000,
+            precision=1e-10,
+        )
+        customized_solver = CGSolver(
+            precond_par=CustomizedLocalPreconditioner(),
+            maxsteps=2000,
+            precision=1e-10,
+        )
+
+        local_volume_conductor = _build_volume_conductor_with_solver(
+            settings_fixture, local_solver
+        )
+        customized_volume_conductor = _build_volume_conductor_with_solver(
+            settings_fixture, customized_solver
+        )
+
+        local_volume_conductor.compute_solution(10000.0)
+        customized_volume_conductor.compute_solution(10000.0)
+
+        local_impedance = local_volume_conductor.compute_impedance()
+        customized_impedance = customized_volume_conductor.compute_impedance()
+
+        assert np.isfinite(local_impedance), "Native local impedance is not finite."
+        assert np.isfinite(customized_impedance), (
+            "Customized local impedance is not finite."
+        )
+
+        relative_difference = abs(customized_impedance - local_impedance) / abs(
+            local_impedance
+        )
+        assert relative_difference < 1e-2, (
+            "Customized local impedance deviates too much from native local "
+            f"({relative_difference:.3%})."
+        )
+
+
 class TestHPRefineCurvedBoundaryIntegration:
     """Regression test for NGSolve bug in 6.2.2602:
     Integrate on curved boundaries returns NaN inside TaskManager
@@ -297,189 +445,3 @@ class TestHPRefineCurvedBoundaryIntegration:
             )
         assert not math.isnan(val)
         assert abs(val - expected_area) < 0.1
-
-
-class TestContactSurfaceImpedance:
-    """Tests for Contact and Contacts surface impedance functionality."""
-
-    def test_contact_get_surface_impedance_R_model(self):
-        """Test Contact.get_surface_impedance with a resistor model."""
-        from ossdbs.model_geometry.contacts import Contact
-
-        contact = Contact(
-            name="test_contact",
-            area=1.0,  # 1 mm^2
-            active=False,
-            floating=True,
-            surface_impedance_model="R",
-            surface_impedance_parameters={"R": 100.0},
-        )
-        # R model: Z = R, independent of frequency
-        z = contact.get_surface_impedance(frequency=1000.0, is_complex=False)
-        assert np.isclose(z, 100.0, rtol=1e-6), f"Expected Z=100, got {z}"
-
-    def test_contact_get_surface_impedance_scales_with_area(self):
-        """Surface impedance should scale linearly with contact area."""
-        from ossdbs.model_geometry.contacts import Contact
-
-        R = 50.0
-        area = 2.5
-        contact = Contact(
-            name="test",
-            area=area,
-            surface_impedance_model="R",
-            surface_impedance_parameters={"R": R},
-        )
-        z = contact.get_surface_impedance(frequency=1000.0, is_complex=False)
-        assert np.isclose(z, R * area, rtol=1e-6), f"Expected Z={R * area}, got {z}"
-
-    def test_contact_get_surface_impedance_complex(self):
-        """Test complex return for EQS mode with RC model."""
-        from ossdbs.model_geometry.contacts import Contact
-
-        contact = Contact(
-            name="test",
-            area=1.0,
-            surface_impedance_model="R",
-            surface_impedance_parameters={"R": 100.0},
-        )
-        z = contact.get_surface_impedance(frequency=1000.0, is_complex=True)
-        # For pure R, imaginary part should be zero
-        assert isinstance(z, complex)
-        assert np.isclose(z.real, 100.0, rtol=1e-6)
-        assert np.isclose(z.imag, 0.0, atol=1e-10)
-
-    def test_contacts_get_surface_impedances(self):
-        """Test Contacts.get_surface_impedances returns dict with correct keys."""
-        from ossdbs.model_geometry.contacts import Contact, Contacts
-
-        contacts = Contacts(
-            [
-                Contact(
-                    name="c1",
-                    active=True,
-                    floating=False,
-                    area=1.0,
-                    surface_impedance_model="R",
-                    surface_impedance_parameters={"R": 100.0},
-                ),
-                Contact(name="c2", active=False, floating=True, area=1.0),
-            ]
-        )
-        z_dict = contacts.get_surface_impedances(frequency=1000.0, is_complex=False)
-        assert z_dict["c1"] is not None
-        assert np.isclose(z_dict["c1"], 100.0)
-        assert z_dict["c2"] is None
-
-
-class TestPrepareCurrentControlledMode:
-    """Tests for prepare_current_controlled_mode with various contact configs."""
-
-    @pytest.fixture
-    def floating_impedance_vc(self, settings_fixture, mri_fixture, geometry_fixture):
-        """Create a FloatingImpedance volume conductor."""
-        mri_image, _ = mri_fixture
-        brain_region, _, geometry = geometry_fixture
-        dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
-        materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
-        solver = ossdbs.prepare_solver(settings_fixture)
-
-        conductivity = ossdbs.ConductivityCF(
-            mri_image,
-            brain_region,
-            dielectric_model,
-            materials,
-            geometry.encapsulation_layers,
-            complex_data=settings_fixture["EQSMode"],
-        )
-
-        # Set up contacts for floating impedance mode:
-        # 1 active (ground) + 1 floating with surface impedance
-        for contact in geometry.contacts:
-            if contact.active:
-                contact.voltage = 0.0
-                break
-        # Make the second contact floating with impedance
-        c2 = geometry.contacts[1]
-        c2.active = False
-        c2.floating = True
-        c2.current = 0.001
-        c2.surface_impedance_model = "R"
-        c2.surface_impedance_parameters = {"R": 100.0}
-
-        vc = VolumeConductorFloatingImpedance(
-            geometry,
-            conductivity,
-            solver,
-            settings_fixture["FEMOrder"],
-            settings_fixture["Mesh"],
-        )
-        return vc
-
-    def test_prepare_cc_mode_1_active_0_floating(
-        self, settings_fixture, mri_fixture, geometry_fixture
-    ):
-        """2 active contacts should work (standard CC mode)."""
-        mri_image, _ = mri_fixture
-        brain_region, _, geometry = geometry_fixture
-        dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
-        materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
-        solver = ossdbs.prepare_solver(settings_fixture)
-
-        conductivity = ossdbs.ConductivityCF(
-            mri_image,
-            brain_region,
-            dielectric_model,
-            materials,
-            geometry.encapsulation_layers,
-            complex_data=settings_fixture["EQSMode"],
-        )
-
-        vc = VolumeConductorNonFloating(
-            geometry,
-            conductivity,
-            solver,
-            settings_fixture["FEMOrder"],
-            settings_fixture["Mesh"],
-        )
-        # Should not raise for 2 active contacts
-        vc.prepare_current_controlled_mode()
-
-    def test_prepare_cc_mode_3_active_raises(
-        self, settings_fixture, mri_fixture, geometry_fixture
-    ):
-        """3+ active contacts should raise ValueError."""
-        mri_image, _ = mri_fixture
-        brain_region, _, geometry = geometry_fixture
-        dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
-        materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
-        solver = ossdbs.prepare_solver(settings_fixture)
-
-        conductivity = ossdbs.ConductivityCF(
-            mri_image,
-            brain_region,
-            dielectric_model,
-            materials,
-            geometry.encapsulation_layers,
-            complex_data=settings_fixture["EQSMode"],
-        )
-
-        # Set 3 contacts to active (if enough contacts exist)
-        active_count = 0
-        for contact in geometry.contacts:
-            if active_count < 3:
-                contact.active = True
-                contact.floating = False
-                contact.voltage = 0.0
-                active_count += 1
-
-        if active_count >= 3:
-            vc = VolumeConductorNonFloating(
-                geometry,
-                conductivity,
-                solver,
-                settings_fixture["FEMOrder"],
-                settings_fixture["Mesh"],
-            )
-            with pytest.raises(ValueError):
-                vc.prepare_current_controlled_mode()

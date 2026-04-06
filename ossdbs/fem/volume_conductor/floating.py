@@ -101,6 +101,21 @@ class VolumeConductorFloating(VolumeConductor):
                 self.mesh.ngsolvemesh,
             )
             f += contact.current / length * v * ngsolve.ds(contact.name)
+            _logger.debug(
+                "Boundary %s length = %s, current = %s",
+                contact.name,
+                length,
+                contact.current,
+            )
+
+        _logger.debug(
+            "Active contacts: %s",
+            [(c.name, c.current, c.voltage) for c in self.contacts.active],
+        )
+        _logger.debug(
+            "Floating contacts: %s",
+            [(c.name, c.current, c.voltage) for c in self.contacts.floating],
+        )
         return f
 
     def _update_floating_voltages(self) -> None:
