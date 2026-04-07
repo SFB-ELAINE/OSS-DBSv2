@@ -201,7 +201,7 @@ class ModelGeometry:
                 contact.max_h = value
                 self.set_face_mesh_sizes({contact.name: value})
             elif setting == "MaxMeshSizeEdge":
-                contact.max_h_edge = value
+                contact.edge_max_h = value
                 self.set_edge_mesh_sizes({contact.name: value})
             elif setting in ["Contact_ID", "Name"]:
                 continue

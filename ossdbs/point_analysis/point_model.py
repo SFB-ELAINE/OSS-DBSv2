@@ -664,17 +664,21 @@ class PointModel(ABC):
         Notes
         -----
         Local mesh size for points is set.
-        The file has the format (according to Netgen documentation):
-          nr_points
-          x1, y1, z1, meshsize
-          x2, y2, z2, meshsize
-          ...
-          xn, yn, zn, meshsize
+        The file has the following format according to the Netgen
+        documentation:
 
-          nr_edges
-          x11, y11, z11, x12, y12, z12, meshsize
-          ...
-          xn1, yn1, zn1, xn2, yn2, zn2, meshsize
+        .. code-block:: text
+
+            nr_points
+            x1, y1, z1, meshsize
+            x2, y2, z2, meshsize
+            ...
+            xn, yn, zn, meshsize
+
+            nr_edges
+            x11, y11, z11, x12, y12, z12, meshsize
+            ...
+            xn1, yn1, zn1, xn2, yn2, zn2, meshsize
         """
         points = self.coordinates
         with open(filename, "w") as fp:
