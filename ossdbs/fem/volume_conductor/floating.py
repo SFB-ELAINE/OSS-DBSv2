@@ -29,6 +29,15 @@ class VolumeConductorFloating(VolumeConductor):
         super().__init__(
             geometry, conductivity, solver, order, meshing_parameters, output_path
         )
+        # This formulation does not support surface impedance on any contact.
+        for contact in self.contacts:
+            if contact.surface_impedance_model is not None:
+                raise ValueError(
+                    f"Contact {contact.name} has a surface impedance model, "
+                    "but the Floating formulation does not support surface "
+                    "impedance. Use FloatingImpedance (set surface impedance "
+                    "on the floating contacts) or NonFloating instead."
+                )
         _logger.debug("Create space")
         self.update_space()
 

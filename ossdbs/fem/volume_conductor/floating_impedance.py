@@ -29,6 +29,17 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         super().__init__(
             geometry, conductivity, solver, order, meshing_parameters, output_path
         )
+        # Check that no active contact carries a surface impedance model,
+        # since this formulation does not handle Robin BC on active contacts.
+        for contact in self.contacts.active:
+            if contact.surface_impedance_model is not None:
+                raise ValueError(
+                    f"Active contact {contact.name} has a surface impedance model, "
+                    "but the FloatingImpedance formulation only supports surface "
+                    "impedance on floating contacts. Either set the contact to "
+                    "floating or remove its surface impedance."
+                )
+
         _logger.debug("Save surface impedance boundaries")
         self._surface_impedance_floating_boundaries = []
         for contact in self.contacts.floating:

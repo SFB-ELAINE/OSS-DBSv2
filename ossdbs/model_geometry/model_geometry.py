@@ -262,16 +262,27 @@ class ModelGeometry:
         return f"E{electrode_index}C{contact_index}"
 
     def get_floating_mode(self):
-        """Check if floating and if yes, which mode."""
-        floating_mode = None
+        """Check if floating and if yes, which mode.
+
+        Returns
+        -------
+        str or None
+            ``"FloatingImpedance"`` if any floating contact carries a surface
+            impedance model, ``"Floating"`` if there are floating contacts but
+            none has an impedance model, or ``None`` if no contacts are floating.
+        """
+        has_floating = False
+        has_impedance = False
         for contact in self.contacts:
             if contact.floating:
-                floating_mode = "Floating"
-                # if we find one surface with a floating impedance, break
+                has_floating = True
                 if contact.surface_impedance_model is not None:
-                    floating_mode = "FloatingImpedance"
-                break
-        return floating_mode
+                    has_impedance = True
+        if has_impedance:
+            return "FloatingImpedance"
+        if has_floating:
+            return "Floating"
+        return None
 
     def set_mesh_sizes(self, mesh_sizes: dict) -> None:
         """Set mesh sizes on edges, faces, and volumes."""
