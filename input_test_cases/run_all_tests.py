@@ -64,18 +64,18 @@ impedance.csv",
         "input_json": "input_case7/input_vta.json",
         "output_csv": "input_case7/Results_VTA/impedance.csv",
         "desired_csv": "desired_output/input_case7/Results_VTA/impedance.csv",
-        "output_nii": "input_case7/Results_VTA/VTA_solution_Lattice.nii",
+        "output_nii": "input_case7/Results_VTA/VTA_solution_Lattice.nii.gz",
         "desired_nii": "desired_output/input_case7/Results_VTA/\
-VTA_solution_Lattice.nii",
+VTA_solution_Lattice.nii.gz",
     },
     {
         "input_dir": "input_case7",
         "input_json": "input_case7/input_vta_out_of_core.json",
         "output_csv": "input_case7/Results_VTA_OOC/impedance.csv",
         "desired_csv": "desired_output/input_case7/Results_VTA_OOC/impedance.csv",
-        "output_nii": "input_case7/Results_VTA_OOC/VTA_solution_Lattice.nii",
+        "output_nii": "input_case7/Results_VTA_OOC/VTA_solution_Lattice.nii.gz",
         "desired_nii": "desired_output/input_case7/Results_VTA_OOC/\
-VTA_solution_Lattice.nii",
+VTA_solution_Lattice.nii.gz",
     },
     {
         "input_dir": "input_case8",

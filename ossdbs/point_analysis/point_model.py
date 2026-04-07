@@ -517,11 +517,11 @@ class PointModel(ABC):
 
         self.save_as_nifti(
             field_mags_full,
-            os.path.join(self.output_path, f"E_field_solution_{self.name}.nii"),
+            os.path.join(self.output_path, f"E_field_solution_{self.name}.nii.gz"),
         )
         self.save_as_nifti(
             field_mags_full,
-            os.path.join(self.output_path, f"VTA_solution_{self.name}.nii"),
+            os.path.join(self.output_path, f"VTA_solution_{self.name}.nii.gz"),
             binarize=True,
             activation_threshold=activation_threshold,
         )
