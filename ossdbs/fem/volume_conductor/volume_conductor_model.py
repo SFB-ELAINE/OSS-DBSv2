@@ -192,12 +192,7 @@ class VolumeConductor(ABC):
         if self.is_complex:
             dtype = complex
 
-        _do_AMR = False
-        if adaptive_mesh_refinement_settings is not None:
-            self._check_AMR_settings(adaptive_mesh_refinement_settings)
-            if "Active" in adaptive_mesh_refinement_settings:
-                if adaptive_mesh_refinement_settings["Active"]:
-                    _do_AMR = True
+        _do_AMR = self._resolve_amr_active(adaptive_mesh_refinement_settings)
 
         multisine_mode = np.all(np.isclose(self.signal.amplitudes, 1.0))
 
@@ -1440,6 +1435,28 @@ class VolumeConductor(ABC):
                 "Need to specify ErrorTolerance and "
                 "MaxIterations for adaptive mesh refinement"
             )
+
+    def _resolve_amr_active(
+        self, adaptive_mesh_refinement_settings: dict | None
+    ) -> bool:
+        """Decide whether AMR should run for this analysis.
+
+        AMR is disabled when hp-refinement has been applied to the mesh,
+        because NGSolve's standard refinement produces an inconsistent
+        mesh on top of hp-refined elements.
+        """
+        if adaptive_mesh_refinement_settings is None:
+            return False
+        self._check_AMR_settings(adaptive_mesh_refinement_settings)
+        active = bool(adaptive_mesh_refinement_settings.get("Active", False))
+        if active and self.mesh.hp_refinement_applied():
+            # hp refinement introduces elements that NGSolve cannot refine
+            _logger.warning(
+                "Attention: Adaptive mesh refinement and hp-refinement "
+                "are mutually exclusive"
+            )
+            return False
+        return active
 
     def _save_report(self, timings: dict):
         """Save simulation run report to disk."""

@@ -445,3 +445,130 @@ class TestHPRefineCurvedBoundaryIntegration:
             )
         assert not math.isnan(val)
         assert abs(val - expected_area) < 0.1
+
+
+class TestRefineAfterRefineHPIsBroken:
+    """Document the NGSolve limitation that prevents combining AMR with
+    hp-refinement.
+
+    Conceptually we *want* to run AMR on top of an hp-refined mesh: hp
+    handles geometry-driven refinement near electrode contacts, and AMR
+    would then handle solution-driven refinement elsewhere. However,
+    NGSolve's standard Mesh.Refine() (the primitive AMR drives) silently
+    corrupts the mesh when called after RefineHP() — the integrated
+    volume of the domain stops matching the true geometry. Because the
+    failure is silent (no exception, no warning), VolumeConductor must
+    proactively disable AMR whenever hp-refinement has been applied.
+    See VolumeConductor._resolve_amr_active.
+    """
+
+    @staticmethod
+    def _build_mesh():
+        box = Box(Pnt(-2, -2, -2), Pnt(2, 2, 2))
+        cyl = Cylinder(Pnt(0, 0, -1), Z, r=0.5, h=2)
+        cyl.faces.Max(Z).name = "contact_top"
+        cyl.faces.Min(Z).name = "contact_bottom"
+        box.faces.name = "outer"
+        geo = OCCGeometry(box - cyl)
+        with ngsolve.TaskManager():
+            mesh = ngsolve.Mesh(geo.GenerateMesh(maxh=1.0))
+            mesh.Curve(2)
+        return mesh
+
+    @staticmethod
+    def _true_volume():
+        # 4x4x4 box minus a cylinder of radius 0.5 and height 2
+        return 4.0 * 4.0 * 4.0 - math.pi * 0.5**2 * 2.0
+
+    def test_refine_hp_alone_preserves_volume(self):
+        """Sanity check: RefineHP on its own keeps the mesh volume correct."""
+        mesh = self._build_mesh()
+        mesh.RefineHP(levels=1, factor=0.25)
+        mesh.Curve(2)
+        with ngsolve.TaskManager():
+            vol = ngsolve.Integrate(ngsolve.CF(1.0) * ngsolve.dx, mesh)
+        assert abs(vol - self._true_volume()) < 1e-2, (
+            f"RefineHP alone should preserve volume, got {vol} "
+            f"vs expected {self._true_volume()}"
+        )
+
+    def test_standard_refine_after_refine_hp_corrupts_mesh(self):
+        """Calling NGSolve's Refine() (the primitive used by AMR) after
+        RefineHP() yields a mesh whose integrated volume no longer
+        matches the true geometry. This is precisely the scenario we
+        would need to support to combine AMR with hp-refinement, and it
+        is the reason that combination is currently disabled in
+        VolumeConductor._resolve_amr_active.
+        """
+        mesh = self._build_mesh()
+        mesh.RefineHP(levels=1, factor=0.25)
+        mesh.Curve(2)
+
+        for el in mesh.Elements():
+            mesh.SetRefinementFlag(el, True)
+        mesh.Refine()
+        mesh.Curve(2)
+
+        with ngsolve.TaskManager():
+            vol = ngsolve.Integrate(ngsolve.CF(1.0) * ngsolve.dx, mesh)
+
+        true_vol = self._true_volume()
+        # The mesh is broken: volume diverges by several percent.
+        # If NGSolve ever fixes this, the assertion will fail and we
+        # can revisit the AMR/hp exclusion in VolumeConductor.
+        assert abs(vol - true_vol) > 1.0, (
+            "NGSolve Refine() after RefineHP() unexpectedly preserved the "
+            f"mesh volume ({vol} vs {true_vol}). The hp/AMR mutual-exclusion "
+            "guard in VolumeConductor may no longer be necessary."
+        )
+
+
+class TestResolveAmrActiveGuard:
+    """Verify the hp-refinement / AMR mutual-exclusion guard in
+    VolumeConductor._resolve_amr_active.
+    """
+
+    @staticmethod
+    def _call(hp_applied: bool, settings):
+        """Invoke the unbound method on a minimal stub object."""
+
+        class _MeshStub:
+            def __init__(self, hp):
+                self._hp = hp
+
+            def hp_refinement_applied(self):
+                return self._hp
+
+        class _Stub:
+            mesh = _MeshStub(hp_applied)
+
+            # _resolve_amr_active calls self._check_AMR_settings; reuse
+            # the real implementation so we exercise the same validation.
+            _check_AMR_settings = VolumeConductorNonFloating._check_AMR_settings
+
+        return VolumeConductorNonFloating._resolve_amr_active(_Stub(), settings)
+
+    def test_settings_none_returns_false(self):
+        assert self._call(hp_applied=False, settings=None) is False
+
+    def test_active_true_without_hp_returns_true(self):
+        settings = {"Active": True, "ErrorTolerance": 0.1, "MaxIterations": 1}
+        assert self._call(hp_applied=False, settings=settings) is True
+
+    def test_active_false_returns_false(self):
+        settings = {"Active": False, "ErrorTolerance": 0.1, "MaxIterations": 1}
+        assert self._call(hp_applied=False, settings=settings) is False
+
+    def test_active_true_with_hp_is_disabled_and_warns(self, caplog):
+        settings = {"Active": True, "ErrorTolerance": 0.1, "MaxIterations": 1}
+        with caplog.at_level("WARNING", logger="ossdbs"):
+            result = self._call(hp_applied=True, settings=settings)
+        assert result is False
+        assert any(
+            "mutually exclusive" in rec.getMessage() for rec in caplog.records
+        ), "Expected a warning about hp-refinement / AMR being mutually exclusive"
+
+    def test_invalid_settings_still_validated(self):
+        # Missing ErrorTolerance / MaxIterations must raise via _check_AMR_settings
+        with pytest.raises(ValueError, match="ErrorTolerance"):
+            self._call(hp_applied=False, settings={"Active": True})
