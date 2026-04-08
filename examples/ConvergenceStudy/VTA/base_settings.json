@@ -108,6 +108,6 @@
   "FEMOrder": 2,
   "OutputPath": "Results_VTA",
   "ComputeImpedance": true,
-  "ExportVTK": true,
+  "ExportVTK": false,
   "ExportElectrode": false 
 }

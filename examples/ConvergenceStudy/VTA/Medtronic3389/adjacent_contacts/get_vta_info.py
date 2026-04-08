@@ -6,7 +6,7 @@ import pandas as pd
 
 from ossdbs import VTAImage
 
-vta_voxel_best = VTAImage("Results_VTA_best/VTA_solution_Lattice.nii")
+vta_voxel_best = VTAImage("Results_VTA_best/VTA_solution_Lattice.nii.gz")
 best_volume = vta_voxel_best.get_vta_volume()
 with open(os.path.join("Results_VTA_best", "VCM_report.json")) as fp:
     vcm_info = json.load(fp)
@@ -39,6 +39,8 @@ result_directories = [
     "Results_VTA_edge_double_material_refinement",
     "Results_VTA_fine_edge_single_material_refinement",
     "Results_VTA_fine_edge_double_material_refinement",
+    "Results_VTA_hp_refinement",
+    "Results_VTA_hp_material_refinement",
 ]
 
 print(
@@ -70,7 +72,7 @@ for idx, result_dir in enumerate(result_directories):
     imp = impedance_data["real"].iloc[0]
     imp_rel_error = 100.0 * abs(imp - best_imp) / best_imp
     ngs_vta_volume = float(lattice_info["volume"])
-    vta_voxel = VTAImage(os.path.join(result_dir, "VTA_solution_Lattice.nii"))
+    vta_voxel = VTAImage(os.path.join(result_dir, "VTA_solution_Lattice.nii.gz"))
     dice = vta_voxel_best.compute_dice_coefficent(vta_voxel)
     volume = vta_voxel.get_vta_volume()
     dofs = vcm_info["DOF"]

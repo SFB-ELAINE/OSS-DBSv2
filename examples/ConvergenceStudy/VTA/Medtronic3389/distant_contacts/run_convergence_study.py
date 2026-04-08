@@ -4,6 +4,7 @@
 
 import json
 import logging
+import os
 
 import numpy as np
 
@@ -34,6 +35,10 @@ electrode_name = "Medtronic3389"
 with open("../../base_settings.json") as fp:
     base_input_dict = json.load(fp)
 
+# adjust pathes
+base_input_dict["MaterialDistribution"]["MRIPath"] = os.path.join(
+    "..", "..", base_input_dict["MaterialDistribution"]["MRIPath"]
+)
 # add electrode
 base_input_dict["Electrodes"][0]["Name"] = electrode_name
 # add contacts
@@ -164,6 +169,29 @@ main_run(base_input_dict)
 remove_file_handler(_logger)
 # reset material refinement
 base_input_dict["Mesh"]["MaterialRefinementSteps"] = 0
+
+# HP refinement: default mesh + HP refinement
+base_input_dict["Mesh"]["MeshingHypothesis"]["Type"] = "Default"
+base_input_dict["Mesh"]["MeshingHypothesis"]["MaxMeshSize"] = 1e6
+base_input_dict["Electrodes"][0]["Contacts"][0]["MaxMeshSizeEdge"] = 1e6
+base_input_dict["Electrodes"][0]["Contacts"][1]["MaxMeshSizeEdge"] = 1e6
+base_input_dict["Mesh"]["HPRefinement"] = {
+    "Active": True,
+    "Levels": 2,
+    "Factor": 0.125,
+}
+base_input_dict["OutputPath"] = "Results_VTA_hp_refinement"
+main_run(base_input_dict)
+remove_file_handler(_logger)
+
+# HP + material refinement: default mesh + HP ref. + 1x material ref.
+base_input_dict["Mesh"]["MaterialRefinementSteps"] = 1
+base_input_dict["OutputPath"] = "Results_VTA_hp_material_refinement"
+main_run(base_input_dict)
+remove_file_handler(_logger)
+# reset
+base_input_dict["Mesh"]["MaterialRefinementSteps"] = 0
+base_input_dict["Mesh"]["HPRefinement"] = {"Active": False}
 
 # finest level: voxel size + adaptive mesh refinement
 max_mesh_size = min(mri_image.voxel_sizes)
