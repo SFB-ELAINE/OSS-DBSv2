@@ -31,7 +31,11 @@ class BehnkeFriedSEEGParameters:
 
     def get_distance_l1_l4(self) -> float:
         """Returns distance between first level contact and fourth level contact."""
-        return  3 * self.contact_length + 2 * self.contact_spacing + self.first_contact_spacing
+        return (
+            3 * self.contact_length
+            + 2 * self.contact_spacing
+            + self.first_contact_spacing
+        )
 
 
 class BehnkeFriedSEEGModel(ElectrodeModel):
@@ -139,7 +143,8 @@ class BehnkeFriedSEEGModel(ElectrodeModel):
             contacts.append(contact.Move(vector))
             if count == 0:
                 distance += (
-                    self._parameters.contact_length + self._parameters.first_contact_spacing
+                    self._parameters.contact_length
+                    + self._parameters.first_contact_spacing
                 )
             else:
                 distance += (

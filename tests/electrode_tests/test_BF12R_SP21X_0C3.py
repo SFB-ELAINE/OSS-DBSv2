@@ -1,6 +1,6 @@
 import pytest
 
-from ossdbs.electrodes import ELECTRODE_MODELS, BF12R_SP21X_0C3
+from ossdbs.electrodes import BF12R_SP21X_0C3, ELECTRODE_MODELS
 
 from .test_electrodes import TestElectrode
 

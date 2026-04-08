@@ -10,6 +10,7 @@ from .abbott_stjude import (
     AbbottStJudeDirectedModel,
     AbbottStJudeParameters,
 )
+from .behnke_fried import BehnkeFriedSEEGModel, BehnkeFriedSEEGParameters
 from .boston_scientific_cartesia import (
     BostonScientificCartesiaHXModel,
     BostonScientificCartesiaParameters,
@@ -22,6 +23,12 @@ from .boston_scientific_vercise import (
     BostonScientificVerciseParameters,
 )
 from .defaults import (
+    BF08R_SP05X_0BH,
+    BF08R_SP21X_0C3,
+    BF10R_SP05X_0BH,
+    BF10R_SP21X_0C3,
+    BF12R_SP05X_0BH,
+    BF12R_SP21X_0C3,
     AbbottStJudeActiveTip6142_6145,
     AbbottStJudeActiveTip6146_6149,
     AbbottStJudeDirected6172,
@@ -59,12 +66,6 @@ from .defaults import (
     SceneRay1211,
     SceneRay1212,
     SceneRay1242,
-    BF08R_SP21X_0C3,
-    BF10R_SP21X_0C3,
-    BF12R_SP21X_0C3,
-    BF08R_SP05X_0BH,
-    BF10R_SP05X_0BH,
-    BF12R_SP05X_0BH,
     default_electrode_parameters,
 )
 from .dixi_microtechniques import (
@@ -88,7 +89,6 @@ from .neuro_pace import NeuroPaceModel, NeuroPaceParameters
 from .neuronexus import NeuroNexusElectrodeModel, NeuroNexusParameters
 from .pins_medical import PINSMedicalModel, PINSMedicalParameters
 from .sceneray import SceneRay1242Model, SceneRay1242Parameters
-from .behnke_fried import BehnkeFriedSEEGModel, BehnkeFriedSEEGParameters
 
 ELECTRODES = {
     "AbbottStJudeActiveTip6142_6145": AbbottStJudeActiveTip6142_6145,
@@ -201,7 +201,7 @@ ELECTRODE_PARAMETERS = {
     "PINSMedicalModel": PINSMedicalParameters,
     "NeuroNexusElectrodeModel": NeuroNexusParameters,
     "SceneRay1242Model": SceneRay1242Parameters,
-    "BehnkeFriedSEEGModel": BehnkeFriedSEEGParameters
+    "BehnkeFriedSEEGModel": BehnkeFriedSEEGParameters,
 }
 
 __all__ = (
@@ -213,6 +213,14 @@ __all__ = (
     "AbbottStJudeDirected6173",
     "AbbottStJudeDirectedModel",
     "AbbottStJudeParameters",
+    "BF08R_SP05X_0BHCustom",
+    "BF08R_SP21X_0C3Custom",
+    "BF10R_SP05X_0BHCustom",
+    "BF10R_SP21X_0C3Custom",
+    "BF12R_SP05X_0BHCustom",
+    "BF12R_SP21X_0C3Custom",
+    "BehnkeFriedSEEGModel",
+    "BehnkeFriedSEEGParameters",
     "BostonScientificCartesiaHX",
     "BostonScientificCartesiaHXModel",
     "BostonScientificCartesiaParameters",
@@ -268,13 +276,5 @@ __all__ = (
     "SceneRay1211",
     "SceneRay1212",
     "SceneRay1242",
-    "BF08R_SP21X_0C3Custom",
-    "BF10R_SP21X_0C3Custom",
-    "BF12R_SP21X_0C3Custom",
-    "BF08R_SP05X_0BHCustom",
-    "BF10R_SP05X_0BHCustom",
-    "BF12R_SP05X_0BHCustom",
-    "BehnkeFriedSEEGModel",
-    "BehnkeFriedSEEGParameters",
     "default_electrode_parameters",
 )

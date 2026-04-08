@@ -8,6 +8,7 @@ from .abbott_stjude import (
     AbbottStJudeDirectedModel,
     AbbottStJudeParameters,
 )
+from .behnke_fried import BehnkeFriedSEEGModel, BehnkeFriedSEEGParameters
 from .boston_scientific_cartesia import (
     BostonScientificCartesiaHXModel,
     BostonScientificCartesiaParameters,
@@ -48,7 +49,6 @@ from .pins_medical import (
     PINSMedicalParameters,
 )
 from .sceneray import SceneRay1242Model, SceneRay1242Parameters
-from .behnke_fried import BehnkeFriedSEEGModel, BehnkeFriedSEEGParameters
 
 default_electrode_parameters = {
     "AbbottStJudeActiveTip6146_6149": AbbottStJudeActiveTipParameters(
@@ -334,56 +334,56 @@ default_electrode_parameters = {
         tip_length=1.28,
         contact_length=1.57,
         contact_spacing=3.93,
-        first_contact_spacing=1.43,  
+        first_contact_spacing=1.43,
         lead_diameter=1.28,
         total_length=400.0,
         n_contacts=8,
-    ), 
+    ),
     "BF10R_SP21X_0C3": BehnkeFriedSEEGParameters(
         tip_length=1.28,
         contact_length=1.57,
         contact_spacing=3.93,
-        first_contact_spacing=1.43,  
+        first_contact_spacing=1.43,
         lead_diameter=1.28,
         total_length=400.0,
         n_contacts=10,
-    ),     
+    ),
     "BF12R_SP21X_0C3": BehnkeFriedSEEGParameters(
         tip_length=1.28,
         contact_length=1.57,
         contact_spacing=3.93,
-        first_contact_spacing=1.43,  
+        first_contact_spacing=1.43,
         lead_diameter=1.28,
         total_length=400.0,
         n_contacts=12,
-    ),         
+    ),
     "BF08R_SP05X_0BH": BehnkeFriedSEEGParameters(
         tip_length=1.28,
         contact_length=1.57,
         contact_spacing=3.43,
-        first_contact_spacing=3.43,  
+        first_contact_spacing=3.43,
         lead_diameter=1.28,
         total_length=400.0,
         n_contacts=8,
-    ),     
+    ),
     "BF10R_SP05X_0BH": BehnkeFriedSEEGParameters(
         tip_length=1.28,
         contact_length=1.57,
         contact_spacing=3.43,
-        first_contact_spacing=3.43,  
+        first_contact_spacing=3.43,
         lead_diameter=1.28,
         total_length=400.0,
         n_contacts=10,
-    ),  
+    ),
     "BF12R_SP05X_0BH": BehnkeFriedSEEGParameters(
         tip_length=1.28,
         contact_length=1.57,
         contact_spacing=3.43,
-        first_contact_spacing=3.43,  
+        first_contact_spacing=3.43,
         lead_diameter=1.28,
         total_length=400.0,
         n_contacts=12,
-    ),     
+    ),
 }
 
 
