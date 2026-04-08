@@ -754,6 +754,12 @@ class LeadSettings:
             "PMT 2102-12-094": "PMTsEEG2102_12",
             "PMT 2102-14-094": "PMTsEEG2102_14",
             "PMT 2102-16-094": "PMTsEEG2102_16",
+            "AdTech BF08R-SP21X": "BF08R_SP21X_0C3",
+            "AdTech BF10R-SP21X": "BF10R_SP21X_0C3",
+            "AdTech BF12R-SP21X": "BF12R_SP21X_0C3",
+            "AdTech BF08R-SP05X": "BF08R_SP05X_0BH",
+            "AdTech BF10R-SP05X": "BF10R_SP05X_0BH",
+            "AdTech BF12R-SP05X": "BF12R_SP05X_0BH",
         }
 
         for lead in electrode_names.keys():
