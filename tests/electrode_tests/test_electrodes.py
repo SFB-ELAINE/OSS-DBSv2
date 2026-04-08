@@ -69,13 +69,13 @@ class TestElectrode:
         "PMTsEEG2102_16",
     ]
     SceneRay1242: ClassVar[list[str]] = ["SceneRay1242"]
-    
+
     BFXR_SP21X_0C3: ClassVar[list[str]] = [
         "BF08R_SP21X_0C3",
         "BF10R_SP21X_0C3",
         "BF12R_SP21X_0C3",
     ]
-    
+
     BFXR_SP05X_0BH: ClassVar[list[str]] = [
         "BF08R_SP05X_0BH",
         "BF10R_SP05X_0BH",
