@@ -43,6 +43,7 @@ meshsizes.txt
 *.png
 *.eps
 *.pdf
+*.svg
 .DS_Store
 
 # Ignore miscellaneous files
@@ -59,3 +60,6 @@ nohup.out
 
 # Generated figures
 figures/
+
+# Results
+examples/Electrochemistry/*.csv

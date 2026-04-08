@@ -1,6 +1,9 @@
 import json
 import math
 import os
+import subprocess
+import sys
+import textwrap
 from copy import deepcopy
 
 import ngsolve
@@ -499,20 +502,66 @@ class TestRefineAfterRefineHPIsBroken:
         would need to support to combine AMR with hp-refinement, and it
         is the reason that combination is currently disabled in
         VolumeConductor._resolve_amr_active.
+
+        On some platforms (observed on macOS) the corruption manifests
+        as a hard crash inside ``mesh.Curve(2)`` rather than a silently
+        broken volume. Either symptom proves the bug is still present,
+        so we run the dangerous sequence in a subprocess: a non-zero
+        exit code (segfault, abort, ...) and a finite-but-wrong volume
+        both count as "bug still present"; only a correct volume should
+        fail this test and prompt us to revisit the guard.
         """
-        mesh = self._build_mesh()
-        mesh.RefineHP(levels=1, factor=0.25)
-        mesh.Curve(2)
+        script = textwrap.dedent(
+            """
+            import math
+            import ngsolve
+            from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Z
 
-        for el in mesh.Elements():
-            mesh.SetRefinementFlag(el, True)
-        mesh.Refine()
-        mesh.Curve(2)
+            box = Box(Pnt(-2, -2, -2), Pnt(2, 2, 2))
+            cyl = Cylinder(Pnt(0, 0, -1), Z, r=0.5, h=2)
+            cyl.faces.Max(Z).name = "contact_top"
+            cyl.faces.Min(Z).name = "contact_bottom"
+            box.faces.name = "outer"
+            geo = OCCGeometry(box - cyl)
+            with ngsolve.TaskManager():
+                mesh = ngsolve.Mesh(geo.GenerateMesh(maxh=1.0))
+                mesh.Curve(2)
+            mesh.RefineHP(levels=1, factor=0.25)
+            mesh.Curve(2)
+            for el in mesh.Elements():
+                mesh.SetRefinementFlag(el, True)
+            mesh.Refine()
+            mesh.Curve(2)
+            with ngsolve.TaskManager():
+                vol = ngsolve.Integrate(ngsolve.CF(1.0) * ngsolve.dx, mesh)
+            print(f"VOLUME={vol}")
+            """
+        )
 
-        with ngsolve.TaskManager():
-            vol = ngsolve.Integrate(ngsolve.CF(1.0) * ngsolve.dx, mesh)
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
 
         true_vol = self._true_volume()
+
+        if result.returncode != 0:
+            # Subprocess crashed (e.g. segfault) — bug is still present,
+            # the AMR/hp guard is still required. Nothing more to check.
+            return
+
+        vol = None
+        for line in result.stdout.splitlines():
+            if line.startswith("VOLUME="):
+                vol = float(line.split("=", 1)[1])
+                break
+        assert vol is not None, (
+            "Could not parse volume from subprocess output:\n"
+            f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+        )
+
         # The mesh is broken: volume diverges by several percent.
         # If NGSolve ever fixes this, the assertion will fail and we
         # can revisit the AMR/hp exclusion in VolumeConductor.
@@ -530,13 +579,20 @@ class TestResolveAmrActiveGuard:
 
     @staticmethod
     def _call(hp_applied: bool, settings):
-        """Invoke the unbound method on a minimal stub object."""
+        """Invoke the unbound method on a minimal stub object.
+
+        ``hp_refinement_applied`` is declared as a ``@property`` here to
+        match the real ``ossdbs.fem.mesh.Mesh`` class — otherwise the
+        stub would silently mask a regression where the production code
+        calls the attribute as a method (``False()`` -> TypeError).
+        """
 
         class _MeshStub:
             def __init__(self, hp):
                 self._hp = hp
 
-            def hp_refinement_applied(self):
+            @property
+            def hp_refinement_applied(self) -> bool:
                 return self._hp
 
         class _Stub:
@@ -547,6 +603,16 @@ class TestResolveAmrActiveGuard:
             _check_AMR_settings = VolumeConductorNonFloating._check_AMR_settings
 
         return VolumeConductorNonFloating._resolve_amr_active(_Stub(), settings)
+
+    def test_mesh_exposes_hp_refinement_applied_as_property(self):
+        """Guard against regressions that turn ``hp_refinement_applied``
+        into a method. The production guard in ``_resolve_amr_active``
+        reads it as an attribute, so the two must stay in sync.
+        """
+        assert isinstance(Mesh.hp_refinement_applied, property), (
+            "Mesh.hp_refinement_applied must remain a @property — "
+            "VolumeConductor._resolve_amr_active reads it as an attribute."
+        )
 
     def test_settings_none_returns_false(self):
         assert self._call(hp_applied=False, settings=None) is False
@@ -572,3 +638,102 @@ class TestResolveAmrActiveGuard:
         # Missing ErrorTolerance / MaxIterations must raise via _check_AMR_settings
         with pytest.raises(ValueError, match="ErrorTolerance"):
             self._call(hp_applied=False, settings={"Active": True})
+
+
+class TestMulticontactImpedanceOverride:
+    """Verify the ``multicontact_impedance`` override in ``run_full_analysis``.
+
+    Background
+    ----------
+    In a StimSets run, the non-active, non-ground contacts are set to
+    ``Floating=True`` with ``Current=0`` — they are passive receivers,
+    not additional stimulation ports. The auto-detection in
+    ``run_full_analysis`` (``n_stim = n_active + n_floating``, multicontact
+    when ``> 2``) would still route these runs through the NxN admittance
+    matrix path, which is physically inappropriate and leaves
+    ``get_scale_factor`` returning a matrix where the downstream code
+    expects a scalar — crashing ``_store_solution_at_contacts`` with
+    ``TypeError: only length-1 arrays can be converted to Python scalars``.
+
+    These tests guard three invariants:
+    1. ``run_full_analysis`` still accepts ``multicontact_impedance`` as a kwarg.
+    2. ``run_stim_sets`` passes ``multicontact_impedance=False``.
+    3. ``get_scale_factor`` returns a plain scalar when ``_multicontact_impedance``
+       is False (i.e., when ``self._impedances`` is a 1-D array).
+    """
+
+    def test_run_full_analysis_exposes_override(self):
+        import inspect
+
+        from ossdbs.fem.volume_conductor.volume_conductor_model import (
+            VolumeConductor,
+        )
+
+        sig = inspect.signature(VolumeConductor.run_full_analysis)
+        assert "multicontact_impedance" in sig.parameters, (
+            "VolumeConductor.run_full_analysis must expose the "
+            "``multicontact_impedance`` override so callers like "
+            "run_stim_sets can force scalar-impedance mode."
+        )
+        assert sig.parameters["multicontact_impedance"].default is None, (
+            "``multicontact_impedance`` default must remain None "
+            "(auto-detect) so existing callers keep their behavior."
+        )
+
+    def test_run_stim_sets_forces_scalar_mode(self):
+        """``run_stim_sets`` must explicitly opt out of multicontact mode.
+
+        Otherwise the ``n_stim > 2`` auto-detection (active + floating)
+        routes the StimSets per-contact run through the admittance-matrix
+        path, which is wrong for passive floating contacts.
+        """
+        import inspect
+
+        from ossdbs.api import run_stim_sets
+
+        src = inspect.getsource(run_stim_sets)
+        assert "multicontact_impedance=False" in src, (
+            "run_stim_sets must pass multicontact_impedance=False to "
+            "run_full_analysis — the floating contacts in stim_sets are "
+            "passive (zero current), not independent stimulation ports."
+        )
+
+    def test_get_scale_factor_returns_scalar_in_scalar_mode(self):
+        """``get_scale_factor`` must return a plain scalar when
+        ``_multicontact_impedance`` is False, so that
+        ``_store_solution_at_contacts`` can assign into a single complex
+        slot of ``_free_stimulation_variable``.
+        """
+        from ossdbs.fem.volume_conductor.volume_conductor_model import (
+            VolumeConductor,
+        )
+
+        class _FakeContact:
+            def __init__(self, current):
+                self.current = current
+
+        class _FakeContacts:
+            def __init__(self, active):
+                self.active = active
+
+        class _Stub:
+            current_controlled = True
+            is_complex = True
+            _multicontact_impedance = False
+            # Scalar-mode allocation (1-D array of complex scalars)
+            _impedances = np.array([10.0 + 0.0j, 12.0 + 1.0j], dtype=complex)
+            contacts = _FakeContacts(
+                [_FakeContact(1.0 + 0.0j), _FakeContact(-1.0 + 0.0j)]
+            )
+
+            # Use the real impedances property via the unbound descriptor.
+            impedances = VolumeConductor.impedances
+
+        stub = _Stub()
+        scale = VolumeConductor.get_scale_factor(stub, 0)
+        assert np.ndim(scale) == 0, (
+            "get_scale_factor must return a plain scalar in scalar-impedance "
+            f"mode; got shape {np.shape(scale)}"
+        )
+        # Expected: Z * |I| = 10 * 1 = 10
+        assert np.isclose(scale, 10.0 + 0.0j), f"Expected Z * |I| = 10+0j, got {scale}"

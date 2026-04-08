@@ -591,6 +591,11 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
         _logger.info(f"Running with contacts:\n{volume_conductor.contacts}")
 
         volume_conductor.output_path = settings["OutputPath"] + contact.name
+        # In StimSets mode the non-active, non-ground contacts are
+        # floating with zero current — they are passive receivers, not
+        # additional stimulation ports. Force scalar-impedance mode so
+        # the admittance-matrix formulation (which would treat each
+        # floating contact as an independent port) is not triggered.
         vcm_timings = volume_conductor.run_full_analysis(
             frequency_domain_signal,
             export_vtk=export_vtk,
@@ -601,6 +606,7 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             adaptive_mesh_refinement_settings=settings["Mesh"][
                 "AdaptiveMeshRefinement"
             ],
+            multicontact_impedance=False,
         )
         _logger.info(f"Timing for contact {contact.name}: {vcm_timings}")
 

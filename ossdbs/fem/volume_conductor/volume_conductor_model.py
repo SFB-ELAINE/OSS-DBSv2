@@ -141,6 +141,7 @@ class VolumeConductor(ABC):
         adaptive_mesh_refinement_settings: dict | None = None,
         truncation_time: float | None = None,
         estimate_currents: bool | None = False,
+        multicontact_impedance: bool | None = None,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -170,6 +171,16 @@ class VolumeConductor(ABC):
             Time until which result will be written to hard drive
         estimate_currents: bool
             Get current estimate per contact by integration of normal component
+        multicontact_impedance: bool or None
+            Override for the multicontact-impedance detection. If None
+            (default), the mode is auto-detected from the contact setup
+            (True when >2 stimulation ports participate, i.e., ``n_active``
+            plus ``n_floating`` in current-controlled mode). Set explicitly
+            to False from callers (e.g., ``run_stim_sets``) where floating
+            contacts are passive (zero current) and only the scalar
+            impedance between the two active contacts is meaningful — the
+            full NxN admittance matrix is physically inappropriate and
+            leaves the scaling logic inconsistent.
 
         Notes
         -----
@@ -209,7 +220,22 @@ class VolumeConductor(ABC):
         n_stim = len(self.contacts.active)
         if self.current_controlled:
             n_stim += len(self.contacts.floating)
-        self._multicontact_impedance = n_stim > 2
+        if multicontact_impedance is None:
+            self._multicontact_impedance = n_stim > 2
+        else:
+            # explicit override — e.g. run_stim_sets, where floating
+            # contacts are passive (zero current) so there is only one
+            # real stimulation port and the admittance-matrix formulation
+            # does not apply.
+            self._multicontact_impedance = multicontact_impedance
+            if multicontact_impedance and len(self.contacts.active) < 2:
+                raise ValueError(
+                    "multicontact_impedance=True requires at least 2 active contacts."
+                )
+        # when forced into scalar mode, n_stim for impedance allocation
+        # follows the "no multicontact" branch
+        if not self._multicontact_impedance:
+            n_stim = len(self.contacts.active)
 
         if self.signal.octave_band_approximation:
             frequency_indices = get_octave_band_indices(self.signal.frequencies)
@@ -791,6 +817,13 @@ class VolumeConductor(ABC):
         is computed via the superposition approach, and the impedance
         matrix Z = Y^{-1} is returned.
 
+        The branch is selected via ``self._multicontact_impedance``,
+        which is set in ``run_full_analysis`` (auto-detected from the
+        contact setup, or explicitly overridden by callers such as
+        ``run_stim_sets`` where floating contacts are passive
+        zero-current receivers and the admittance-matrix formulation
+        does not apply).
+
         References
         ----------
         .. [Zimmermann2021a] Zimmermann, J., et al. (2021).
@@ -803,9 +836,7 @@ class VolumeConductor(ABC):
             Scalar impedance for 2 active contacts, or NxN impedance
             matrix for multicontact configurations.
         """
-        if len(self.contacts.active) == 2 and (
-            len(self.contacts.floating) == 0 or not self.current_controlled
-        ):
+        if not self._multicontact_impedance and len(self.contacts.active) == 2:
             power = self.compute_power()
             voltage_diff = 0
             for idx, contact in enumerate(self.contacts.active):
@@ -1449,7 +1480,7 @@ class VolumeConductor(ABC):
             return False
         self._check_AMR_settings(adaptive_mesh_refinement_settings)
         active = bool(adaptive_mesh_refinement_settings.get("Active", False))
-        if active and self.mesh.hp_refinement_applied():
+        if active and self.mesh.hp_refinement_applied:
             # hp refinement introduces elements that NGSolve cannot refine
             _logger.warning(
                 "Attention: Adaptive mesh refinement and hp-refinement "
