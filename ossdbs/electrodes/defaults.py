@@ -8,6 +8,7 @@ from .abbott_stjude import (
     AbbottStJudeDirectedModel,
     AbbottStJudeParameters,
 )
+from .behnke_fried import BehnkeFriedSEEGModel, BehnkeFriedSEEGParameters
 from .boston_scientific_cartesia import (
     BostonScientificCartesiaHXModel,
     BostonScientificCartesiaParameters,
@@ -329,6 +330,60 @@ default_electrode_parameters = {
         lead_diameter=1.27,
         total_length=450.0,
     ),
+    "BF08R_SP21X_0C3": BehnkeFriedSEEGParameters(
+        tip_length=1.28,
+        contact_length=1.57,
+        contact_spacing=3.93,
+        first_contact_spacing=1.43,
+        lead_diameter=1.28,
+        total_length=400.0,
+        n_contacts=8,
+    ),
+    "BF10R_SP21X_0C3": BehnkeFriedSEEGParameters(
+        tip_length=1.28,
+        contact_length=1.57,
+        contact_spacing=3.93,
+        first_contact_spacing=1.43,
+        lead_diameter=1.28,
+        total_length=400.0,
+        n_contacts=10,
+    ),
+    "BF12R_SP21X_0C3": BehnkeFriedSEEGParameters(
+        tip_length=1.28,
+        contact_length=1.57,
+        contact_spacing=3.93,
+        first_contact_spacing=1.43,
+        lead_diameter=1.28,
+        total_length=400.0,
+        n_contacts=12,
+    ),
+    "BF08R_SP05X_0BH": BehnkeFriedSEEGParameters(
+        tip_length=1.28,
+        contact_length=1.57,
+        contact_spacing=3.43,
+        first_contact_spacing=3.43,
+        lead_diameter=1.28,
+        total_length=400.0,
+        n_contacts=8,
+    ),
+    "BF10R_SP05X_0BH": BehnkeFriedSEEGParameters(
+        tip_length=1.28,
+        contact_length=1.57,
+        contact_spacing=3.43,
+        first_contact_spacing=3.43,
+        lead_diameter=1.28,
+        total_length=400.0,
+        n_contacts=10,
+    ),
+    "BF12R_SP05X_0BH": BehnkeFriedSEEGParameters(
+        tip_length=1.28,
+        contact_length=1.57,
+        contact_spacing=3.43,
+        first_contact_spacing=3.43,
+        lead_diameter=1.28,
+        total_length=400.0,
+        n_contacts=12,
+    ),
 }
 
 
@@ -628,3 +683,51 @@ def SceneRay1212(
     """SceneRay 1212 electrode."""
     parameters = default_electrode_parameters["SceneRay1212"]
     return BostonScientificVerciseModel(parameters, rotation, direction, position)
+
+
+def BF08R_SP21X_0C3(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """BF08R_SP21X_0C3 electrode."""
+    parameters = default_electrode_parameters["BF08R_SP21X_0C3"]
+    return BehnkeFriedSEEGModel(parameters, rotation, direction, position)
+
+
+def BF10R_SP21X_0C3(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """BF10R_SP21X_0C3 electrode."""
+    parameters = default_electrode_parameters["BF10R_SP21X_0C3"]
+    return BehnkeFriedSEEGModel(parameters, rotation, direction, position)
+
+
+def BF12R_SP21X_0C3(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """BF12R_SP21X_0C3 electrode."""
+    parameters = default_electrode_parameters["BF12R_SP21X_0C3"]
+    return BehnkeFriedSEEGModel(parameters, rotation, direction, position)
+
+
+def BF08R_SP05X_0BH(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """BF08R_SP05X_0BH electrode."""
+    parameters = default_electrode_parameters["BF08R_SP05X_0BH"]
+    return BehnkeFriedSEEGModel(parameters, rotation, direction, position)
+
+
+def BF10R_SP05X_0BH(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """BF10R_SP05X_0BH electrode."""
+    parameters = default_electrode_parameters["BF10R_SP05X_0BH"]
+    return BehnkeFriedSEEGModel(parameters, rotation, direction, position)
+
+
+def BF12R_SP05X_0BH(
+    rotation: float = 0, direction: tuple = (0, 0, 1), position: tuple = (0, 0, 0)
+):
+    """BF12R_SP05X_0BH electrode."""
+    parameters = default_electrode_parameters["BF12R_SP05X_0BH"]
+    return BehnkeFriedSEEGModel(parameters, rotation, direction, position)
