@@ -277,19 +277,18 @@ def validate_solver_settings(settings: dict, model_geometry: ModelGeometry) -> N
 
     Notes
     -----
-    BDDC preconditioner does not work well with complex-valued systems
-    (EQS mode) combined with FloatingImpedance formulation. This function
-    enforces the use of 'local' preconditioner in such cases.
+    BDDC preconditioner does not work well with the FloatingImpedance
+    formulation. This function enforces the use of 'local' preconditioner
+    in such cases.
     """
     floating_mode = model_geometry.get_floating_mode()
-    is_eqs_mode = settings.get("EQSMode", False)
     preconditioner = settings["Solver"].get("Preconditioner", "bddc")
 
-    if floating_mode == "FloatingImpedance" and is_eqs_mode:
+    if floating_mode == "FloatingImpedance":
         if preconditioner == "bddc":
             _logger.warning(
                 "BDDC preconditioner is not compatible with FloatingImpedance "
-                "formulation in EQS mode. Switching to 'local' preconditioner."
+                "formulation. Switching to 'local' preconditioner."
             )
             settings["Solver"]["Preconditioner"] = "local"
             settings["Solver"]["PreconditionerKwargs"] = {}
