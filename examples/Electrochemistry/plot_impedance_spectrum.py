@@ -20,21 +20,39 @@ Usage
 import impedancefitter as ifit
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 # --- Frequency range (Hz) ---
 f_min = 10.0
 f_max = 100e3
 n_points = 200
 
-frequencies = np.logspace(np.log10(f_min), np.log10(f_max), n_points)
-omega = 2.0 * np.pi * frequencies
 
 # --- Lempka 2009 equivalent circuit models ---
-lempka_full = "CPE_dl + R_inf + parallel(R_delta, CPE_tissue)"
+lempka_cpe = "CPE_dl"
 lempka_tissue = "R_inf + parallel(R_delta, CPE_tissue)"
+lempka_full = lempka_cpe + "+ " + lempka_tissue
 
 ecm_full = ifit.get_equivalent_circuit_model(lempka_full)
 ecm_tissue = ifit.get_equivalent_circuit_model(lempka_tissue)
+ecm_cpe = ifit.get_equivalent_circuit_model(lempka_cpe)
+
+# Load results
+
+sim_impedance = pd.read_csv("Results_LempkaImpedance_spectrum/impedance.csv")
+sim_frequencies = sim_impedance["freq"].to_numpy()
+omega = 2.0 * np.pi * sim_frequencies
+sim_Z = sim_impedance["real"].to_numpy() + 1j * sim_impedance["imag"].to_numpy()
+sim_impedance_no_interface = pd.read_csv(
+    "Results_NoInterface_Lempka_Spectrum/impedance.csv"
+)
+assert np.all(
+    np.isclose(sim_frequencies, sim_impedance_no_interface["freq"].to_numpy())
+)
+sim_no_interface_Z = (
+    sim_impedance_no_interface["real"].to_numpy()
+    + 1j * sim_impedance_no_interface["imag"].to_numpy()
+)
 
 # --- Parameter sets from Lempka 2009 ---
 # Note: R_delta and CPE_tissue parameters are rough estimates from the paper
@@ -76,17 +94,21 @@ param_sets = {
 # --- Compute impedance for each parameter set ---
 Z_full = {}
 Z_tissue = {}
+Z_cpe = {}
 for name, params in param_sets.items():
     Z_full[name] = ecm_full.eval(omega=omega, **params)
     Z_tissue[name] = ecm_tissue.eval(omega=omega, **params)
+    Z_cpe[name] = ecm_cpe.eval(omega=omega, **params)
 
 # --- Bode plot: |Z| and phase ---
 fig, (ax_mag, ax_phase) = plt.subplots(2, 1, sharex=True, figsize=(7, 6))
 
 for name in param_sets:
     Z = Z_full[name]
-    ax_mag.plot(frequencies, np.abs(Z), label=name)
-    ax_phase.plot(frequencies, np.angle(Z, deg=True), label=name)
+    ax_mag.plot(sim_frequencies, np.abs(Z), label=name)
+    ax_phase.plot(sim_frequencies, np.angle(Z, deg=True), label=name)
+ax_mag.plot(sim_frequencies, np.abs(sim_Z), label="Simulation")
+ax_phase.plot(sim_frequencies, np.angle(sim_Z, deg=True), label="Simulation")
 
 ax_mag.set_ylabel(r"|Z| / $\Omega$")
 ax_mag.set_xscale("log")
@@ -109,8 +131,15 @@ plt.show()
 fig2, (ax2_mag, ax2_phase) = plt.subplots(2, 1, sharex=True, figsize=(7, 6))
 
 ref_name = "Day 1"
-ax2_mag.plot(frequencies, np.abs(Z_full[ref_name]), label="Full model")
-ax2_mag.plot(frequencies, np.abs(Z_tissue[ref_name]), label="Tissue only", ls="dashed")
+ax2_mag.plot(sim_frequencies, np.abs(sim_Z), label="Full model")
+ax2_mag.plot(
+    sim_frequencies,
+    np.abs(sim_no_interface_Z + Z_cpe[ref_name]),
+    label="Full model (estimated)",
+)
+ax2_mag.plot(
+    sim_frequencies, np.abs(sim_no_interface_Z), label="Tissue only", ls="dashed"
+)
 ax2_mag.set_ylabel(r"|Z| / $\Omega$")
 ax2_mag.set_xscale("log")
 ax2_mag.set_yscale("log")
@@ -118,10 +147,15 @@ ax2_mag.legend()
 ax2_mag.grid(True, which="both", ls=":", alpha=0.5)
 ax2_mag.set_title(f"Lempka 2009 — Full model vs tissue contribution ({ref_name})")
 
-ax2_phase.plot(frequencies, np.angle(Z_full[ref_name], deg=True), label="Full model")
+ax2_phase.plot(sim_frequencies, np.angle(sim_Z, deg=True), label="Full model")
 ax2_phase.plot(
-    frequencies,
-    np.angle(Z_tissue[ref_name], deg=True),
+    sim_frequencies,
+    np.angle(sim_no_interface_Z + Z_cpe[ref_name], deg=True),
+    label="Full model (estimated)",
+)
+ax2_phase.plot(
+    sim_frequencies,
+    np.angle(sim_no_interface_Z, deg=True),
     label="Tissue only",
     ls="dashed",
 )
@@ -140,8 +174,10 @@ plt.show()
 fig3, ax3 = plt.subplots(figsize=(7, 6))
 
 for name in param_sets:
-    Z = Z_full[name]
+    # Z = Z_full[name]
+    Z = sim_no_interface_Z + Z_cpe[name]
     ax3.plot(Z.real, -Z.imag, label=name)
+ax3.plot(sim_Z.real, -sim_Z.imag, label="Simulation")
 
 ax3.set_xlabel(r"Re(Z) / $\Omega$")
 ax3.set_ylabel(r"$-$Im(Z) / $\Omega$")

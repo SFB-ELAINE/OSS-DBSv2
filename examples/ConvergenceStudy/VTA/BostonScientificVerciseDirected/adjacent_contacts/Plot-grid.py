@@ -13,31 +13,57 @@ plt.rcParams["text.latex.preamble"] = (
     r"\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother"
 )
 
-convergence_threshold = 5.0  # in %
+convergence_threshold = 1.0  # in %
 
 data = pd.read_csv("vta_results_summary.csv")
 data["roman"] = data["roman"].astype("string")
 
-columns_to_plot = ["time", "dofs", "imp_rel_error", "ngs_vta_volume_rel_error"]
-labels = ["Time / s", "DOFs", r"Rel. err. impedance / \%", r"Rel. err. VTA / \%"]
-scales = ["linear", "log", "linear", "linear"]
+columns_to_plot = [
+    "time",
+    "dofs",
+    "ngs_vta_volume",
+    "imp",
+    "imp_rel_error",
+    "ngs_vta_volume_rel_error",
+]
+labels = [
+    "Time / s",
+    "DOFs",
+    r"VTA volume / mm$^3$",
+    r"Impedance / $\Omega$",
+    r"Rel. err. impedance / \%",
+    r"Rel. err. VTA / \%",
+]
+scales = ["log", "log", "linear", "linear", "linear", "linear"]
 
-data["not_converged"] = (data["imp_rel_error"] > convergence_threshold) | (
-    data["ngs_vta_volume_rel_error"] > convergence_threshold
+converged = (data["imp_rel_error"] <= convergence_threshold) & (
+    data["ngs_vta_volume_rel_error"] <= convergence_threshold
 )
 
-g = sns.PairGrid(
-    data, x_vars=data[columns_to_plot], y_vars=["roman"], height=4, hue="not_converged"
-)
+g = sns.PairGrid(data, x_vars=data[columns_to_plot], y_vars=["roman"], height=4)
 g.map(
     sns.stripplot,
     size=10,
     orient="h",
     jitter=False,
-    palette="flare_r",
     linewidth=1,
     edgecolor="w",
 )
+
+# Overlay orange dots for converged strategies
+for ax_idx, col in enumerate(columns_to_plot):
+    ax = g.axes.flat[ax_idx]
+    for y_pos, (_, row) in enumerate(data.iterrows()):
+        if converged.iloc[y_pos]:
+            ax.scatter(
+                row[col],
+                y_pos,
+                color="orange",
+                s=100,
+                zorder=5,
+                edgecolor="w",
+                linewidth=1,
+            )
 
 for ax, label, scale in zip(g.axes.flat, labels, scales, strict=False):
     # Make the grid horizontal instead of vertical

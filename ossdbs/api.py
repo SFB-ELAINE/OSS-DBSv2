@@ -584,9 +584,9 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
         volume_conductor = prepare_volume_conductor_model(
             settings, geometry, conductivity, solver
         )
-        volume_conductor.prepare_mesh_refinements(
-            settings["Mesh"]["MaterialRefinementSteps"]
-        )
+        # The loaded mesh already has h-refinement (material bisection)
+        # baked in.  Apply HP refinement and rebuild the FEM space.
+        volume_conductor.apply_hp_and_update_space()
         _logger.info(f"Running with contacts:\n{volume_conductor.contacts}")
 
         volume_conductor.output_path = settings["OutputPath"] + contact.name

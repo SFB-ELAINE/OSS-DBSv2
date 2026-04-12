@@ -95,6 +95,12 @@ class VolumeConductor(ABC):
         else:
             self.mesh.generate_mesh(meshing_parameters)
 
+        # Ensure HP refinement params are stored even when loading a
+        # mesh (generate_mesh stores them, load_mesh does not).
+        hp_params = meshing_parameters.get("HPRefinement")
+        if hp_params is not None and hp_params.get("Active"):
+            self.mesh.set_hp_refinement_params(hp_params)
+
         if meshing_parameters["SaveMesh"]:
             self.mesh.save(meshing_parameters["SavePath"])
 
@@ -124,6 +130,24 @@ class VolumeConductor(ABC):
         """Apply material and HP mesh refinements."""
         self.refine_mesh_by_material(material_mesh_refinement_steps)
         # HP refinement must come after bisection-based material refinement
+        self.mesh.apply_hp_refinement()
+        self.update_space()
+
+    def apply_h_refinements(self, material_mesh_refinement_steps: int = 0):
+        """Apply only h-refinements (material bisection).
+
+        Use this when the mesh will be saved for later reuse
+        (e.g. StimSets).  HP refinement is deferred so it can be
+        applied on each loaded mesh instance.
+        """
+        self.refine_mesh_by_material(material_mesh_refinement_steps)
+
+    def apply_hp_and_update_space(self):
+        """Apply deferred HP refinement and rebuild the FEM space.
+
+        Call after loading an h-refined mesh to complete the
+        refinement pipeline.
+        """
         self.mesh.apply_hp_refinement()
         self.update_space()
 

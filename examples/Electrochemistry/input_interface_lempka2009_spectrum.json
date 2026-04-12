@@ -33,7 +33,6 @@
           "Current[A]": 0.0,
           "Voltage[V]": 1.0,
           "Floating": false,
-	  "MaxMeshSizeEdge": 0.05,
 	  "SurfaceImpedance":
 	  {"Model": "CPE_dl", "Parameters": {"dl_k": 1.5e6, "dl_alpha": 0.8}}
        },
@@ -42,15 +41,13 @@
           "Active": true,
           "Current[A]": 0.0,
           "Voltage[V]": 0.0,
-	  "MaxMeshSizeEdge": 0.05,
           "Floating": false
         }
       ],
       "EncapsulationLayer": {
         "Thickness[mm]": 0.0,
         "Material": "Blood",
-        "DielectricModel": "ColeCole4",
-        "MaxMeshSize": 0.1
+        "DielectricModel": "ColeCole4"
       }
     }
   ],
@@ -129,7 +126,7 @@
     "MeshElementOrder": 2,
     "MeshingHypothesis": {
       "Type": "Fine",
-      "MaxMeshSize": 1
+      "MaxMeshSize": 10
     },
     "HPRefinement": {
       "Active": true 

@@ -147,11 +147,11 @@ def main_run(input_settings: dict):
 
     # save Mesh for StimSets
     if settings["StimSets"]["Active"]:
-        settings["Mesh"]["SaveMesh"] = True
         settings["Mesh"]["SavePath"] = os.path.join(settings["OutputPath"], "tmp_mesh")
         settings["Mesh"]["LoadPath"] = os.path.join(
             settings["OutputPath"], "tmp_mesh.vol.gz"
         )
+        settings["Mesh"]["SaveMesh"] = False
         settings["Mesh"]["LoadMesh"] = False
         # because of floating
         settings["Solver"]["Preconditioner"] = "local"
@@ -162,11 +162,11 @@ def main_run(input_settings: dict):
         volume_conductor = prepare_volume_conductor_model(
             settings, geometry, conductivity, solver
         )
-        volume_conductor.prepare_mesh_refinements(
-            settings["Mesh"]["MaterialRefinementSteps"]
-        )
         frequency_domain_signal = prepare_stimulation_signal(settings)
         if not settings["StimSets"]["Active"]:
+            volume_conductor.prepare_mesh_refinements(
+                settings["Mesh"]["MaterialRefinementSteps"]
+            )
             vcm_timings = run_volume_conductor_model(
                 settings,
                 volume_conductor,
@@ -175,8 +175,13 @@ def main_run(input_settings: dict):
             )
             _logger.info(f"Volume conductor timings:\n{pprint.pformat(vcm_timings)}")
         else:
-            # mesh was saved already
-            settings["Mesh"]["SaveMesh"] = False
+            # Apply h-refinement (material bisection) and save the
+            # h-refined mesh.  HP refinement is deferred: it will be
+            # applied on each per-contact VCM after loading the mesh.
+            volume_conductor.apply_h_refinements(
+                settings["Mesh"]["MaterialRefinementSteps"]
+            )
+            volume_conductor.mesh.save(settings["Mesh"]["SavePath"])
             settings["Mesh"]["LoadMesh"] = True
             run_stim_sets(
                 settings, geometry, conductivity, solver, frequency_domain_signal

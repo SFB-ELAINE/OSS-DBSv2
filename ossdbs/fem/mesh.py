@@ -54,6 +54,16 @@ class Mesh:
             self._hp_refinement_params = meshing_parameters["HPRefinement"]
         self._mesh.Curve(order=self.order)
 
+    def set_hp_refinement_params(self, hp_params: dict) -> None:
+        """Store HP refinement parameters for deferred application.
+
+        This is used when loading a pre-existing mesh so that
+        apply_hp_refinement() can still be called later.
+        Existing stored parameters are overwritten.
+        """
+        if not self._hp_refinement_applied:
+            self._hp_refinement_params = hp_params
+
     @property
     def hp_refinement_applied(self) -> bool:
         """Whether HP refinement has been applied to this mesh."""

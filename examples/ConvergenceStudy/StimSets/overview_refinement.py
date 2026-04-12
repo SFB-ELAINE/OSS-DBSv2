@@ -23,6 +23,8 @@ result_directories = [
     "Results_PAM_fine_edge_refinement",
     "Results_PAM_material_refinement",
     "Results_PAM_edge_single_material_refinement",
+    "Results_PAM_hp_refinement",
+    "Results_PAM_hp_material_refinement",
 ]
 
 
@@ -80,7 +82,7 @@ for result_directory in result_directories:
     print("++++++++++++++")
 
 
-labels = ["I", "II", "III", "IV", "V"]
+labels = ["I", "II", "III", "IV", "V", "VI", "VII"]
 
 for idx, data_dict in enumerate([mean_diff_dict, max_diff_dict]):
     x_max = 0
