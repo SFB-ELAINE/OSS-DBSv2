@@ -1,9 +1,16 @@
-import matplotlib.pyplot as plt
+"""Generate pam_results_summary.csv for the StimSets convergence study.
+
+Reads the per-strategy overview CSVs (from evaluate_convergence.py)
+and VCM_report.json files to produce a summary table with DOFs,
+compute time, and per-pathway mean/max absolute error vs. best.
+"""
+
+import json
+import os
+
 import numpy as np
 import pandas as pd
-import seaborn as sns
 
-stim_sets_combinations = 254
 pathways = [
     "M1_cf_face_right",
     "M1_cf_lowerex_right",
@@ -12,113 +19,91 @@ pathways = [
     "R_M1_hdp_lowerex_right",
     "R_M1_hdp_upperex_right",
     "cerebellothalamic_right",
-    "medial_lemniscus_right",
     "gpe2stn_ass_right",
     "gpe2stn_sm_right",
+    "medial_lemniscus_right",
 ]
 
 result_directories = [
     "Results_PAM_default",
+    "Results_PAM_default_meshsize",
     "Results_PAM_fine",
-    "Results_PAM_fine_edge_refinement",
     "Results_PAM_material_refinement",
+    "Results_PAM_fine_edge_refinement",
     "Results_PAM_edge_single_material_refinement",
     "Results_PAM_hp_refinement",
     "Results_PAM_hp_material_refinement",
 ]
 
+best_directory = "Results_PAM_best"
 
-# Thanks to StackOverflow: https://stackoverflow.com/questions/34177378/pyplot-annotation-roman-numerals
-# Turn on LaTeX formatting for text
-plt.rcParams["text.usetex"] = True
-plt.rcParams["axes.labelsize"] = 18
+# Load best (reference) results
+best_df = pd.read_csv(f"{best_directory}_overview.csv")
 
-# Place the command in the text.latex.preamble using rcParams
-# ruff: noqa: E501
-plt.rcParams["text.latex.preamble"] = (
-    r"\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother"
-)
+# Get best DOF and timing
+best_vcm = json.load(open(f"{best_directory}E1C1/VCM_report.json"))
+best_dofs = best_vcm["DOF"]
+best_time = sum(best_vcm["Timings"]["ComputeSolution"])
+# Sum across all 8 contacts
+for i in range(2, 9):
+    vcm_path = f"{best_directory}E1C{i}/VCM_report.json"
+    if os.path.isfile(vcm_path):
+        vcm = json.load(open(vcm_path))
+        best_time += sum(vcm["Timings"]["ComputeSolution"])
 
-convergence_threshold = 5.0  # in %
-
-
-best_result = pd.read_csv("Results_PAM_best_overview.csv")
-columns = best_result.columns
-print(type(columns), type(columns[0]))
+# Build summary
+results_dict = {
+    "roman": [],
+    "study_name": [],
+    "time": [],
+    "dofs": [],
+}
 for pathway in pathways:
-    print(pathway in columns)
+    results_dict[f"Pathway_status_{pathway}.json_activated"] = []
+    results_dict[f"Pathway_status_{pathway}.json_activated_rel_error"] = []
+    results_dict[f"Pathway_status_{pathway}.json_activated_max_error"] = []
 
-# get best result
-mean_activations = []
-mean_diff_dict = {}
-max_diff_dict = {}
-mean_diff_dict["roman"] = []
-max_diff_dict["roman"] = []
-for pw_idx, _ in enumerate(pathways):
-    mean_diff_dict["roman"].append(rf"\rom{pw_idx + 1}")
-    max_diff_dict["roman"].append(rf"\rom{pw_idx + 1}")
-columns_to_plot = []
-for result_directory in result_directories:
-    print("++++++++++++++")
-    print(result_directory)
-    print("--------------")
-    print("Pathway, Mean activation, Mean difference, Max. difference")
-    df = pd.read_csv(result_directory + "_overview.csv")
-    mean_diff_dict[result_directory] = []
-    max_diff_dict[result_directory] = []
-    columns_to_plot.append(result_directory)
+for idx, result_dir in enumerate(result_directories):
+    study_name = result_dir.replace("Results_PAM_", "")
+
+    # DOF and timing from E1C1 VCM report
+    vcm_path = f"{result_dir}E1C1/VCM_report.json"
+    vcm = json.load(open(vcm_path))
+    dofs = vcm["DOF"]
+    time_total = sum(vcm["Timings"]["ComputeSolution"])
+    for i in range(2, 9):
+        vcm_path_i = f"{result_dir}E1C{i}/VCM_report.json"
+        if os.path.isfile(vcm_path_i):
+            vcm_i = json.load(open(vcm_path_i))
+            time_total += sum(vcm_i["Timings"]["ComputeSolution"])
+
+    results_dict["roman"].append(r"\rom{" f"{idx + 1}" "}")
+    results_dict["study_name"].append(study_name)
+    results_dict["dofs"].append(dofs)
+    results_dict["time"].append(time_total)
+
+    # Per-pathway activation and error (mean over 254 protocols)
+    df = pd.read_csv(f"{result_dir}_overview.csv")
     for pathway in pathways:
-        best_activation = best_result[pathway].to_numpy()
-        current_activation = df[pathway].to_numpy()
-        difference = np.abs(best_activation - current_activation)
-        mean_activation = np.mean(current_activation)
-        std_activation = np.std(current_activation)
-        mean_diff = np.mean(difference)
-        std_diff = np.std(difference)
-        max_diff = np.max(difference)
-        print(f"{pathway}, {mean_activation:.2f}, {mean_diff:.2f}, {max_diff:.2f}")
-        mean_diff_dict[result_directory].append(mean_diff)
-        max_diff_dict[result_directory].append(max_diff)
-    print("++++++++++++++")
+        mean_activation = df[pathway].mean()
+        abs_errors = np.abs(df[pathway].values - best_df[pathway].values)
+        mean_error = abs_errors.mean()
+        max_error = abs_errors.max()
+        results_dict[f"Pathway_status_{pathway}.json_activated"].append(mean_activation)
+        results_dict[f"Pathway_status_{pathway}.json_activated_rel_error"].append(
+            mean_error
+        )
+        results_dict[f"Pathway_status_{pathway}.json_activated_max_error"].append(
+            max_error
+        )
 
+summary = pd.DataFrame(results_dict)
+summary["best_time"] = best_time
+summary["best_dofs"] = best_dofs
 
-labels = ["I", "II", "III", "IV", "V", "VI", "VII"]
+for pathway in pathways:
+    summary[f"Pathway_status_{pathway}.json_activated_best"] = best_df[pathway].mean()
 
-for idx, data_dict in enumerate([mean_diff_dict, max_diff_dict]):
-    x_max = 0
-    data = pd.DataFrame(data_dict)
-    for result_directory in result_directories:
-        data["not_converged"] = data[result_directory] > convergence_threshold
-        print(data[[result_directory, "not_converged"]])
-        x_max = max(x_max, data[result_directory].max())
-
-    g = sns.PairGrid(
-        data,
-        x_vars=data[columns_to_plot],
-        y_vars=["roman"],
-        height=4,
-        hue="not_converged",
-    )
-    g.map(
-        sns.stripplot,
-        size=10,
-        orient="h",
-        jitter=False,
-        palette="flare_r",
-        linewidth=1,
-        edgecolor="w",
-    )
-
-    for ax, _ in zip(g.axes.flat, labels, strict=False):
-        # Make the grid horizontal instead of vertical
-        ax.xaxis.grid(False)
-        ax.yaxis.grid(True)
-        # set labels and scales
-        # ax.set(xlabel=label)
-        ax.set(xlim=(-0.25, x_max * 1.1))
-        ax.set(xlabel="Rel. error")
-        ax.set(ylabel="Pathway")
-    sns.despine(left=True, bottom=False)
-    plt.savefig(f"pam_convergence_overview_{idx}.pdf")
-    plt.savefig(f"pam_convergence_overview_{idx}.svg")
-    plt.close()
+summary.to_csv("pam_results_summary.csv", index=False)
+print("Wrote pam_results_summary.csv")
+print(summary[["roman", "study_name", "dofs", "time"]].to_string(index=False))
