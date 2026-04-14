@@ -36,6 +36,9 @@ electrochemical model, e.g., a constant-phase element).
 | `input_interface_1kOhm_1active_1floating.json` | Mixed: 1 active contact + 1 floating with 1 kOhm interface |
 | `input_interface_lempka2009.json` | Lempka 2009 CPE model (`CPE_dl`, k=1.5e6, alpha=0.8) at 100 Hz |
 | `input_no_interface_lempka2009.json` | Same geometry, without surface impedance |
+| `input_interface_lempka2009_spectrum.json` | Day 1 CPE (`dl_k=1.5e6, dl_alpha=0.8`) over 200 frequencies 10 Hz–100 kHz |
+| `input_interface_lempka2009_day15_spectrum.json` | Day 15 CPE (`dl_k=1e6, dl_alpha=0.75`) over the same 200-frequency grid |
+| `input_no_interface_lempka2009_spectrum.json` | Pure Dirichlet tissue-only reference over the same 200-frequency grid |
 | `input_admittance_matrix.json` | 3-contact current-controlled setup for admittance/impedance matrix |
 
 ### Manual NGSolve scripts
@@ -62,26 +65,36 @@ The reference outputs of `Simulation_hp_EQS.py` and
 - `benchmark/results_Z_pure_float.csv`
 
 To check the current implementation against these reference values, first
-re-run the two manual simulations (they write fresh CSVs into the current
-directory) and then run `check_benchmarks.py`:
+re-run the two manual simulations and the corresponding OSS-DBS JSON
+inputs, then run `check_benchmarks.py`:
 
 ```bash
+# Manual NGSolve scripts (produce CSVs in the current directory)
 python Simulation_hp_EQS.py
 python Simulation_hp_EQS_pure_float.py
+
+# OSS-DBS JSON inputs (populate Results_*/ folders)
+ossdbs input_interface_1kOhm_EQS.json
+ossdbs input_interface_1kOhm_floating.json
+
+# Compare everything against the benchmarks
 python check_benchmarks.py
 ```
 
 The check uses a 5% relative tolerance per physical quantity (`I`, `I1`,
 `I2`, `V1`, `V2`, `Field`) to absorb mesh-randomness differences across
-runs/machines.
+runs/machines. For the OSS-DBS comparisons, the check is sign-invariant
+because OSS-DBS and the manual scripts use opposite sign conventions for
+contact currents.
 
 ### Verification scripts
 
 | Script | Purpose |
 |--------|---------|
 | `check_impedance.py` | Verifies the impedance decomposition `Z_total ≈ Z_tissue + Z_interface` for the OSS-DBS JSON examples (see *Verifying the impedance decomposition* below). |
-| `check_benchmarks.py` | Compares the manual NGSolve scripts against the reference CSVs in `benchmark/`. |
-| `plot_impedance_spectrum.py` | Plots the Lempka 2009 electrode-tissue interface model (Bode, Nyquist, tissue-vs-full decomposition). |
+| `check_benchmarks.py` | Compares both the manual NGSolve scripts and the OSS-DBS JSON runs against the reference CSVs in `benchmark/`. |
+| `plot_impedance_spectrum.py` | Bode/Nyquist comparison of the full FEM run (`Results_LempkaImpedance_spectrum`) against `Z_tissue_FEM + Z_CPE_dl` for each Lempka 2009 parameter set (Day 1/15, pre/post stim). |
+| `plot_impedance_spectrum_day1_vs_day15.py` | Overlays the Day 1 and Day 15 FEM spectra against their respective `Z_tissue_FEM + Z_CPE_dl` decompositions, plus a per-frequency relative-error plot. |
 
 ### Verification results
 
@@ -128,6 +141,23 @@ The small (~1%) discrepancy arises because the Robin BC modifies the current
 distribution in the tissue volume. The tissue impedance is not identical
 between the two runs -- it shifts slightly when the surface impedance is
 present, since the two components are coupled through the FEM solution.
+
+For a frequency-swept version of the same check, run the spectrum inputs
+and then one of the plot scripts:
+
+```bash
+ossdbs input_interface_lempka2009_spectrum.json
+ossdbs input_interface_lempka2009_day15_spectrum.json
+ossdbs input_no_interface_lempka2009_spectrum.json
+
+python plot_impedance_spectrum.py             # Day 1 vs all 4 parameter sets
+python plot_impedance_spectrum_day1_vs_day15.py  # Day 1 vs Day 15 overlay + error
+```
+
+Both plot scripts construct the decomposition as `Z_tissue_FEM(f) +
+Z_CPE_dl(f)` using the FEM tissue spectrum (not an ECM tissue model) and
+compare it against the full FEM spectrum. Max relative error is ~2% around
+1–2 kHz for both Day 1 and Day 15.
 
 ## Admittance and impedance matrix for multicontact stimulation
 
