@@ -142,6 +142,12 @@ def main_run(input_settings: dict):
                     "as a floating-point number. "
                     "Set e.g. to 20 for 20 times pulse + counterpulse width."
                 )
+            if truncation_ratio < 1.0:
+                raise ValueError(
+                    "The truncation ratio is a multiple of the "
+                    "active signal part."
+                    "Values smaller than 1.0 are not permitted."
+                )
             time_domain_signal = generate_signal(settings)
             truncation_time = truncation_ratio * time_domain_signal.get_active_time()
 

@@ -133,7 +133,7 @@ def main():
     args = parser.parse_args()
 
     # Truncation ratios to be checked
-    to_run = [0, 5, 10, 20, 30]
+    to_run = [5, 10, 20, 30]
 
     ossdbs.set_logger(level=args.loglevel)
     logger = logging.getLogger("ossdbs")
