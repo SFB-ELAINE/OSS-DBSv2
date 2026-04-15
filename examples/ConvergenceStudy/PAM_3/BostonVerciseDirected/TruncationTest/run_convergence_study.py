@@ -132,20 +132,22 @@ def main():
     )
     args = parser.parse_args()
 
-    # Truncation ratios to be checked
-    to_run = [5, 10, 20, 30]
+    # Truncation ratios to be checked (None = no truncation)
+    to_run = [None, 5, 10, 20, 30]
 
     ossdbs.set_logger(level=args.loglevel)
     logger = logging.getLogger("ossdbs")
     base, mri_image, perimeter = setup_base_config()
 
-    for name in to_run:
+    for ratio in to_run:
+        label = "none" if ratio is None else str(ratio)
         print(f"\n{'=' * 60}")
-        print(f"Running strategy: {name}")
+        print(f"Running strategy: truncation_{label}")
         print(f"{'=' * 60}")
         cfg = configure_hp_material_refinement(base, mri_image, perimeter)
-        cfg["TruncateAfterActivePartRatio"] = float(name)
-        cfg["OutputPath"] = f"Results_PAM_truncation_{name}"
+        if ratio is not None:
+            cfg["TruncateAfterActivePartRatio"] = float(ratio)
+        cfg["OutputPath"] = f"Results_PAM_truncation_{label}"
         run_strategy(cfg, logger)
 
     print(f"\nCompleted {len(to_run)} strategy(ies).")
