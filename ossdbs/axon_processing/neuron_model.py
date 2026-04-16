@@ -21,9 +21,6 @@ from .utilities import (
     store_axon_statuses,
 )
 
-# for PyInstaller support
-mp.freeze_support()
-
 _logger = logging.getLogger(__name__)
 
 # Use 'spawn' context for multiprocessing to ensure clean NEURON state in children.

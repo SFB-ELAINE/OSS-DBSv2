@@ -4,6 +4,7 @@
 import argparse
 import json
 import logging
+import multiprocessing
 
 from ossdbs import set_logger
 from ossdbs.api import run_PAM
@@ -55,4 +56,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     main()

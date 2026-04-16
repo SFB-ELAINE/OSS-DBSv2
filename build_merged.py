@@ -58,6 +58,7 @@ HIDDEN_IMPORTS = [
 ]
 
 COLLECT_ALL = [
+    "ossdbs",
     "ngsolve",
     "neuron",
     "dipy",
