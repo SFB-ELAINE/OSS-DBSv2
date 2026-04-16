@@ -21,10 +21,8 @@ threshold = 0.01
 
 # get frequencies
 signal = RectangleSignal(frequency, pulse_width, inter_pulse_width, counter_pulse_width)
-fft_frequencies, fft_signal = signal.get_fft_spectrum(cutoff_frequency)
-first_negative_freq = np.argwhere(fft_frequencies < 0)[0, 0]
-frequencies = fft_frequencies[:first_negative_freq]
-frequency_indices = get_octave_band_indices(frequencies)
+fft_frequencies, fft_signal, signal_length = signal.get_fft_spectrum(cutoff_frequency)
+frequency_indices = get_octave_band_indices(fft_frequencies)
 frequencies = frequency_indices * frequency
 
 modelCC4 = dielectric_models["ColeCole4"]

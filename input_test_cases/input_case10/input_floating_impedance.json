@@ -88,19 +88,23 @@
     "CutoffFrequency": 1e6
   },
   "Mesh": {
-    "LoadMesh": true,
-    "LoadPath": "mesh.vol.gz", 
+    "LoadMesh": false,
+    "LoadPath": "mesh.vol.gz",
     "MeshElementOrder": 2,
     "MeshingHypothesis": {
-      "Type": "Default",
-      "MaxMeshSize": 1e6 
+      "Type": "Moderate"
+    },
+    "HPRefinement": {
+      "Active": true,
+      "Levels": 2,
+      "Factor": 0.125
     },
     "MeshSize": {
       "Edges": {},
       "Faces": {},
       "Volumes": {}
     },
-    "SaveMesh": true 
+    "SaveMesh": false
   },
   "Solver": {
     "Type": "CG",

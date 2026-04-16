@@ -405,6 +405,8 @@ class VolumeConductor(ABC):
                         else:
                             self._impedances[band_indices] = amr_metric
                     if estimate_currents:
+                        # recompute currents on the final refined mesh
+                        estimated_currents = self.estimate_currents()
                         for contact in self.contacts:
                             self._currents[contact.name][band_indices] = (
                                 estimated_currents[contact.name]
@@ -680,12 +682,6 @@ class VolumeConductor(ABC):
             if contact.surface_impedance_model is not None:
                 floating_with_surface_impedance += 1
             sum_currents += contact.current
-        if floating_with_surface_impedance > 0 and not new_signal.current_controlled:
-            raise ValueError(
-                "Surface impedance floating mode requires "
-                "current-controlled stimulation."
-            )
-
         if new_signal.current_controlled:
             voltages_active = np.zeros(len(self.contacts.active))
             for idx, contact in enumerate(self.contacts.active):
@@ -867,7 +863,7 @@ class VolumeConductor(ABC):
                 voltage = contact.voltage
                 voltage_diff += (-1) ** idx * contact.voltage
                 if contact.surface_impedance_model is not None:
-                    interface_addmittance = ngsolve.CF(
+                    interface_admittance = ngsolve.CF(
                         1.0 / self._surface_impedances[contact.name]
                     )
                     diff = (
@@ -875,7 +871,25 @@ class VolumeConductor(ABC):
                         - self.potential
                     )
                     power += ngsolve.Integrate(
-                        interface_addmittance * diff * ngsolve.Conj(diff),
+                        interface_admittance * diff * ngsolve.Conj(diff),
+                        mesh=self.mesh.ngsolvemesh,
+                        definedon=self.mesh.ngsolvemesh.Boundaries(contact.name),
+                    )
+            # Add surface-impedance dissipation for floating contacts.
+            # contact.voltage holds the computed u_k after
+            # _update_floating_voltages().  Without this term the scalar
+            # Z = V^2 / P under-counts P and over-estimates |Z|.
+            for contact in self.contacts.floating:
+                if contact.surface_impedance_model is not None:
+                    interface_admittance = ngsolve.CF(
+                        1.0 / self._surface_impedances[contact.name]
+                    )
+                    diff = (
+                        self.mesh.boundary_coefficients({contact.name: contact.voltage})
+                        - self.potential
+                    )
+                    power += ngsolve.Integrate(
+                        interface_admittance * diff * ngsolve.Conj(diff),
                         mesh=self.mesh.ngsolvemesh,
                         definedon=self.mesh.ngsolvemesh.Boundaries(contact.name),
                     )
@@ -1009,9 +1023,10 @@ class VolumeConductor(ABC):
             surface_impedances = None
 
         # create temporary Dirichlet space and grid function
-        # include BrainSurface as Dirichlet u=0 (ground reference)
+        # include the outer brain surface as Dirichlet u=0 (ground reference)
         # so that Y is non-singular and all contacts appear in Z
-        dirichlet_boundaries = [*contact_names, "BrainSurface"]
+        brain_surfaces = self._model_geometry.brain_surface_names
+        dirichlet_boundaries = [*contact_names, *brain_surfaces]
         space = self.h1_space(
             boundaries=dirichlet_boundaries, is_complex=self.is_complex
         )
@@ -1293,7 +1308,7 @@ class VolumeConductor(ABC):
 
         Exports flat-format CSV with columns: freq, row, col, real, imag.
         Both matrices are NxN (all stimulation contacts), with the
-        BrainSurface as the implicit ground reference.
+        outer brain surface as the implicit ground reference.
         """
         contacts = self.contacts.active
         if self.current_controlled:

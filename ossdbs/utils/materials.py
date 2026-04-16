@@ -58,8 +58,8 @@ def have_dielectric_properties_changed(
         new_omega = 2.0 * np.pi * new_freq
 
         if is_complex:
-            old_value = model.conductivity(old_omega)
-            new_value = model.conductivity(new_omega)
+            old_value = model.complex_conductivity(old_omega)
+            new_value = model.complex_conductivity(new_omega)
             # Compute relative errors for real and imaginary parts
             error_real = np.abs(old_value.real - new_value.real)
             error_real /= np.abs(old_value)

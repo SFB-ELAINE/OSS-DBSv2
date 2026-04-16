@@ -29,24 +29,36 @@
       "Contacts": [
         {
           "Contact_ID": 1,
-          "Active": true,
-          "Current[A]": 0.0,
-          "Voltage[V]": 1.0,
-          "Floating": false
+          "Active": false,
+          "Current[A]": 1e-3,
+          "Voltage[V]": 0.0,
+          "SurfaceImpedance": {
+            "Model": "R",
+            "Parameters": {"R": 1e3}
+          },
+          "Floating": true
         },
         {
           "Contact_ID": 2,
           "Active": false,
           "Current[A]": 0.0,
           "Voltage[V]": 0.0,
+          "SurfaceImpedance": {
+            "Model": "R",
+            "Parameters": {"R": 1e3}
+          },
           "Floating": true
         },
         {
           "Contact_ID": 3,
-          "Active": true,
-          "Current[A]": 0.0,
+          "Active": false,
+          "Current[A]": -1e-3,
           "Voltage[V]": 0.0,
-          "Floating": false
+          "SurfaceImpedance": {
+            "Model": "R",
+            "Parameters": {"R": 1e3}
+          },
+          "Floating": true
         }
       ],
       "EncapsulationLayer": {
@@ -73,7 +85,7 @@
     "Type": "ColeCole4"
   },
   "StimulationSignal": {
-    "CurrentControlled": false,
+    "CurrentControlled": true,
     "Type": "Rectangle",
     "SpectrumMode": "OctaveBand",
     "Frequency[Hz]": 130.0,
@@ -135,8 +147,9 @@
   },
   "EQSMode": true,
   "FEMOrder": 2,
-  "OutputPath": "Results_floating",
+  "OutputPath": "Results_floating_impedance_noground",
   "ComputeImpedance": true,
-  "ExportVTK": true,
-  "ExportElectrode": true
+  "ExportVTK": false,
+  "ExportElectrode": false,
+  "ComputeCurrents": true
 }

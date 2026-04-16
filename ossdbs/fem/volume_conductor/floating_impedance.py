@@ -92,7 +92,7 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
         )
 
         _logger.debug("Bilinear form")
-        bilinear_form = self.__bilinear_form(self._sigma, self._space, frequency)
+        bilinear_form = self.__bilinear_form(self._sigma, self._space)
         _logger.debug("Linear form")
         linear_form = self.__linear_form(self._space)
         _logger.debug("Solve BVP")
@@ -118,14 +118,14 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
             spaces.append(self.number_space())
         return ngsolve.FESpace(spaces=spaces)
 
-    def __bilinear_form(self, sigma, space, frequency) -> ngsolve.BilinearForm:
+    def __bilinear_form(self, sigma, space) -> ngsolve.BilinearForm:
         """Bilinear form."""
         bilinear_form = ngsolve.BilinearForm(space)
         trial = space.TrialFunction()
         test = space.TestFunction()
         u = trial[0]
         v = test[0]
-        _logger.debug("Creating space with {len(u)} subspaces")
+        _logger.debug(f"Creating bilinear form with {len(space.components)} subspaces")
 
         n_float = len(self._surface_impedance_floating_boundaries)
 

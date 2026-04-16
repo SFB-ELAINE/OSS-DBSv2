@@ -43,6 +43,11 @@ class ModelGeometry:
         self.update_contact_areas()
 
     @property
+    def brain_surface_names(self) -> list[str]:
+        """Return the boundary names of the outer brain surface."""
+        return self._brain.get_surface_names()
+
+    @property
     def geometry(self) -> netgen.occ.OCCGeometry:
         """Return netgen geometry of the model.
 
@@ -195,6 +200,12 @@ class ModelGeometry:
                     raise ValueError("No surface impedance model provided.")
                 if "Parameters" not in value:
                     raise ValueError("No surface impedance model parameters provided.")
+                # Skip when no model is requested — the defaults injected by
+                # settings.py ({"Model": None, "Parameters": {}}) would
+                # otherwise set surface_impedance_parameters to {} and trip a
+                # spurious warning in check_contact.
+                if value["Model"] is None:
+                    continue
                 contact.surface_impedance_model = value["Model"]
                 contact.surface_impedance_parameters = value["Parameters"]
             elif setting == "MaxMeshSize":
