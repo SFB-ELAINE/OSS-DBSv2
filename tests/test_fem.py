@@ -1,14 +1,19 @@
 import json
+import math
 import os
+from copy import deepcopy
 
+import ngsolve
 import numpy as np
 import pytest
+from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Z
 
 import ossdbs
 from ossdbs.fem.mesh import Mesh
 from ossdbs.fem.preconditioner import (
     AMGPreconditioner,
     BDDCPreconditioner,
+    CustomizedLocalPreconditioner,
     DirectPreconditioner,
     LocalPreconditioner,
     MultigridPreconditioner,
@@ -28,6 +33,7 @@ class TestPreconditioner:
         [
             AMGPreconditioner,
             BDDCPreconditioner,
+            CustomizedLocalPreconditioner,
             DirectPreconditioner,
             LocalPreconditioner,
             MultigridPreconditioner,
@@ -85,6 +91,55 @@ def geometry_fixture(settings_fixture):
     brain = ossdbs.BrainGeometry(settings["BrainRegion"]["Shape"], brain_region)
     geometry = ossdbs.ModelGeometry(brain, electrodes)
     return brain_region, electrodes, geometry
+
+
+def _build_volume_conductor_with_solver(
+    settings: dict,
+    solver,
+):
+    """Build a volume conductor for a given solver on the stable case-1 setup."""
+    local_settings = deepcopy(settings)
+    local_settings["MaterialDistribution"]["MRIPath"] = os.path.join(
+        os.getcwd(), "input_files/sub-John_Doe/JD_segmask.nii.gz"
+    )
+    local_settings["MaterialDistribution"]["DiffusionTensorActive"] = True
+    local_settings["MaterialDistribution"]["DTIPath"] = os.path.join(
+        os.getcwd(), "input_files/sub-John_Doe/JD_DTI_NormMapping.nii.gz"
+    )
+    mri_image, _ = ossdbs.load_images(local_settings)
+    brain_region = ossdbs.create_bounding_box(local_settings["BrainRegion"])
+    electrodes = ossdbs.generate_electrodes(local_settings)
+    brain = ossdbs.BrainGeometry(local_settings["BrainRegion"]["Shape"], brain_region)
+    geometry = ossdbs.ModelGeometry(brain, electrodes)
+    ossdbs.set_contact_and_encapsulation_layer_properties(local_settings, geometry)
+
+    dielectric_model = ossdbs.prepare_dielectric_properties(local_settings)
+    materials = local_settings["MaterialDistribution"]["MRIMapping"]
+    conductivity = ossdbs.ConductivityCF(
+        mri_image,
+        brain_region,
+        dielectric_model,
+        materials,
+        geometry.encapsulation_layers,
+        complex_data=local_settings["EQSMode"],
+    )
+
+    floating_mode = geometry.get_floating_mode()
+    volume_conductor_classes = {
+        "Floating": VolumeConductorFloating,
+        "FloatingImpedance": VolumeConductorFloatingImpedance,
+        "NonFloating": VolumeConductorNonFloating,
+    }
+    volume_conductor_class = volume_conductor_classes.get(
+        floating_mode, VolumeConductorNonFloating
+    )
+    return volume_conductor_class(
+        geometry,
+        conductivity,
+        solver,
+        local_settings["FEMOrder"],
+        local_settings["Mesh"],
+    )
 
 
 class TestMesh:
@@ -238,3 +293,155 @@ class TestVolumeConductorModel:
             assert volume_conductor is not None
         except Exception:
             pytest.fail("Cannot be instantiated.")
+
+
+class TestCustomizedLocalPreconditioner:
+    def test_customized_local_cg_solver_runs(
+        self, settings_fixture, mri_fixture, geometry_fixture
+    ):
+        mri_image, _ = mri_fixture
+        brain_region, _, geometry = geometry_fixture
+        dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
+        materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
+        ossdbs.set_contact_and_encapsulation_layer_properties(
+            settings_fixture, geometry
+        )
+
+        solver = CGSolver(
+            precond_par=CustomizedLocalPreconditioner(),
+            maxsteps=2000,
+            precision=1e-10,
+        )
+
+        conductivity = ossdbs.ConductivityCF(
+            mri_image,
+            brain_region,
+            dielectric_model,
+            materials,
+            geometry.encapsulation_layers,
+            complex_data=settings_fixture["EQSMode"],
+        )
+
+        floating_mode = geometry.get_floating_mode()
+        volume_conductor_classes = {
+            "Floating": VolumeConductorFloating,
+            "FloatingImpedance": VolumeConductorFloatingImpedance,
+            "NonFloating": VolumeConductorNonFloating,
+        }
+        VolumeConductorClass = volume_conductor_classes.get(
+            floating_mode, VolumeConductorNonFloating
+        )
+
+        volume_conductor = VolumeConductorClass(
+            geometry,
+            conductivity,
+            solver,
+            settings_fixture["FEMOrder"],
+            settings_fixture["Mesh"],
+        )
+
+        volume_conductor.compute_solution(10000.0)
+
+        sol = volume_conductor._potential.vec.FV().NumPy()
+        assert np.all(np.isfinite(sol)), (
+            "Customized local preconditioner produced NaN/Inf values."
+        )
+        assert not np.allclose(sol, 0.0), (
+            "Customized local preconditioner produced a trivial zero solution."
+        )
+
+    def test_customized_local_impedance_matches_native_local(
+        self, settings_fixture
+    ) -> None:
+        local_solver = CGSolver(
+            precond_par=LocalPreconditioner(),
+            maxsteps=2000,
+            precision=1e-10,
+        )
+        customized_solver = CGSolver(
+            precond_par=CustomizedLocalPreconditioner(),
+            maxsteps=2000,
+            precision=1e-10,
+        )
+
+        local_volume_conductor = _build_volume_conductor_with_solver(
+            settings_fixture, local_solver
+        )
+        customized_volume_conductor = _build_volume_conductor_with_solver(
+            settings_fixture, customized_solver
+        )
+
+        local_volume_conductor.compute_solution(10000.0)
+        customized_volume_conductor.compute_solution(10000.0)
+
+        local_impedance = local_volume_conductor.compute_impedance()
+        customized_impedance = customized_volume_conductor.compute_impedance()
+
+        assert np.isfinite(local_impedance), "Native local impedance is not finite."
+        assert np.isfinite(customized_impedance), (
+            "Customized local impedance is not finite."
+        )
+
+        relative_difference = abs(customized_impedance - local_impedance) / abs(
+            local_impedance
+        )
+        assert relative_difference < 1e-2, (
+            "Customized local impedance deviates too much from native local "
+            f"({relative_difference:.3%})."
+        )
+
+
+class TestHPRefineCurvedBoundaryIntegration:
+    """Regression test for NGSolve bug in 6.2.2602:
+    Integrate on curved boundaries returns NaN inside TaskManager
+    after RefineHP + Curve applied outside TaskManager.
+    """
+
+    @pytest.fixture
+    def hp_refined_mesh(self):
+        box = Box(Pnt(-2, -2, -2), Pnt(2, 2, 2))
+        cyl = Cylinder(Pnt(0, 0, -1), Z, r=0.5, h=2)
+        cyl.faces.Max(Z).name = "contact_top"
+        cyl.faces.Min(Z).name = "contact_bottom"
+        box.faces.name = "outer"
+        geo = OCCGeometry(box - cyl)
+
+        with ngsolve.TaskManager():
+            mesh = ngsolve.Mesh(geo.GenerateMesh(maxh=0.5))
+            mesh.Curve(2)
+
+        mesh.RefineHP(levels=2, factor=0.125)
+        mesh.Curve(2)
+        return mesh
+
+    def test_curved_boundary_integration_not_nan(self, hp_refined_mesh):
+        """Curved boundary integration inside TaskManager must not return NaN."""
+        with ngsolve.TaskManager():
+            val = ngsolve.Integrate(
+                ngsolve.CF(1.0) * ngsolve.ds("contact_top"), hp_refined_mesh
+            )
+        assert not math.isnan(val), (
+            "Integrate on curved boundary 'contact_top' returned NaN inside TaskManager. "
+            "This is a known NGSolve 6.2.2602 regression."
+        )
+
+    def test_curved_boundary_area_accuracy(self, hp_refined_mesh):
+        """Curved boundary area must be close to the analytical value."""
+        expected_area = math.pi * 0.5**2  # disk of radius 0.5
+        with ngsolve.TaskManager():
+            val = ngsolve.Integrate(
+                ngsolve.CF(1.0) * ngsolve.ds("contact_top"), hp_refined_mesh
+            )
+        assert abs(val - expected_area) < 0.02, (
+            f"Integrate on 'contact_top' = {val}, expected ~{expected_area:.4f}"
+        )
+
+    def test_flat_boundary_integration_inside_taskmanager(self, hp_refined_mesh):
+        """Flat boundary integration inside TaskManager should work regardless."""
+        expected_area = 4.0 * 4.0 * 6  # 6 faces of a 4x4x4 box
+        with ngsolve.TaskManager():
+            val = ngsolve.Integrate(
+                ngsolve.CF(1.0) * ngsolve.ds("outer"), hp_refined_mesh
+            )
+        assert not math.isnan(val)
+        assert abs(val - expected_area) < 0.1

@@ -7,6 +7,7 @@ from .mesh import Mesh
 from .preconditioner import (
     AMGPreconditioner,
     BDDCPreconditioner,
+    CustomizedLocalPreconditioner,
     DirectPreconditioner,
     LocalPreconditioner,
     MultigridPreconditioner,
@@ -25,6 +26,7 @@ SOLVERS = {"CG": CGSolver, "GMRES": GMRESSolver, "Direct": DirectSolver}
 
 PRECONDITIONERS = {
     "bddc": BDDCPreconditioner,
+    "customized_local": CustomizedLocalPreconditioner,
     "local": LocalPreconditioner,
     "multigrid": MultigridPreconditioner,
     "h1amg": AMGPreconditioner,
@@ -37,6 +39,7 @@ __all__ = [
     "BDDCPreconditioner",
     "CGSolver",
     "ConductivityCF",
+    "CustomizedLocalPreconditioner",
     "DirectPreconditioner",
     "DirectSolver",
     "GMRESSolver",

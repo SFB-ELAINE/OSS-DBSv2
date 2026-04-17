@@ -1,162 +1,99 @@
-Rodent studies
+Rodent Studies
 ==============
 
-In this example we show how to run a study in a rodent brain with OSS-DBS.
-Here, we simulate the treatment of a wistar rat using a MRI based on Johnson et.al rat atlas.
-The image is segemented in GrayMatter, WhiteMatter and CerebrospinalFluid.
+This example demonstrates how to perform a DBS simulation in a rodent brain using OSS-DBSv2.
 
-.. code-block:: bash
+MRI and DTI data are openly available, for example from the Johnson et al.\ rat brain atlas:
 
-    "MagneticResonanceImage":
-        {
-            "MaterialCoding": {
-                "Unknown": 0,
-                "GrayMatter": 1,
-                "WhiteMatter": 2,
-                "CerebrospinalFluid": 3
+- **Publication**: Johnson, G. Allan, et al. *A multicontrast MR atlas of the Wistar rat brain.* NeuroImage, 242 (2021), 118470.
+  DOI: https://doi.org/10.1016/j.neuroimage.2021.118470
+- **Original Dataset**: https://civmvoxport.vm.duke.edu/voxbase/studyhome.php?studyid=754/
+- **License**: https://creativecommons.org/licenses/by-nc-sa/3.0/
+- **Author/Creator**: Johnson, G. Allan, et al.
+
+After downloading the dataset, the segmented MRI (``segmask.nii.gz``) and the normalized DTI can be used in OSS-DBSv2 as follows:
+
+.. code-block:: json
+
+    "MaterialDistribution": {
+      "MRIPath": "./input_files/segmask.nii.gz",
+      "MRIMapping": {
+        "Unknown": 0,
+        "CSF": 3,
+        "White matter": 2,
+        "Gray matter": 1,
+        "Blood": 4
+      },
+      "DiffusionTensorActive": false,
+      "DTIPath": ""
+    },
+
+Rodent Electrodes
+-----------------
+
+In addition to clinical DBS electrodes, OSS-DBSv2 includes dedicated electrode models for small rodent studies.
+A complete list is available in the :ref:`electrode documentation <electrodes>`.
+
+In this example, a SNEX100 electrode is implanted cranially into the region of the subthalamic nucleus (STN).
+The electrode has two contacts, so either bipolar or monopolar stimulation can be used.
+Below a configuration for monopolar stimulation with 1 V at contact 1 is shown.
+As simplification, the outer boundary of the brain region is treated as ground.
+Since most rodent electrodes do not feature directional contacts, no orientation needs to be specified.
+
+.. code-block:: json
+
+    "Electrodes": [
+      {
+        "Name": "MicroProbesSNEX100",
+        "Rotation[Degrees]": 0,
+        "Direction": {"x[mm]": 2.23, "y[mm]": 5.07, "z[mm]": 3.99},
+        "TipPosition": {"x[mm]": 14.59, "y[mm]": -14.74, "z[mm]": -9.06},
+        "Contacts": [
+            {
+              "Contact_ID": 1,
+              "Active": true,
+              "Voltage[V]": 1.0,
+              "Floating": false
             },
-            "Path": "./input_files/segmask.nii"
-        },
+                            {
+                    "Contact_ID": 2,
+                    "Active": false,
+                    "Voltage[V]": 0.0,
+                    "Floating": true,
+                }
 
-
-For this study we choose a custom made monopolar electrode from Microprobes especially designed
-for small rodents. 
-Since the electrode is symetric the rotaion has no impact and is left to 0.
-Further we want to implant the electrode crainial into the region of the subthalamic nucleus (STN)
-relativ to the given MRI. This electrode has only one contact so we set it as active with a
-voltage of 1 V.
-
-.. code-block:: bash
-
-    "Electrodes": [
-        {
-            "Name": "BostonScientificVerciseDirected",
-            "Rotation": 0,
-            "Direction": [2.2314, 5.0661, 3.990],
-            "Translation": [14.5884, -14.7434, -9.0634],
-            "Contact_1": {"Active": true,
-                          "Value": 1.0},
+        ]
+      }
     ]
-
-
-As a simplification we choose to set the skull of the animal as ground with a voltage of 0 V.
-We can use this simplification since the distance from the electrode tip to the skull is relativly
-large and the electric field is decreasing rapidly in the vincinity of the active contact.
-
-.. code-block:: bash
-
-    "BrainSurface":
+    "Surfaces": [
         {
+            "Name": "BrainSurface",
             "Active": true,
-            "Value": 0
-        },
-
-
-As optional parameter we introduce a region of interest around our implantation centre. By setting the
-size of the region we define an area in which the simulation will have a higher resolution.
-
-.. code-block:: bash
-
-    "RegionOfInterest":
-        {
-            "Active": true,
-            "Center": [14.937, -13.613, -5.123],
-            "Shape": [80, 80, 80]
-        },
-
-For the explanation of further parameters you can ferfer to the general introduction of the input files.
-
-.. note::
-
-    Format of the input needs to be updated!
-
-An example of a full input directorie can be find below.
-
-.. code-block:: bash
-
-    {
-    "BrainSurface":
-        {
-            "Active": false,
-            "Value": 0
-        },
-    "DiffusionTensorImage":
-        {
-            "Path": ""
-        },
-    "Electrodes": [
-        {
-            "Name": "BostonScientificVerciseDirected",
-            "Rotation": 6.412,
-            "Direction": [2.2314, 5.0661, 3.990],
-            "Translation": [14.5884, -14.7434, -9.0634],
-            "Contact_1": {"Active": true,
-                          "Value": 1.0},
-            "Contact_2": {"Active": false,
-                          "Value": 0.0},
-            "Contact_3": {"Active": false,
-                          "Value": 0.0},
-            "Contact_4": {"Active": false,
-                          "Value": 0.0},
-            "Contact_5": {"Active": false,
-                          "Value": 0.0},
-            "Contact_6": {"Active": false,
-                          "Value": 0.0},
-            "Contact_7": {"Active": false,
-                          "Value": 0.0},
-            "Contact_8": {"Active": true,
-                          "Value": 0.0},
-
-            "Contacts": {
-                "Active": [true,
-                           false,
-                           false,
-                           false,
-                           false,
-                           false,
-                           false,
-                           true],
-                "Value": [1.0,
-                          0.0,
-                          0.0,
-                          0.0,
-                          0.0,
-                          0.0,
-                          0.0,
-                          0.0]
-            }
+            "Voltage[V]": 0.0,
+            "Floating": false
         }
     ],
-    "FEMMode": "QS",
-    "MagneticResonanceImage":
-        {
-            "MaterialCoding": {
-                "Unknown": 0,
-                "GrayMatter": 1,
-                "WhiteMatter": 2,
-                "CerebrospinalFluid": 3
-            },
-            "Path": "./input_files/segmask.nii"
-        },
-    "Mesh": {
-        "LoadMesh": false,
-        "LoadPath": "./input_files/mesh.vol",
-        "MeshElementOrder": 2,
-        "SavePath": ""
+
+Estimate Stimulation Volume
+---------------------------
+
+To the stimulation volume a point model around the electrode tip is created.
+Therefore, the ``Lattice`` option is activated and the location and number of points specified.
+
+.. code-block:: json
+
+  "PointModel": {
+    "Pathway": {
+      "Active": false,
+      "FileName": ""
     },
-    "MeshElementOrder": 2,
-    "OutputPath": "test_result",
-    "RegionOfInterest":
-        {
-            "Active": true,
-            "Center": [14.937, -13.613, -5.123],
-            "Shape": [80, 80, 80]
-        },
-    "SpectrumMode": "NoTruncation",
-    "StimulationSignal":
-        {
-            "Type": "Rectangle",
-            "Frequency": 130.0,
-            "PulseWidthMicroSeconds": 60.0,
-            "TopWidthMicroSeconds": 0.0
-        }
+    "Lattice": {
+      "Active": true,
+      "Center":  {"x[mm]": 14.59, "y[mm]": -14.74, "z[mm]": -9.06},
+      "Shape": {"x": 20, "y": 20, "z": 20},
+      "Direction": {"x[mm]": 2.23, "y[mm]": 5.07, "z[mm]": 3.99},
+      "PointDistance[mm]": 0.5
+    }
+  },
+
+The results are stored in the specified ``OutputPath`` directory after running the simulation.

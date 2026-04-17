@@ -32,7 +32,7 @@
           "Contact_ID": 1,
           "Active": true,
           "Current[A]": 0.004,
-          "Voltage[V]": 0.0,
+          "Voltage[V]": 1.0,
           "Floating": false,
           "SurfaceImpedance[Ohmm]": {
             "real": 0.0,

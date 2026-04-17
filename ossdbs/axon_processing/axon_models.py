@@ -925,10 +925,9 @@ class AxonModels:
         For Lead-DBS visualization, use <projection_name>_axons.mat
 
         """
-        # TODO fallback for non hdf5
         try:
             file = h5py.File(pathway_file, mode="r")
-        except ValueError:
+        except OSError:
             _logger.warning("Fell back to MATLAB file")
             file = scipy.io.loadmat(pathway_file)
 
