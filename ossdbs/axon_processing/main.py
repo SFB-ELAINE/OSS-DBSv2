@@ -4,6 +4,7 @@
 import argparse
 import json
 import logging
+import multiprocessing
 
 from ossdbs import set_logger
 from ossdbs.api import run_PAM
@@ -52,3 +53,8 @@ def main() -> None:
     input_settings["CurrentVector"] = None
 
     run_PAM(input_settings)
+
+
+if __name__ == "__main__":
+    multiprocessing.freeze_support()
+    main()

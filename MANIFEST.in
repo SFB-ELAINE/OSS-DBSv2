@@ -9,6 +9,7 @@ exclude .gitlab-ci.yml
 exclude .pre-commit-config.yaml
 exclude .readthedocs.yaml
 exclude setup.py
+exclude build_merged.py
 
 recursive-include docs *.dia
 recursive-include docs *.ipynb

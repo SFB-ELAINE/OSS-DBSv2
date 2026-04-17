@@ -49,3 +49,7 @@ meshsizes.txt
 ng.ini
 ngmesh.ini
 x86_64/
+
+# Other generated files
+*.spec
+tmpclaude*
