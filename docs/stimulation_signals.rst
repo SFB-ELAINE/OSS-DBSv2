@@ -17,23 +17,90 @@ The code distinguishes between:
 This separation is useful because the solver can evaluate the field at selected
 frequencies and then reconstruct the signal in time when needed.
 
-Supported signal classes
-------------------------
+Supported signal types
+----------------------
 
-The package currently includes rectangular, trapezoidal, and triangular signal
-classes. In practice, rectangular DBS pulses are the most mature and are the
-best starting point for external users.
+Time-domain pulse signals
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Typical settings
-----------------
+These signals define a periodic waveform that is Fourier-transformed for the
+frequency-domain FEM solve and optionally reconstructed in the time domain
+afterwards.
 
-Common signal-related settings include:
+- **Rectangle** (``"Type": "Rectangle"``) — standard rectangular DBS pulse.
+  The most common and best-tested signal type.
+- **Trapezoid** (``"Type": "Trapezoid"``) — trapezoidal pulse with a finite
+  rise time controlled by ``PulseTopWidth[us]``.
+- **Triangle** (``"Type": "Triangle"``) — triangular pulse (trapezoid with
+  zero top width).
 
-- signal type
-- stimulation frequency
-- pulse width
-- counter-pulse or inter-pulse settings when applicable
-- whether the stimulation is current-controlled or voltage-controlled
+Common parameters for all time-domain signals:
+
+- ``Frequency[Hz]`` — stimulation repetition rate (e.g. 130 Hz for standard
+  DBS)
+- ``PulseWidth[us]`` — duration of the primary pulse phase
+- ``CounterPulseWidth[us]`` — duration of the charge-balancing counter pulse
+  (0 to omit)
+- ``InterPulseWidth[us]`` — gap between primary and counter pulse
+- ``CounterAmplitude`` — amplitude of the counter pulse relative to the
+  primary pulse (default 1.0)
+
+Multisine
+^^^^^^^^^
+
+The multisine mode (``"Type": "Multisine"``) bypasses waveform generation
+entirely. Instead, a list of discrete frequencies is solved with unit
+amplitude at each:
+
+.. code-block:: json
+
+   "StimulationSignal": {
+     "Type": "Multisine",
+     "ListOfFrequencies": [130.0, 1000.0, 10000.0],
+     "CurrentControlled": false
+   }
+
+This is useful for impedance spectroscopy, single-frequency studies, or when
+the frequency content is known in advance. No time-domain reconstruction is
+performed.
+
+Frequency-domain settings
+-------------------------
+
+SpectrumMode
+^^^^^^^^^^^^
+
+For time-domain signals, ``SpectrumMode`` controls how many frequencies are
+actually solved:
+
+- ``"FullSpectrum"`` (default) — solves at every harmonic up to the cutoff
+  frequency. Accurate but expensive for high cutoff frequencies.
+- ``"OctaveBand"`` — solves only at octave-band centre frequencies and
+  interpolates. Much faster with minimal loss of accuracy for typical DBS
+  pulses.
+
+CutoffFrequency
+^^^^^^^^^^^^^^^^
+
+``CutoffFrequency`` (default: 1e6 Hz) sets the upper limit of the Fourier
+spectrum. Harmonics above this frequency are discarded. For most DBS
+applications, 0.5–1 MHz is sufficient. Lower values reduce the number of
+FEM solves.
+
+CurrentControlled
+^^^^^^^^^^^^^^^^^
+
+``CurrentControlled`` selects between voltage-controlled and current-controlled
+stimulation modes. See :ref:`stimulation-modes` in the volume conductor
+documentation for a detailed description of all supported cases.
+
+Related pages
+-------------
+
+- :doc:`volume_conductor_model` — stimulation modes, surface impedance, and
+  solver configuration
+- :doc:`input_settings` — ``StimulationSignal`` JSON settings
+- :doc:`examples` — runnable example configurations
 
 API reference
 -------------

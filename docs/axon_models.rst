@@ -35,6 +35,14 @@ When to use this part of the toolbox
 - treat it as a separate workflow layer that builds on a correct and stable
   volume conductor setup
 
+Related pages
+-------------
+
+- :doc:`point_analysis` — lattice and pathway evaluation that feeds into
+  axon models
+- :doc:`volume_conductor_model` — the upstream FEM solve
+- :doc:`input_settings` — ``PointModel.Pathway`` configuration
+
 API reference
 -------------
 

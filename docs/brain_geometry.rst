@@ -44,6 +44,43 @@ the final ``ModelGeometry`` is assembled, OSS-DBSv2:
 This step is central because it connects the anatomical model to the numerical
 problem that is solved by the volume conductor model.
 
+Encapsulation layers
+--------------------
+
+After electrode implantation, a thin tissue reaction layer (fibrous
+encapsulation) forms around the electrode shaft. This layer has different
+electrical properties from the surrounding brain tissue and can significantly
+affect current spread and impedance.
+
+OSS-DBSv2 models encapsulation as an additional volume region between the
+electrode surface and the brain tissue. It is configured per electrode in the
+JSON input:
+
+.. code-block:: json
+
+   "EncapsulationLayer": {
+     "Thickness[mm]": 0.2,
+     "Material": "Gray matter",
+     "DielectricModel": "ColeCole4",
+     "MaxMeshSize": 0.1
+   }
+
+- ``Thickness[mm]``: radial thickness of the layer around the electrode shaft.
+  Set to ``0.0`` to disable encapsulation entirely.
+- ``Material``: tissue class used for dielectric properties (e.g. ``Gray matter``,
+  ``Blood``). This determines the baseline conductivity of the layer.
+- ``DielectricModel``: dielectric model applied to the encapsulation material.
+  Typically the same model as the surrounding tissue.
+- ``MaxMeshSize``: maximum mesh element size inside the encapsulation volume.
+  Because the layer is thin, a smaller value than the global mesh size is often
+  needed to ensure adequate resolution.
+
+During geometry construction, the encapsulation volume is created from the
+electrode shaft geometry, intersected with the brain domain, and glued into
+the model. The resulting regions are named ``EncapsulationLayer_N`` (volume)
+and ``EncapsulationLayerSurface_N`` (outer surface), where *N* is the
+electrode index.
+
 Practical considerations
 ------------------------
 
@@ -55,6 +92,14 @@ Practical considerations
   simpler shape, or no encapsulation layer.
 - Use the example cases to understand how contact numbering maps to the final
   geometry.
+
+Related pages
+-------------
+
+- :doc:`input_settings` — JSON configuration for brain region and electrodes
+- :doc:`electrodes` — available electrode models and custom parameters
+- :doc:`materials` — dielectric models used for tissue and encapsulation layers
+- :doc:`volume_conductor_model` — how the geometry feeds into the FEM solve
 
 API reference
 -------------

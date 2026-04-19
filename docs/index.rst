@@ -58,6 +58,9 @@ If you are new to the project, the recommended path is:
 3. :doc:`input_settings`
 4. :doc:`examples`
 
+If you want to drive OSS-DBSv2 from Python scripts instead of the CLI, see
+:doc:`python_api`.
+
 If you already use Lead-DBS, go directly to :doc:`lead_dbs`.
 
 Documentation structure
@@ -79,6 +82,7 @@ For more details about the first version of OSS-DBS, see [Butenko2019]_.
    lead_dbs
    tutorial
    examples
+   python_api
 
 .. toctree::
    :maxdepth: 1
