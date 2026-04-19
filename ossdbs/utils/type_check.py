@@ -32,7 +32,6 @@ class TypeChecker:
             "Material": str,
             "MaxMeshSize": (int, float),
         },
-        "InterfaceImpedance": {"Model": (type(None), str), "Parameters": dict},
         "EQSMode": bool,
         "FEMOrder": int,
         "MaterialDistribution": {

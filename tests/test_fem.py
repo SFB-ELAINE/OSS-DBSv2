@@ -640,29 +640,25 @@ class TestResolveAmrActiveGuard:
             self._call(hp_applied=False, settings={"Active": True})
 
 
-class TestMulticontactImpedanceOverride:
-    """Verify the ``multicontact_impedance`` override in ``run_full_analysis``.
+class TestScalarImpedanceOnly:
+    """Guard that the stimulation pipeline only deals in scalar impedance.
 
-    Background
-    ----------
-    In a StimSets run, the non-active, non-ground contacts are set to
-    ``Floating=True`` with ``Current=0`` — they are passive receivers,
-    not additional stimulation ports. The auto-detection in
-    ``run_full_analysis`` (``n_stim = n_active + n_floating``, multicontact
-    when ``> 2``) would still route these runs through the NxN admittance
-    matrix path, which is physically inappropriate and leaves
-    ``get_scale_factor`` returning a matrix where the downstream code
-    expects a scalar — crashing ``_store_solution_at_contacts`` with
-    ``TypeError: only length-1 arrays can be converted to Python scalars``.
+    The NxN admittance-matrix path was auto-triggered when
+    ``n_active + n_floating > 2``, which routed CC + floating-impedance
+    configurations through a matrix path that ``get_scale_factor`` and
+    ``_store_solution_at_contacts`` could not consume. The full admittance
+    matrix is now considered an analysis tool that lives outside
+    ``run_full_analysis`` (see ``docs/impedance_analyzer_plan.md``).
 
-    These tests guard three invariants:
-    1. ``run_full_analysis`` still accepts ``multicontact_impedance`` as a kwarg.
-    2. ``run_stim_sets`` passes ``multicontact_impedance=False``.
-    3. ``get_scale_factor`` returns a plain scalar when ``_multicontact_impedance``
-       is False (i.e., when ``self._impedances`` is a 1-D array).
+    Invariants:
+    1. ``run_full_analysis`` no longer exposes the ``multicontact_impedance``
+       kwarg.
+    2. ``get_scale_factor`` returns a plain scalar.
+    3. ``compute_impedance`` raises ``NotImplementedError`` when called with
+       anything other than exactly 2 active contacts.
     """
 
-    def test_run_full_analysis_exposes_override(self):
+    def test_multicontact_kwarg_removed(self):
         import inspect
 
         from ossdbs.fem.volume_conductor.volume_conductor_model import (
@@ -670,37 +666,14 @@ class TestMulticontactImpedanceOverride:
         )
 
         sig = inspect.signature(VolumeConductor.run_full_analysis)
-        assert "multicontact_impedance" in sig.parameters, (
-            "VolumeConductor.run_full_analysis must expose the "
-            "``multicontact_impedance`` override so callers like "
-            "run_stim_sets can force scalar-impedance mode."
-        )
-        assert sig.parameters["multicontact_impedance"].default is None, (
-            "``multicontact_impedance`` default must remain None "
-            "(auto-detect) so existing callers keep their behavior."
+        assert "multicontact_impedance" not in sig.parameters, (
+            "VolumeConductor.run_full_analysis must not expose "
+            "``multicontact_impedance`` — the admittance-matrix mode is "
+            "handled by a standalone analyzer."
         )
 
-    def test_run_stim_sets_forces_scalar_mode(self):
-        """``run_stim_sets`` must explicitly opt out of multicontact mode.
-
-        Otherwise the ``n_stim > 2`` auto-detection (active + floating)
-        routes the StimSets per-contact run through the admittance-matrix
-        path, which is wrong for passive floating contacts.
-        """
-        import inspect
-
-        from ossdbs.api import run_stim_sets
-
-        src = inspect.getsource(run_stim_sets)
-        assert "multicontact_impedance=False" in src, (
-            "run_stim_sets must pass multicontact_impedance=False to "
-            "run_full_analysis — the floating contacts in stim_sets are "
-            "passive (zero current), not independent stimulation ports."
-        )
-
-    def test_get_scale_factor_returns_scalar_in_scalar_mode(self):
-        """``get_scale_factor`` must return a plain scalar when
-        ``_multicontact_impedance`` is False, so that
+    def test_get_scale_factor_returns_scalar(self):
+        """``get_scale_factor`` must return a plain scalar so
         ``_store_solution_at_contacts`` can assign into a single complex
         slot of ``_free_stimulation_variable``.
         """
@@ -719,21 +692,37 @@ class TestMulticontactImpedanceOverride:
         class _Stub:
             current_controlled = True
             is_complex = True
-            _multicontact_impedance = False
-            # Scalar-mode allocation (1-D array of complex scalars)
             _impedances = np.array([10.0 + 0.0j, 12.0 + 1.0j], dtype=complex)
             contacts = _FakeContacts(
                 [_FakeContact(1.0 + 0.0j), _FakeContact(-1.0 + 0.0j)]
             )
 
-            # Use the real impedances property via the unbound descriptor.
             impedances = VolumeConductor.impedances
 
         stub = _Stub()
         scale = VolumeConductor.get_scale_factor(stub, 0)
         assert np.ndim(scale) == 0, (
-            "get_scale_factor must return a plain scalar in scalar-impedance "
-            f"mode; got shape {np.shape(scale)}"
+            f"get_scale_factor must return a plain scalar; got shape {np.shape(scale)}"
         )
         # Expected: Z * |I| = 10 * 1 = 10
         assert np.isclose(scale, 10.0 + 0.0j), f"Expected Z * |I| = 10+0j, got {scale}"
+
+    def test_compute_impedance_raises_for_nontwo_active(self):
+        """``compute_impedance`` only handles the 2-active scalar case.
+
+        Multicontact configurations must go through the standalone
+        admittance-matrix analyzer.
+        """
+        from ossdbs.fem.volume_conductor.volume_conductor_model import (
+            VolumeConductor,
+        )
+
+        class _FakeContacts:
+            def __init__(self, active):
+                self.active = active
+
+        class _Stub:
+            contacts = _FakeContacts([object(), object(), object()])
+
+        with pytest.raises(NotImplementedError, match="exactly 2 active"):
+            VolumeConductor.compute_impedance(_Stub())

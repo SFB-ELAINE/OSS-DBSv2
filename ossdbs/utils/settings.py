@@ -124,6 +124,11 @@ class Settings:
         },
         "OutputPath": "Results",
         "ComputeImpedance": False,
+        "ImpedanceAnalysis": {
+            "Enabled": False,
+            "Frequencies": None,
+            "IncludeFloating": True,
+        },
         "ComputeCurrents": False,
         "ExportVTK": False,
         "ExportFrequency": None,
@@ -135,7 +140,6 @@ class Settings:
         "FailFlag": "oss",
         "OutOfCore": False,
         "PathwayFile": None,
-        "InterfaceImpedance": {"Model": None, "Parameters": {}},
         "StimSets": {
             "Active": False,
             "StimSetsFile": None,

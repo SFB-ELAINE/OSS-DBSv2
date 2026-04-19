@@ -165,6 +165,20 @@ For configurations with more than two contacts, the relationship between
 voltages and currents is described by an admittance matrix Y (or its inverse,
 the impedance matrix Z), rather than a single scalar impedance.
 
+The admittance/impedance matrix is produced by a standalone analyzer,
+enabled via the ``ImpedanceAnalysis`` block in the input JSON:
+
+```json
+"ImpedanceAnalysis": {
+  "Enabled": true,
+  "IncludeFloating": true
+}
+```
+
+This analyzer is decoupled from the stimulation pipeline; enabling it
+adds two CSV outputs and does not change the stimulation solution. See
+``docs/impedance_analyzer_plan.md`` for the design.
+
 The file `input_admittance_matrix.json` demonstrates this with a 3-contact
 current-controlled setup on a BostonScientificVercise electrode:
 
@@ -179,21 +193,14 @@ ossdbs input_admittance_matrix.json
 This produces two CSV files in `Results_AdmittanceMatrix/`:
 
 - `admittance_matrix.csv`: the full 3x3 admittance matrix Y (all contacts)
-- `impedance_matrix.csv`: the reduced 2x2 impedance matrix Z (ground removed)
+- `impedance_matrix.csv`: the full 3x3 impedance matrix Z = Y^-1
 
 The admittance matrix Y is computed via the **superposition approach**: for N
 contacts, N(N+1)/2 Dirichlet BVPs are solved with different voltage
 configurations. Each entry Y_ij is derived from the power dissipated in the
 corresponding BVP (see `examples/MulticontactCurrents/Superposition-approach.ipynb`
-for the mathematical derivation).
-
-Since the ground contact is included, the full Y matrix is singular (rows sum
-to zero by current conservation). The impedance matrix is obtained by removing
-the ground row/column from Y and inverting the resulting (N-1)x(N-1) matrix:
-
-```
-Z_reduced = inv(Y_reduced)
-```
+for the mathematical derivation). The outer brain surface is used as the
+Dirichlet u=0 ground reference so that Y is non-singular.
 
 ## How the surface impedance is implemented
 

@@ -74,10 +74,6 @@ class VolumeConductor(ABC):
 
         # to store impedances at all frequencies
         self._impedances = None
-        self._admittance_matrices = None
-        self._admittance_matrix = None
-        self._multicontact_impedance = False
-        self._ground_contact_idx = None
         # to store the voltage (current-controlled)
         # or current (voltage-controlled) stimulation
         self._free_stimulation_variable = None
@@ -165,7 +161,6 @@ class VolumeConductor(ABC):
         adaptive_mesh_refinement_settings: dict | None = None,
         truncation_time: float | None = None,
         estimate_currents: bool | None = False,
-        multicontact_impedance: bool | None = None,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -195,16 +190,6 @@ class VolumeConductor(ABC):
             Time until which result will be written to hard drive
         estimate_currents: bool
             Get current estimate per contact by integration of normal component
-        multicontact_impedance: bool or None
-            Override for the multicontact-impedance detection. If None
-            (default), the mode is auto-detected from the contact setup
-            (True when >2 stimulation ports participate, i.e., ``n_active``
-            plus ``n_floating`` in current-controlled mode). Set explicitly
-            to False from callers (e.g., ``run_stim_sets``) where floating
-            contacts are passive (zero current) and only the scalar
-            impedance between the two active contacts is meaningful — the
-            full NxN admittance matrix is physically inappropriate and
-            leaves the scaling logic inconsistent.
 
         Notes
         -----
@@ -239,27 +224,15 @@ class VolumeConductor(ABC):
             )
             compute_impedance = True
 
-        # detect multicontact impedance mode
-        # floating contacts only participate in current-controlled stimulation
-        n_stim = len(self.contacts.active)
-        if self.current_controlled:
-            n_stim += len(self.contacts.floating)
-        if multicontact_impedance is None:
-            self._multicontact_impedance = n_stim > 2
-        else:
-            # explicit override — e.g. run_stim_sets, where floating
-            # contacts are passive (zero current) so there is only one
-            # real stimulation port and the admittance-matrix formulation
-            # does not apply.
-            self._multicontact_impedance = multicontact_impedance
-            if multicontact_impedance and len(self.contacts.active) < 2:
-                raise ValueError(
-                    "multicontact_impedance=True requires at least 2 active contacts."
-                )
-        # when forced into scalar mode, n_stim for impedance allocation
-        # follows the "no multicontact" branch
-        if not self._multicontact_impedance:
-            n_stim = len(self.contacts.active)
+        if compute_impedance and len(self.contacts.active) != 2:
+            _logger.warning(
+                "ComputeImpedance was requested but the configuration has "
+                f"{len(self.contacts.active)} active contacts (needs exactly 2). "
+                "Disabling scalar impedance computation. For multicontact "
+                "configurations, enable the ImpedanceAnalysis block in the "
+                "input JSON."
+            )
+            compute_impedance = False
 
         if self.signal.octave_band_approximation:
             frequency_indices = get_octave_band_indices(self.signal.frequencies)
@@ -292,19 +265,10 @@ class VolumeConductor(ABC):
             )
 
         if compute_impedance:
-            if self._multicontact_impedance:
-                self._admittance_matrices = np.ndarray(
-                    shape=(len(self.signal.frequencies), n_stim, n_stim),
-                    dtype=dtype,
-                )
-                self._impedances = np.ndarray(
-                    shape=(len(self.signal.frequencies), n_stim, n_stim),
-                    dtype=dtype,
-                )
-            else:
-                self._impedances = np.ndarray(
-                    shape=(len(self.signal.frequencies)), dtype=dtype
-                )
+            # scalar 1-D array, one entry per frequency
+            self._impedances = np.ndarray(
+                shape=(len(self.signal.frequencies),), dtype=dtype
+            )
 
         if estimate_currents:
             self._currents = {}
@@ -340,10 +304,6 @@ class VolumeConductor(ABC):
                 if compute_impedance:
                     impedance = self.compute_impedance()
                     self._impedances[band_indices] = impedance
-                    if self._multicontact_impedance:
-                        self._admittance_matrices[band_indices] = (
-                            self._admittance_matrix
-                        )
                 if estimate_currents:
                     estimated_currents = self.estimate_currents()
                     for contact in self.contacts:
@@ -496,17 +456,14 @@ class VolumeConductor(ABC):
         # save impedance at all frequencies to file!
         if compute_impedance:
             _logger.info("Saving impedance")
-            if self._multicontact_impedance:
-                self._export_impedance_matrices()
-            else:
-                df = pd.DataFrame(
-                    {
-                        "freq": self.signal.frequencies,
-                        "real": self.impedances.real,
-                        "imag": self.impedances.imag,
-                    }
-                )
-                df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
+            df = pd.DataFrame(
+                {
+                    "freq": self.signal.frequencies,
+                    "real": self.impedances.real,
+                    "imag": self.impedances.imag,
+                }
+            )
+            df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
         if estimate_currents:
             df = pd.DataFrame(
                 {
@@ -690,21 +647,18 @@ class VolumeConductor(ABC):
             if not np.isclose(sum_currents, 0):
                 raise ValueError("The sum of all currents is not zero!")
 
-            if len(self.contacts.floating) > 0:
-                if floating_with_surface_impedance > 0:
-                    if len(self.contacts.floating) > floating_with_surface_impedance:
-                        raise ValueError(
-                            "You have some floating contacts with a "
-                            "surface impedance model and some without."
-                            " This case has not yet been covered"
-                        )
-                else:
-                    active_contacts_grounded = np.isclose(voltages_active, 0.0)
-                    if len(np.where(active_contacts_grounded)[0]) > 1:
-                        raise ValueError(
-                            "In multipolar current-controlled mode, "
-                            "only one active contact has to be grounded!"
-                        )
+            # Mixed floating (some with surface impedance, some without) is
+            # rejected earlier in VolumeConductorFloatingImpedance.__init__,
+            # so that case never reaches here. Only the plain Floating case
+            # (no floating contact carries a surface impedance) needs the
+            # multipolar-ground check.
+            if len(self.contacts.floating) > 0 and floating_with_surface_impedance == 0:
+                active_contacts_grounded = np.isclose(voltages_active, 0.0)
+                if len(np.where(active_contacts_grounded)[0]) > 1:
+                    raise ValueError(
+                        "In multipolar current-controlled mode, "
+                        "only one active contact has to be grounded!"
+                    )
 
     @property
     def current_controlled(self) -> bool:
@@ -713,7 +667,12 @@ class VolumeConductor(ABC):
 
     @property
     def impedances(self) -> np.ndarray:
-        """Return list of impedances."""
+        """Scalar impedance per frequency (1-D array, length ``n_freq``).
+
+        Populated by ``run_full_analysis`` when ``compute_impedance`` is
+        True. Multicontact admittance / impedance matrices are produced
+        by ``ossdbs.fem.analysis.ImpedanceAnalyzer``, not here.
+        """
         return self._impedances
 
     @property
@@ -823,26 +782,17 @@ class VolumeConductor(ABC):
         )
         return power
 
-    def compute_impedance(self) -> complex | np.ndarray:
-        """Compute impedance at most recent solution.
+    def compute_impedance(self) -> complex:
+        """Compute scalar impedance at most recent solution.
 
-        Notes
-        -----
         For two active contacts, the scalar impedance is computed
         by volume integration. This approach is superior to
         integration of the normal current density. It has been
         described in [Zimmermann2021a]_.
 
-        For multicontact configurations, the full admittance matrix Y
-        is computed via the superposition approach, and the impedance
-        matrix Z = Y^{-1} is returned.
-
-        The branch is selected via ``self._multicontact_impedance``,
-        which is set in ``run_full_analysis`` (auto-detected from the
-        contact setup, or explicitly overridden by callers such as
-        ``run_stim_sets`` where floating contacts are passive
-        zero-current receivers and the admittance-matrix formulation
-        does not apply).
+        Multicontact configurations are not handled here. The full
+        admittance-matrix analysis is a separate analysis tool (see
+        ``docs/impedance_analyzer_plan.md``).
 
         References
         ----------
@@ -852,217 +802,55 @@ class VolumeConductor(ABC):
 
         Returns
         -------
-        complex or np.ndarray
-            Scalar impedance for 2 active contacts, or NxN impedance
-            matrix for multicontact configurations.
-        """
-        if not self._multicontact_impedance and len(self.contacts.active) == 2:
-            power = self.compute_power()
-            voltage_diff = 0
-            for idx, contact in enumerate(self.contacts.active):
-                voltage = contact.voltage
-                voltage_diff += (-1) ** idx * contact.voltage
-                if contact.surface_impedance_model is not None:
-                    interface_admittance = ngsolve.CF(
-                        1.0 / self._surface_impedances[contact.name]
-                    )
-                    diff = (
-                        self.mesh.boundary_coefficients({contact.name: voltage})
-                        - self.potential
-                    )
-                    power += ngsolve.Integrate(
-                        interface_admittance * diff * ngsolve.Conj(diff),
-                        mesh=self.mesh.ngsolvemesh,
-                        definedon=self.mesh.ngsolvemesh.Boundaries(contact.name),
-                    )
-            # Add surface-impedance dissipation for floating contacts.
-            # contact.voltage holds the computed u_k after
-            # _update_floating_voltages().  Without this term the scalar
-            # Z = V^2 / P under-counts P and over-estimates |Z|.
-            for contact in self.contacts.floating:
-                if contact.surface_impedance_model is not None:
-                    interface_admittance = ngsolve.CF(
-                        1.0 / self._surface_impedances[contact.name]
-                    )
-                    diff = (
-                        self.mesh.boundary_coefficients({contact.name: contact.voltage})
-                        - self.potential
-                    )
-                    power += ngsolve.Integrate(
-                        interface_admittance * diff * ngsolve.Conj(diff),
-                        mesh=self.mesh.ngsolvemesh,
-                        definedon=self.mesh.ngsolvemesh.Boundaries(contact.name),
-                    )
-            _logger.debug(f"Voltage drop for impedance: {voltage_diff}")
-            _logger.debug(f"Power after surface imp: {power}")
-            return voltage_diff * np.conj(voltage_diff) / power
-        else:
-            # multicontact: compute full admittance matrix and invert
-            Y = self.compute_admittance_matrix(self._frequency)
-            self._admittance_matrix = Y
-            self._ground_contact_idx = None
-            Z = np.linalg.inv(Y)
-            return Z
-
-    def _solve_admittance_bvp(
-        self,
-        space: ngsolve.H1,
-        gfu: ngsolve.GridFunction,
-        boundary_values: dict,
-        sigma: ngsolve.CoefficientFunction,
-        surface_impedances: dict | None = None,
-    ) -> complex:
-        """Solve a single Dirichlet BVP and return total dissipated power.
-
-        Parameters
-        ----------
-        space : ngsolve.H1
-            H1 space with Dirichlet BCs on all stimulation contacts.
-        gfu : ngsolve.GridFunction
-            Grid function (reused across calls).
-        boundary_values : dict
-            Mapping of contact name to voltage value.
-        sigma : ngsolve.CoefficientFunction
-            Conductivity coefficient function.
-        surface_impedances : dict or None
-            Mapping of contact name to surface impedance value (or None).
-
-        Returns
-        -------
         complex
-            Total power (volume + surface impedance contributions).
+            Scalar impedance between the two active contacts.
         """
-        # set Dirichlet BCs
-        coefficient = self.mesh.boundary_coefficients(boundary_values)
-        gfu.Set(coefficient, VOL_or_BND=ngsolve.BND)
-
-        u = space.TrialFunction()
-        v = space.TestFunction()
-
-        bilinear_form = ngsolve.BilinearForm(space=space)
-        bilinear_form += sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
-
-        linear_form = ngsolve.LinearForm(space=space)
-
-        # add Robin BC terms for contacts with surface impedance
-        if surface_impedances is not None:
-            for contact_name, voltage in boundary_values.items():
-                zs = surface_impedances.get(contact_name)
-                if zs is None:
-                    continue
-                ys = ngsolve.CF(1.0 / zs)
-                bilinear_form += ys * u * v * ngsolve.ds(contact_name)
-                linear_form += ys * ngsolve.CF(voltage) * v * ngsolve.ds(contact_name)
-
-        self.solver.bvp(bilinear_form, linear_form, gfu)
-
-        # compute volume power
-        E = -ngsolve.grad(gfu)
-        J = sigma * E
-        power = ngsolve.Integrate(ngsolve.Conj(E) * J, self.mesh.ngsolvemesh)
-
-        # add surface impedance power contributions
-        if surface_impedances is not None:
-            for contact_name, voltage in boundary_values.items():
-                zs = surface_impedances.get(contact_name)
-                if zs is None:
-                    continue
-                ys = ngsolve.CF(1.0 / zs)
-                diff = self.mesh.boundary_coefficients({contact_name: voltage}) - gfu
-                power += ngsolve.Integrate(
-                    ys * diff * ngsolve.Conj(diff),
-                    mesh=self.mesh.ngsolvemesh,
-                    definedon=self.mesh.ngsolvemesh.Boundaries(contact_name),
-                )
-
-        return power
-
-    def compute_admittance_matrix(self, frequency: float) -> np.ndarray:
-        """Compute the admittance matrix via the superposition approach.
-
-        For N contacts, solves N(N+1)/2 Dirichlet BVPs to build the
-        full NxN admittance matrix Y. Each entry is computed from the
-        dissipated power of a specific voltage configuration.
-
-        Parameters
-        ----------
-        frequency : float
-            Frequency [Hz] at which to compute the admittance matrix.
-
-        Returns
-        -------
-        np.ndarray
-            NxN admittance matrix (complex if EQS mode).
-
-        Notes
-        -----
-        Follows the superposition approach described in
-        ``examples/MulticontactCurrents/Superposition-approach.ipynb``.
-        """
-        contacts = self.contacts.active
-        if self.current_controlled:
-            contacts = contacts + self.contacts.floating
-        N = len(contacts)
-        contact_names = [c.name for c in contacts]
-        dtype = complex if self.is_complex else float
-        Y = np.zeros((N, N), dtype=dtype)
-
-        _logger.info(
-            f"Computing {N}x{N} admittance matrix "
-            f"({N * (N + 1) // 2} BVPs) at {frequency} Hz"
-        )
-
-        # get conductivity and surface impedances at this frequency
-        sigma = self.conductivity_cf(self.mesh, frequency)
-        surface_impedances = self.contacts.get_surface_impedances(
-            frequency, is_complex=self.is_complex
-        )
-        # check if any surface impedance is active
-        has_surface_impedance = any(v is not None for v in surface_impedances.values())
-        if not has_surface_impedance:
-            surface_impedances = None
-
-        # create temporary Dirichlet space and grid function
-        # include the outer brain surface as Dirichlet u=0 (ground reference)
-        # so that Y is non-singular and all contacts appear in Z
-        brain_surfaces = self._model_geometry.brain_surface_names
-        dirichlet_boundaries = [*contact_names, *brain_surfaces]
-        space = self.h1_space(
-            boundaries=dirichlet_boundaries, is_complex=self.is_complex
-        )
-        gfu = ngsolve.GridFunction(space=space)
-
-        # diagonal entries: Y_ii = P / Vi^2
-        # where P = 0.5 * integral of sigma|grad(u)|^2 dV (half the dissipated power)
-        Vi = 1.0
-        for i in range(N):
-            boundary_values = dict.fromkeys(contact_names, 0.0)
-            boundary_values[contact_names[i]] = Vi
-            power = 0.5 * self._solve_admittance_bvp(
-                space, gfu, boundary_values, sigma, surface_impedances
+        if len(self.contacts.active) != 2:
+            raise NotImplementedError(
+                "Scalar impedance requires exactly 2 active contacts "
+                f"(got {len(self.contacts.active)}). For multicontact "
+                "configurations, use the standalone admittance-matrix "
+                "analysis tool."
             )
-            Y[i, i] = 2.0 * power / (Vi * Vi)
-            _logger.debug(f"Y[{i},{i}] = {Y[i, i]}")
-
-        # off-diagonal entries
-        Vi = 1.0
-        Vj = 2.0
-        for i in range(N):
-            for j in range(i + 1, N):
-                boundary_values = dict.fromkeys(contact_names, 0.0)
-                boundary_values[contact_names[i]] = Vi
-                boundary_values[contact_names[j]] = Vj
-                power = 0.5 * self._solve_admittance_bvp(
-                    space, gfu, boundary_values, sigma, surface_impedances
+        power = self.compute_power()
+        voltage_diff = 0
+        for idx, contact in enumerate(self.contacts.active):
+            voltage = contact.voltage
+            voltage_diff += (-1) ** idx * contact.voltage
+            if contact.surface_impedance_model is not None:
+                interface_admittance = ngsolve.CF(
+                    1.0 / self._surface_impedances[contact.name]
                 )
-                Y[i, j] = power / (Vi * Vj) - 0.5 * (
-                    Vi / Vj * Y[i, i] + Vj / Vi * Y[j, j]
+                diff = (
+                    self.mesh.boundary_coefficients({contact.name: voltage})
+                    - self.potential
                 )
-                Y[j, i] = Y[i, j]
-                _logger.debug(f"Y[{i},{j}] = Y[{j},{i}] = {Y[i, j]}")
-
-        _logger.info(f"Admittance matrix:\n{Y}")
-        return Y
+                power += ngsolve.Integrate(
+                    interface_admittance * diff * ngsolve.Conj(diff),
+                    mesh=self.mesh.ngsolvemesh,
+                    definedon=self.mesh.ngsolvemesh.Boundaries(contact.name),
+                )
+        # Add surface-impedance dissipation for floating contacts.
+        # contact.voltage holds the computed u_k after
+        # _update_floating_voltages().  Without this term the scalar
+        # Z = V^2 / P under-counts P and over-estimates |Z|.
+        for contact in self.contacts.floating:
+            if contact.surface_impedance_model is not None:
+                interface_admittance = ngsolve.CF(
+                    1.0 / self._surface_impedances[contact.name]
+                )
+                diff = (
+                    self.mesh.boundary_coefficients({contact.name: contact.voltage})
+                    - self.potential
+                )
+                power += ngsolve.Integrate(
+                    interface_admittance * diff * ngsolve.Conj(diff),
+                    mesh=self.mesh.ngsolvemesh,
+                    definedon=self.mesh.ngsolvemesh.Boundaries(contact.name),
+                )
+        _logger.debug(f"Voltage drop for impedance: {voltage_diff}")
+        _logger.debug(f"Power after surface imp: {power}")
+        return voltage_diff * np.conj(voltage_diff) / power
 
     def estimate_currents(self) -> dict:
         """Estimate currents by integration of normal component.
@@ -1303,43 +1091,6 @@ class VolumeConductor(ABC):
                     "Its voltage has to be 0V (ground)."
                 )
 
-    def _export_impedance_matrices(self) -> None:
-        """Export admittance and impedance matrices to CSV files.
-
-        Exports flat-format CSV with columns: freq, row, col, real, imag.
-        Both matrices are NxN (all stimulation contacts), with the
-        outer brain surface as the implicit ground reference.
-        """
-        contacts = self.contacts.active
-        if self.current_controlled:
-            contacts = contacts + self.contacts.floating
-        all_names = [c.name for c in contacts]
-        freqs = self.signal.frequencies
-
-        for label, matrices, names in [
-            ("admittance_matrix", self._admittance_matrices, all_names),
-            ("impedance_matrix", self._impedances, all_names),
-        ]:
-            rows = []
-            for freq_idx, freq in enumerate(freqs):
-                mat = matrices[freq_idx]
-                for i, row_name in enumerate(names):
-                    for j, col_name in enumerate(names):
-                        rows.append(
-                            {
-                                "freq": freq,
-                                "row": row_name,
-                                "col": col_name,
-                                "real": mat[i, j].real,
-                                "imag": mat[i, j].imag
-                                if np.iscomplex(mat[i, j])
-                                else 0.0,
-                            }
-                        )
-            df = pd.DataFrame(rows)
-            df.to_csv(os.path.join(self.output_path, f"{label}.csv"), index=False)
-            _logger.info(f"Saved {label} to {label}.csv")
-
     def setup_timings_dict(
         self, export_vtk: bool, point_models: list[PointModel]
     ) -> dict:
@@ -1432,13 +1183,6 @@ class VolumeConductor(ABC):
                 new_frequency,
                 threshold,
             )
-
-    def _add_surface_impedance(self) -> bool:
-        """Decide if surface impedance should be added to active contacts."""
-        add_surface_impedance = False
-        for contact in self.contacts.active:
-            add_surface_impedance = not np.isclose(contact.surface_impedance, 0.0)
-        return add_surface_impedance
 
     def _frequency_domain_exports(
         self,

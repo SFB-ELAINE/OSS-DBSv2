@@ -143,7 +143,10 @@
   "EQSMode": false,
   "FEMOrder": 2,
   "OutputPath": "Results_AdmittanceMatrix",
-  "ComputeImpedance": true,
+  "ImpedanceAnalysis": {
+    "Enabled": true,
+    "IncludeFloating": true
+  },
   "ExportVTK": false,
   "ExportElectrode": false
 }
