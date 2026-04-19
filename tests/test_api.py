@@ -251,17 +251,6 @@ class TestGeneratePointModels:
         assert len(result) == 1
 
 
-class TestGenerateMeshsizeFileFromNeuronGrid:
-    """Tests for generate_meshsize_file_from_neuron_grid function."""
-
-    def test_not_implemented(self):
-        """Test that function raises NotImplementedError."""
-        from ossdbs.api import generate_meshsize_file_from_neuron_grid
-
-        with pytest.raises(NotImplementedError):
-            generate_meshsize_file_from_neuron_grid()
-
-
 class TestRunVolumeConductorModel:
     """Tests for run_volume_conductor_model function."""
 

@@ -134,19 +134,6 @@ class Contacts:
         self._active = [contact for contact in self._all_contacts if contact.active]
         # Floating boundary conditions
         self._floating = [contact for contact in self._all_contacts if contact.floating]
-        # Do not stimulate / Neumann boundary condition
-        self._unused = [
-            contact
-            for contact in self._all_contacts
-            if not contact.floating and not contact.active
-        ]
-        # if a contact has a surface impedance model,
-        # set the surface impedance to active
-        self._surface_impedance_active = False
-        for contact in self._all_contacts:
-            if contact.surface_impedance_model is not None:
-                self._surface_impedance_active = True
-                break
 
     def append(self, contact: Contact) -> None:
         """Add another contact."""
@@ -155,8 +142,6 @@ class Contacts:
             self._active.append(contact)
         elif contact.floating:
             self._floating.append(contact)
-        else:
-            self._unused.append(contact)
 
     @property
     def active(self) -> list[Contact]:
@@ -177,21 +162,6 @@ class Contacts:
         list of Contacts
         """
         return self._floating
-
-    @property
-    def unused(self) -> list[Contact]:
-        """List of all unused (i.e. not active and not floating) contacts.
-
-        Returns
-        -------
-        list of Contacts
-        """
-        return self._unused
-
-    @property
-    def surface_impedance_active(self) -> bool:
-        """Get status of surface impedance."""
-        return self._surface_impedance_active
 
     @property
     def currents(self) -> dict:

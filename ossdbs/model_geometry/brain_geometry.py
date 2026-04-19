@@ -41,7 +41,9 @@ class BrainGeometry:
 
     Examples
     --------
-    TODO example for custom import
+    >>> from ossdbs.model_geometry import BrainGeometry, BoundingBox
+    >>> bbox = BoundingBox((-20, -20, -20), (20, 20, 20))
+    >>> brain = BrainGeometry("Sphere", bounding_box=bbox)
 
     """
 
@@ -162,12 +164,11 @@ class BrainGeometry:
         return self._affine_trafo(box)
 
     def import_geometry(self, path_to_geo_file: str):
-        """Import brain geometry from CAD file.
+        """Import brain geometry from a CAD file (STEP, IGES, or STL).
 
-        Notes
-        -----
-        TODO link to NGSolve / Netgen docs.
-
+        The imported shape is assigned the boundary name ``BrainSurface``
+        and the material name ``Brain``. The file is loaded via
+        `Netgen's OCC interface <https://docu.ngsolve.org/latest/i-tutorials/unit-4a.2-csg2d/csg2d.html>`_.
         """
         _logger.debug(f"Import brain geometry from file: {path_to_geo_file}")
         occgeo = netgen.occ.OCCGeometry(path_to_geo_file)

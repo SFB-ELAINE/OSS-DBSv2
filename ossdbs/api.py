@@ -358,14 +358,6 @@ def generate_point_models(settings: dict):
     return point_models
 
 
-def generate_meshsize_file_from_neuron_grid():
-    """Use point grid to specify mesh sizes.
-
-    TODO implement
-    """
-    raise NotImplementedError("Not yet supported")
-
-
 def generate_signal(settings) -> TimeDomainSignal:
     """Generate a time-domain signal (waveform)."""
     signal_settings = settings["StimulationSignal"]
@@ -467,13 +459,22 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
 def run_volume_conductor_model(
     settings, volume_conductor, frequency_domain_signal, truncation_time=None
 ):
-    """TODO document.
+    """Run the volume conductor model at all required frequencies.
 
+    Solves the FEM system at each frequency in the signal spectrum,
+    optionally computes impedance and currents, exports results, and
+    reconstructs the time-domain solution.
 
-    Notes
-    -----
-    Run at all frequencies.
-    If the mode is multisine, a provided list of frequencies is used.
+    Parameters
+    ----------
+    settings : dict
+        Complete simulation settings dictionary.
+    volume_conductor : VolumeConductor
+        Prepared volume conductor model with mesh and FEM space.
+    frequency_domain_signal : FrequencyDomainSignal
+        Signal defining the frequencies and amplitudes to solve.
+    truncation_time : float, optional
+        If set, truncate the time-domain reconstruction to this duration.
     """
     _logger.info("Run volume conductor model")
 
@@ -514,16 +515,62 @@ def run_volume_conductor_model(
         truncation_time=truncation_time,
         estimate_currents=compute_currents,
     )
+
+    _run_impedance_analysis(settings, volume_conductor, frequency_domain_signal)
+
     return vcm_timings
 
 
-def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_signal):
-    """TODO document.
+def _run_impedance_analysis(
+    settings, volume_conductor, frequency_domain_signal
+) -> None:
+    """Run the optional multicontact admittance / impedance analysis.
 
-    Notes
-    -----
-    Run at all frequencies.
-    If the mode is multisine, a provided list of frequencies is used.
+    Triggered by the ``ImpedanceAnalysis`` block in the input JSON.
+    Produces ``admittance_matrix.csv`` and ``impedance_matrix.csv`` in
+    the output directory. Decoupled from ``run_full_analysis`` — no
+    effect on the stimulation output.
+    """
+    block = settings.get("ImpedanceAnalysis") or {}
+    if not block.get("Enabled"):
+        return
+
+    from ossdbs.fem.analysis import ImpedanceAnalyzer
+
+    frequencies = block.get("Frequencies")
+    if not frequencies:
+        frequencies = frequency_domain_signal.frequencies
+    include_floating = block.get("IncludeFloating", True)
+
+    _logger.info(
+        f"Running impedance analysis at {len(frequencies)} frequency "
+        f"point(s); include_floating={include_floating}"
+    )
+    analyzer = ImpedanceAnalyzer(volume_conductor, include_floating=include_floating)
+    analyzer.compute(frequencies)
+    analyzer.export(settings["OutputPath"])
+
+
+def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_signal):
+    """Run StimSets batch workflow: compute unit solutions per contact.
+
+    For each non-ground contact, sets up a unit-current solve (1 A on
+    that contact, all others floating, ground at -1 A), loads the
+    pre-saved mesh, applies HP refinement, and runs the full FEM
+    analysis. Results are stored in per-contact output directories.
+
+    Parameters
+    ----------
+    settings : dict
+        Complete simulation settings dictionary.
+    geometry : ModelGeometry
+        Geometry with electrode and contact definitions.
+    conductivity : ConductivityCF
+        Conductivity coefficient function.
+    solver : Solver
+        Configured FEM solver.
+    frequency_domain_signal : FrequencyDomainSignal
+        Signal defining the frequencies and amplitudes to solve.
     """
     _logger.info("Run StimSets volume conductor model")
 
@@ -590,11 +637,6 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
         _logger.info(f"Running with contacts:\n{volume_conductor.contacts}")
 
         volume_conductor.output_path = settings["OutputPath"] + contact.name
-        # In StimSets mode the non-active, non-ground contacts are
-        # floating with zero current — they are passive receivers, not
-        # additional stimulation ports. Force scalar-impedance mode so
-        # the admittance-matrix formulation (which would treat each
-        # floating contact as an independent port) is not triggered.
         vcm_timings = volume_conductor.run_full_analysis(
             frequency_domain_signal,
             export_vtk=export_vtk,
@@ -605,7 +647,6 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             adaptive_mesh_refinement_settings=settings["Mesh"][
                 "AdaptiveMeshRefinement"
             ],
-            multicontact_impedance=False,
         )
         _logger.info(f"Timing for contact {contact.name}: {vcm_timings}")
 

@@ -215,11 +215,6 @@ class NeuronSimulator(ABC):
         self._signal_dict = value
 
     @property
-    def axon_model_type(self):
-        """Type of axon model."""
-        return self._pathways_dict["Axon_Model_Type"]
-
-    @property
     def connectome_name(self):
         """Name of connectome."""
         return self._pathways_dict["connectome_name"]
@@ -485,33 +480,6 @@ class NeuronSimulator(ABC):
         for scaling_comp in self._scaling_vector:
             v_ext = v_ext + v_time_sol * 1000.0 * scaling * scaling_comp
         return v_ext
-
-    def get_axon_status_multiprocessing(self, neuron_index, v_time_sol, output):
-        """Probe action potential at a neuron (axon).
-
-        Parameters
-        ----------
-        neuron_index: int
-            index of neuron in the pathway starting from 0
-        v_time_sol: np.ndarray
-            potential distribution (in V) in space (on the neuron)
-            and time (DBS signal)
-        output:
-            multiprocessing output data structure
-
-        Returns
-        -------
-        list, neuron index in the pathway and its activation status (1 or 0),
-        or [neuron_index, None, error_message] if an error occurred.
-
-        """
-        try:
-            v_ext = self.get_v_ext(v_time_sol)
-            spike = self.run_NEURON(v_ext, self._extra_initialization)
-            return output.put([neuron_index, spike])
-        except Exception as e:
-            # Return error info so parent can handle it
-            return output.put([neuron_index, None, str(e)])
 
     def run_NEURON(
         self,

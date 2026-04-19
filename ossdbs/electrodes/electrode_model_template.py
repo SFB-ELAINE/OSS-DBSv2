@@ -2,6 +2,8 @@
 # Copyright 2023, 2024 Jan Philipp Payonk, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from __future__ import annotations
+
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
@@ -176,23 +178,6 @@ class ElectrodeModel(ABC):
     def index(self, index: int) -> None:
         self._index = index
 
-    def get_max_mesh_size_contacts(self, ratio: float) -> float:
-        """Use electrode's contact size to estimate maximal mesh size.
-
-        Parameters
-        ----------
-        ratio: float
-            Ratio between characteristic contact size and maximal mesh size.
-
-        Notes
-        -----
-        For most of the electrodes, the electrode diameter is used.
-        Exemptions are:
-        * :class:`ossdbs.electrodes.MicroProbesSNEX100Model`
-
-        """
-        return self._parameters.lead_diameter / ratio
-
     def export_electrode(self, output_path, brain_dict, n_electrode) -> None:
         """Export electrode as Netgen and VTK file."""
         _logger.info("Export electrode as Netgen and VTK file")
@@ -281,7 +266,13 @@ class ElectrodeModel(ABC):
                 vertex.hpref = vertex_sizes[vertex.name]
 
     def get_contact_areas(self) -> dict:
-        """Measure contact areas."""
+        """Measure contact areas from the electrode geometry.
+
+        Returns
+        -------
+        dict
+            Mapping of face name to area (in mm^2).
+        """
         surface_areas = {}
         for face in self.geometry.faces:
             if face.name not in surface_areas:

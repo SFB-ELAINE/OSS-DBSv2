@@ -42,16 +42,22 @@ class VolumeConductorFloatingImpedance(VolumeConductor):
 
         _logger.debug("Save surface impedance boundaries")
         self._surface_impedance_floating_boundaries = []
+        floating_without_impedance = []
         for contact in self.contacts.floating:
             if contact.surface_impedance_model is not None:
                 self._surface_impedance_floating_boundaries.append(contact.name)
             else:
-                _logger.warning(
-                    f"Contact {contact.name} ignored because no "
-                    "surface impedance model given."
-                )
+                floating_without_impedance.append(contact.name)
+        if floating_without_impedance:
+            raise ValueError(
+                "The FloatingImpedance formulation requires every floating "
+                "contact to carry a surface impedance model. Contacts "
+                f"{floating_without_impedance} have none. Either add a "
+                "surface impedance model to them, or switch to the plain "
+                "Floating formulation by removing the surface impedance "
+                f"from {self._surface_impedance_floating_boundaries}."
+            )
         _logger.debug("Create space")
-        self._floating_values = {}
         self.update_space()
 
     def update_space(self):

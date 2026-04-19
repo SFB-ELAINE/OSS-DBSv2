@@ -240,45 +240,6 @@ class Mesh:
         """
         self._mesh.ngmesh.Save(file_name)
 
-    def refine_at_voxel(self, start: tuple, end: tuple, data: np.ndarray) -> None:
-        """Refine the mesh at the marked locations.
-
-        Parameters
-        ----------
-        start : tuple
-            Lower coordinates of voxel space.
-
-        end : tuple
-            Upper coordinates of voxel space.
-
-        data : np.ndarray
-            Voxelvalues.
-        """
-        space = ngsolve.L2(self._mesh, order=0)
-        grid_function = ngsolve.GridFunction(space=space)
-        cf = ngsolve.VoxelCoefficient(
-            start=start, end=end, values=data.astype(float), linear=False
-        )
-        grid_function.Set(cf)
-        flags = grid_function.vec.FV().NumPy()
-
-        for element, flag in zip(self._mesh.Elements(ngsolve.VOL), flags, strict=True):
-            self._mesh.SetRefinementFlag(ei=element, refine=flag)
-        self.refine()
-
-    def refine_at_materials(self, materials: list[str]) -> None:
-        """Refine the mesh by the boundaries.
-
-        Parameters
-        ----------
-        materials : list[str]
-            Collection of material names.
-
-        """
-        for element in self._mesh.Elements(ngsolve.VOL):
-            to_refine = element.mat in materials
-            self._mesh.SetRefinementFlag(ei=element, refine=to_refine)
-
     def refine_at_boundaries(self, boundaries: list) -> None:
         """Refine the mesh by the boundaries.
 

@@ -36,7 +36,6 @@ class VolumeConductorNonFloating(VolumeConductor):
             if contact.surface_impedance_model is None
         ]
         self._space = self.h1_space(boundaries=boundaries, is_complex=self.is_complex)
-        self._floating_values = {}
         self.update_space()
 
     def update_space(self):
