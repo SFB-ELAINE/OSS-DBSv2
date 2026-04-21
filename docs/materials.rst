@@ -70,11 +70,9 @@ The file must use the same spatial reference frame as the segmented MRI.
 Spatial units in the NIfTI header are respected (meter, mm, or micron are
 converted to mm automatically).
 
-The DTI data is expected to be a **normalised mapping** of the diffusion
-tensor — that is, the tensor at each voxel is normalised so that it acts
-as a dimensionless direction-and-anisotropy weight rather than carrying
-physical diffusion units. A suitable file can be obtained, for example,
-from the Lead-DBS template data
+The DTI data needs to be preprocessed before importing.
+Currently, this is supported in Lead-DBS where common preprocessing steps are implemented.
+The Lead-DBS template data provides an example
 (``IITmean_tensor_Norm_mapping.nii.gz``).
 
 JSON configuration

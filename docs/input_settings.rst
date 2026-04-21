@@ -38,7 +38,7 @@ section contains:
 
 - ``Center``: the center of the domain in millimeters
 - ``Dimension``: the extent in x, y, and z direction
-- ``Shape``: for example ``Sphere`` or another supported geometry type
+- ``Shape``: for example ``Sphere`` or another supported geometry type like ``Box`` or ``Ellipsoid`` 
 
 For standalone usage, this is often the first section to adapt when moving from
 an example dataset to a new subject or experiment.

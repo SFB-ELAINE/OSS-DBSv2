@@ -39,7 +39,7 @@ The ``CurrentControlled`` flag in ``StimulationSignal`` selects the mode.
 Depending on the mode, contacts can be **active** (carrying a Dirichlet
 boundary condition), **floating** (equipotential via Lagrange multiplier), or
 **floating with surface impedance** (coupled via a Robin boundary condition).
-Not every combination is valid. The table below summarises the supported cases.
+Not every combination is valid. Below, the supported cases are summarised.
 
 Voltage-controlled stimulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -225,16 +225,16 @@ Solver selection
 OSS-DBSv2 provides three solver types:
 
 - **CG** (Conjugate Gradient) — the default. Efficient for symmetric positive
-  definite systems, which covers most real-valued (non-EQS) volume conductor
+  definite systems, which covers most real-valued and EQS volume conductor
   problems. Use this as the starting point.
 - **GMRES** — required for non-symmetric or complex-valued systems. When
-  ``EQSMode`` is enabled, the system matrix becomes complex and CG is no
-  longer applicable; switch to GMRES. GMRES also handles the
-  ``FloatingImpedance`` formulation where the Lagrange multiplier and Robin
-  terms can break strict symmetry.
-- **Direct** — factorises the system matrix with PARDISO. Robust and
-  deterministic but memory-intensive. Practical for small to medium problems
-  (up to ~200k DOFs) or as a reference for verifying iterative solver results.
+  ``EQSMode`` is enabled, the system matrix becomes complex.
+  GMRES also handles the ``FloatingImpedance`` formulation where the
+  Lagrange multiplier and Robin terms could break strict symmetry.
+- **Direct** — factorises the system matrix with a direct solver like PARDISO.
+  Robust and deterministic but memory-intensive. Practical for small to
+  medium problems (up to ~200k DOFs) or as a reference for verifying
+  iterative solver results.
 
 Preconditioner selection
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -269,11 +269,11 @@ Recommended configurations
 +=============================+===============+====================+
 | Standard (real-valued)      | CG            | bddc               |
 +-----------------------------+---------------+--------------------+
-| EQS mode (complex)          | GMRES         | bddc               |
+| EQS mode (complex)          | CG or GMRES   | bddc               |
 +-----------------------------+---------------+--------------------+
 | FloatingImpedance           | CG or GMRES   | local              |
 +-----------------------------+---------------+--------------------+
-| FloatingImpedance + EQS     | GMRES         | customized_local   |
+| FloatingImpedance + EQS     | CG or GMRES   | customized_local   |
 +-----------------------------+---------------+--------------------+
 | Small problem / debugging   | Direct        | (not applicable)   |
 +-----------------------------+---------------+--------------------+

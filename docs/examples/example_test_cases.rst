@@ -218,15 +218,15 @@ This case validates impedance computation against analytical or reference
 values in a homogeneous tissue medium using a Boston Scientific Vercise
 electrode.
 
-Six input files explore different combinations:
+Five input files explore different combinations:
 
 - ``input_homogeneous.json``: baseline without interface impedance
 - ``input_no_interface.json``: heterogeneous MRI-based tissue, no interface
 - ``input_homogeneous_lempka2009.json``: homogeneous tissue with Lempka (2009)
   CPE interface parameters (``CPE_dl``, ``dl_k = 1.5e6``, ``dl_alpha = 0.8``)
-- ``input_interface_lempka2009.json``: MRI-based tissue with Lempka interface
-- ``input_surface_impedance_lempka2009.json``: surface impedance (Robin BC)
-  formulation with Lempka parameters on active contacts
+- ``input_surface_impedance_lempka2009.json``: MRI-based tissue with the
+  surface impedance (Robin BC) formulation using Lempka parameters on
+  active contacts
 - ``input_homogeneous_surface_impedance_lempka2009.json``: homogeneous tissue
   with surface impedance
 
