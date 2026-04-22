@@ -297,7 +297,7 @@ class LeadSettings:
         return self._get_str("Patient_folder")
 
     def get_est_in_temp(self):
-        """TODO description."""
+        """Whether the simulation is estimated in template (MNI) space."""
         return bool(self._get_num("Estimate_In_Template"))
 
     def get_mri_name(self):
@@ -335,7 +335,7 @@ class LeadSettings:
 
     # TODO check if calculation matches Lead-DBS (Konstantin)
     def get_specs_array_length(self, oss_elec_name):
-        """TODO description."""
+        """Distance between the first and last contact from electrode specs."""
         elec_params = default_electrode_parameters[oss_elec_name]
         return elec_params.get_distance_l1_l4()
 
@@ -409,17 +409,18 @@ class LeadSettings:
         return self._get_arr("stim_center")
 
     def get_rot_z(self, index_side: int):
-        """TODO description.
+        """Compute electrode rotation angle around the z-axis.
 
         Parameters
         ----------
         index_side: int
-            Side of brain
+            Hemisphere index (0 = right, 1 = left).
 
         Notes
         -----
-         Always recalculated from the other settings
-        *IMPORTANT*: it is actually not native but scrf!
+        Always recalculated from marker coordinates. Uses MNI-space
+        coordinates when estimating in template, native (scanner) space
+        otherwise.
         """
         if self.get_est_in_temp():
             head_MNI = self.get_head_mni()[index_side, :]
@@ -479,7 +480,7 @@ class LeadSettings:
         return self._get_arr("Activation_threshold_VTA")
 
     def get_phi_vec(self):
-        """TODO description."""
+        """Current fractionalization vector from Lead-DBS."""
         return self._get_arr("Phi_vector")
 
     def get_case_grnd(self):
@@ -495,7 +496,7 @@ class LeadSettings:
         return self._get_num("outOfCore")
 
     def get_connectome(self):
-        """TODO description."""
+        """Name of the connectome used for pathway activation modeling."""
         return self._get_str("connectome")
 
     def get_axon_len(self):

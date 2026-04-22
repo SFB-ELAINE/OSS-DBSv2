@@ -38,7 +38,7 @@ section contains:
 
 - ``Center``: the center of the domain in millimeters
 - ``Dimension``: the extent in x, y, and z direction
-- ``Shape``: for example ``Sphere`` or another supported geometry type
+- ``Shape``: for example ``Sphere`` or another supported geometry type like ``Box`` or ``Ellipsoid`` 
 
 For standalone usage, this is often the first section to adapt when moving from
 an example dataset to a new subject or experiment.
@@ -96,6 +96,10 @@ Important mesh settings include:
 - ``MeshElementOrder`` for the geometric discretization
 - ``MeshingHypothesis`` for coarse-to-fine global mesh sizing
 - ``MeshSize`` for targeted local refinement
+- ``HPRefinement`` for combined geometric and polynomial refinement near
+  boundaries
+
+See :ref:`mesh-refinement` for a full description of all mesh control options.
 
 Important solver settings include:
 
@@ -105,7 +109,8 @@ Important solver settings include:
 
 For most new users, the example defaults are a good starting point. Solver and
 mesh tuning usually becomes important only for large studies or demanding
-anisotropic models.
+anisotropic models. See :ref:`solver-guidance` for detailed recommendations on
+solver and preconditioner selection.
 
 Stimulation signal
 ------------------
@@ -118,7 +123,9 @@ include:
 - frequency or pulse-shape parameters depending on the chosen model
 
 Different workflows use different subsets of these settings. When importing
-from Lead-DBS, several values are generated automatically.
+from Lead-DBS, several values are generated automatically. See
+:ref:`stimulation-modes` for a detailed description of how current- and
+voltage-controlled stimulation interact with contact configurations.
 
 Point models and post-processing
 --------------------------------
@@ -132,12 +139,174 @@ Point models and post-processing
 These options are often disabled for a first validation run and enabled later
 once the core volume conductor setup is working as expected.
 
+Surfaces
+--------
+
+The optional ``Surfaces`` block sets boundary conditions on the outer brain
+surface. This is primarily used to treat the brain boundary as a grounded
+electrode in monopolar stimulation setups:
+
+.. code-block:: json
+
+   "Surfaces": [
+     {
+       "Name": "BrainSurface",
+       "Active": true,
+       "Voltage[V]": 0.0,
+       "Floating": false
+     }
+   ]
+
+Each entry uses the same fields as a contact definition (``Active``,
+``Voltage[V]``, ``Floating``, ``Current[A]``). The ``Name`` must match a
+boundary name in the geometry — the default outer boundary is called
+``BrainSurface``. If ``Surfaces`` is omitted or empty, the outer boundary
+is left as a natural (zero-flux) boundary condition.
+
+.. _stimsets-workflow:
+
+StimSets (batch stimulation)
+----------------------------
+
+The ``StimSets`` workflow enables efficient batch simulation of many
+stimulation protocols on the same electrode geometry. Instead of running a
+full mesh-generation and FEM solve for every protocol, StimSets exploits
+linearity: it computes one **unit solution** per contact and then
+superimposes them with protocol-specific scaling factors.
+
+JSON configuration
+^^^^^^^^^^^^^^^^^^
+
+.. code-block:: json
+
+   "StimSets": {
+     "Active": true,
+     "StimSetsFile": "Current_protocol.csv"
+   }
+
+- ``Active`` (default: ``false``) — enable the StimSets workflow.
+- ``StimSetsFile`` — path to a CSV file containing stimulation protocols
+  (see format below). Can also be ``null`` when using the Python API with
+  a ``CurrentVector`` instead.
+
+Requirements
+^^^^^^^^^^^^
+
+- Stimulation must be **current-controlled** (``CurrentControlled: true``).
+- Exactly one contact or surface must serve as **ground** with
+  ``Current[A]: -1``. This is typically the brain surface
+  (``Surfaces`` block) or one active electrode contact.
+- The preconditioner is automatically set to ``local`` (floating contacts
+  require it).
+
+CSV format
+^^^^^^^^^^
+
+The CSV file has a header row with contact names and one row per
+stimulation protocol. Values are in **milliamps** (the code converts to
+Amperes by multiplying by 1e-3). NaN values are treated as zero current.
+
+.. code-block:: text
+
+   Contact0,Contact1,Contact2,Contact3
+   -1.954,0.0,-0.983,0.0
+   -3.811,-0.933,-2.437,0.784
+
+The number of columns must match the number of non-ground contacts.
+
+Execution workflow
+^^^^^^^^^^^^^^^^^^
+
+The StimSets pipeline proceeds in two stages:
+
+**Stage 1 — Unit solutions** (``ossdbs``):
+
+1. A single mesh is generated and h-refined (material bisection), then
+   saved to disk.
+2. For each non-ground contact, the mesh is reloaded, HP refinement is
+   re-applied, and a unit-current FEM solve is performed (1 A on that
+   contact, all others floating, ground at −1 A).
+3. Unit solutions are stored in per-contact directories named
+   ``<OutputPath>E1C1``, ``<OutputPath>E1C2``, etc.
+
+**Stage 2 — Pathway activation** (``run_pathway_activation``):
+
+1. All unit solutions are loaded from the per-contact directories.
+2. For each row in the CSV file, the unit solutions are scaled by the
+   protocol currents and superimposed.
+3. The resulting time-domain field is passed to the NEURON model for
+   axon activation analysis.
+
+Stage 2 is run separately after stage 1:
+
+.. code-block:: bash
+
+   run_pathway_activation input.json
+
+This separation allows re-running the PAM stage with different protocol
+files or scaling factors without repeating the expensive FEM solves.
+
+Additional top-level settings
+-----------------------------
+
+Several top-level keys control the FEM formulation and output behaviour:
+
+- ``EQSMode`` (default: ``false``) — enable electro-quasi-static mode. When
+  ``true``, the FEM solve uses complex-valued spaces to account for
+  capacitive tissue effects at non-zero frequencies. When ``false``, only real
+  conductivity is used (quasi-static approximation).
+- ``FEMOrder`` (default: 2) — polynomial order of the finite-element space.
+  Higher orders improve accuracy at the cost of more degrees of freedom.
+  This is independent of ``MeshElementOrder``, which controls the geometric
+  mesh curvature.
+- ``ComputeImpedance`` (default: ``false``) — compute the complex impedance
+  at each frequency and write ``impedance.csv``.
+- ``ComputeCurrents`` (default: ``false``) — estimate contact currents at
+  each frequency by integrating the normal current density over contact
+  surfaces.
+- ``ExportVTK`` (default: ``false``) — export potential, E-field,
+  conductivity, and material distributions as VTU files for ParaView.
+- ``ExportElectrode`` (default: ``false``) — export electrode geometry as VTU
+  and Netgen mesh files.
+- ``ExportFrequency`` (default: ``null``) — frequency at which VTK export is
+  performed. If ``null``, the median frequency is used.
+
 Output files
 ------------
 
-``OutputPath`` defines where OSS-DBSv2 writes results. In addition to numerical
-outputs, the software writes log files and status flags that are especially
-useful in automated or Lead-DBS-driven workflows.
+``OutputPath`` defines where OSS-DBSv2 writes results. The following files may
+be produced depending on the configuration:
+
+**Always written:**
+
+- ``ossdbs.log`` — full log of the simulation run
+- ``VCM_report.json`` — degrees of freedom, element count, and solver timings
+
+**Controlled by JSON flags:**
+
+- ``ComputeImpedance: true`` produces ``impedance.csv`` with columns
+  ``freq``, ``real``, ``imag``. For current-controlled multicontact setups,
+  ``admittance_matrix.csv`` and ``impedance_matrix.csv`` are also written
+  (flat format: ``freq``, ``row``, ``col``, ``real``, ``imag``).
+- ``ExportVTK: true`` produces VTU files for ParaView visualisation:
+  ``potential.vtu``, ``E-field.vtu``, ``conductivity.vtu``, and
+  ``material.vtu``.
+- ``ExportElectrode: true`` produces ``electrode_N.vtu`` and
+  ``electrode_N.vol.gz`` for each electrode.
+
+**Produced by specific workflows:**
+
+- **Floating contacts**: ``floating_potentials.csv`` (frequency-domain floating
+  voltages) and ``floating_in_time.csv`` (reconstructed time-domain values).
+- **Time-domain signal**: ``stimulation_in_time.csv`` (reconstructed
+  stimulation waveform at contact surfaces) and ``time_domain_signal.pdf``
+  (plot of the reconstructed signal).
+- **Point model (Lattice)**: ``oss_lattice_*.h5`` with potential and field
+  values on the evaluation grid.
+- **Point model (Pathway)**: ``oss_pathway_*.h5`` with field values sampled
+  along axon trajectories, plus activation results when NEURON is available.
+- **VTA**: ``oss_vta.nii`` (NIfTI volume of tissue activated).
+- ``SaveMesh: true``: ``mesh.vol.gz`` for later reuse.
 
 When adapting examples, it is often helpful to choose an explicit output folder
 per subject or experiment so results from different runs do not get mixed.

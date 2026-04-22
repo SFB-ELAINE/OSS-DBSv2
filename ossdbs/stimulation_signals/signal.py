@@ -41,8 +41,10 @@ class TimeDomainSignal(ABC):
 
     Notes
     -----
-    TODO document and clarify how to use amplitude
-    The spectrum is also received from here.
+    Amplitudes are relative: the primary pulse has amplitude 1.0 and the
+    counter pulse amplitude is given as a fraction (e.g. 0.5 means half
+    the primary amplitude). The actual voltage or current scaling is
+    applied externally by the volume conductor model.
 
     """
 

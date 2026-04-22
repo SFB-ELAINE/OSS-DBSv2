@@ -35,6 +35,14 @@ Practical guidance
   of the study design.
 
 
+Related pages
+-------------
+
+- :doc:`volume_conductor_model` — the FEM solve that produces the fields
+  sampled by point models
+- :doc:`axon_models` — pathway-based activation analysis using sampled fields
+- :doc:`input_settings` — ``PointModel`` JSON configuration
+
 API reference
 -------------
 

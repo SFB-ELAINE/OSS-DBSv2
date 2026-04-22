@@ -560,14 +560,3 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         return netgen.occ.Fuse([contact_1, contact_2]).Rotate(
             occ.Axis(p=origin, d=rotation), angle
         )
-
-    def get_max_mesh_size_contacts(self, ratio: float) -> float:
-        """Use electrode's contact size to estimate maximal mesh size.
-
-        Parameters
-        ----------
-        ratio: float
-            Ratio between characteristic contact size and maximal mesh size.
-
-        """
-        return self._parameters.core_electrode_diameter / ratio

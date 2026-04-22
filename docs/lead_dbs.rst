@@ -53,3 +53,11 @@ This command generates an OSS-DBSv2 configuration file in JSON format that can b
 This standalone route is useful when you want to keep the anatomical and
 electrode information prepared by Lead-DBS but run larger batches, parameter
 sweeps, or custom scripts directly in OSS-DBSv2.
+
+Related pages
+-------------
+
+- :doc:`tutorial` — standalone CLI workflow
+- :doc:`input_settings` — JSON settings reference
+- :doc:`python_api` — scripting API for custom pipelines and parameter sweeps
+- :doc:`electrodes` — available electrode models

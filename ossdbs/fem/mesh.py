@@ -30,6 +30,8 @@ class Mesh:
         self._geometry = geometry
         self._order = order
         self._mesh = None
+        self._hp_refinement_params = None
+        self._hp_refinement_applied = False
 
     def generate_mesh(self, meshing_parameters: dict) -> None:
         """Generate NGSolve mesh."""
@@ -45,12 +47,43 @@ class Mesh:
             "HPRefinement" in meshing_parameters
             and meshing_parameters["HPRefinement"]["Active"]
         ):
+            # Store HP refinement parameters for deferred application.
+            # HP refinement must be applied after any bisection-based
+            # refinement (e.g. material refinement), because RefineHP
+            # introduces element types that Netgen's bisection cannot handle.
+            self._hp_refinement_params = meshing_parameters["HPRefinement"]
+        self._mesh.Curve(order=self.order)
+
+    def set_hp_refinement_params(self, hp_params: dict) -> None:
+        """Store HP refinement parameters for deferred application.
+
+        This is used when loading a pre-existing mesh so that
+        apply_hp_refinement() can still be called later.
+        Existing stored parameters are overwritten.
+        """
+        if not self._hp_refinement_applied:
+            self._hp_refinement_params = hp_params
+
+    @property
+    def hp_refinement_applied(self) -> bool:
+        """Whether HP refinement has been applied to this mesh."""
+        return self._hp_refinement_applied
+
+    def apply_hp_refinement(self) -> None:
+        """Apply deferred HP refinement.
+
+        Must be called after all bisection-based refinement steps
+        (e.g. material refinement) are complete.
+        """
+        if self._hp_refinement_params is not None:
             _logger.info("Applying HP Refinement")
             self._mesh.RefineHP(
-                levels=meshing_parameters["HPRefinement"]["Levels"],
-                factor=meshing_parameters["HPRefinement"]["Factor"],
+                levels=self._hp_refinement_params["Levels"],
+                factor=self._hp_refinement_params["Factor"],
             )
-        self._mesh.Curve(order=self.order)
+            self._mesh.Curve(order=self._order)
+            self._hp_refinement_params = None
+            self._hp_refinement_applied = True
 
     def load_mesh(self, filename: str) -> None:
         """Load NGSolve mesh from file."""
@@ -89,16 +122,18 @@ class Mesh:
 
     def get_meshing_parameters(self, mesh_parameters: dict):
         """Prepare NGSolve meshing parameters deviating from default."""
-        meshing_hypothesis = {}
-        if "MaxMeshSize" in mesh_parameters:
-            meshing_hypothesis["maxh"] = mesh_parameters["MaxMeshSize"]
-        if "CurvatureSafety" in mesh_parameters:
-            meshing_hypothesis["curvaturesafety"] = mesh_parameters["CurvatureSafety"]
-        if "Grading" in mesh_parameters:
-            meshing_hypothesis["grading"] = mesh_parameters["Grading"]
-        if "MeshSizeFilename" in mesh_parameters:
-            meshing_hypothesis["meshsizefilename"] = mesh_parameters["MeshSizeFilename"]
-        return meshing_hypothesis
+        # Map input parameter names to NGSolve parameter names
+        param_mapping = {
+            "MaxMeshSize": "maxh",
+            "CurvatureSafety": "curvaturesafety",
+            "Grading": "grading",
+            "MeshSizeFilename": "meshsizefilename",
+        }
+        return {
+            ngsolve_key: mesh_parameters[input_key]
+            for input_key, ngsolve_key in param_mapping.items()
+            if input_key in mesh_parameters
+        }
 
     @property
     def order(self) -> int:
@@ -205,45 +240,6 @@ class Mesh:
         """
         self._mesh.ngmesh.Save(file_name)
 
-    def refine_at_voxel(self, start: tuple, end: tuple, data: np.ndarray) -> None:
-        """Refine the mesh at the marked locations.
-
-        Parameters
-        ----------
-        start : tuple
-            Lower coordinates of voxel space.
-
-        end : tuple
-            Upper coordinates of voxel space.
-
-        data : np.ndarray
-            Voxelvalues.
-        """
-        space = ngsolve.L2(self._mesh, order=0)
-        grid_function = ngsolve.GridFunction(space=space)
-        cf = ngsolve.VoxelCoefficient(
-            start=start, end=end, values=data.astype(float), linear=False
-        )
-        grid_function.Set(cf)
-        flags = grid_function.vec.FV().NumPy()
-
-        for element, flag in zip(self._mesh.Elements(ngsolve.VOL), flags, strict=True):
-            self._mesh.SetRefinementFlag(ei=element, refine=flag)
-        self.refine()
-
-    def refine_at_materials(self, materials: list[str]) -> None:
-        """Refine the mesh by the boundaries.
-
-        Parameters
-        ----------
-        materials : list[str]
-            Collection of material names.
-
-        """
-        for element in self._mesh.Elements(ngsolve.VOL):
-            to_refine = element.mat in materials
-            self._mesh.SetRefinementFlag(ei=element, refine=to_refine)
-
     def refine_at_boundaries(self, boundaries: list) -> None:
         """Refine the mesh by the boundaries.
 
@@ -313,6 +309,16 @@ class Mesh:
         self._mesh.ngmesh.Elements3D().NumPy()["refine"] = to_refine
         # refine
         self.refine()
+
+    def get_boundary_areas(self) -> dict:
+        """Integrate over boundaries to obtain surface areas."""
+        surface_area_dict = {}
+        for boundary in self.boundaries:
+            area = ngsolve.Integrate(
+                ngsolve.CF(1.0) * ngsolve.ds(boundary), mesh=self.ngsolvemesh
+            )
+            surface_area_dict[boundary] = area
+        return surface_area_dict
 
     @property
     def n_elements(self) -> int:

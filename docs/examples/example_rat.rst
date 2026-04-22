@@ -49,30 +49,36 @@ Since most rodent electrodes do not feature directional contacts, no orientation
         "Direction": {"x[mm]": 2.23, "y[mm]": 5.07, "z[mm]": 3.99},
         "TipPosition": {"x[mm]": 14.59, "y[mm]": -14.74, "z[mm]": -9.06},
         "Contacts": [
-            {
-              "Contact_ID": 1,
-              "Active": true,
-              "Voltage[V]": 1.0,
-              "Floating": false
-            },
-                            {
-                    "Contact_ID": 2,
-                    "Active": false,
-                    "Voltage[V]": 0.0,
-                    "Floating": true,
-                }
-
+          {
+            "Contact_ID": 1,
+            "Active": true,
+            "Voltage[V]": 1.0,
+            "Floating": false
+          },
+          {
+            "Contact_ID": 2,
+            "Active": false,
+            "Voltage[V]": 0.0,
+            "Floating": true
+          }
         ]
       }
-    ]
-    "Surfaces": [
-        {
-            "Name": "BrainSurface",
-            "Active": true,
-            "Voltage[V]": 0.0,
-            "Floating": false
-        }
     ],
+    "Surfaces": [
+      {
+        "Name": "BrainSurface",
+        "Active": true,
+        "Voltage[V]": 0.0,
+        "Floating": false
+      }
+    ],
+
+The ``Surfaces`` block sets boundary conditions on the outer brain surface.
+Here it is used to treat the brain boundary as a grounded electrode (0 V,
+active), providing the return path for monopolar stimulation. This is a common
+simplification in rodent studies where the skull or a distant return electrode
+acts as ground. The surface name ``BrainSurface`` matches the default name
+assigned to the outer boundary by ``BrainGeometry``.
 
 Estimate Stimulation Volume
 ---------------------------

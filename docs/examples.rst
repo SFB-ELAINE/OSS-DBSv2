@@ -20,19 +20,29 @@ If you are new to OSS-DBSv2, start here:
 Additional repository examples
 ------------------------------
 
-The repository also contains example collections for specific subsystems:
+The ``examples/`` directory in the repository contains script and notebook
+collections for specific subsystems. Each subdirectory is self-contained
+and can be run after installation. The links below point to the
+corresponding documentation pages for background.
 
-- ``examples/BrainGeometryAPI`` for geometry construction
-- ``examples/ElectrodesAPI`` for electrode placement and customization
-- ``examples/DielectricModelAPI`` for tissue property models
-- ``examples/ImageAPI`` for MRI and DTI handling
-- ``examples/MeshAPI`` for mesh generation and refinement
-- ``examples/StimulationSignalAPI`` for signal generation
-- ``examples/MulticontactCurrents`` for multicontact stimulation studies
-- ``examples/OptimizeSettings`` for exploratory optimization workflows
-
-These examples are especially useful once the basic CLI workflow from the
-tutorial is already familiar.
+- ``examples/BrainGeometryAPI`` — building brain regions with electrodes
+  and encapsulation layers. See :doc:`brain_geometry`.
+- ``examples/ElectrodesAPI`` — placing electrodes, including directed and
+  custom models. See :doc:`electrodes`.
+- ``examples/DielectricModelAPI`` — Cole-Cole and constant dielectric
+  models, custom parameter overrides. See :doc:`materials`.
+- ``examples/ImageAPI`` — MRI loading, voxel mapping, and DTI anisotropy
+  (including the ``example_dti_mask.py`` masking demo). See :doc:`materials`
+  (:ref:`dti-anisotropy`).
+- ``examples/MeshAPI`` — mesh generation, local mesh sizes, HP refinement,
+  and adaptive refinement. See :ref:`mesh-refinement`.
+- ``examples/StimulationSignalAPI`` — rectangular and biphasic pulse
+  generation, octave-band mode. See :doc:`stimulation_signals`.
+- ``examples/MulticontactCurrents`` — current-controlled multicontact
+  setups with floating and superposition approaches. See
+  :ref:`stimulation-modes`.
+- ``examples/OptimizeSettings`` — exploratory optimisation of stimulation
+  parameters. See :doc:`python_api`.
 
 .. toctree::
    :maxdepth: 1

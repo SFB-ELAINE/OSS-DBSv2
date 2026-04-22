@@ -194,6 +194,7 @@ After your first successful run, the most useful follow-up pages are:
 - :doc:`examples`
 - :doc:`electrodes`
 - :doc:`volume_conductor_model`
+- :doc:`python_api` — for scripting, parameter sweeps, and custom pipelines
 
 Related Documentation
 ---------------------

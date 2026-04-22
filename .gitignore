@@ -43,6 +43,7 @@ meshsizes.txt
 *.png
 *.eps
 *.pdf
+*.svg
 .DS_Store
 
 # Ignore miscellaneous files
@@ -50,6 +51,17 @@ ng.ini
 ngmesh.ini
 x86_64/
 
+# CLAUDE files
+tmpclaude*
+
+# Runtime artifacts
+nohup.out
+*.log
+
+# Generated figures
+figures/
+
+# Results
+examples/Electrochemistry/*.csv
 # Other generated files
 *.spec
-tmpclaude*

@@ -133,4 +133,105 @@ This example shows pathway-based evaluation of electric fields.
 Case 9: StimSets
 ----------------
 
-WIP – will demonstrate batch simulations of the same electrode configuration across varying stimulation settings.
+This case demonstrates the **StimSets** batch workflow, which computes
+unit solutions for each electrode contact and then superimposes them for
+an arbitrary number of stimulation protocols.
+
+**Setup:**
+
+- A Medtronic 3387 electrode (4 contacts) is placed in an ellipsoidal
+  brain region.
+- The ``Surfaces`` block sets ``BrainSurface`` as a current-controlled
+  ground (``Current[A]: -1``).
+- Stimulation is current-controlled with a 130 Hz rectangular pulse.
+- ``StimSets`` is enabled and points to ``Current_protocol.csv``.
+
+**How it works:**
+
+1. The mesh is generated once and saved (with material bisection applied).
+2. For each non-ground contact, the code creates a unit-current solve:
+   only that contact is active (1 A), all others are floating, and the
+   ground carries −1 A.
+3. HP refinement is re-applied on the loaded mesh for each unit solve.
+4. The unit solutions are stored in per-contact output directories
+   (``E1C1``, ``E1C2``, …).
+
+**Pathway activation (PAM):**
+
+After the unit solutions are computed, pathway activation is run
+separately via ``run_pathway_activation``:
+
+.. code-block:: bash
+
+   run_pathway_activation input_pathway.json
+
+This loads all unit solutions, reads each row of ``Current_protocol.csv``
+as a scaling vector, superimposes the unit solutions accordingly, and
+runs the NEURON model for each protocol. See :ref:`stimsets-workflow` in
+the settings reference for full details.
+
+**CSV format:**
+
+``Current_protocol.csv`` is a CSV file with a header row naming the
+contacts and one row per stimulation protocol. Values are in
+**milliamps** (converted to Amperes internally). NaN entries are treated
+as zero current.
+
+.. code-block:: text
+
+   Contact0,Contact1,Contact2,Contact3
+   -1.954,0.0,-0.983,0.0
+   -3.811,-0.933,-2.437,0.784
+   1.113,-1.445,3.622,-3.436
+
+
+Case 10: Floating with Surface Impedance
+-----------------------------------------
+
+This case demonstrates the ``VolumeConductorFloatingImpedance`` formulation
+using a PINS Medical L303 electrode with three contacts.
+
+Three input files are provided:
+
+- ``input_floating.json``: plain floating contacts (no surface impedance).
+  Contact 1 at 1 V, contact 3 at ground, contact 2 floating.
+- ``input_floating_impedance.json``: same contact activation but all floating
+  contacts carry a resistive surface impedance (``R = 1 kOhm``).
+- ``input_floating_impedance_noground.json``: all three contacts are floating
+  with surface impedance and no active ground. Currents are prescribed
+  (+1 mA / 0 / -1 mA) in current-controlled mode. A Lagrange multiplier
+  constrains the sum of floating potentials to zero.
+
+This case is useful for verifying that:
+
+- floating contacts with surface impedance produce physically plausible results
+- the no-ground current-controlled configuration is well-posed
+- impedance estimates include the surface-impedance dissipation
+
+See :ref:`surface-impedance` and :ref:`stimulation-modes` for background.
+
+
+Case 11: Impedance Validation (Homogeneous)
+--------------------------------------------
+
+This case validates impedance computation against analytical or reference
+values in a homogeneous tissue medium using a Boston Scientific Vercise
+electrode.
+
+Five input files explore different combinations:
+
+- ``input_homogeneous.json``: baseline without interface impedance
+- ``input_no_interface.json``: heterogeneous MRI-based tissue, no interface
+- ``input_homogeneous_lempka2009.json``: homogeneous tissue with Lempka (2009)
+  CPE interface parameters (``CPE_dl``, ``dl_k = 1.5e6``, ``dl_alpha = 0.8``)
+- ``input_surface_impedance_lempka2009.json``: MRI-based tissue with the
+  surface impedance (Robin BC) formulation using Lempka parameters on
+  active contacts
+- ``input_homogeneous_surface_impedance_lempka2009.json``: homogeneous tissue
+  with surface impedance
+
+These configurations allow comparing the lumped-element interface model with
+the surface impedance Robin BC approach, and verifying that both give
+consistent impedance spectra.
+
+

@@ -29,14 +29,18 @@ class VolumeConductorNonFloating(VolumeConductor):
         super().__init__(
             geometry, conductivity, solver, order, meshing_parameters, output_path
         )
-        boundaries = [contact.name for contact in self.contacts.active]
+        # dirichlet boundaries (no surface impedance)
+        boundaries = [
+            contact.name
+            for contact in self.contacts.active
+            if contact.surface_impedance_model is None
+        ]
         self._space = self.h1_space(boundaries=boundaries, is_complex=self.is_complex)
-        self._floating_values = {}
         self.update_space()
 
     def update_space(self):
         """Update space (e.g., if mesh changes)."""
-        # only GridFunction needs to be updated
+        self._space.Update()
         self._potential = ngsolve.GridFunction(space=self._space)
 
     def compute_solution(self, frequency: float) -> ngsolve.comp.GridFunction:
@@ -69,12 +73,32 @@ class VolumeConductorNonFloating(VolumeConductor):
         v = self._space.TestFunction()
         _logger.debug("Bilinear form")
         # TODO symmetric even if anisotropy?
-        bilinear_form = ngsolve.BilinearForm(space=self._space, symmetric=True)
+        bilinear_form = ngsolve.BilinearForm(space=self._space)
         _logger.debug("Bilinear form, formulation")
         bilinear_form += self._sigma * ngsolve.grad(u) * ngsolve.grad(v) * ngsolve.dx
 
-        # TODO add surface impedance
         _logger.debug("Linear form")
         linear_form = ngsolve.LinearForm(space=self._space)
+
+        # add surface impedance as Robin BC
+        self._surface_impedances = self.contacts.get_surface_impedances(
+            frequency, is_complex=self.is_complex
+        )
+        for contact in self.contacts.active:
+            if contact.surface_impedance_model is None:
+                continue
+            ys = 1.0 / self._surface_impedances[contact.name]
+            _logger.debug(
+                f"Contact: {contact.name}, Ys: {ys},"
+                f" Boundary Value: {boundary_values[contact.name]}"
+            )
+            bilinear_form += ngsolve.CF(ys) * u * v * ngsolve.ds(contact.name)
+            linear_form += (
+                ngsolve.CF(ys)
+                * ngsolve.CF(boundary_values[contact.name])
+                * v
+                * ngsolve.ds(contact.name)
+            )
+
         _logger.debug("Solve BVP")
         self.solver.bvp(bilinear_form, linear_form, self._potential)

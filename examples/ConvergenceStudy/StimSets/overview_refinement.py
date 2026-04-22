@@ -1,7 +1,16 @@
+"""Generate pam_results_summary.csv for the StimSets convergence study.
+
+Reads the per-strategy overview CSVs (from evaluate_convergence.py)
+and VCM_report.json files to produce a summary table with DOFs,
+compute time, and per-pathway mean/max absolute error vs. best.
+"""
+
+import json
+import os
+
 import numpy as np
 import pandas as pd
 
-stim_sets_combinations = 254
 pathways = [
     "M1_cf_face_right",
     "M1_cf_lowerex_right",
@@ -17,29 +26,84 @@ pathways = [
 
 result_directories = [
     "Results_PAM_default",
+    "Results_PAM_default_meshsize",
     "Results_PAM_fine",
-    "Results_PAM_fine_edge_refinement",
     "Results_PAM_material_refinement",
+    "Results_PAM_fine_edge_refinement",
     "Results_PAM_edge_single_material_refinement",
+    "Results_PAM_hp_refinement",
+    "Results_PAM_hp_material_refinement",
 ]
 
-best_result = pd.read_csv("Results_PAM_best_overview.csv")
-# get best result
-mean_activations = []
-for result_directory in result_directories:
-    print("++++++++++++++")
-    print(result_directory)
-    print("--------------")
-    print("Pathway, Mean activation, Mean difference, Max. difference")
-    df = pd.read_csv(result_directory + "_overview.csv")
+best_directory = "Results_PAM_best"
+
+# Load best (reference) results
+best_df = pd.read_csv(f"{best_directory}_overview.csv")
+
+# Get best DOF and timing
+best_vcm = json.load(open(f"{best_directory}E1C1/VCM_report.json"))
+best_dofs = best_vcm["DOF"]
+best_time = sum(best_vcm["Timings"]["ComputeSolution"])
+# Sum across all 8 contacts
+for i in range(2, 9):
+    vcm_path = f"{best_directory}E1C{i}/VCM_report.json"
+    if os.path.isfile(vcm_path):
+        vcm = json.load(open(vcm_path))
+        best_time += sum(vcm["Timings"]["ComputeSolution"])
+
+# Build summary
+results_dict = {
+    "roman": [],
+    "study_name": [],
+    "time": [],
+    "dofs": [],
+}
+for pathway in pathways:
+    results_dict[f"Pathway_status_{pathway}.json_activated"] = []
+    results_dict[f"Pathway_status_{pathway}.json_activated_rel_error"] = []
+    results_dict[f"Pathway_status_{pathway}.json_activated_max_error"] = []
+
+for idx, result_dir in enumerate(result_directories):
+    study_name = result_dir.replace("Results_PAM_", "")
+
+    # DOF and timing from E1C1 VCM report
+    vcm_path = f"{result_dir}E1C1/VCM_report.json"
+    vcm = json.load(open(vcm_path))
+    dofs = vcm["DOF"]
+    time_total = sum(vcm["Timings"]["ComputeSolution"])
+    for i in range(2, 9):
+        vcm_path_i = f"{result_dir}E1C{i}/VCM_report.json"
+        if os.path.isfile(vcm_path_i):
+            vcm_i = json.load(open(vcm_path_i))
+            time_total += sum(vcm_i["Timings"]["ComputeSolution"])
+
+    results_dict["roman"].append(r"\rom{" f"{idx + 1}" "}")
+    results_dict["study_name"].append(study_name)
+    results_dict["dofs"].append(dofs)
+    results_dict["time"].append(time_total)
+
+    # Per-pathway activation and error (mean over 254 protocols)
+    df = pd.read_csv(f"{result_dir}_overview.csv")
     for pathway in pathways:
-        best_activation = best_result[pathway].to_numpy()
-        current_activation = df[pathway].to_numpy()
-        difference = np.abs(best_activation - current_activation)
-        mean_activation = np.mean(current_activation)
-        std_activation = np.std(current_activation)
-        mean_diff = np.mean(difference)
-        std_diff = np.std(difference)
-        max_diff = np.max(difference)
-        print(f"{pathway}, {mean_activation:.2f}, {mean_diff:.2f}, {max_diff:.2f}")
-    print("++++++++++++++")
+        mean_activation = df[pathway].mean()
+        abs_errors = np.abs(df[pathway].values - best_df[pathway].values)
+        mean_error = abs_errors.mean()
+        max_error = abs_errors.max()
+        results_dict[f"Pathway_status_{pathway}.json_activated"].append(mean_activation)
+        results_dict[f"Pathway_status_{pathway}.json_activated_rel_error"].append(
+            mean_error
+        )
+        results_dict[f"Pathway_status_{pathway}.json_activated_max_error"].append(
+            max_error
+        )
+
+summary = pd.DataFrame(results_dict)
+summary["best_time"] = best_time
+summary["best_dofs"] = best_dofs
+
+for pathway in pathways:
+    summary[f"Pathway_status_{pathway}.json_activated_best"] = best_df[pathway].mean()
+
+summary.to_csv("pam_results_summary.csv", index=False)
+print("Wrote pam_results_summary.csv")
+print(summary[["roman", "study_name", "dofs", "time"]].to_string(index=False))

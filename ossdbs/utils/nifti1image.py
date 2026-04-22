@@ -11,17 +11,12 @@ from ossdbs.model_geometry import BoundingBox
 
 
 class Nifti1Image:
-    """Interface for Nifti1 image.
+    """Interface for NIfTI-1 images via `nibabel <https://nipy.org/nibabel/>`_.
 
     Attributes
     ----------
     file_path : str
-        File path of a Nifti1 image.
-
-    Notes
-    -----
-    TODO: add link to Nibabel documentation
-
+        File path of a NIfTI-1 image (.nii or .nii.gz).
     """
 
     def __init__(self, file_path: str) -> None:

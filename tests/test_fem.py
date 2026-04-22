@@ -1,6 +1,9 @@
 import json
 import math
 import os
+import subprocess
+import sys
+import textwrap
 from copy import deepcopy
 
 import ngsolve
@@ -445,3 +448,281 @@ class TestHPRefineCurvedBoundaryIntegration:
             )
         assert not math.isnan(val)
         assert abs(val - expected_area) < 0.1
+
+
+class TestRefineAfterRefineHPIsBroken:
+    """Document the NGSolve limitation that prevents combining AMR with
+    hp-refinement.
+
+    Conceptually we *want* to run AMR on top of an hp-refined mesh: hp
+    handles geometry-driven refinement near electrode contacts, and AMR
+    would then handle solution-driven refinement elsewhere. However,
+    NGSolve's standard Mesh.Refine() (the primitive AMR drives) silently
+    corrupts the mesh when called after RefineHP() — the integrated
+    volume of the domain stops matching the true geometry. Because the
+    failure is silent (no exception, no warning), VolumeConductor must
+    proactively disable AMR whenever hp-refinement has been applied.
+    See VolumeConductor._resolve_amr_active.
+    """
+
+    @staticmethod
+    def _build_mesh():
+        box = Box(Pnt(-2, -2, -2), Pnt(2, 2, 2))
+        cyl = Cylinder(Pnt(0, 0, -1), Z, r=0.5, h=2)
+        cyl.faces.Max(Z).name = "contact_top"
+        cyl.faces.Min(Z).name = "contact_bottom"
+        box.faces.name = "outer"
+        geo = OCCGeometry(box - cyl)
+        with ngsolve.TaskManager():
+            mesh = ngsolve.Mesh(geo.GenerateMesh(maxh=1.0))
+            mesh.Curve(2)
+        return mesh
+
+    @staticmethod
+    def _true_volume():
+        # 4x4x4 box minus a cylinder of radius 0.5 and height 2
+        return 4.0 * 4.0 * 4.0 - math.pi * 0.5**2 * 2.0
+
+    def test_refine_hp_alone_preserves_volume(self):
+        """Sanity check: RefineHP on its own keeps the mesh volume correct."""
+        mesh = self._build_mesh()
+        mesh.RefineHP(levels=1, factor=0.25)
+        mesh.Curve(2)
+        with ngsolve.TaskManager():
+            vol = ngsolve.Integrate(ngsolve.CF(1.0) * ngsolve.dx, mesh)
+        assert abs(vol - self._true_volume()) < 1e-2, (
+            f"RefineHP alone should preserve volume, got {vol} "
+            f"vs expected {self._true_volume()}"
+        )
+
+    def test_standard_refine_after_refine_hp_corrupts_mesh(self):
+        """Calling NGSolve's Refine() (the primitive used by AMR) after
+        RefineHP() yields a mesh whose integrated volume no longer
+        matches the true geometry. This is precisely the scenario we
+        would need to support to combine AMR with hp-refinement, and it
+        is the reason that combination is currently disabled in
+        VolumeConductor._resolve_amr_active.
+
+        On some platforms (observed on macOS) the corruption manifests
+        as a hard crash inside ``mesh.Curve(2)`` rather than a silently
+        broken volume. Either symptom proves the bug is still present,
+        so we run the dangerous sequence in a subprocess: a non-zero
+        exit code (segfault, abort, ...) and a finite-but-wrong volume
+        both count as "bug still present"; only a correct volume should
+        fail this test and prompt us to revisit the guard.
+        """
+        script = textwrap.dedent(
+            """
+            import math
+            import ngsolve
+            from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Z
+
+            box = Box(Pnt(-2, -2, -2), Pnt(2, 2, 2))
+            cyl = Cylinder(Pnt(0, 0, -1), Z, r=0.5, h=2)
+            cyl.faces.Max(Z).name = "contact_top"
+            cyl.faces.Min(Z).name = "contact_bottom"
+            box.faces.name = "outer"
+            geo = OCCGeometry(box - cyl)
+            with ngsolve.TaskManager():
+                mesh = ngsolve.Mesh(geo.GenerateMesh(maxh=1.0))
+                mesh.Curve(2)
+            mesh.RefineHP(levels=1, factor=0.25)
+            mesh.Curve(2)
+            for el in mesh.Elements():
+                mesh.SetRefinementFlag(el, True)
+            mesh.Refine()
+            mesh.Curve(2)
+            with ngsolve.TaskManager():
+                vol = ngsolve.Integrate(ngsolve.CF(1.0) * ngsolve.dx, mesh)
+            print(f"VOLUME={vol}")
+            """
+        )
+
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+
+        true_vol = self._true_volume()
+
+        if result.returncode != 0:
+            # Subprocess crashed (e.g. segfault) — bug is still present,
+            # the AMR/hp guard is still required. Nothing more to check.
+            return
+
+        vol = None
+        for line in result.stdout.splitlines():
+            if line.startswith("VOLUME="):
+                vol = float(line.split("=", 1)[1])
+                break
+        assert vol is not None, (
+            "Could not parse volume from subprocess output:\n"
+            f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+        )
+
+        # The mesh is broken: volume diverges by several percent.
+        # If NGSolve ever fixes this, the assertion will fail and we
+        # can revisit the AMR/hp exclusion in VolumeConductor.
+        assert abs(vol - true_vol) > 1.0, (
+            "NGSolve Refine() after RefineHP() unexpectedly preserved the "
+            f"mesh volume ({vol} vs {true_vol}). The hp/AMR mutual-exclusion "
+            "guard in VolumeConductor may no longer be necessary."
+        )
+
+
+class TestResolveAmrActiveGuard:
+    """Verify the hp-refinement / AMR mutual-exclusion guard in
+    VolumeConductor._resolve_amr_active.
+    """
+
+    @staticmethod
+    def _call(hp_applied: bool, settings):
+        """Invoke the unbound method on a minimal stub object.
+
+        ``hp_refinement_applied`` is declared as a ``@property`` here to
+        match the real ``ossdbs.fem.mesh.Mesh`` class — otherwise the
+        stub would silently mask a regression where the production code
+        calls the attribute as a method (``False()`` -> TypeError).
+        """
+
+        class _MeshStub:
+            def __init__(self, hp):
+                self._hp = hp
+
+            @property
+            def hp_refinement_applied(self) -> bool:
+                return self._hp
+
+        class _Stub:
+            mesh = _MeshStub(hp_applied)
+
+            # _resolve_amr_active calls self._check_AMR_settings; reuse
+            # the real implementation so we exercise the same validation.
+            _check_AMR_settings = VolumeConductorNonFloating._check_AMR_settings
+
+        return VolumeConductorNonFloating._resolve_amr_active(_Stub(), settings)
+
+    def test_mesh_exposes_hp_refinement_applied_as_property(self):
+        """Guard against regressions that turn ``hp_refinement_applied``
+        into a method. The production guard in ``_resolve_amr_active``
+        reads it as an attribute, so the two must stay in sync.
+        """
+        assert isinstance(Mesh.hp_refinement_applied, property), (
+            "Mesh.hp_refinement_applied must remain a @property — "
+            "VolumeConductor._resolve_amr_active reads it as an attribute."
+        )
+
+    def test_settings_none_returns_false(self):
+        assert self._call(hp_applied=False, settings=None) is False
+
+    def test_active_true_without_hp_returns_true(self):
+        settings = {"Active": True, "ErrorTolerance": 0.1, "MaxIterations": 1}
+        assert self._call(hp_applied=False, settings=settings) is True
+
+    def test_active_false_returns_false(self):
+        settings = {"Active": False, "ErrorTolerance": 0.1, "MaxIterations": 1}
+        assert self._call(hp_applied=False, settings=settings) is False
+
+    def test_active_true_with_hp_is_disabled_and_warns(self, caplog):
+        settings = {"Active": True, "ErrorTolerance": 0.1, "MaxIterations": 1}
+        with caplog.at_level("WARNING", logger="ossdbs"):
+            result = self._call(hp_applied=True, settings=settings)
+        assert result is False
+        assert any(
+            "mutually exclusive" in rec.getMessage() for rec in caplog.records
+        ), "Expected a warning about hp-refinement / AMR being mutually exclusive"
+
+    def test_invalid_settings_still_validated(self):
+        # Missing ErrorTolerance / MaxIterations must raise via _check_AMR_settings
+        with pytest.raises(ValueError, match="ErrorTolerance"):
+            self._call(hp_applied=False, settings={"Active": True})
+
+
+class TestScalarImpedanceOnly:
+    """Guard that the stimulation pipeline only deals in scalar impedance.
+
+    The NxN admittance-matrix path was auto-triggered when
+    ``n_active + n_floating > 2``, which routed CC + floating-impedance
+    configurations through a matrix path that ``get_scale_factor`` and
+    ``_store_solution_at_contacts`` could not consume. The full admittance
+    matrix is now considered an analysis tool that lives outside
+    ``run_full_analysis`` (see ``docs/impedance_analyzer_plan.md``).
+
+    Invariants:
+    1. ``run_full_analysis`` no longer exposes the ``multicontact_impedance``
+       kwarg.
+    2. ``get_scale_factor`` returns a plain scalar.
+    3. ``compute_impedance`` raises ``NotImplementedError`` when called with
+       anything other than exactly 2 active contacts.
+    """
+
+    def test_multicontact_kwarg_removed(self):
+        import inspect
+
+        from ossdbs.fem.volume_conductor.volume_conductor_model import (
+            VolumeConductor,
+        )
+
+        sig = inspect.signature(VolumeConductor.run_full_analysis)
+        assert "multicontact_impedance" not in sig.parameters, (
+            "VolumeConductor.run_full_analysis must not expose "
+            "``multicontact_impedance`` — the admittance-matrix mode is "
+            "handled by a standalone analyzer."
+        )
+
+    def test_get_scale_factor_returns_scalar(self):
+        """``get_scale_factor`` must return a plain scalar so
+        ``_store_solution_at_contacts`` can assign into a single complex
+        slot of ``_free_stimulation_variable``.
+        """
+        from ossdbs.fem.volume_conductor.volume_conductor_model import (
+            VolumeConductor,
+        )
+
+        class _FakeContact:
+            def __init__(self, current):
+                self.current = current
+
+        class _FakeContacts:
+            def __init__(self, active):
+                self.active = active
+
+        class _Stub:
+            current_controlled = True
+            is_complex = True
+            _impedances = np.array([10.0 + 0.0j, 12.0 + 1.0j], dtype=complex)
+            contacts = _FakeContacts(
+                [_FakeContact(1.0 + 0.0j), _FakeContact(-1.0 + 0.0j)]
+            )
+
+            impedances = VolumeConductor.impedances
+
+        stub = _Stub()
+        scale = VolumeConductor.get_scale_factor(stub, 0)
+        assert np.ndim(scale) == 0, (
+            f"get_scale_factor must return a plain scalar; got shape {np.shape(scale)}"
+        )
+        # Expected: Z * |I| = 10 * 1 = 10
+        assert np.isclose(scale, 10.0 + 0.0j), f"Expected Z * |I| = 10+0j, got {scale}"
+
+    def test_compute_impedance_raises_for_nontwo_active(self):
+        """``compute_impedance`` only handles the 2-active scalar case.
+
+        Multicontact configurations must go through the standalone
+        admittance-matrix analyzer.
+        """
+        from ossdbs.fem.volume_conductor.volume_conductor_model import (
+            VolumeConductor,
+        )
+
+        class _FakeContacts:
+            def __init__(self, active):
+                self.active = active
+
+        class _Stub:
+            contacts = _FakeContacts([object(), object(), object()])
+
+        with pytest.raises(NotImplementedError, match="exactly 2 active"):
+            VolumeConductor.compute_impedance(_Stub())

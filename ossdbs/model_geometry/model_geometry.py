@@ -38,24 +38,44 @@ class ModelGeometry:
         self._contacts = []
         self._encapsulation_layers = []
 
-        self._geometry = self._construct_geometry(self._brain, self._electrodes)
+        self._shape = self._construct_shape(self._brain, self._electrodes)
+        self._geometry = None  # built lazily after mesh sizes are set
+        self.update_contact_areas()
+
+    @property
+    def brain_surface_names(self) -> list[str]:
+        """Return the boundary names of the outer brain surface."""
+        return self._brain.get_surface_names()
 
     @property
     def geometry(self) -> netgen.occ.OCCGeometry:
         """Return netgen geometry of the model.
 
+        The OCCGeometry is built lazily so that mesh size properties
+        (maxh on faces/edges) are captured by the constructor.
+
         Returns
         -------
         netgen.occ.OCCGeometry
         """
+        if self._geometry is None:
+            try:
+                self._geometry = netgen.occ.OCCGeometry(self._shape)
+            except netgen.occ.OCCException:
+                _logger.error(
+                    "The geometry couldn't be constructed. "
+                    "Tip: reduce the size of the brain geometry "
+                    "or remove the encapsulation layer."
+                )
+                raise
         return self._geometry
 
-    def _construct_geometry(self, brain, electrodes) -> netgen.occ.OCCGeometry:
-        """Create a netgen geometry of this brain model.
+    def _construct_shape(self, brain, electrodes):
+        """Create the OCC shape of this brain model.
 
-        Returns
-        -------
-        netgen.occ.OCCGeometry
+        Returns the raw OCC shape (not yet wrapped in OCCGeometry)
+        so that mesh size properties can be set before OCCGeometry
+        construction captures them.
         """
         brain_geo = brain.geometry
         for idx, electrode in enumerate(electrodes, start=1):
@@ -87,18 +107,26 @@ class ModelGeometry:
             if not built_correctly:
                 raise RuntimeError("Geometry could not be built.")
 
+        # add brain surface
         brain_surfaces = brain.get_surface_names()
+        surface_areas = brain.get_surface_areas()
         for surface in brain_surfaces:
-            self._contacts.append(Contact(name=surface))
-        try:
-            return netgen.occ.OCCGeometry(brain_geo)
-        except netgen.occ.OCCException:
-            _logger.error(
-                "The geometry couldn't be constructed. "
-                "Tip: reduce the size of the brain geometry "
-                "or remove the encapsulation layer."
-            )
-            raise
+            self._contacts.append(Contact(name=surface, area=surface_areas[surface]))
+        return brain_geo
+
+    def update_contact_areas(self) -> None:
+        """Update contact areas."""
+        for contact in self.contacts:
+            area_set = False
+            for surface in self._shape.faces:
+                if contact.name == surface.name:
+                    if area_set:
+                        _logger.warning(f"Trying to set area twice for {contact.name}")
+                    area = surface.mass
+                    area_set = True
+                    contact.area = area
+            if not area_set:
+                raise RuntimeError(f"Area for {contact.name} not set")
 
     def check_brain_geo(
         self, brain_geo: netgen.occ.Solid, electrode: ElectrodeModel
@@ -167,8 +195,19 @@ class ModelGeometry:
                 contact.floating = value
             elif setting == "Voltage[V]":
                 contact.voltage = value
-            elif setting == "SurfaceImpedance[Ohmm]":
-                contact.surface_impedance = value["real"] + 1j * value["imag"]
+            elif setting == "SurfaceImpedance":
+                if "Model" not in value:
+                    raise ValueError("No surface impedance model provided.")
+                if "Parameters" not in value:
+                    raise ValueError("No surface impedance model parameters provided.")
+                # Skip when no model is requested — the defaults injected by
+                # settings.py ({"Model": None, "Parameters": {}}) would
+                # otherwise set surface_impedance_parameters to {} and trip a
+                # spurious warning in check_contact.
+                if value["Model"] is None:
+                    continue
+                contact.surface_impedance_model = value["Model"]
+                contact.surface_impedance_parameters = value["Parameters"]
             elif setting == "MaxMeshSize":
                 contact.max_h = value
                 self.set_face_mesh_sizes({contact.name: value})
@@ -234,23 +273,27 @@ class ModelGeometry:
         return f"E{electrode_index}C{contact_index}"
 
     def get_floating_mode(self):
-        """Check if floating and if yes, which mode."""
-        floating_mode = None
+        """Check if floating and if yes, which mode.
+
+        Returns
+        -------
+        str or None
+            ``"FloatingImpedance"`` if any floating contact carries a surface
+            impedance model, ``"Floating"`` if there are floating contacts but
+            none has an impedance model, or ``None`` if no contacts are floating.
+        """
+        has_floating = False
+        has_impedance = False
         for contact in self.contacts:
             if contact.floating:
-                floating_mode = "Floating"
-                if not np.isclose(contact.surface_impedance, 0.0):
-                    floating_mode = "FloatingImpedance"
-                break
-        if floating_mode == "FloatingImpedance":
-            for contact in self.contacts:
-                if not np.isclose(contact.surface_impedance, 0.0):
-                    _logger.warning(
-                        f"""Mode has been set to Floating but there
-                        is a nonzero surface impedance on contact {contact.name}"""
-                    )
-
-        return floating_mode
+                has_floating = True
+                if contact.surface_impedance_model is not None:
+                    has_impedance = True
+        if has_impedance:
+            return "FloatingImpedance"
+        if has_floating:
+            return "Floating"
+        return None
 
     def set_mesh_sizes(self, mesh_sizes: dict) -> None:
         """Set mesh sizes on edges, faces, and volumes."""
@@ -263,18 +306,25 @@ class ModelGeometry:
 
     def set_edge_mesh_sizes(self, mesh_sizes: dict) -> None:
         """Set mesh sizes on edges."""
-        for edge in self._geometry.shape.edges:
+        for edge in self._shape.edges:
             if edge.name in mesh_sizes:
                 edge.maxh = mesh_sizes[edge.name]
+        self._invalidate_geometry()
 
     def set_face_mesh_sizes(self, mesh_sizes) -> None:
         """Set mesh sizes on faces."""
-        for face in self._geometry.shape.faces:
+        for face in self._shape.faces:
             if face.name in mesh_sizes:
                 face.maxh = mesh_sizes[face.name]
+        self._invalidate_geometry()
 
     def set_volume_mesh_sizes(self, mesh_sizes: dict) -> None:
         """Set mesh sizes on volumes."""
-        for solid in self._geometry.shape.solids:
+        for solid in self._shape.solids:
             if solid.name in mesh_sizes:
                 solid.maxh = mesh_sizes[solid.name]
+        self._invalidate_geometry()
+
+    def _invalidate_geometry(self) -> None:
+        """Reset cached OCCGeometry so it is rebuilt with updated mesh sizes."""
+        self._geometry = None

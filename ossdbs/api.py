@@ -262,12 +262,36 @@ def generate_mesh(settings):
         mesh.load_mesh(mesh_settings["LoadPath"])
         return mesh
 
-    if "MeshingHypothesis" not in mesh_settings:
-        mesh_settings["MeshingHypothesis"] = {"Type": "Default"}
+    mesh_settings.setdefault("MeshingHypothesis", {"Type": "Default"})
     mesh.generate_mesh(mesh_settings)
+    # Apply HP refinement immediately for standalone mesh generation
+    # (no subsequent bisection-based refinement expected)
+    mesh.apply_hp_refinement()
     if mesh_settings["SaveMesh"]:
         mesh.save(mesh_settings["SavePath"])
     return mesh
+
+
+def validate_solver_settings(settings: dict, model_geometry: ModelGeometry) -> None:
+    """Validate and adjust solver settings based on model configuration.
+
+    Notes
+    -----
+    BDDC preconditioner does not work well with the FloatingImpedance
+    formulation. This function enforces the use of 'local' preconditioner
+    in such cases.
+    """
+    floating_mode = model_geometry.get_floating_mode()
+    preconditioner = settings["Solver"].get("Preconditioner", "bddc")
+
+    if floating_mode == "FloatingImpedance":
+        if preconditioner == "bddc":
+            _logger.warning(
+                "BDDC preconditioner is not compatible with FloatingImpedance "
+                "formulation. Switching to 'local' preconditioner."
+            )
+            settings["Solver"]["Preconditioner"] = "local"
+            settings["Solver"]["PreconditionerKwargs"] = {}
 
 
 def prepare_solver(settings):
@@ -332,14 +356,6 @@ def generate_point_models(settings: dict):
             VoxelLattice(center, affine, shape, header, export_field=export_field)
         )
     return point_models
-
-
-def generate_meshsize_file_from_neuron_grid():
-    """Use point grid to specify mesh sizes.
-
-    TODO implement
-    """
-    raise NotImplementedError("Not yet supported")
 
 
 def generate_signal(settings) -> TimeDomainSignal:
@@ -443,13 +459,22 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
 def run_volume_conductor_model(
     settings, volume_conductor, frequency_domain_signal, truncation_time=None
 ):
-    """TODO document.
+    """Run the volume conductor model at all required frequencies.
 
+    Solves the FEM system at each frequency in the signal spectrum,
+    optionally computes impedance and currents, exports results, and
+    reconstructs the time-domain solution.
 
-    Notes
-    -----
-    Run at all frequencies.
-    If the mode is multisine, a provided list of frequencies is used.
+    Parameters
+    ----------
+    settings : dict
+        Complete simulation settings dictionary.
+    volume_conductor : VolumeConductor
+        Prepared volume conductor model with mesh and FEM space.
+    frequency_domain_signal : FrequencyDomainSignal
+        Signal defining the frequencies and amplitudes to solve.
+    truncation_time : float, optional
+        If set, truncate the time-domain reconstruction to this duration.
     """
     _logger.info("Run volume conductor model")
 
@@ -459,6 +484,11 @@ def run_volume_conductor_model(
         if settings["ComputeImpedance"]:
             _logger.info("Will compute impedance at each frequency")
             compute_impedance = True
+    compute_currents = False
+    if "ComputeCurrents" in settings:
+        if settings["ComputeCurrents"]:
+            _logger.info("Will estimate currents at each frequency")
+            compute_currents = True
     if "ExportVTK" in settings:
         export_vtk = settings["ExportVTK"]
         if export_vtk:
@@ -478,22 +508,69 @@ def run_volume_conductor_model(
         export_vtk,
         point_models=point_models,
         activation_threshold=settings["ActivationThresholdVTA[V-per-m]"],
+        dielectric_threshold=settings.get("DielectricAccuracy", 0.01),
         out_of_core=out_of_core,
         export_frequency=export_frequency,
         adaptive_mesh_refinement_settings=settings["Mesh"]["AdaptiveMeshRefinement"],
-        material_mesh_refinement_steps=settings["Mesh"]["MaterialRefinementSteps"],
         truncation_time=truncation_time,
+        estimate_currents=compute_currents,
     )
+
+    _run_impedance_analysis(settings, volume_conductor, frequency_domain_signal)
+
     return vcm_timings
 
 
-def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_signal):
-    """TODO document.
+def _run_impedance_analysis(
+    settings, volume_conductor, frequency_domain_signal
+) -> None:
+    """Run the optional multicontact admittance / impedance analysis.
 
-    Notes
-    -----
-    Run at all frequencies.
-    If the mode is multisine, a provided list of frequencies is used.
+    Triggered by the ``ImpedanceAnalysis`` block in the input JSON.
+    Produces ``admittance_matrix.csv`` and ``impedance_matrix.csv`` in
+    the output directory. Decoupled from ``run_full_analysis`` — no
+    effect on the stimulation output.
+    """
+    block = settings.get("ImpedanceAnalysis") or {}
+    if not block.get("Enabled"):
+        return
+
+    from ossdbs.fem.analysis import ImpedanceAnalyzer
+
+    frequencies = block.get("Frequencies")
+    if not frequencies:
+        frequencies = frequency_domain_signal.frequencies
+    include_floating = block.get("IncludeFloating", True)
+
+    _logger.info(
+        f"Running impedance analysis at {len(frequencies)} frequency "
+        f"point(s); include_floating={include_floating}"
+    )
+    analyzer = ImpedanceAnalyzer(volume_conductor, include_floating=include_floating)
+    analyzer.compute(frequencies)
+    analyzer.export(settings["OutputPath"])
+
+
+def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_signal):
+    """Run StimSets batch workflow: compute unit solutions per contact.
+
+    For each non-ground contact, sets up a unit-current solve (1 A on
+    that contact, all others floating, ground at -1 A), loads the
+    pre-saved mesh, applies HP refinement, and runs the full FEM
+    analysis. Results are stored in per-contact output directories.
+
+    Parameters
+    ----------
+    settings : dict
+        Complete simulation settings dictionary.
+    geometry : ModelGeometry
+        Geometry with electrode and contact definitions.
+    conductivity : ConductivityCF
+        Conductivity coefficient function.
+    solver : Solver
+        Configured FEM solver.
+    frequency_domain_signal : FrequencyDomainSignal
+        Signal defining the frequencies and amplitudes to solve.
     """
     _logger.info("Run StimSets volume conductor model")
 
@@ -554,6 +631,9 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
         volume_conductor = prepare_volume_conductor_model(
             settings, geometry, conductivity, solver
         )
+        # The loaded mesh already has h-refinement (material bisection)
+        # baked in.  Apply HP refinement and rebuild the FEM space.
+        volume_conductor.apply_hp_and_update_space()
         _logger.info(f"Running with contacts:\n{volume_conductor.contacts}")
 
         volume_conductor.output_path = settings["OutputPath"] + contact.name
@@ -567,7 +647,6 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             adaptive_mesh_refinement_settings=settings["Mesh"][
                 "AdaptiveMeshRefinement"
             ],
-            material_mesh_refinement_steps=settings["Mesh"]["MaterialRefinementSteps"],
         )
         _logger.info(f"Timing for contact {contact.name}: {vcm_timings}")
 
@@ -604,8 +683,7 @@ def run_PAM(settings):
     neuron_model = get_neuron_model(model_type, pathways_dict, pathway_solution_dir)
 
     if settings["StimSets"]["Active"]:
-        if "CurrentVector" not in settings:
-            settings["CurrentVector"] = None
+        settings.setdefault("CurrentVector", None)
         # files to load individual solutions from
         time_domain_solution_files = []
 

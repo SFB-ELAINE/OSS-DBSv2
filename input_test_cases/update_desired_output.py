@@ -21,8 +21,8 @@ for test_dir in os.listdir("."):
                 )
                 try:
                     shutil.copy(
-                        os.path.join(source_dir, "VTA_solution_Lattice.nii"),
-                        os.path.join(result_dir, "VTA_solution_Lattice.nii"),
+                        os.path.join(source_dir, "VTA_solution_Lattice.nii.gz"),
+                        os.path.join(result_dir, "VTA_solution_Lattice.nii.gz"),
                     )
                 except FileNotFoundError:
                     # if file is not there, we don't need to copy it
