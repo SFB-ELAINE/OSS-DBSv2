@@ -21,8 +21,6 @@ from .utilities import (
     store_axon_statuses,
 )
 
-# mp.set_start_method("fork", force=True)
-
 _logger = logging.getLogger(__name__)
 
 # Use 'spawn' context for multiprocessing to ensure clean NEURON state in children.

@@ -63,3 +63,5 @@ figures/
 
 # Results
 examples/Electrochemistry/*.csv
+# Other generated files
+*.spec
