@@ -1,98 +1,126 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+import numpy as np
 
-# Thanks to StackOverflow: https://stackoverflow.com/questions/34177378/pyplot-annotation-roman-numerals
-# Turn on LaTeX formatting for text
+THRESHOLD = 1.0
+
+# --- (Existing setup code remains the same) ---
 plt.rcParams["text.usetex"] = True
 plt.rcParams["axes.labelsize"] = 18
-
-# Place the command in the text.latex.preamble using rcParams
-# ruff: noqa: E501
 plt.rcParams["text.latex.preamble"] = (
     r"\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother"
 )
 
 pathways_to_plot = [
-    "M1_cf_lowerex_right",
-    "M1_cf_upperex_right",
-    "M1_cf_face_right",
-    "R_M1_hdp_lowerex_right",
-    "R_M1_hdp_upperex_right",
-    "R_M1_hdp_face_right",
+    "M1_cf_lowerex_right", "M1_cf_upperex_right", "M1_cf_face_right",
+    "R_M1_hdp_lowerex_right", "R_M1_hdp_upperex_right", "R_M1_hdp_face_right",
     "gpe2stn_sm_right",
-    # remaining pathways not activated in NF best run
 ]
 
 pathway_labels = [
-    "M1 lower extr.",
-    "M1 upper extr.",
-    "M1 face",
-    "HDP M1 lower extr.",
-    "HDP M1 upper extr.",
-    "HDP M1 face",
+    "M1 lower extr.", "M1 upper extr.", "M1 face",
+    "HDP M1 lower extr.", "HDP M1 upper extr.", "HDP M1 face",
     "Pallido-subthalamic Motor",
 ]
 
-pathway_label_dict = {}
-for pathway, label in zip(pathways_to_plot, pathway_labels, strict=False):
-    pathway_label_dict[pathway] = label
-
+pathway_label_dict = dict(zip(pathways_to_plot, pathway_labels))
 
 data = pd.read_csv("nf_results_summary.csv")
 data["roman"] = data["roman"].astype("string")
 
-for pathway in pathways_to_plot:
-    pw_id = f"Pathway_status_{pathway}.json_activated"
-    if pw_id not in data.columns:
-        raise ValueError(f"Pathway {pathway} not in dataset.")
-
 columns_to_plot = ["time", "dofs"]
 labels = ["Time / s", "DOFs"]
 scales = ["log", "log"]
-data["not_converged"] = False
+
+pathway_cols = []
 for pathway in pathways_to_plot:
     pw_id = f"Pathway_status_{pathway}.json_activated"
     columns_to_plot.append(pw_id)
+    pathway_cols.append(pw_id) # Keep track of pathway columns only
     labels.append(rf"{pathway_label_dict[pathway]} / \%")
     scales.append("linear")
 
-best_df = data.filter(regex="best", axis=1).iloc[0].to_dict()
-best_df["time"] = best_df["best_time"]
-best_df["dofs"] = best_df["best_dofs"]
-best_df["roman"] = "Best"
-
+# Construct "Best" reference 
+best_row = data.filter(regex="best", axis=1).iloc[0].to_dict()
+best_vals = {"time": best_row["best_time"], "dofs": best_row["best_dofs"]}
 for pathway in pathways_to_plot:
     pw_id = f"Pathway_status_{pathway}.json_activated"
-    best_df[pw_id] = best_df[pw_id + "_best"]
+    best_vals[pw_id] = best_row[pw_id + "_best"]
 
-best_df = pd.DataFrame([best_df])
-data = pd.concat([data, best_df], ignore_index=True)
-# required for plot
-data.fillna(0.0, inplace=True)
+best_df_row = best_vals.copy()
+best_df_row["roman"] = "Best"
+data = pd.concat([data, pd.DataFrame([best_df_row])], ignore_index=True).fillna(0.0)
 
-g = sns.PairGrid(
-    data, x_vars=data[columns_to_plot], y_vars=["roman"], height=4, hue="not_converged"
-)
-g.map(
-    sns.stripplot,
-    size=10,
-    orient="h",
-    jitter=False,
-    palette="flare_r",
-    linewidth=1,
-    edgecolor="w",
-)
+# --- Calculate Global Limits for Pathways ---
+# We find the min and max across all pathway columns to sync their scales
+pw_min = data[pathway_cols].values.min()
+pw_max = data[pathway_cols].values.max()
+# Add a small 5% padding so markers aren't cut off at the edges
+padding = (pw_max - pw_min) * 0.05
+pw_limit = (pw_min - padding, pw_max + padding)
 
-for ax, label, scale in zip(g.axes.flat, labels, scales, strict=False):
-    # Make the grid horizontal instead of vertical
+# --- Plotting with PairGrid ---
+g = sns.PairGrid(data, x_vars=columns_to_plot, y_vars=["roman"], height=4)
+
+for i, ax in enumerate(g.axes.flat):
+    col_name = columns_to_plot[i]
+    ref_val = best_vals[col_name]
+    
+# Define colors for each row
+    marker_colors = []
+    edge_colors = []
+    
+    for _, row in data.iterrows():
+        # 1. Check if it's the "Best" row first
+        if row["roman"] == "Best":
+            color = "gold"
+        # 2. Check if it's a "standard" column (time/dofs)
+        elif col_name in ["time", "dofs"]:
+            color = "white"
+        # 3. Apply the 5% difference rule
+        else:
+            diff = abs(row[col_name] - ref_val)
+            #threshold = 0.05 * ref_val if ref_val != 0 else 0.05
+            color = "red" if diff > THRESHOLD else "white"
+            
+        marker_colors.append(color)
+        # Use black edge for white markers so they are visible
+        edge_colors.append("black" if color == "white" else color)
+
+    # Create the stripplot directly on the axis
+    sns.stripplot(
+        data=data,
+        x=col_name,
+        y="roman",
+        ax=ax,
+        orient="h",
+        jitter=False,
+        size=10,
+        hue=data.index,      # Use index to ensure every point is treated uniquely
+        palette=marker_colors, # Map the pre-calculated color list
+        edgecolor="black",     # Black edge makes white markers visible on grid
+        linewidth=0.5
+    )
+    
+    # Cleanup: Remove the legend generated by 'hue'
+    if ax.get_legend():
+        ax.get_legend().remove()
+
+    # --- Formatting ---
     ax.xaxis.grid(False)
     ax.yaxis.grid(True)
-    # set labels and scales
-    ax.set(xlabel=label)
-    ax.set(xscale=scale)
-    ax.set(ylabel="Strategy")
+    ax.set(xlabel=labels[i], xscale=scales[i])
+    if i == 0:
+        ax.set(ylabel="Strategy")
+    else:
+        ax.set(ylabel="")
+        
+    # --- Apply Shared XLim Logic ---
+    if col_name not in ["time", "dofs"]:
+        ax.set_xlim(pw_limit)
+
 sns.despine(left=True, bottom=False)
-plt.savefig("nf_convergence_overview.pdf")
-plt.savefig("nf_convergence_overview.svg")
-plt.close()
+plt.tight_layout()
+plt.savefig("nf_convergence_overview_new.pdf")
+plt.show()
