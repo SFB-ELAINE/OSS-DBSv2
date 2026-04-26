@@ -79,8 +79,11 @@
     "LoadMesh": false,
     "MeshElementOrder": 2,
     "MeshingHypothesis": {
-      "Type": "Fine",
-      "MaxMeshSize": 1
+      "Type": "Fine"
+    },
+    "MaterialRefinementSteps": 1,
+    "HPRefinement": {
+      "Active": true
     },
     "AdaptiveMeshRefinement": {"Active": true, "MaxIterations": 5, "ErrorTolerance": 0.1},
     "HPRefinement": {"Active": true},

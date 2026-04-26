@@ -74,8 +74,11 @@
     "LoadMesh": false,
     "MeshElementOrder": 2,
     "MeshingHypothesis": {
-      "Type": "Default",
-      "MaxMeshSize": 1
+      "Type": "Default"
+    },
+    "MaterialRefinementSteps": 1,
+    "HPRefinement": {
+      "Active": true
     },
     "SaveMesh": false
   },
