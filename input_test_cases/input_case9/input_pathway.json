@@ -69,8 +69,13 @@
     "LoadMesh": false,
     "MeshElementOrder": 2,
     "MeshingHypothesis": {
-      "Type": "Fine",
+      "Type": "Default",
       "MaxMeshSize": 1
+    },
+    "HPRefinement": {
+      "Active": true,
+      "Levels": 2,
+      "Factor": 0.125
     },
     "MeshSize": {
       "Edges": {},
