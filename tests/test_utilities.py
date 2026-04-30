@@ -7,6 +7,7 @@ import json
 
 import numpy as np
 import pytest
+
 pytest.importorskip("neuron")
 
 from nibabel.streamlines import ArraySequence
