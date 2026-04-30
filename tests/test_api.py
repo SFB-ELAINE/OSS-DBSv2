@@ -11,6 +11,7 @@ from ossdbs.api import (
     generate_point_models,
     generate_signal,
     prepare_stimulation_signal,
+    PAM_AVAILABLE
 )
 from ossdbs.stimulation_signals import (
     FrequencyDomainSignal,
@@ -447,16 +448,16 @@ class TestRunStimSets:
 
 class TestRunPAM:
     """Tests for run_PAM function."""
-
+    
     def test_pam_not_available(self):
         """Test that run_PAM raises error when NEURON not installed."""
-        from ossdbs.api import PAM_AVAILABLE, run_PAM
+        from ossdbs.api import run_PAM
 
         if not PAM_AVAILABLE:
             with pytest.raises(RuntimeError, match="PAM not available"):
                 run_PAM({})
 
-    @pytest.mark.skipif(ossdbs.api.PAM_AVAILABLE == False)
+    @pytest.mark.skipif(not PAM_AVAILABLE)
     @patch("ossdbs.axon_processing.get_neuron_model")
     def test_pam_basic_run(self, mock_get_neuron_model, tmp_path):
         """Test basic PAM run with mocked components."""
@@ -491,7 +492,7 @@ class TestRunPAM:
         mock_model.load_solution.assert_called_once()
         mock_model.process_pathways.assert_called_once()
 
-    @pytest.mark.skipif(ossdbs.api.PAM_AVAILABLE == False)
+    @pytest.mark.skipif(not PAM_AVAILABLE)
     @patch("ossdbs.axon_processing.get_neuron_model")
     def test_pam_with_current_vector(self, mock_get_neuron_model, tmp_path):
         """Test PAM with CurrentVector (StimSets mode)."""
@@ -531,7 +532,7 @@ class TestRunPAM:
         mock_model.superimpose_unit_solutions.assert_called_once()
         mock_model.process_pathways.assert_called_once()
 
-    @pytest.mark.skipif(ossdbs.api.PAM_AVAILABLE == False)
+    @pytest.mark.skipif(not PAM_AVAILABLE)
     @patch("ossdbs.axon_processing.get_neuron_model")
     def test_pam_stimsets_no_current_vector_raises_error(
         self, mock_get_neuron_model, tmp_path
