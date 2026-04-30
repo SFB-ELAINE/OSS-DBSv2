@@ -7,11 +7,11 @@ import numpy as np
 import pytest
 
 from ossdbs.api import (
+    PAM_AVAILABLE,
     create_bounding_box,
     generate_point_models,
     generate_signal,
     prepare_stimulation_signal,
-    PAM_AVAILABLE
 )
 from ossdbs.stimulation_signals import (
     FrequencyDomainSignal,
@@ -448,7 +448,7 @@ class TestRunStimSets:
 
 class TestRunPAM:
     """Tests for run_PAM function."""
-    
+
     def test_pam_not_available(self):
         """Test that run_PAM raises error when NEURON not installed."""
         from ossdbs.api import run_PAM
