@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 # do not test if neuron is not installed
-neuron = pytest.importorskip("neuron")
+pytest.importorskip("neuron")
 
 from ossdbs.axon_processing.neuron_model import (
     NEURON_PROCESS_TIMEOUT,
