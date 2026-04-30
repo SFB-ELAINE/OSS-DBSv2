@@ -7,6 +7,8 @@ import json
 
 import numpy as np
 import pytest
+# do not test if neuron is not installed
+neuron = pytest.importorskip("neuron")
 
 from ossdbs.axon_processing.axon_models import (
     AxonModels,
