@@ -1,0 +1,122 @@
+{
+  "BrainRegion": {
+    "Center": {
+      "x[mm]": 11.6939,
+      "y[mm]": -15.9992,
+      "z[mm]": -10.1624
+    },
+    "Dimension": {
+      "x[mm]": 60,
+      "y[mm]": 60,
+      "z[mm]": 80
+    },
+    "Shape": "Ellipsoid"
+  },
+  "Electrodes": [
+    {
+      "Name": "BostonScientificVerciseDirected",
+      "Rotation[Degrees]": 5.560808219457241,
+      "Direction": {
+        "x[mm]": 0.3027327778243897,
+        "y[mm]": 0.5101293066126904,
+        "z[mm]": 0.805059597648264
+      },
+      "TipPosition": {
+        "x[mm]": 11.449074999999999,
+        "y[mm]": -16.41175,
+        "z[mm]": -10.813465
+      },
+      "Contacts": [],
+      "EncapsulationLayer": {
+        "Thickness[mm]": 0.0,
+        "Material": "Blood",
+        "DielectricModel": "ColeCole4"
+      }
+    }
+  ],
+  "MaterialDistribution": {
+    "MRIPath": "../../ConvergenceStudy/VTA/segmask.nii.gz",
+    "MRIMapping": {
+      "Gray matter": 1,
+      "White matter": 2,
+      "CSF": 3,
+      "Blood": 4,
+      "Unknown": 0
+    },
+    "DiffusionTensorActive": false,
+    "DTIPath": ""
+  },
+  "DielectricModel": {
+    "Type": "ColeCole4"
+  },
+  "StimulationSignal": {
+    "CurrentControlled": false,
+    "Type": "Multisine",
+    "ListOfFrequencies": [
+      10000.0
+    ]
+  },
+  "Mesh": {
+    "LoadMesh": false,
+    "MeshElementOrder": 2,
+    "MeshingHypothesis": {
+      "Type": "Default",
+      "MaxMeshSize": 1e6
+    },
+    "HPRefinement": {
+      "Active": true,
+      "Levels": 2,
+      "Factor": 0.125
+    },
+    "AdaptiveMeshRefinement": {
+      "Active": false
+    },
+    "MeshSize": {
+      "Edges": {},
+      "Faces": {},
+      "Volumes": {}
+    },
+    "SaveMesh": false
+  },
+  "Solver": {
+    "Type": "CG",
+    "Preconditioner": "bddc",
+    "PreconditionerKwargs": {},
+    "PrintRates": true,
+    "MaximumSteps": 200,
+    "Precision": 1e-8
+  },
+  "PointModel": {
+    "Pathway": {
+      "Active": false,
+      "FileName": ""
+    },
+    "Lattice": {
+      "Active": true,
+      "Center": {
+        "x[mm]": 11.449074999999999,
+        "y[mm]": -16.41175,
+        "z[mm]": -10.813465
+      },
+      "Shape": {
+        "x": 60,
+        "y": 60,
+        "z": 240
+      },
+      "Direction": {
+        "x[mm]": 0,
+        "y[mm]": 0,
+        "z[mm]": 1
+      },
+      "PointDistance[mm]": 0.125
+    }
+  },
+  "ActivationThresholdVTA[V-per-m]": 200.0,
+  "CollapseVTA": false,
+  "EQSMode": false,
+  "FEMOrder": 2,
+  "OutputPath": "Results_default",
+  "ComputeImpedance": true,
+  "ExportVTK": true,
+  "ExportElectrode": false
+}
