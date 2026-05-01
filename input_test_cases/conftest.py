@@ -23,9 +23,7 @@ def pytest_configure(config):
     config.addinivalue_line("markers", "vta: VTA-related tests")
     config.addinivalue_line("markers", "pam: Pathway Activation Modeling tests")
     config.addinivalue_line("markers", "floating: floating contact tests")
-    config.addinivalue_line(
-        "markers", "surface_impedance: surface impedance tests"
-    )
+    config.addinivalue_line("markers", "surface_impedance: surface impedance tests")
 
 
 def pytest_collection_modifyitems(config, items):
