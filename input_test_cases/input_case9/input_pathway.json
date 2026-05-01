@@ -1,9 +1,9 @@
 {
   "BrainRegion": {
     "Center": {
-      "x[mm]": -9.476,
-      "y[mm]": 11.605,
-      "z[mm]": 4.676
+      "x[mm]": 0.794,
+      "y[mm]": -32.671,
+      "z[mm]": -0.618
     },
     "Dimension": {
       "x[mm]": 40.0,
@@ -28,9 +28,9 @@
         "z[mm]": 1.0
       },
       "TipPosition": {
-        "x[mm]": -9.476,
-        "y[mm]": 11.605,
-        "z[mm]": 4.676
+        "x[mm]": 0.794,
+        "y[mm]": -32.671,
+        "z[mm]": -0.618
       },
       "EncapsulationLayer": {
         "Thickness[mm]": 0.0,
@@ -41,7 +41,7 @@
     }
   ],
   "MaterialDistribution": {
-    "MRIPath": "../../input_files/Butenko_segmask.nii.gz",
+    "MRIPath": "../../input_files/sub-John_Doe/JD_segmask.nii.gz",
     "MRIMapping": {
       "Gray matter": 1,
       "White matter": 2,
@@ -98,14 +98,14 @@
   "PointModel": {
     "Pathway": {
       "Active": true,
-      "FileName": "../../input_files/data.h5"
+      "FileName": "../../input_files/sub-John_Doe/data.h5"
     },
     "Lattice": {
       "Active": false,
       "Center": {
-        "x[mm]": -9.476,
-        "y[mm]": 11.605,
-        "z[mm]": 4.7
+        "x[mm]": 0.794,
+        "y[mm]": -32.671,
+        "z[mm]": -0.594
       },
       "Shape": {
         "x": 15,

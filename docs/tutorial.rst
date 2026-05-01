@@ -33,7 +33,7 @@ The example input file demonstrates a basic voltage-controlled simulation with:
 
 - a spherical brain region centered around the electrode
 - one Boston Scientific Vercise electrode
-- MRI-based tissue labeling from ``Butenko_segmask.nii.gz``
+- MRI-based tissue labeling from ``sub-John_Doe/JD_segmask.nii.gz``
 - a Cole-Cole dielectric model
 - a finite-element solve with configurable mesh and solver settings
 
@@ -55,9 +55,9 @@ This section defines the size and location of the simulated domain:
 
     "BrainRegion": {
       "Center": {
-        "x[mm]": -9.48,
-        "y[mm]": 11.61,
-        "z[mm]": 4.68
+        "x[mm]": 0.790,
+        "y[mm]": -32.666,
+        "z[mm]": -0.614
       },
       "Dimension": {
         "x[mm]": 40.0,
@@ -85,9 +85,9 @@ and contact-level activation settings:
           "z[mm]": 1.0
         },
         "TipPosition": {
-          "x[mm]": -9.48,
-          "y[mm]": 11.61,
-          "z[mm]": 4.68
+          "x[mm]": 0.790,
+          "y[mm]": -32.666,
+          "z[mm]": -0.614
         },
         "Contacts": [
           {

@@ -1,9 +1,9 @@
 {
   "BrainRegion": {
     "Center": {
-      "x[mm]": 17.0,
-      "y[mm]": 8.0,
-      "z[mm]": 6.0
+      "x[mm]": 0.794,
+      "y[mm]": -32.671,
+      "z[mm]": -0.618
     },
     "Dimension": {
       "x[mm]": 40.0,
@@ -30,9 +30,9 @@
         "z[mm]": 1.0
       },
       "TipPosition": {
-        "x[mm]": 17.0,
-        "y[mm]": 8.0,
-        "z[mm]": 6.0
+        "x[mm]": 0.794,
+        "y[mm]": -32.671,
+        "z[mm]": -0.618
       },
       "Contacts": [
         {
@@ -41,10 +41,6 @@
           "Current[A]": 0.004,
           "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
           "MaxMeshSizeEdge": 0.05
         },
         {
@@ -53,10 +49,6 @@
           "Current[A]": -0.002,
           "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
           "MaxMeshSizeEdge": 0.05
         },
         {
@@ -65,10 +57,6 @@
           "Current[A]": -0.002,
           "Voltage[V]": 0.0,
           "Floating": true,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
           "MaxMeshSizeEdge": 0.05
         }
       ],
@@ -81,13 +69,13 @@
     }
   ],
   "MaterialDistribution": {
-    "MRIPath": "../../input_files/icbm_avg_152_segmented.nii.gz",
+    "MRIPath": "../../input_files/sub-John_Doe/JD_segmask.nii.gz",
     "MRIMapping": {
-      "Unknown": 0,
-      "CSF": 1,
+      "Gray matter": 1,
       "White matter": 2,
-      "Gray matter": 3,
-      "Blood": 4
+      "CSF": 3,
+      "Blood": 4,
+      "Unknown": 0
     },
     "DiffusionTensorActive": false,
     "DTIPath": ""
@@ -126,7 +114,7 @@
     "Preconditioner": "bddc",
     "PreconditionerKwargs": {"coarsetype": "local"},
     "PrintRates": true,
-    "MaximumSteps": 200,
+    "MaximumSteps": 2000,
     "Precision": 1e-8
   },
   "PointModel": {

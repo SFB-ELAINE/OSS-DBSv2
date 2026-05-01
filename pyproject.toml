@@ -41,6 +41,7 @@ dependencies = ["h5py==3.14.0",
 		# pin the numpy version to < 2
 		"numpy<2; platform_system=='Windows'",
 		"dipy>=1.8.0",
+		"mkl<2026; platform_system!='Darwin'",
                 ]
 
 [project.optional-dependencies]

@@ -1,9 +1,9 @@
 {
   "BrainRegion": {
     "Center": {
-      "x[mm]": -9.476,
-      "y[mm]": 11.605,
-      "z[mm]": 10
+      "x[mm]": 0.794,
+      "y[mm]": -32.671,
+      "z[mm]": 4.706
     },
     "Dimension": {
       "x[mm]": 40.0,
@@ -22,9 +22,9 @@
         "z[mm]": 1.0
       },
       "TipPosition": {
-        "x[mm]": -9.476,
-        "y[mm]": 11.605,
-        "z[mm]": 4.676
+        "x[mm]": 0.794,
+        "y[mm]": -32.671,
+        "z[mm]": -0.618
       },
       "Contacts": [
         {
@@ -55,7 +55,7 @@
     }
   ],
   "MaterialDistribution": {
-    "MRIPath": "../../input_files/Butenko_segmask.nii.gz",
+    "MRIPath": "../../input_files/sub-John_Doe/JD_segmask.nii.gz",
     "MRIMapping": {
       "Gray matter": 1,
       "White matter": 2,
@@ -110,7 +110,7 @@
     "Preconditioner": "bddc",
     "PreconditionerKwargs": {},
     "PrintRates": true,
-    "MaximumSteps": 200,
+    "MaximumSteps": 500,
     "Precision": 1e-8
   },
   "PointModel": {
@@ -121,9 +121,9 @@
     "Lattice": {
       "Active": false,
       "Center": {
-        "x[mm]": -9.476,
-        "y[mm]": 11.605,
-        "z[mm]": 4.7
+        "x[mm]": 0.794,
+        "y[mm]": -32.671,
+        "z[mm]": -0.594
       },
       "Shape": {
         "x": 40,
@@ -145,6 +145,6 @@
   "OutputPath": "Results_LempkaSurfaceImpedance",
   "ComputeImpedance": true,
   "ComputeCurrents": true,
-  "ExportVTK": true,
+  "ExportVTK": false,
   "ExportElectrode": false
 }
