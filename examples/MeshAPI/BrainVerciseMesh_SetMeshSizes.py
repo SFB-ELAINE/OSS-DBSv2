@@ -14,7 +14,7 @@ import ossdbs
 
 settings = {
     "BrainRegion": {
-        "Center": {"x[mm]": -9.48, "y[mm]": 11.61, "z[mm]": 4.68},
+        "Center": {"x[mm]": 0.794, "y[mm]": -32.671, "z[mm]": -0.618},
         "Dimension": {"x[mm]": 40.0, "y[mm]": 40.0, "z[mm]": 40.0},
         "Shape": "Ellipsoid",
     },
@@ -23,7 +23,7 @@ settings = {
             "Name": "BostonScientificVercise",
             "Rotation[Degrees]": 0,
             "Direction": {"x[mm]": 0, "y[mm]": 0, "z[mm]": 1},
-            "TipPosition": {"x[mm]": -9.48, "y[mm]": 11.61, "z[mm]": 4.68},
+            "TipPosition": {"x[mm]": 0.794, "y[mm]": -32.671, "z[mm]": -0.618},
             "EncapsulationLayer": {
                 "Thickness[mm]": 0.0,  # indicates that no encapsulation is modelled
             },
@@ -65,7 +65,9 @@ settings = {
             ],
         }
     ],
-    "MaterialDistribution": {"MRIPath": "../../input_files/Butenko_segmask.nii.gz"},
+    "MaterialDistribution": {
+        "MRIPath": "../../input_files/sub-John_Doe/JD_segmask.nii.gz"
+    },
     "Mesh": {"LoadMesh": False, "SaveMesh": False},
     "ExportElectrode": False,
 }

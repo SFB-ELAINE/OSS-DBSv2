@@ -191,16 +191,21 @@ Case 10: Floating with Surface Impedance
 This case demonstrates the ``VolumeConductorFloatingImpedance`` formulation
 using a PINS Medical L303 electrode with three contacts.
 
-Three input files are provided:
+Four input files are provided:
 
 - ``input_floating.json``: plain floating contacts (no surface impedance).
   Contact 1 at 1 V, contact 3 at ground, contact 2 floating.
-- ``input_floating_impedance.json``: same contact activation but all floating
-  contacts carry a resistive surface impedance (``R = 1 kOhm``).
+- ``input_floating_encap.json``: same contact activation as ``input_floating.json``
+  but with a 0.2 mm encapsulation layer around the electrode shaft.
+- ``input_floating_impedance.json``: same contact activation but the floating
+  contact carries a resistive surface impedance (``R = 1 kOhm``).
 - ``input_floating_impedance_noground.json``: all three contacts are floating
   with surface impedance and no active ground. Currents are prescribed
   (+1 mA / 0 / -1 mA) in current-controlled mode. A Lagrange multiplier
   constrains the sum of floating potentials to zero.
+
+The helper script ``plot_comparison.py`` produces a side-by-side comparison
+of these variants.
 
 This case is useful for verifying that:
 

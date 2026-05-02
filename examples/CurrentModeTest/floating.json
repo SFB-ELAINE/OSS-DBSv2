@@ -125,7 +125,7 @@
         }
     ],
     "MaterialDistribution": {
-        "MRIPath": "../../input_files/Butenko_segmask.nii.gz",
+        "MRIPath": "../../input_files/sub-John_Doe/JD_segmask.nii.gz",
         "MRIMapping": {
             "Blood": 4,
             "Gray matter": 1,
