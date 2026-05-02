@@ -16,12 +16,13 @@ import h5py
 import numpy as np
 import pytest
 
-neuron_model = pytest.importorskip(
-    "ossdbs.axon_processing.neuron_model",
-    reason="ossdbs.axon_processing.neuron_model requires NEURON",
+# do not test if neuron is not installed
+pytest.importorskip("neuron")
+
+from ossdbs.axon_processing.neuron_model import (
+    NEURON_PROCESS_TIMEOUT,
+    _mp_context,
 )
-NEURON_PROCESS_TIMEOUT = neuron_model.NEURON_PROCESS_TIMEOUT
-_mp_context = neuron_model._mp_context
 
 # Check if NEURON module is available
 NEURON_MODULE_AVAILABLE = importlib.util.find_spec("neuron") is not None
