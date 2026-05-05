@@ -16,6 +16,9 @@ import h5py
 import numpy as np
 import pytest
 
+# do not test if neuron is not installed
+pytest.importorskip("neuron")
+
 from ossdbs.axon_processing.neuron_model import (
     NEURON_PROCESS_TIMEOUT,
     _mp_context,
