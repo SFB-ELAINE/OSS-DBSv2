@@ -1,8 +1,8 @@
 """Panel A: vary the boundary condition on the non-active segmented contacts.
 
-Active contact (C2 at +1 V) and case (BrainSurface, 0 V) are identical
-across the three runs. The seven non-active segmented contacts
-(C1, C3, C4, C5, C6, C7, C8) switch between:
+Active contacts (C2 at 0 V, C4 at +1 V) are identical
+across the three runs. The six non-active segmented contacts
+(C1, C3, C5, C6, C7, C8) switch between:
 
   A1_floating    pure floating (no surface impedance)
   A2_insulating  natural Neumann BC (Active=false, Floating=false)
@@ -26,7 +26,7 @@ def remove_file_handler(logger):
             logger.removeHandler(h)
 
 
-NON_ACTIVE_IDS = [1, 3, 4, 5, 6, 7, 8]
+NON_ACTIVE_IDS = [1, 3, 5, 6, 7, 8]
 MILD_R = 1e3  # Ohm, specific impedance — same scale as input_interface_1kOhm.json
 
 
@@ -37,9 +37,16 @@ def make_contact_list(scheme: str) -> list[dict]:
             "Contact_ID": 2,
             "Active": True,
             "Current[A]": 0.0,
+            "Voltage[V]": 0.0,
+            "Floating": False,
+        },
+        {
+            "Contact_ID": 4,
+            "Active": True,
+            "Current[A]": 0.0,
             "Voltage[V]": 1.0,
             "Floating": False,
-        }
+        },
     ]
     for cid in NON_ACTIVE_IDS:
         c = {
@@ -80,7 +87,6 @@ def main() -> None:
     for run_id, scheme in RUNS:
         d = copy.deepcopy(base)
         d["Electrodes"][0]["Contacts"] = make_contact_list(scheme)
-        d["Surfaces"] = [{"Name": "BrainSurface", "Active": True, "Voltage[V]": 0.0}]
         d["OutputPath"] = f"Results_{run_id}"
         # bddc fails to converge with floating contacts; matches the
         # solver block of examples/Electrochemistry/input_interface_1kOhm_floating.json

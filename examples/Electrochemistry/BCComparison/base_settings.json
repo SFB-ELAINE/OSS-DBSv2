@@ -14,8 +14,8 @@
   },
   "Electrodes": [
     {
-      "Name": "BostonScientificVerciseDirected",
-      "Rotation[Degrees]": 5.560808219457241,
+      "Name": "BostonScientificVercise",
+      "Rotation[Degrees]": 0,
       "Direction": {
         "x[mm]": 0.3027327778243897,
         "y[mm]": 0.5101293066126904,
@@ -83,32 +83,15 @@
     "Preconditioner": "bddc",
     "PreconditionerKwargs": {},
     "PrintRates": true,
-    "MaximumSteps": 200,
+    "MaximumSteps": 400,
     "Precision": 1e-8
   },
   "PointModel": {
     "Pathway": {
-      "Active": false,
-      "FileName": ""
+      "Active": false
     },
     "Lattice": {
-      "Active": true,
-      "Center": {
-        "x[mm]": 11.449074999999999,
-        "y[mm]": -16.41175,
-        "z[mm]": -10.813465
-      },
-      "Shape": {
-        "x": 60,
-        "y": 60,
-        "z": 240
-      },
-      "Direction": {
-        "x[mm]": 0,
-        "y[mm]": 0,
-        "z[mm]": 1
-      },
-      "PointDistance[mm]": 0.125
+      "Active": false
     }
   },
   "ActivationThresholdVTA[V-per-m]": 200.0,
@@ -118,5 +101,6 @@
   "OutputPath": "Results_default",
   "ComputeImpedance": true,
   "ExportVTK": true,
+  "ExportVTKSubdivision": 2,
   "ExportElectrode": false
 }
