@@ -20,11 +20,28 @@ The example uses `input_files/inputTest.json` as the base OSS-DBS input. The run
 
 ## Requirements
 
-Use an environment where OSS-DBS runs, then install dependencies:
+Use an environment where OSS-DBS runs, then install the temporary EasyVVUQ
+compatibility branch:
 
 ```bash
-python -m pip install easyvvuq==1.3 chaospy pandas matplotlib scipy
+python -m pip install "easyvvuq @ git+https://github.com/CheLamVien/EasyVVUQ.git@fix-pce-derivatives-numpoly2" pandas matplotlib scipy
 ```
+
+This is the recommended installation for this example while EasyVVUQ's upstream
+NumPy 2 support is still pending. The branch is related to the dependency update work in
+[`UCL-CCS/EasyVVUQ#476`](https://github.com/UCL-CCS/EasyVVUQ/pull/476), but
+keeps the changes scoped to dependency metadata and a PCE derivative fix. It
+was tested with Python 3.13.13, NumPy 2.4.4, Chaospy 4.3.21, and Numpoly 1.3.9.
+
+If you prefer the upstream EasyVVUQ 1.3 release, install it with NumPy 1.x:
+
+```bash
+python -m pip install "setuptools<81" "numpy<2" easyvvuq==1.3 chaospy pandas matplotlib scipy
+```
+
+EasyVVUQ 1.3 requires `numpy<2`, so this upstream-release path does not test the
+new NumPy stack. The `setuptools<81` pin keeps `pkg_resources` available for the
+Chaospy version resolved by EasyVVUQ 1.3.
 
 ---
 
