@@ -2,7 +2,8 @@
 
 Four-panel figure (2x2):
   A: FFT coefficient amplitudes (stem plot, log x-axis)
-  B: CC3 dielectric properties with frequency-skipping check (white=needed, purple=skipped)
+  B: CC3 dielectric properties with frequency-skipping check
+     (white=needed, magenta=skipped)
   C: CC3 ratio between real and imaginary conductivity with frequency-skipping check
   D: Time-domain signal reconstructed at different cutoff frequencies
 
@@ -18,7 +19,9 @@ from ossdbs.stimulation_signals import RectangleSignal, get_octave_band_indices
 from ossdbs.stimulation_signals.utilities import adjust_cutoff_frequency
 from ossdbs.utils import have_dielectric_properties_changed
 
+
 def apply_dark_style(fig, axes):
+    """Switch figure to dark background."""
     fig.patch.set_facecolor("black")
     for ax in axes:
         ax.set_facecolor("black")
@@ -141,13 +144,13 @@ def plot_dielectric_panel(ax, material_models, frequencies, threshold, title):
             continue
         (line,) = ax.plot(frequencies, full[mat].real, label=mat)
         ax.plot(frequencies, needed[mat].real, "o", color="white", markersize=3)
-        ax.plot(frequencies, not_needed[mat].real, "o", color="purple", markersize=3)
+        ax.plot(frequencies, not_needed[mat].real, "o", color="m", markersize=3)
         perm = full[mat].imag / omega / e0
         perm_needed = needed[mat].imag / omega / e0
         perm_not_needed = not_needed[mat].imag / omega / e0
         ax2.plot(frequencies, perm, ls="dashed", color=line.get_color())
         ax2.plot(frequencies, perm_needed, "o", color="white", markersize=3)
-        ax2.plot(frequencies, perm_not_needed, "o", color="purple", markersize=3)
+        ax2.plot(frequencies, perm_not_needed, "o", color="m", markersize=3)
 
     ax.set_xlabel("Frequency / Hz")
     ax.set_ylabel(r"Real conductivity / S\,m$^{-1}$")
@@ -171,8 +174,6 @@ def plot_dielectric_panel(ax, material_models, frequencies, threshold, title):
                 text.set_color("white")
 
 
-
-
 # ============================================================
 # Panel B — CC3 dielectric properties
 # ============================================================
@@ -194,7 +195,7 @@ for mat in material_modelCC4:
     ratio_not_needed = not_needed_cc3[mat].real / np.abs(not_needed_cc3[mat].imag)
     ax_c.plot(frequencies, ratio, label=mat)
     ax_c.plot(frequencies, ratio_needed, "o", color="white", markersize=3)
-    ax_c.plot(frequencies, ratio_not_needed, "o", color="purple", markersize=3)
+    ax_c.plot(frequencies, ratio_not_needed, "o", color="m", markersize=3)
 ax_c.set_xlabel("Frequency / Hz")
 ax_c.set_ylabel("Ratio between real and imaginary part")
 ax_c.legend(loc="upper right", fontsize=7)
