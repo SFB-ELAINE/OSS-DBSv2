@@ -143,14 +143,30 @@ def plot_dielectric_panel(ax, material_models, frequencies, threshold, title):
         if mat == "CSF":
             continue
         (line,) = ax.plot(frequencies, full[mat].real, label=mat)
-        ax.plot(frequencies, needed[mat].real, "o", color="white", markersize=3)
-        ax.plot(frequencies, not_needed[mat].real, "o", color="m", markersize=3)
+        ax.plot(frequencies, needed[mat].real, "o", color="white", markersize=4)
+        ax.plot(
+            frequencies,
+            not_needed[mat].real,
+            "o",
+            color="magenta",
+            markersize=4,
+            markeredgecolor="white",
+            markeredgewidth=0.5,
+        )
         perm = full[mat].imag / omega / e0
         perm_needed = needed[mat].imag / omega / e0
         perm_not_needed = not_needed[mat].imag / omega / e0
         ax2.plot(frequencies, perm, ls="dashed", color=line.get_color())
-        ax2.plot(frequencies, perm_needed, "o", color="white", markersize=3)
-        ax2.plot(frequencies, perm_not_needed, "o", color="m", markersize=3)
+        ax2.plot(frequencies, perm_needed, "o", color="white", markersize=4)
+        ax2.plot(
+            frequencies,
+            perm_not_needed,
+            "o",
+            color="magenta",
+            markersize=4,
+            markeredgecolor="white",
+            markeredgewidth=0.5,
+        )
 
     ax.set_xlabel("Frequency / Hz")
     ax.set_ylabel(r"Real conductivity / S\,m$^{-1}$")
@@ -194,8 +210,16 @@ for mat in material_modelCC4:
     ratio_needed = needed_cc3[mat].real / np.abs(needed_cc3[mat].imag)
     ratio_not_needed = not_needed_cc3[mat].real / np.abs(not_needed_cc3[mat].imag)
     ax_c.plot(frequencies, ratio, label=mat)
-    ax_c.plot(frequencies, ratio_needed, "o", color="white", markersize=3)
-    ax_c.plot(frequencies, ratio_not_needed, "o", color="m", markersize=3)
+    ax_c.plot(frequencies, ratio_needed, "o", color="white", markersize=4)
+    ax_c.plot(
+        frequencies,
+        ratio_not_needed,
+        "o",
+        color="magenta",
+        markersize=4,
+        markeredgecolor="white",
+        markeredgewidth=0.5,
+    )
 ax_c.set_xlabel("Frequency / Hz")
 ax_c.set_ylabel("Ratio between real and imaginary part")
 ax_c.legend(loc="upper right", fontsize=7)
@@ -230,7 +254,7 @@ ax_d.plot(
     td_100k,
     linestyle="none",
     marker="o",
-    markersize=3,
+    markersize=4,
     label=r"\SI{100}{\kilo\hertz}",
 )
 ax_d.set_xlabel(r"Time / $\mu$s")
