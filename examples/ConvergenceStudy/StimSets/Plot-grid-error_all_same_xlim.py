@@ -6,32 +6,46 @@ import seaborn as sns
 
 plt.rcParams["text.usetex"] = True
 plt.style.use("dark_background")  # Sets background black and basic elements white
-plt.rcParams.update({
-    "axes.facecolor": "black",
-    "figure.facecolor": "black",
-    "axes.edgecolor": "white",
-    "axes.labelcolor": "white",
-    "xtick.color": "white",
-    "ytick.color": "white",
-    "grid.color": "gray", # Subtle grid
-    "text.color": "white",
-    "axes.labelsize": 18,
-    "text.latex.preamble": (
-        r"\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother"
-    )
-})
+plt.rcParams.update(
+    {
+        "axes.facecolor": "black",
+        "figure.facecolor": "black",
+        "axes.edgecolor": "white",
+        "axes.labelcolor": "white",
+        "xtick.color": "white",
+        "ytick.color": "white",
+        "grid.color": "gray",  # Subtle grid
+        "text.color": "white",
+        "axes.labelsize": 18,
+        "text.latex.preamble": (
+            r"\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother"
+        ),
+    }
+)
 
 pathways_to_plot = [
-    "M1_cf_face_right", "M1_cf_lowerex_right", "M1_cf_upperex_right",
-    "R_M1_hdp_face_right", "R_M1_hdp_lowerex_right", "R_M1_hdp_upperex_right",
-    "cerebellothalamic_right", "gpe2stn_ass_right", "gpe2stn_sm_right",
+    "M1_cf_face_right",
+    "M1_cf_lowerex_right",
+    "M1_cf_upperex_right",
+    "R_M1_hdp_face_right",
+    "R_M1_hdp_lowerex_right",
+    "R_M1_hdp_upperex_right",
+    "cerebellothalamic_right",
+    "gpe2stn_ass_right",
+    "gpe2stn_sm_right",
     "medial_lemniscus_right",
 ]
 
 pathway_labels = [
-    "M1 face", "M1 lower extr.", "M1 upper extr.",
-    "HDP M1 face", "HDP M1 lower extr.", "HDP M1 upper extr.",
-    "Cerebellothalamic", "Pallido-subthalamic Assoc", "Pallido-subthalamic Motor",
+    "M1 face",
+    "M1 lower extr.",
+    "M1 upper extr.",
+    "HDP M1 face",
+    "HDP M1 lower extr.",
+    "HDP M1 upper extr.",
+    "Cerebellothalamic",
+    "Pallido-subthalamic Assoc",
+    "Pallido-subthalamic Motor",
     "Medial lemniscus",
 ]
 
@@ -57,9 +71,7 @@ for pathway in pathways_to_plot:
 
 # --- 2. Plotting ---
 # We do not pass 'hue' here because 'hue' will be column-specific
-g = sns.PairGrid(
-    data, x_vars=columns_to_plot, y_vars=["roman"], height=4
-)
+g = sns.PairGrid(data, x_vars=columns_to_plot, y_vars=["roman"], height=4)
 
 # Define our highlight palette
 # True (Not Converged) -> Red, False (Converged) -> White
@@ -68,7 +80,7 @@ palette = {True: "#FF0000", False: "#FFFFFF"}
 # Iterate through axes and columns to apply specific logic
 for i, ax in enumerate(g.axes.flat):
     col_name = columns_to_plot[i]
-    
+
     # Logic: If it's an error column, calculate convergence per point
     # If it's time/dofs, we can default to False (White)
     if "max_error" in col_name:
@@ -88,15 +100,15 @@ for i, ax in enumerate(g.axes.flat):
         jitter=False,
         linewidth=1,
         edgecolor="black",
-        legend=False # Remove individual legends
+        legend=False,  # Remove individual legends
     )
 
     # --- 3. Formatting each axis ---
     ax.xaxis.grid(False)
     ax.yaxis.grid(True, color="#444444")
     ax.set(xlabel=labels[i], xscale=scales[i], ylabel="Strategy")
-    
-    if i > 1: # Pathway error columns
+
+    if i > 1:  # Pathway error columns
         ax.set(xlim=(-0.3, 8))
         # Optional: Add a vertical line for the threshold
         ax.axvline(convergence_threshold, color="red", linestyle="--", alpha=0.5)

@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Created on Sun Apr 26 18:08:46 2026
 
 @author: forel
 """
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 # Load the data
-best_df = pd.read_csv('Results_PAM_best_overview.csv')
-ref_df = pd.read_csv('Results_PAM_hp_material_refinement_overview.csv')
+best_df = pd.read_csv("Results_PAM_best_overview.csv")
+ref_df = pd.read_csv("Results_PAM_hp_material_refinement_overview.csv")
 
 # Flatten all values from both dataframes into 1D arrays
 best_values = best_df.values.flatten()
@@ -34,9 +33,14 @@ print(f"Global Correlation: {correlation}")
 
 # Prepare a small summary for the user
 summary_data = {
-    "Metric": ["Total non-zero entries", "Global Correlation", "Mean Activation (non-zero)", "Mean Abs Error (non-zero)"],
-    "Value": [len(best_filtered), correlation, best_filtered.mean(), abs_errors.mean()]
+    "Metric": [
+        "Total non-zero entries",
+        "Global Correlation",
+        "Mean Activation (non-zero)",
+        "Mean Abs Error (non-zero)",
+    ],
+    "Value": [len(best_filtered), correlation, best_filtered.mean(), abs_errors.mean()],
 }
 summary_df = pd.DataFrame(summary_data)
-summary_df.to_csv('global_correlation_results.csv', index=False)
+summary_df.to_csv("global_correlation_results.csv", index=False)
 print(summary_df)

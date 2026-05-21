@@ -30,7 +30,9 @@ data["truncation_ratio"] = data["truncation_ratio"].astype(str)
 x_labels = data["truncation_ratio"].values
 x_pos = np.arange(len(x_labels))
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4), gridspec_kw={"wspace": 0.35}, facecolor='black')
+fig, (ax1, ax2) = plt.subplots(
+    1, 2, figsize=(10, 4), gridspec_kw={"wspace": 0.35}, facecolor="black"
+)
 
 # --- Left panel: activation error ---
 markers = ["o", "s", "^", "v", "D", "P", "X", "*"]
@@ -48,7 +50,7 @@ ax1.axhline(0, color="white", linewidth=0.5, linestyle="--", alpha=0.3)
 
 # --- Right panel: time steps and file size ---
 color_ts = "white"  # Updated to white
-color_fs = "C1"     # Orange for contrast
+color_fs = "C1"  # Orange for contrast
 bar_width = 0.6
 
 # Bars set to white with 0.6 alpha for a sleek "frosted" look
@@ -73,8 +75,8 @@ ax2b.set_ylabel(r"H5 file size / \si{\mega\byte}", color=color_fs)
 ax2b.tick_params(axis="y", labelcolor=color_fs)
 
 # Ensure spines of the twin axis are also handled
-ax2b.spines['right'].set_color(color_fs)
-ax2.spines['left'].set_color(color_ts)
+ax2b.spines["right"].set_color(color_fs)
+ax2.spines["left"].set_color(color_ts)
 
 plt.savefig("truncation_test.pdf", bbox_inches="tight", facecolor=fig.get_facecolor())
 plt.savefig("truncation_test.svg", bbox_inches="tight", facecolor=fig.get_facecolor())
