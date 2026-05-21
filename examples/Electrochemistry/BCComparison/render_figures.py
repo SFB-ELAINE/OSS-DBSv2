@@ -26,6 +26,7 @@ from paraview.simple import (
     ColorBy,
     CreateRenderView,
     Delete,
+    ExportView,
     GetColorTransferFunction,
     GetScalarBar,
     Hide,
@@ -138,9 +139,12 @@ def _slice(reader):
     return cut
 
 
-def _style_color_bar(view, field, preset, title, log_scale=False):
+def _style_color_bar(view, field, preset, title, log_scale=False, fmt="{:.2f}"):
     """Apply consistent colour-bar styling, optionally on log scale."""
     lut = GetColorTransferFunction(field)
+    # Reset to linear before applying the preset so that re-use of the global
+    # LUT object across runs does not accumulate log-space transformations.
+    lut.UseLogScale = 0
     lut.ApplyPreset(preset, True)
     if log_scale:
         lut.MapControlPointsToLogSpace()
@@ -148,10 +152,14 @@ def _style_color_bar(view, field, preset, title, log_scale=False):
     bar = GetScalarBar(lut, view)
     bar.Title = title
     bar.ComponentTitle = ""
-    bar.LabelFormat = "{:<#6.3g}"
-    bar.RangeLabelFormat = "{:<#6.3g}"
+    bar.LabelFormat = fmt
+    bar.RangeLabelFormat = fmt
     bar.LabelColor = [1.0, 1.0, 1.0]
     bar.TitleColor = [1.0, 1.0, 1.0]
+    bar.TitleFontSize = 32
+    bar.LabelFontSize = 28
+    bar.ScalarBarLength = 0.65
+    bar.ScalarBarThickness = 30
     return lut, bar
 
 
@@ -178,7 +186,7 @@ def render_run(run_id: str) -> None:
     ColorBy(pot_disp, ("POINTS", "potential_real"))
     pot_disp.RescaleTransferFunctionToDataRange(False, True)
     lut, _ = _style_color_bar(
-        view, "potential_real", POTENTIAL_PRESET, "Electric potential / V"
+        view, "potential_real", POTENTIAL_PRESET, "Electric potential / V", fmt="{:.2f}"
     )
     lut.RescaleTransferFunction(*POTENTIAL_RANGE)
     pot_disp.SetScalarBarVisibility(view, True)
@@ -189,6 +197,7 @@ def render_run(run_id: str) -> None:
         ImageResolution=list(IMAGE_SIZE),
         TransparentBackground=0,
     )
+    ExportView(os.path.join(out_dir, "potential_slice.svg"), view=view)
     Hide(pot_slice, view)
     Delete(pot_slice)
     Delete(pot_reader)
@@ -209,7 +218,7 @@ def render_run(run_id: str) -> None:
     ColorBy(e_disp, ("POINTS", "E_Vm"))
     e_disp.RescaleTransferFunctionToDataRange(False, True)
     lut, _ = _style_color_bar(
-        view, "E_Vm", E_FIELD_PRESET, "log(E) / V·m⁻¹", log_scale=True
+        view, "E_Vm", E_FIELD_PRESET, "E / V·m⁻¹", log_scale=True, fmt="{:.0f}"
     )
     lut.RescaleTransferFunction(*E_FIELD_RANGE)
     e_disp.SetScalarBarVisibility(view, True)
@@ -220,13 +229,14 @@ def render_run(run_id: str) -> None:
         ImageResolution=list(IMAGE_SIZE),
         TransparentBackground=0,
     )
+    ExportView(os.path.join(out_dir, "E_field_slice.svg"), view=view)
     Hide(e_calc, view)
     Delete(e_calc)
     Delete(e_slice)
     Delete(e_reader)
     Delete(view)
 
-    print(f"[ok]   {run_id}: wrote {out_dir}/potential_slice.png + E_field_slice.png")
+    print(f"[ok]   {run_id}: wrote {out_dir}/{{potential,E_field}}_slice.{{png,svg}}")
 
 
 def render_material(run_id: str = "A1_floating") -> None:
@@ -256,6 +266,10 @@ def render_material(run_id: str = "A1_floating") -> None:
     bar.ComponentTitle = ""
     bar.LabelFormat = "{:<#6.0f}"
     bar.RangeLabelFormat = "{:<#6.0f}"
+    bar.TitleFontSize = 32
+    bar.LabelFontSize = 28
+    bar.ScalarBarLength = 0.65
+    bar.ScalarBarThickness = 30
     mat_disp.SetScalarBarVisibility(view, True)
     Render(view)
     SaveScreenshot(
@@ -264,12 +278,13 @@ def render_material(run_id: str = "A1_floating") -> None:
         ImageResolution=list(IMAGE_SIZE),
         TransparentBackground=0,
     )
+    ExportView(os.path.join(out_dir, "material_slice.svg"), view=view)
     Hide(mat_slice, view)
     Delete(mat_slice)
     Delete(mat_reader)
     Delete(view)
 
-    print(f"[ok]   material: wrote {out_dir}/material_slice.png")
+    print(f"[ok]   material: wrote {out_dir}/material_slice.{{png,svg}}")
 
 
 def main(argv: list[str]) -> None:

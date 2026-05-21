@@ -55,7 +55,7 @@ x86_64/
 tmpclaude*
 
 # Runtime artifacts
-nohup.out
+nohup*.out
 *.log
 
 # Generated figures
