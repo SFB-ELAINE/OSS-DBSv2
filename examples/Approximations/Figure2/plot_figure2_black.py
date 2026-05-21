@@ -81,16 +81,11 @@ frequency_indices = get_octave_band_indices(fft_frequencies_dc)
 frequencies = frequency_indices * frequency
 
 modelCC3 = dielectric_models["ColeCole3"]
-modelCC4 = dielectric_models["ColeCole4"]
 material_modelCC3 = {}
-material_modelCC4 = {}
 for material, parameters in default_dielectric_parameters["ColeCole3"].items():
     if material in ["Blood", "Unknown"]:
         continue
     material_modelCC3[material] = modelCC3(parameters)
-    material_modelCC4[material] = modelCC4(
-        default_dielectric_parameters["ColeCole4"][material]
-    )
 
 
 # Compute conductivities + classify needed/not-needed
@@ -203,7 +198,7 @@ full_cc3, needed_cc3, not_needed_cc3 = compute_dielectric_classification(
 )
 ax_c.set_xscale("log")
 ax_c.set_yscale("log")
-for mat in material_modelCC4:
+for mat in material_modelCC3:
     if mat == "CSF":
         continue
     ratio = full_cc3[mat].real / np.abs(full_cc3[mat].imag)

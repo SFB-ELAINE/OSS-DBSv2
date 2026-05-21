@@ -8,7 +8,8 @@ THRESHOLD = 1.0
 plt.rcParams["text.usetex"] = True
 plt.rcParams["axes.labelsize"] = 18
 plt.rcParams["text.latex.preamble"] = (
-    r"\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother"
+    r"\makeatletter "
+    r"\newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother"
 )
 
 pathways_to_plot = [
@@ -31,7 +32,7 @@ pathway_labels = [
     "Pallido-subthalamic Motor",
 ]
 
-pathway_label_dict = dict(zip(pathways_to_plot, pathway_labels))
+pathway_label_dict = dict(zip(pathways_to_plot, pathway_labels, strict=True))
 
 data = pd.read_csv("nf_results_summary.csv")
 data["roman"] = data["roman"].astype("string")
