@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Heteroskedasticity check for convergence study results."""
 
-
 import numpy as np
 import pandas as pd
 
