@@ -18,7 +18,7 @@ plt.rcParams.update(
         "text.color": "white",
         "axes.labelsize": 18,
         "text.latex.preamble": (
-            r"\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother"
+            r"\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother"  # noqa: E501
         ),
     }
 )
@@ -49,7 +49,7 @@ pathway_labels = [
     "Medial lemniscus",
 ]
 
-pathway_label_dict = dict(zip(pathways_to_plot, pathway_labels))
+pathway_label_dict = dict(zip(pathways_to_plot, pathway_labels, strict=False))
 convergence_threshold = 5.0  # in %
 
 # Load data

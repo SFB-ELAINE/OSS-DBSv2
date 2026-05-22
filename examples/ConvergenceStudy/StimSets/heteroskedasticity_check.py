@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
-"""
-Created on Sun Apr 26 18:08:46 2026
+"""Heteroskedasticity check for convergence study results."""
 
-@author: forel
-"""
 
 import numpy as np
 import pandas as pd
