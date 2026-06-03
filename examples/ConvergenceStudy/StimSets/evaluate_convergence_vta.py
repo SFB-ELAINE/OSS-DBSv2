@@ -134,6 +134,28 @@ def read_dof(strategy):
         return None, None
 
 
+def read_time(strategy, n_contacts):
+    """Total ComputeSolution time (s) summed over all contact solves.
+
+    Mirrors the cost measure used by the PAM overview (one StimSets VTA
+    estimate needs one unit solve per non-ground contact, so the cost is
+    the sum across contacts). Returns None if no report is readable.
+    """
+    total, found = 0.0, False
+    for contact_i in range(1, n_contacts + 1):
+        report = os.path.join(
+            f"Results_VTA_{strategy}E1C{contact_i}", "VCM_report.json"
+        )
+        try:
+            with open(report) as fp:
+                d = json.load(fp)
+            total += sum(d["Timings"]["ComputeSolution"])
+            found = True
+        except (OSError, json.JSONDecodeError, KeyError):
+            continue
+    return total if found else None
+
+
 def dice(mask_a, mask_b):
     """Dice overlap of two boolean masks (1.0 if both empty)."""
     a_sum = mask_a.sum()
@@ -183,6 +205,7 @@ def main():
     summary_rows = []
     per_protocol = {"protocol": np.arange(n_protocols)}
 
+    roman_idx = 0
     for strategy in STRATEGIES:
         print(f"Strategy: {strategy}")
         fields = (
@@ -219,12 +242,22 @@ def main():
             ]
         )
         dof, elements = read_dof(strategy)
+        time_s = read_time(strategy, n_contacts)
+        # Roman numerals label the refinement strategies (I, II, ...) as in
+        # the PAM/VTA figures; the reference run is labelled "Best".
+        if strategy == REFERENCE:
+            roman = "Best"
+        else:
+            roman_idx += 1
+            roman = rf"\rom{{{roman_idx}}}"
 
         summary_rows.append(
             {
+                "roman": roman,
                 "strategy": strategy,
                 "DOF": dof,
                 "Elements": elements,
+                "time": time_s,
                 "n_common_points": int(n_common),
                 "mean_VTA_volume_mm3": float(np.mean(volumes)),
                 "median_VTA_volume_mm3": float(np.median(volumes)),
