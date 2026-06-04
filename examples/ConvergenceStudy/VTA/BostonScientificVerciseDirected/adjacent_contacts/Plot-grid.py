@@ -18,6 +18,19 @@ convergence_threshold = 1.0  # in %
 data = pd.read_csv("vta_results_summary.csv")
 data["roman"] = data["roman"].astype("string")
 
+# Add "Best" row for absolute values
+best_df = data.filter(regex="best", axis=1).iloc[0].to_dict()
+best_df["time"] = best_df["best_time"]
+best_df["dofs"] = best_df["best_dofs"]
+best_df["ngs_vta_volume"] = best_df["best_ngs_vta_volume"]
+best_df["imp"] = best_df["best_impedance"]
+best_df["imp_rel_error"] = 0.0
+best_df["ngs_vta_volume_rel_error"] = 0.0
+best_df["roman"] = "Best"
+best_df = pd.DataFrame([best_df])
+data = pd.concat([data, best_df], ignore_index=True)
+data.fillna(0.0, inplace=True)
+
 columns_to_plot = [
     "time",
     "dofs",
