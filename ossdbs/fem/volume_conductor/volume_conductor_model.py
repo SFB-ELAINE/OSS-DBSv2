@@ -107,6 +107,11 @@ class VolumeConductor(ABC):
         # frequency at which VTK shall be exported
         self._export_frequency = None
 
+        # VTA volume (mm^3) computed by direct ngsolve integration
+        # over the FEM mesh; populated in _frequency_domain_exports
+        # whenever an ActivationThreshold is configured.
+        self._vta_volume = None
+
     @abstractmethod
     def compute_solution(self, frequency: float) -> None:
         """Compute solution at frequency.
@@ -1158,7 +1163,10 @@ class VolumeConductor(ABC):
         """Determine volume of E-field above threshold at current frequency."""
         field = scale_factor * self.electric_field
         # convert to V/m (field is in V/mm because mesh is in mm)
-        field_magnitude = 1e3 * ngsolve.sqrt(ngsolve.InnerProduct(field, field))
+        # Use the modulus |E| (Norm) so complex frequency-domain fields are
+        # handled; for real fields this equals sqrt(E.E). This matches the
+        # complex-modulus convention of the exported field magnitude.
+        field_magnitude = 1e3 * ngsolve.Norm(field)
         # subtract threshold from electric field,
         # all positive values are 1, negative values 0
         threshold_cf = ngsolve.IfPos(field_magnitude - activation_threshold, 1, 0)
@@ -1193,6 +1201,14 @@ class VolumeConductor(ABC):
         """Export solution at desired frequency."""
         export_frequency = self.signal.frequencies[export_frequency_index]
         _logger.info(f"Exporting results at {export_frequency} Hz.")
+        if activation_threshold is not None:
+            scale_factor = (
+                self._scale_factor * self.signal.amplitudes[export_frequency_index]
+            )
+            self._vta_volume = self.threshold_frequency_domain_Efield(
+                scale_factor, activation_threshold
+            )
+            _logger.info(f"VTA volume is: {self._vta_volume:.3f}")
         for point_model in point_models:
             _logger.info(f"Exporting for point model type {type(point_model)}.")
             point_model.export_potential_at_frequency(
@@ -1209,13 +1225,7 @@ class VolumeConductor(ABC):
                     activation_threshold=activation_threshold,
                 )
             if isinstance(point_model, Lattice):
-                scale_factor = (
-                    self._scale_factor * self.signal.amplitudes[export_frequency_index]
-                )
-                point_model.VTA_volume = self.threshold_frequency_domain_Efield(
-                    scale_factor, activation_threshold
-                )
-                _logger.info(f"VTA volume is: {point_model.VTA_volume:.3f}")
+                point_model.VTA_volume = self._vta_volume
 
     def _process_frequency_domain_solution(
         self, band_indices: list | np.ndarray, point_models: PointModel
@@ -1278,6 +1288,8 @@ class VolumeConductor(ABC):
         report["DOF"] = self._space.ndof
         report["Elements"] = self.mesh.n_elements
         report["Timings"] = timings
+        if self._vta_volume is not None:
+            report["VTA_volume_mm3"] = self._vta_volume
 
         with open(os.path.join(self.output_path, "VCM_report.json"), "w") as fp:
             json.dump(report, fp)

@@ -516,12 +516,16 @@ class PointModel(ABC):
             field_mags_full,
             os.path.join(self.output_path, f"E_field_solution_{self.name}.nii.gz"),
         )
-        self.save_as_nifti(
-            field_mags_full,
-            os.path.join(self.output_path, f"VTA_solution_{self.name}.nii.gz"),
-            binarize=True,
-            activation_threshold=activation_threshold,
-        )
+        # The binarized VTA only makes sense with a threshold. In StimSets
+        # mode the per-contact unit solution has no meaningful VTA (it is
+        # formed after superposition), so the threshold may be unset.
+        if activation_threshold is not None:
+            self.save_as_nifti(
+                field_mags_full,
+                os.path.join(self.output_path, f"VTA_solution_{self.name}.nii.gz"),
+                binarize=True,
+                activation_threshold=activation_threshold,
+            )
 
     def create_time_result(
         self,
