@@ -166,6 +166,7 @@ class VolumeConductor(ABC):
         adaptive_mesh_refinement_settings: dict | None = None,
         truncation_time: float | None = None,
         estimate_currents: bool | None = False,
+        vtk_subdivision: int = 0,
     ) -> dict:
         """Run volume conductor model at all frequencies.
 
@@ -195,6 +196,8 @@ class VolumeConductor(ABC):
             Time until which result will be written to hard drive
         estimate_currents: bool
             Get current estimate per contact by integration of normal component
+        vtk_subdivision: int
+            Element subdivision count forwarded to ``ngsolve.VTKOutput``.
 
         Notes
         -----
@@ -444,7 +447,7 @@ class VolumeConductor(ABC):
                 _logger.info(f"Exporting at {self._export_frequency}")
                 # save vtk
                 if export_vtk:
-                    self.vtk_export(freq_idx, multisine_mode)
+                    self.vtk_export(freq_idx, multisine_mode, vtk_subdivision)
                     time_1 = time.time()
                     timings["VTKExport"].append(time_1 - time_0)
                     time_0 = time_1
@@ -878,7 +881,12 @@ class VolumeConductor(ABC):
             estimated_currents[contact.name] = current
         return estimated_currents
 
-    def vtk_export(self, freq_idx: int, multisine_mode: bool = False) -> None:
+    def vtk_export(
+        self,
+        freq_idx: int,
+        multisine_mode: bool = False,
+        subdivision: int = 0,
+    ) -> None:
         """Export all relevant properties to VTK.
 
         Parameters
@@ -887,13 +895,18 @@ class VolumeConductor(ABC):
             Index of frequency
         multisine_mode: bool
             If rectangular pulse is used (multisine_mode = False)
+        subdivision: int
+            Element subdivision count forwarded to ngsolve.VTKOutput.
         """
-        self.export_solution_to_vtk(freq_idx, multisine_mode)
-        self.export_conductivity_to_vtk()
-        self.export_material_distribution_to_vtk()
+        self.export_solution_to_vtk(freq_idx, multisine_mode, subdivision)
+        self.export_conductivity_to_vtk(subdivision)
+        self.export_material_distribution_to_vtk(subdivision)
 
     def export_solution_to_vtk(
-        self, freq_idx: int, multisine_mode: bool = False
+        self,
+        freq_idx: int,
+        multisine_mode: bool = False,
+        subdivision: int = 0,
     ) -> None:
         """Export potential and field at frequency to VTK.
 
@@ -903,6 +916,8 @@ class VolumeConductor(ABC):
             Index of frequency
         multisine_mode: bool
             If rectangular pulse is used (multisine_mode = False)
+        subdivision: int
+            Element subdivision count forwarded to ngsolve.VTKOutput.
         """
         ngmesh = self.mesh.ngsolvemesh
         # use standard solution with 1V voltage drop
@@ -912,13 +927,13 @@ class VolumeConductor(ABC):
             scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
         FieldSolution(
             scale_factor * self.potential, "potential", ngmesh, self.is_complex
-        ).save(os.path.join(self.output_path, "potential"))
+        ).save(os.path.join(self.output_path, "potential"), subdivision)
 
         FieldSolution(
             scale_factor * self.electric_field, "E_field", ngmesh, self.is_complex
-        ).save(os.path.join(self.output_path, "E-field"))
+        ).save(os.path.join(self.output_path, "E-field"), subdivision)
 
-    def export_conductivity_to_vtk(self) -> None:
+    def export_conductivity_to_vtk(self, subdivision: int = 0) -> None:
         """Write conductivity to VTK file."""
         ngmesh = self.mesh.ngsolvemesh
         if self.conductivity_cf.is_tensor:
@@ -936,7 +951,7 @@ class VolumeConductor(ABC):
             conductivity_export = self.conductivity
         FieldSolution(
             conductivity_export, "conductivity", ngmesh, self.is_complex
-        ).save(os.path.join(self.output_path, "conductivity"))
+        ).save(os.path.join(self.output_path, "conductivity"), subdivision)
 
         if self.conductivity_cf.is_tensor:
             dti_voxel = self.conductivity_cf.dti_voxel_distribution
@@ -951,10 +966,10 @@ class VolumeConductor(ABC):
             )
             dti_export = ngsolve.CoefficientFunction(cf_list, dims=(6,))
             FieldSolution(dti_export, "dti", ngmesh, False).save(
-                os.path.join(self.output_path, "dti")
+                os.path.join(self.output_path, "dti"), subdivision
             )
 
-    def export_material_distribution_to_vtk(self) -> None:
+    def export_material_distribution_to_vtk(self, subdivision: int = 0) -> None:
         """Write material distribution to VTK file."""
         ngmesh = self.mesh.ngsolvemesh
         FieldSolution(
@@ -962,7 +977,7 @@ class VolumeConductor(ABC):
             "material",
             ngmesh,
             False,
-        ).save(os.path.join(self.output_path, "material"))
+        ).save(os.path.join(self.output_path, "material"), subdivision)
 
     def floating_values(self) -> dict:
         """Read out floating potentials."""

@@ -495,6 +495,7 @@ def run_volume_conductor_model(
             _logger.info("Will export solution to VTK")
     else:
         export_vtk = False
+    vtk_subdivision = int(settings.get("ExportVTKSubdivision", 0))
     if "ExportFrequency" in settings:
         export_frequency = settings["ExportFrequency"]
         if export_frequency is not None:
@@ -514,6 +515,7 @@ def run_volume_conductor_model(
         adaptive_mesh_refinement_settings=settings["Mesh"]["AdaptiveMeshRefinement"],
         truncation_time=truncation_time,
         estimate_currents=compute_currents,
+        vtk_subdivision=vtk_subdivision,
     )
 
     _run_impedance_analysis(settings, volume_conductor, frequency_domain_signal)
@@ -582,6 +584,7 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
         )
     # no vtk export
     export_vtk = settings["ExportVTK"]
+    vtk_subdivision = int(settings.get("ExportVTKSubdivision", 0))
     # no intermediate exports
     export_frequency = None
     # no VTA analysis
@@ -647,6 +650,7 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             adaptive_mesh_refinement_settings=settings["Mesh"][
                 "AdaptiveMeshRefinement"
             ],
+            vtk_subdivision=vtk_subdivision,
         )
         _logger.info(f"Timing for contact {contact.name}: {vcm_timings}")
 

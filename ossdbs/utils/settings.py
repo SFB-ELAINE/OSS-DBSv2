@@ -131,6 +131,7 @@ class Settings:
         },
         "ComputeCurrents": False,
         "ExportVTK": False,
+        "ExportVTKSubdivision": 0,
         "ExportFrequency": None,
         "ExportElectrode": False,
         "ModelSide": 0,
