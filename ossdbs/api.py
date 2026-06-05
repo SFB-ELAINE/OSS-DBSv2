@@ -5,6 +5,7 @@
 import importlib
 import json
 import logging
+from tqdm import tqdm
 import os
 
 import numpy as np
@@ -720,16 +721,14 @@ def run_PAM(settings):
 
         # go through stimulation protocols
         _logger.info("Running stimulation protocols")
-        for protocol_i in range(n_stim_protocols):
-            # get the scaling vector for the current
+        for protocol_i in tqdm(range(n_stim_protocols), desc="Processing protocols"):
             scaling_vector = list(stim_protocols[protocol_i])
-            # swap NaNs to zero current and convert to A (StimSets in mA)
             scaling_vector = [0 if np.isnan(x) else 1e-3 * x for x in scaling_vector]
-
+        
             td_solution = neuron_model.superimpose_unit_solutions(
                 td_unit_solutions, scaling_vector
             )
-            # when using optimizer, scaling_index is not used
+            
             if (
                 settings["CurrentVector"] is not None
                 and settings["StimSets"]["StimSetsFile"] is None
@@ -738,9 +737,16 @@ def run_PAM(settings):
                     td_solution, scaling=settings["Scaling"], scaling_index=None
                 )
             else:
-                neuron_model.process_pathways(
-                    td_solution, scaling=settings["Scaling"], scaling_index=protocol_i
-                )
+                try:
+                    # Globally disable all logs at or below CRITICAL level
+                    logging.disable(logging.CRITICAL)
+                    
+                    neuron_model.process_pathways(
+                        td_solution, scaling=settings["Scaling"], scaling_index=protocol_i
+                    )
+                finally:
+                    # Re-enable logging back to normal (NOTSET means no global restriction)
+                    logging.disable(logging.NOTSET)
     else:
         td_solution = neuron_model.load_solution(time_domain_solution)
         neuron_model.process_pathways(
