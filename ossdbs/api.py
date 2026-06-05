@@ -8,6 +8,7 @@ import logging
 import os
 
 import numpy as np
+from tqdm import tqdm
 
 from ossdbs.dielectric_model import (
     default_dielectric_parameters,
@@ -724,27 +725,46 @@ def run_PAM(settings):
 
         # go through stimulation protocols
         _logger.info("Running stimulation protocols")
-        for protocol_i in range(n_stim_protocols):
-            # get the scaling vector for the current
+        # Refresh the bar only ~once per percent rather than every iteration:
+        # each protocol is slow (>> tqdm's default 0.1 s mininterval), so the
+        # time-based throttle would otherwise update on every iteration. miniters
+        # gates updates by iteration count; mininterval=0 disables the time gate.
+        percent_step = max(1, n_stim_protocols // 100)
+        for protocol_i in tqdm(
+            range(n_stim_protocols),
+            desc="Processing protocols",
+            miniters=percent_step,
+            mininterval=0,
+        ):
+            # swap NaNs to zero current and convert mA -> A (StimSets in mA)
             scaling_vector = list(stim_protocols[protocol_i])
-            # swap NaNs to zero current and convert to A (StimSets in mA)
             scaling_vector = [0 if np.isnan(x) else 1e-3 * x for x in scaling_vector]
 
             td_solution = neuron_model.superimpose_unit_solutions(
                 td_unit_solutions, scaling_vector
             )
-            # when using optimizer, scaling_index is not used
+
             if (
                 settings["CurrentVector"] is not None
                 and settings["StimSets"]["StimSetsFile"] is None
             ):
+                # when using optimizer, scaling_index is not used
                 neuron_model.process_pathways(
                     td_solution, scaling=settings["Scaling"], scaling_index=None
                 )
             else:
-                neuron_model.process_pathways(
-                    td_solution, scaling=settings["Scaling"], scaling_index=protocol_i
-                )
+                try:
+                    # Globally disable all logs at or below CRITICAL level
+                    logging.disable(logging.CRITICAL)
+
+                    neuron_model.process_pathways(
+                        td_solution,
+                        scaling=settings["Scaling"],
+                        scaling_index=protocol_i,
+                    )
+                finally:
+                    # Re-enable logging (NOTSET removes the global restriction)
+                    logging.disable(logging.NOTSET)
     else:
         td_solution = neuron_model.load_solution(time_domain_solution)
         neuron_model.process_pathways(
