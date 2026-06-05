@@ -1178,7 +1178,10 @@ class VolumeConductor(ABC):
         """Determine volume of E-field above threshold at current frequency."""
         field = scale_factor * self.electric_field
         # convert to V/m (field is in V/mm because mesh is in mm)
-        field_magnitude = 1e3 * ngsolve.sqrt(ngsolve.InnerProduct(field, field))
+        # Use the modulus |E| (Norm) so complex frequency-domain fields are
+        # handled; for real fields this equals sqrt(E.E). This matches the
+        # complex-modulus convention of the exported field magnitude.
+        field_magnitude = 1e3 * ngsolve.Norm(field)
         # subtract threshold from electric field,
         # all positive values are 1, negative values 0
         threshold_cf = ngsolve.IfPos(field_magnitude - activation_threshold, 1, 0)
