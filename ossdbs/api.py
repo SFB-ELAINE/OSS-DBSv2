@@ -5,10 +5,10 @@
 import importlib
 import json
 import logging
-from tqdm import tqdm
 import os
 
 import numpy as np
+from tqdm import tqdm
 
 from ossdbs.dielectric_model import (
     default_dielectric_parameters,
@@ -724,11 +724,11 @@ def run_PAM(settings):
         for protocol_i in tqdm(range(n_stim_protocols), desc="Processing protocols"):
             scaling_vector = list(stim_protocols[protocol_i])
             scaling_vector = [0 if np.isnan(x) else 1e-3 * x for x in scaling_vector]
-        
+
             td_solution = neuron_model.superimpose_unit_solutions(
                 td_unit_solutions, scaling_vector
             )
-            
+
             if (
                 settings["CurrentVector"] is not None
                 and settings["StimSets"]["StimSetsFile"] is None
@@ -740,9 +740,11 @@ def run_PAM(settings):
                 try:
                     # Globally disable all logs at or below CRITICAL level
                     logging.disable(logging.CRITICAL)
-                    
+
                     neuron_model.process_pathways(
-                        td_solution, scaling=settings["Scaling"], scaling_index=protocol_i
+                        td_solution,
+                        scaling=settings["Scaling"],
+                        scaling_index=protocol_i,
                     )
                 finally:
                     # Re-enable logging back to normal (NOTSET means no global restriction)
