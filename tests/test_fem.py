@@ -222,10 +222,10 @@ class TestDTIMasking:
                 vals = cf(mp)  # 9 components (flattened 3x3)
                 return np.array(vals, dtype=float).reshape((3, 3))
 
-            # Tissue-specific test points (updated by you)
+            # Tissue-specific test points in JD MRI frame
             test_points = {
-                "GM": (-11.2, -2.5, 5.2),
-                "WM": (-10.9, -2.6, -2.3),
+                "GM": (1.9, -34.6, 4.4),
+                "WM": (0.8, -33.7, -0.6),
             }
 
             # Evaluate tensors

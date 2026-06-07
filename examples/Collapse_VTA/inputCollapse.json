@@ -1,9 +1,9 @@
 {
   "BrainRegion": {
     "Center": {
-      "x[mm]": 17.0,
-      "y[mm]": 8.0,
-      "z[mm]": 6.0
+      "x[mm]": 0.794,
+      "y[mm]": -32.671,
+      "z[mm]": -0.618
     },
     "Dimension": {
       "x[mm]": 40.0,
@@ -23,9 +23,9 @@
         "z[mm]": 1.0
       },
       "TipPosition": {
-        "x[mm]": 17.0,
-        "y[mm]": 8.0,
-        "z[mm]": 6.0
+        "x[mm]": 0.794,
+        "y[mm]": -32.671,
+        "z[mm]": -0.618
       },
       "Contacts": [
         {
@@ -34,10 +34,6 @@
           "Current[A]": 0.0,
           "Voltage[V]": 1.0,
           "Floating": false,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
           "MaxMeshSizeEdge": 0.05
         },
         {
@@ -46,10 +42,6 @@
           "Current[A]": 0.0,
           "Voltage[V]": 0.0,
           "Floating": false,
-          "SurfaceImpedance[Ohmm]": {
-            "real": 0.0,
-            "imag": 0.0
-          },
           "MaxMeshSizeEdge": 0.05
         }
       ],
@@ -62,13 +54,13 @@
     }
   ],
   "MaterialDistribution": {
-    "MRIPath": "../../input_files/icbm_avg_152_segmented.nii.gz",
+    "MRIPath": "../../input_files/sub-John_Doe/JD_segmask.nii.gz",
     "MRIMapping": {
-      "Unknown": 0,
-      "CSF": 1,
+      "Gray matter": 1,
       "White matter": 2,
-      "Gray matter": 3,
-      "Blood": 4
+      "CSF": 3,
+      "Blood": 4,
+      "Unknown": 0
     },
     "DiffusionTensorActive": false,
     "DTIPath": ""
@@ -80,8 +72,11 @@
     "LoadMesh": false,
     "MeshElementOrder": 2,
     "MeshingHypothesis": {
-      "Type": "Fine",
-      "MaxMeshSize": 1
+      "Type": "Fine"
+    },
+    "MaterialRefinementSteps": 1,
+    "HPRefinement": {
+      "Active": true
     },
     "MeshSize": {
       "Edges": {},
@@ -105,8 +100,8 @@
     "Preconditioner": "bddc",
     "PreconditionerKwargs": {},
     "PrintRates": true,
-    "MaximumSteps": 200,
-    "Precision": 1e-8
+    "MaximumSteps": 500,
+    "Precision": 1e-08
   },
   "PointModel": {
     "Pathway": {

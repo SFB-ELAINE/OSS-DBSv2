@@ -1,0 +1,59 @@
+# Simulation Tests - Run only on Pull Requests
+#
+# These are full simulation tests that compare outputs against expected results.
+# Separated from main CI to avoid slowing down regular development.
+
+name: Simulation Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  simulation-tests:
+    name: Simulation Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache-dependency-path: "pyproject.toml"
+          cache: "pip"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install -U pip
+          python -m pip install .[test,impedance]
+
+      - name: Run Fast Simulation Tests
+        run: |
+          pytest input_test_cases/test_simulations.py \
+            -m "simulation and not slow" \
+            -v \
+            --tb=short \
+            --color=yes
+
+      - name: Run Slow Simulation Tests
+        if: success()
+        run: |
+          pytest input_test_cases/test_simulations.py \
+            -m "simulation and slow and not requires_neuron" \
+            -v \
+            --tb=short \
+            --color=yes
+
+      - name: Upload Test Outputs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-test-outputs
+          path: |
+            input_test_cases/**/Results*/
+          retention-days: 7

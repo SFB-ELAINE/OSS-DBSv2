@@ -1,0 +1,10 @@
+{
+    "n_Ranvier": [21, 21],
+    "axon_diams": [3.0, 3.0],
+    "Axon_Model_Type": "McNeal1976",
+    "Name_prepared_neuron_array": "data.h5",
+    "Neuron_model_array_prepared": true,
+    "N_seeded_neurons": [3, 1],
+    "N_orig_neurons": [3, 1],
+    "connectome_name": "test_pathways"
+}

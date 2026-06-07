@@ -31,32 +31,28 @@
                     "Active": false,
                     "Current[A]": 0.0,
                     "Voltage[V]": 0.0,
-                    "Floating": true,
-                    "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0}
+                    "Floating": true
                 },
                 {
                     "Contact_ID": 2,
                     "Active": false,
                     "Current[A]": 0.012,
                     "Voltage[V]": 0.0,
-                    "Floating": true,
-                    "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0}
+                    "Floating": true
                 },
                 {
                     "Contact_ID": 3,
                     "Active": false,
                     "Current[A]": -0.004,
                     "Voltage[V]": 0.0,
-                    "Floating": true,
-                    "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0}
+                    "Floating": true
                 },
                 {
                     "Contact_ID": 4,
                     "Active": false,
                     "Current[A]": -0.008,
                     "Voltage[V]": 0.0,
-                    "Floating": true,
-                    "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0}
+                    "Floating": true
                 }
             ]
         }
