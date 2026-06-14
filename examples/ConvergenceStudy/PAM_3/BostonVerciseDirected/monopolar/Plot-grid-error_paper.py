@@ -44,42 +44,30 @@ PAPER_ROMAN = {
     "hp_material_refinement": 14,
 }
 
-# StimSets paper: restrict to the strategies that were also run for the
-# StimSets VTA study (minus the neuron mesh-size one), so the StimSets PAM
-# and VTA figures show the exact same strategy set. Canonical order.
-STIMSETS_STRATEGIES = [
-    "default",
-    "fine",
-    "fine_edge_refinement",
-    "edge_single_material_refinement",
-    "hp_refinement",
-    "hp_material_refinement",
-]
-
 pathways_to_plot = [
-    "M1_cf_face_right",
     "M1_cf_lowerex_right",
     "M1_cf_upperex_right",
-    "R_M1_hdp_face_right",
+    # "M1_cf_face_right",  # not activated
     "R_M1_hdp_lowerex_right",
     "R_M1_hdp_upperex_right",
-    "cerebellothalamic_right",
-    "gpe2stn_ass_right",
+    "R_M1_hdp_face_right",
     "gpe2stn_sm_right",
-    "medial_lemniscus_right",
+    "gpe2stn_ass_right",
+    "cerebellothalamic_right",
+    # "medial_lemniscus_right"  # not activated
 ]
 
 pathway_labels = [
-    "M1 face",
     "M1 lower extr.",
     "M1 upper extr.",
-    "HDP M1 face",
+    # "M1 face",  # not activated
     "HDP M1 lower extr.",
     "HDP M1 upper extr.",
-    "Cerebellothalamic",
-    "Pallido-subthalamic Assoc",
+    "HDP M1 face",
     "Pallido-subthalamic Motor",
-    "Medial lemniscus",
+    "Pallido-subthalamic Assoc",
+    "Cerebellothalamic",
+    # "Medial lemniscus"  # not activated
 ]
 
 pathway_label_dict = {}
@@ -91,9 +79,9 @@ convergence_threshold = 5.0  # in %
 
 data = pd.read_csv("pam_results_summary.csv")
 
-# keep the paper subset in canonical order and relabel the romans
-data = data[data["study_name"].isin(STIMSETS_STRATEGIES)].copy()
-data["_order"] = data["study_name"].map(STIMSETS_STRATEGIES.index)
+# drop the neuron mesh-size strategies and renumber to the canonical map
+data = data[data["study_name"].isin(PAPER_ROMAN)].copy()
+data["_order"] = data["study_name"].map(PAPER_ROMAN)
 data = data.sort_values("_order").drop(columns="_order")
 data["roman"] = (
     data["study_name"].map(lambda s: rf"\rom{{{PAPER_ROMAN[s]}}}").astype("string")
@@ -143,9 +131,9 @@ for i, ax in enumerate(g.axes.flat):
     ax.xaxis.grid(False)
     ax.yaxis.grid(True, color="#444444")
     ax.set(xlabel=labels[i], xscale=scales[i], ylabel="Strategy")
-    # set consistent limit except for M1 face / cerebellothalamic
+    # set consistent limit except for M1 upper extrem
     if i > 1:
-        if i not in (2, 8):  # M1 face, cerebellothalamic
+        if i != 3:
             ax.set(xlim=(-0.1, 2.5))
         else:
             ax.set(xlim=(-0.1, None))

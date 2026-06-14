@@ -2,15 +2,25 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-# Thanks to StackOverflow: https://stackoverflow.com/questions/34177378/pyplot-annotation-roman-numerals
-# Turn on LaTeX formatting for text
-plt.rcParams["text.usetex"] = True
-plt.rcParams["axes.labelsize"] = 18
-
-# Place the command in the text.latex.preamble using rcParams
+# --- Style Settings (Black Background / White Text) ---
 # ruff: noqa: E501
-plt.rcParams["text.latex.preamble"] = (
-    r"\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother"
+plt.rcParams["text.usetex"] = True
+plt.style.use("dark_background")  # black background, white foreground elements
+plt.rcParams.update(
+    {
+        "axes.facecolor": "black",
+        "figure.facecolor": "black",
+        "axes.edgecolor": "white",
+        "axes.labelcolor": "white",
+        "xtick.color": "white",
+        "ytick.color": "white",
+        "grid.color": "gray",
+        "text.color": "white",
+        "axes.labelsize": 18,
+        "text.latex.preamble": (
+            r"\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother"
+        ),
+    }
 )
 
 # Canonical strategy -> Roman numeral for the paper figures. The neuron
@@ -94,8 +104,9 @@ g.map(
     size=10,
     orient="h",
     jitter=False,
+    color="white",
     linewidth=1,
-    edgecolor="w",
+    edgecolor="black",
 )
 
 # Overlay orange dots for converged strategies
@@ -116,7 +127,7 @@ for ax_idx, col in enumerate(columns_to_plot):
 for ax, label, scale in zip(g.axes.flat, labels, scales, strict=False):
     # Make the grid horizontal instead of vertical
     ax.xaxis.grid(False)
-    ax.yaxis.grid(True)
+    ax.yaxis.grid(True, color="#444444")
     # set labels and scales
     ax.set(xlabel=label)
     ax.set(xscale=scale)
