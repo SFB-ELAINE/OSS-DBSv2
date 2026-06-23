@@ -34,6 +34,16 @@ REFERENCE = "best"
 # handle the complex multi-frequency StimSets field).
 THRESHOLD_VPM = 200.0
 
+# Clinical-feasibility filter on the current protocols. Only protocols that a
+# real device could deliver are kept: total injected current
+# sum(|I|) <= L1_THRESHOLD_MA, and every contact within
+# [LOWER_LIM_MA, UPPER_LIM_MA]. Protocols outside these bounds are dropped
+# before any VTA metric is computed (the per-contact unit FEM solves are
+# protocol-independent, so no FEM re-run is needed).
+L1_THRESHOLD_MA = 8.0
+LOWER_LIM_MA = -4.0
+UPPER_LIM_MA = 4.0
+
 # Strategy result-directory prefixes (without the per-contact E1C<i> suffix).
 STRATEGIES = [
     "default",
@@ -62,11 +72,21 @@ def load_spacing():
 
 
 def load_stim_protocols():
-    """Load current protocols (mA -> A, NaN -> 0). Shape (n_protocols, n_contacts)."""
+    """Load clinically feasible current protocols (mA -> A, NaN -> 0).
+
+    Keeps only protocols with total current sum(|I|) <= L1_THRESHOLD_MA and
+    every contact within [LOWER_LIM_MA, UPPER_LIM_MA]. Returns
+    (protocols, kept_idx): protocols of shape (n_kept, n_contacts) in A, and
+    kept_idx the original row indices into Current_protocols_0.csv (used to
+    label the per-protocol output).
+    """
     df = pd.read_csv(STIM_SETS_FILE)
-    arr = df.to_numpy(dtype=float)
-    arr = np.nan_to_num(arr, nan=0.0)
-    return arr * 1e-3  # mA -> A
+    arr = np.nan_to_num(df.to_numpy(dtype=float), nan=0.0)
+    within_l1 = np.abs(arr).sum(axis=1) <= L1_THRESHOLD_MA
+    within_limits = ((arr >= LOWER_LIM_MA) & (arr <= UPPER_LIM_MA)).all(axis=1)
+    keep = within_l1 & within_limits
+    kept_idx = np.flatnonzero(keep)
+    return arr[keep] * 1e-3, kept_idx  # mA -> A
 
 
 def _coord_keys(df):
@@ -186,11 +206,13 @@ def main():
     threshold_vpm = THRESHOLD_VPM
     spacing = load_spacing()
     voxel_volume = spacing**3  # mm^3 per lattice point
-    stim_protocols = load_stim_protocols()
+    stim_protocols, kept_idx = load_stim_protocols()
     n_protocols, n_contacts = stim_protocols.shape
     print(
-        f"Protocols: {n_protocols}, contacts: {n_contacts}, "
-        f"threshold: {threshold_vpm} V/m, spacing: {spacing} mm"
+        f"Protocols: {n_protocols} kept (sum|I|<={L1_THRESHOLD_MA} mA, "
+        f"per-contact in [{LOWER_LIM_MA}, {UPPER_LIM_MA}] mA), "
+        f"contacts: {n_contacts}, threshold: {threshold_vpm} V/m, "
+        f"spacing: {spacing} mm"
     )
 
     # reference (best) first
@@ -203,7 +225,7 @@ def main():
     ref_volumes = ref_masks.sum(axis=1) * voxel_volume
 
     summary_rows = []
-    per_protocol = {"protocol": np.arange(n_protocols)}
+    per_protocol = {"protocol": kept_idx}
 
     roman_idx = 0
     for strategy in STRATEGIES:
