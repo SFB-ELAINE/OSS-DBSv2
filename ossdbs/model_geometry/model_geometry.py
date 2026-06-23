@@ -201,7 +201,7 @@ class ModelGeometry:
                 # surface impedance (identical to the new default).
                 _logger.warning(
                     "Contact setting 'SurfaceImpedance[Ohmm]' is deprecated. "
-                    "Use 'SurfaceImpedance': {'Model': ..., 'Parameters': {...}} instead. "
+                    "Use 'SurfaceImpedance': {'Model': ..., 'Parameters': {}} instead."
                     "The old value will be ignored."
                 )
             elif setting == "SurfaceImpedance":
