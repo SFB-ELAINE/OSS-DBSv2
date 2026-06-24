@@ -3,6 +3,14 @@
 Reads the per-strategy overview CSVs (from evaluate_convergence.py)
 and VCM_report.json files to produce a summary table with DOFs,
 compute time, and per-pathway mean/max absolute error vs. best.
+
+Only clinically feasible current protocols are aggregated: total current
+sum(|I|) <= L1_THRESHOLD_MA and every contact within
+[LOWER_LIM_MA, UPPER_LIM_MA]. This matches the filter applied to the
+StimSets VTA evaluation (evaluate_convergence_vta.py). The overview CSVs
+are kept full (one row per protocol, in Current_protocols_0.csv order); the
+filter selects the kept rows positionally before computing the metrics, so
+no PAM re-run is needed.
 """
 
 import json
@@ -10,6 +18,25 @@ import os
 
 import numpy as np
 import pandas as pd
+
+# Clinical-feasibility filter on the current protocols (see module docstring).
+STIM_SETS_FILE = "OSS_sim_files_rh/Current_protocols_0.csv"
+L1_THRESHOLD_MA = 8.0
+LOWER_LIM_MA = -4.0
+UPPER_LIM_MA = 4.0
+
+
+def kept_protocol_indices():
+    """Positional indices of protocols passing the clinical-feasibility filter.
+
+    The overview CSVs share the row order of Current_protocols_0.csv, so these
+    indices select the same protocols there via ``.iloc``.
+    """
+    arr = np.nan_to_num(pd.read_csv(STIM_SETS_FILE).to_numpy(dtype=float), nan=0.0)
+    within_l1 = np.abs(arr).sum(axis=1) <= L1_THRESHOLD_MA
+    within_limits = ((arr >= LOWER_LIM_MA) & (arr <= UPPER_LIM_MA)).all(axis=1)
+    return np.flatnonzero(within_l1 & within_limits)
+
 
 pathways = [
     "M1_cf_face_right",
@@ -37,8 +64,12 @@ result_directories = [
 
 best_directory = "Results_PAM_best"
 
-# Load best (reference) results
-best_df = pd.read_csv(f"{best_directory}_overview.csv")
+# Load best (reference) results, restricted to clinically feasible protocols
+kept_idx = kept_protocol_indices()
+best_df = (
+    pd.read_csv(f"{best_directory}_overview.csv").iloc[kept_idx].reset_index(drop=True)
+)
+print(f"Aggregating over {len(kept_idx)} clinically feasible protocols")
 
 # Get best DOF and timing
 best_vcm = json.load(open(f"{best_directory}E1C1/VCM_report.json"))
@@ -82,8 +113,8 @@ for idx, result_dir in enumerate(result_directories):
     results_dict["dofs"].append(dofs)
     results_dict["time"].append(time_total)
 
-    # Per-pathway activation and error (mean over 254 protocols)
-    df = pd.read_csv(f"{result_dir}_overview.csv")
+    # Per-pathway activation and error (mean over the kept protocols)
+    df = pd.read_csv(f"{result_dir}_overview.csv").iloc[kept_idx].reset_index(drop=True)
     for pathway in pathways:
         mean_activation = df[pathway].mean()
         abs_errors = np.abs(df[pathway].values - best_df[pathway].values)
