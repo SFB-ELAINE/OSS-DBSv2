@@ -42,6 +42,7 @@ PAPER_ROMAN = {
     "fine_edge_double_material_refinement": 12,
     "hp_refinement": 13,
     "hp_material_refinement": 14,
+    "hp_double_material_refinement": 15,
 }
 
 pathways_to_plot = [

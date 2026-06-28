@@ -60,6 +60,7 @@ STRATEGIES = [
     "fine_edge_double_material_refinement",
     "hp_refinement",
     "hp_material_refinement",
+    "hp_double_material_refinement",
     "best",
 ]
 

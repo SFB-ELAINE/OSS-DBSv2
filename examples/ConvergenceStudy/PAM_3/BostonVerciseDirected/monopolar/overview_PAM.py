@@ -50,6 +50,7 @@ result_directories = [
     "Results_PAM_fine_edge_double_material_refinement",
     "Results_PAM_hp_refinement",
     "Results_PAM_hp_material_refinement",
+    "Results_PAM_hp_double_material_refinement",
 ]
 
 

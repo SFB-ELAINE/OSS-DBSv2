@@ -42,6 +42,7 @@ PAPER_ROMAN = {
     "fine_edge_double_material_refinement": 12,
     "hp_refinement": 13,
     "hp_material_refinement": 14,
+    "hp_double_material_refinement": 15,
 }
 
 # StimSets paper: restrict to the strategies that were also run for the
@@ -54,6 +55,7 @@ STIMSETS_STRATEGIES = [
     "edge_single_material_refinement",
     "hp_refinement",
     "hp_material_refinement",
+    "hp_double_material_refinement",
 ]
 
 convergence_threshold = 1.0  # rel. VTA volume error, in %

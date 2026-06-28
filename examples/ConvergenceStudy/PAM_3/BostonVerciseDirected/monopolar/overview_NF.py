@@ -50,6 +50,7 @@ result_directories = [
     "Results_NF_fine_edge_double_material_refinement",
     "Results_NF_hp_refinement",
     "Results_NF_hp_material_refinement",
+    "Results_NF_hp_double_material_refinement",
 ]
 
 

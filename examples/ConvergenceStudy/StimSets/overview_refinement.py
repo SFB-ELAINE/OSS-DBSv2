@@ -60,6 +60,7 @@ result_directories = [
     "Results_PAM_edge_single_material_refinement",
     "Results_PAM_hp_refinement",
     "Results_PAM_hp_material_refinement",
+    "Results_PAM_hp_double_material_refinement",
 ]
 
 best_directory = "Results_PAM_best"

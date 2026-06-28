@@ -41,6 +41,7 @@ result_directories = [
     "Results_VTA_fine_edge_double_material_refinement",
     "Results_VTA_hp_refinement",
     "Results_VTA_hp_material_refinement",
+    "Results_VTA_hp_double_material_refinement",
 ]
 
 print(
