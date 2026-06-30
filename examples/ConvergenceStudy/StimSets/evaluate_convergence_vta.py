@@ -61,6 +61,7 @@ STRATEGIES = [
     "hp_refinement",
     "hp_material_refinement",
     "hp_double_material_refinement",
+    "fine_hp_material_refinement",
     "best",
 ]
 

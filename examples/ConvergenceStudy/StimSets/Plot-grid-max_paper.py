@@ -43,6 +43,7 @@ PAPER_ROMAN = {
     "hp_refinement": 13,
     "hp_material_refinement": 14,
     "hp_double_material_refinement": 15,
+    "fine_hp_material_refinement": 16,
 }
 
 # StimSets paper: restrict to the strategies that were also run for the
@@ -56,6 +57,7 @@ STIMSETS_STRATEGIES = [
     "hp_refinement",
     "hp_material_refinement",
     "hp_double_material_refinement",
+    "fine_hp_material_refinement",
 ]
 
 # Worst-case companion to Plot-grid_paper.py: the worst protocol per

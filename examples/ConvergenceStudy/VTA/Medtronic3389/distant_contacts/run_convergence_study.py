@@ -200,6 +200,13 @@ run_selected(base_input_dict)
 base_input_dict["Mesh"]["MaterialRefinementSteps"] = 2
 base_input_dict["OutputPath"] = "Results_VTA_hp_double_material_refinement"
 run_selected(base_input_dict)
+
+# Fine mesh + HP ref. + 1x material refinement
+base_input_dict["Mesh"]["MeshingHypothesis"]["Type"] = "Fine"
+base_input_dict["Mesh"]["MaterialRefinementSteps"] = 1
+base_input_dict["OutputPath"] = "Results_VTA_fine_hp_material_refinement"
+run_selected(base_input_dict)
+base_input_dict["Mesh"]["MeshingHypothesis"]["Type"] = "Default"
 # reset
 base_input_dict["Mesh"]["MaterialRefinementSteps"] = 0
 base_input_dict["Mesh"]["HPRefinement"] = {"Active": False}
