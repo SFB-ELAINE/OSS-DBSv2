@@ -274,6 +274,13 @@ class LeadSettings:
                 output_path, self.get_pathway_params_file()
             )
 
+            # use advance mesh strategy for PAM
+            partial_dict["Mesh"] = {
+                "MeshingHypothesis": {"Type": "Fine"},
+                "MaterialRefinementSteps": 1,
+                "HPRefinement": {"Active": True, "Levels": 2, "Factor": 0.125},
+            }
+
         # do not use h1amg as coarsetype preconditioner
         # if floating potentials are involved
         # set also to floating if multicontact current-controlled
