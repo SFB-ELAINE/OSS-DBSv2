@@ -3,8 +3,6 @@ import pandas as pd
 import seaborn as sns
 
 # --- 1. Style Settings (Black Background / White Text) ---
-
-plt.rcParams["text.usetex"] = True
 plt.style.use("dark_background")  # Sets background black and basic elements white
 plt.rcParams.update(
     {
@@ -16,46 +14,54 @@ plt.rcParams.update(
         "ytick.color": "white",
         "grid.color": "gray",  # Subtle grid
         "text.color": "white",
+        # Explicitly uniform font sizes
         "axes.labelsize": 18,
-        "text.latex.preamble": (
-            r"\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother"  # noqa: E501
-        ),
+        "xtick.labelsize": 14,
+        "ytick.labelsize": 14,
     }
 )
 
-# Canonical strategy -> Roman numeral for the paper figures. The neuron
-# mesh-size strategies (default_meshsize, edge_meshsize) are excluded.
-# Shared verbatim across the PAM and VTA convergence figures so a numeral
-# always denotes the same mesh-refinement strategy everywhere.
+# Canonical strategy -> Roman numeral for the paper figures. Shared verbatim
+# with the StimSets VTA figure (Plot-grid-max_paper.py) so a numeral always
+# denotes the same mesh-refinement strategy across both figures.
 PAPER_ROMAN = {
     "default": 1,
     "fine": 2,
-    "very_fine": 3,
-    "edge_refinement": 4,
-    "fine_edge_refinement": 5,
-    "very_fine_edge_refinement": 6,
-    "edge_voxel_refinement": 7,
-    "material_refinement": 8,
-    "edge_single_material_refinement": 9,
-    "edge_double_material_refinement": 10,
-    "fine_edge_single_material_refinement": 11,
-    "fine_edge_double_material_refinement": 12,
-    "hp_refinement": 13,
-    "hp_material_refinement": 14,
-    "hp_double_material_refinement": 15,
-    "fine_hp_material_refinement": 16,
+    "material_refinement": 3,
+    "edge_single_material_refinement": 4,
+    "hp_refinement": 5,
+    "fine_hp_material_refinement": 6,
 }
 
-# StimSets paper: restrict to the strategies that were also run for the
-# StimSets VTA study (minus the neuron mesh-size one). Canonical order.
+# A simple tuple lookup (0 is padded since Roman numerals start at 1)
+ROMAN_NUMERALS = (
+    "",
+    "I",
+    "II",
+    "III",
+    "IV",
+    "V",
+    "VI",
+    "VII",
+    "VIII",
+    "IX",
+    "X",
+    "XI",
+    "XII",
+    "XIII",
+    "XIV",
+    "XV",
+    "XVI",
+)
+
+# StimSets paper: restrict to the strategies also run for the StimSets VTA
+# study, so the PAM and VTA figures show the exact same strategy set.
 STIMSETS_STRATEGIES = [
     "default",
     "fine",
-    "fine_edge_refinement",
+    "material_refinement",
     "edge_single_material_refinement",
     "hp_refinement",
-    "hp_material_refinement",
-    "hp_double_material_refinement",
     "fine_hp_material_refinement",
 ]
 
@@ -73,15 +79,15 @@ pathways_to_plot = [
 ]
 
 pathway_labels = [
-    "M1 face",
-    "M1 lower extr.",
-    "M1 upper extr.",
+    "CST M1 face",
+    "CST M1 lower extr.",
+    "CST M1 upper extr.",
     "HDP M1 face",
     "HDP M1 lower extr.",
     "HDP M1 upper extr.",
-    "Cerebellothalamic",
-    "Pallido-subthalamic Assoc",
-    "Pallido-subthalamic Motor",
+    "Dentatorubrothalamic",
+    "GPe -> STN assoc.",
+    "GPe -> STN motor",
     "Medial lemniscus",
 ]
 
@@ -96,7 +102,7 @@ data = data[data["study_name"].isin(STIMSETS_STRATEGIES)].copy()
 data["_order"] = data["study_name"].map(STIMSETS_STRATEGIES.index)
 data = data.sort_values("_order").drop(columns="_order")
 data["roman"] = (
-    data["study_name"].map(lambda s: rf"\rom{{{PAPER_ROMAN[s]}}}").astype("string")
+    data["study_name"].map(lambda s: ROMAN_NUMERALS[PAPER_ROMAN[s]]).astype("string")
 )
 
 # Build column lists
@@ -109,12 +115,12 @@ for pathway in pathways_to_plot:
     if pw_id not in data.columns:
         raise ValueError(f"Pathway {pathway} not in dataset.")
     columns_to_plot.append(pw_id)
-    labels.append(rf"Err. {pathway_label_dict[pathway]} / %")
+    labels.append(rf"{pathway_label_dict[pathway]} / %")
     scales.append("linear")
 
 # --- 2. Plotting ---
 # We do not pass 'hue' here because 'hue' will be column-specific
-g = sns.PairGrid(data, x_vars=columns_to_plot, y_vars=["roman"], height=4)
+g = sns.PairGrid(data, x_vars=columns_to_plot, y_vars=["roman"], height=4, aspect=1)
 
 # Define our highlight palette
 # True (Not Converged) -> Red, False (Converged) -> White
@@ -152,9 +158,15 @@ for i, ax in enumerate(g.axes.flat):
     ax.set(xlabel=labels[i], xscale=scales[i], ylabel="Strategy")
 
     if i > 1:  # Pathway error columns
-        ax.set(xlim=(-0.3, 8))
+        ax.set(xlim=(0, 17))
         # Optional: Add a vertical line for the threshold
         ax.axvline(convergence_threshold, color="red", linestyle="--", alpha=0.5)
+    else:  # Time / DOFs columns
+        ax.set(xscale="log")
+        if i == 0:
+            ax.set(xlim=(10, 1000))
+        else:
+            ax.set(xlim=(1e4, 2e6))
 
 sns.despine(left=True, bottom=False)
 
