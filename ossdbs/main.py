@@ -191,7 +191,12 @@ def main_run(input_settings: dict):
             volume_conductor.mesh.save(settings["Mesh"]["SavePath"])
             settings["Mesh"]["LoadMesh"] = True
             run_stim_sets(
-                settings, geometry, conductivity, solver, frequency_domain_signal
+                settings,
+                geometry,
+                conductivity,
+                solver,
+                frequency_domain_signal,
+                truncation_time=truncation_time,
             )
 
     time_1 = time.time()
