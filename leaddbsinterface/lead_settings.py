@@ -896,7 +896,10 @@ class LeadSettings:
             electrode_name = elec_dict["Name"].replace("Custom", "")
             lead_diameter = default_electrode_parameters[electrode_name].lead_diameter
             perimeter = np.pi * lead_diameter
-            edge_size = perimeter / 50.0
+            if self.get_calc_axon_act():
+                edge_size = 1e6
+            else:
+                edge_size = perimeter / 50.0
 
             for i in range(len(pulse_amp)):
                 # all (truly) non-active contacts are floating with 0A
