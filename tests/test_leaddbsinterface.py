@@ -86,7 +86,7 @@ class TestDefaultSettings:
 
         # Check other settings
         assert settings["ExportVTK"] is True
-        assert settings["Mesh"]["MeshingHypothesis"]["Type"] == "Default"
+        assert settings["Mesh"]["MeshingHypothesis"]["Type"] == "Fine"
         assert settings["Mesh"]["MaterialRefinementSteps"] == 1
         assert settings["FEMOrder"] == 2
         assert settings["ComputeImpedance"] is False
