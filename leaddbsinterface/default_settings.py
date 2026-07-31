@@ -39,8 +39,8 @@ def load_default_for_lead(settings):
     settings["Mesh"]["MeshingHypothesis"]["Type"] = "Fine"
     settings["Mesh"]["MaterialRefinementSteps"] = 1
     settings["Mesh"]["HPRefinement"] = {
-        "Active": True, 
-        "Levels": 2, 
+        "Active": True,
+        "Levels": 2,
         "Factor": 0.125,
     }
 
