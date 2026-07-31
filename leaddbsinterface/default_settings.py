@@ -34,10 +34,14 @@ def load_default_for_lead(settings):
         "White matter"
     )
     settings["ExportVTK"] = True
-    settings["Mesh"]["MeshingHypothesis"]["Type"] = "Default"
-    # material refinement
+
+    # mesh settings based on the conv. study
+    settings["Mesh"]["MeshingHypothesis"]["Type"] = "Fine"
     settings["Mesh"]["MaterialRefinementSteps"] = 1
-    # edge refinement is defined in other file depending on lead geometry
+    settings["Mesh"]["HPRefinement"]["Active"] = "True"
+    settings["Mesh"]["HPRefinement"]["Levels"] = 2
+    settings["Mesh"]["HPRefinement"]["Factor"] = 0.125
+
     settings["FEMOrder"] = 2
     settings["ComputeImpedance"] = False
 
