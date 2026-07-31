@@ -38,9 +38,11 @@ def load_default_for_lead(settings):
     # mesh settings based on the conv. study
     settings["Mesh"]["MeshingHypothesis"]["Type"] = "Fine"
     settings["Mesh"]["MaterialRefinementSteps"] = 1
-    settings["Mesh"]["HPRefinement"]["Active"] = "True"
-    settings["Mesh"]["HPRefinement"]["Levels"] = 2
-    settings["Mesh"]["HPRefinement"]["Factor"] = 0.125
+    settings["Mesh"]["HPRefinement"] = {
+        "Active": True, 
+        "Levels": 2, 
+        "Factor": 0.125,
+    }
 
     settings["FEMOrder"] = 2
     settings["ComputeImpedance"] = False
