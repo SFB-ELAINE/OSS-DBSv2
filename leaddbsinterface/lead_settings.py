@@ -274,13 +274,6 @@ class LeadSettings:
                 output_path, self.get_pathway_params_file()
             )
 
-            # use advance mesh strategy for PAM
-            partial_dict["Mesh"] = {
-                "MeshingHypothesis": {"Type": "Fine"},
-                "MaterialRefinementSteps": 1,
-                "HPRefinement": {"Active": True, "Levels": 2, "Factor": 0.125},
-            }
-
         # do not use h1amg as coarsetype preconditioner
         # if floating potentials are involved
         # set also to floating if multicontact current-controlled
@@ -893,13 +886,6 @@ class LeadSettings:
 
             if "Name" not in elec_dict:
                 raise KeyError("Need to provide name of electrode")
-            electrode_name = elec_dict["Name"].replace("Custom", "")
-            lead_diameter = default_electrode_parameters[electrode_name].lead_diameter
-            perimeter = np.pi * lead_diameter
-            if self.get_calc_axon_act():
-                edge_size = 1e6
-            else:
-                edge_size = perimeter / 50.0
 
             for i in range(len(pulse_amp)):
                 # all (truly) non-active contacts are floating with 0A
@@ -923,7 +909,6 @@ class LeadSettings:
                             "Current[A]": pulse_amp[i],
                             "Voltage[V]": 0.0,
                             "Floating": True,
-                            "MaxMeshSizeEdge": edge_size,
                         }
                     else:
                         cntct_dicts[cntcts_made] = {
@@ -933,7 +918,6 @@ class LeadSettings:
                             "Current[A]": 0.0,
                             "Voltage[V]": pulse_amp[i],
                             "Floating": False,
-                            "MaxMeshSizeEdge": edge_size,
                         }
 
                 cntcts_made += 1
