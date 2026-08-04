@@ -76,7 +76,7 @@ version_file = "ossdbs/_version.py"
 [tool.ruff]
 line-length = 88
 target-version = "py310"
-lint.extend-select = [
+lint.select = [
     "E", # style errors
     "W", # style warnings
     "F", # flakes
