@@ -114,20 +114,19 @@ class BrainGeometry:
     def _create_shape(self) -> netgen.occ.Solid:
         if self._shape == "Sphere":
             return self._create_sphere()
-        elif self._shape == "Box":
+        if self._shape == "Box":
             return self._create_box()
-        elif self._shape == "Ellipsoid":
+        if self._shape == "Ellipsoid":
             return self._create_ellipsoid()
-        elif self._shape == "Custom":
+        if self._shape == "Custom":
             raise RuntimeError(
                 """Please load the custom geometry from a CAD file using the
                 `import_geometry` or add it via the `set_geometry` method."""
             )
-        else:
-            raise NotImplementedError(
-                f"""The shape {self._shape} is not implemented.
+        raise NotImplementedError(
+            f"""The shape {self._shape} is not implemented.
                 Please choose among these shapes: Box, Sphere, Ellipsoid and Custom."""
-            )
+        )
 
     def _create_ellipsoid(self) -> netgen.occ.Solid:
         x, y, z = np.subtract(self._bbox.end, self._bbox.start) / 2

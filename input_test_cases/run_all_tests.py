@@ -315,9 +315,9 @@ def _readNIfTI(filename: str) -> set:
 
     end_voxel = [data_shape[0], data_shape[1], data_shape[2]]
     counter = 0
-    for i in range(0, end_voxel[0]):
-        for j in range(0, end_voxel[1]):
-            for k in range(0, end_voxel[2]):
+    for i in range(end_voxel[0]):
+        for j in range(end_voxel[1]):
+            for k in range(end_voxel[2]):
                 if data[i, j, k] > 0.1:
                     counter += 1
                     X_coord = affine[0][3] + i * affine[0][0]

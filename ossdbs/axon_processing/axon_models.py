@@ -76,7 +76,7 @@ class AxonMorphology(ABC):
     def axon_length(self, value):
         self._axon_length = value
         expected_n_Ranvier = int(value / self.node_step)
-        if not self.n_Ranvier == expected_n_Ranvier:
+        if self.n_Ranvier != expected_n_Ranvier:
             # Updating number of Ranviers to match axon length
             self.n_Ranvier = expected_n_Ranvier
 
@@ -243,12 +243,9 @@ class AxonMorphologyMRG2002(AxonMorphology):
     def get_n_comp(self, downsampled):
         """Get number of compartments depending on sampling."""
         if downsampled:
-            if self.fiber_diam >= 5.7:
-                # node -- -- internodal -- -- -- -- internodal -- -- node
-                n_comp = 3
-            else:
-                # node -- -- -- internodal -- -- -- node
-                n_comp = 2
+            # fiber_diam >= 5.7: node -- -- internodal -- -- -- -- internodal -- -- node
+            # fiber_diam  < 5.7: node -- -- -- internodal -- -- -- node
+            n_comp = 3 if self.fiber_diam >= 5.7 else 2
         else:
             n_comp = int(
                 (
@@ -352,14 +349,13 @@ class AxonMorphologyMRG2002(AxonMorphology):
             if not self.downsampled:
                 # only internodal compartments.
                 # The distances will be computed from the node of Ranvier using loc_pos
-                for inx_loc in np.arange(1, self.n_comp):
-                    inx_loc = int(inx_loc)
+                for inx_loc in range(1, self.n_comp):
                     if inx_loc == 1:
                         loc_pos = (self.ranvier_length + self.para1_length) / 2
 
-                    if inx_loc == 2 or inx_loc == 10:
+                    if inx_loc in {2, 10}:
                         loc_pos = loc_pos + (self.para1_length + self.para2_length) / 2
-                    if inx_loc == 3 or inx_loc == 9:
+                    if inx_loc in {3, 9}:
                         loc_pos = loc_pos + (self.para2_length + self.inter_length) / 2
                     if inx_loc in [4, 5, 6, 7, 8]:
                         loc_pos = loc_pos + self.inter_length / 1
@@ -387,11 +383,11 @@ class AxonMorphologyMRG2002(AxonMorphology):
                 for inx_loc in np.arange(1, self.n_comp):
                     if inx_loc == 1:
                         loc_pos = (self.ranvier_length + self.para1_length) / 2
-                    if inx_loc == 2 or inx_loc == 7:
+                    if inx_loc in {2, 7}:
                         loc_pos = loc_pos + (self.para1_length + self.para2_length) / 2
-                    if inx_loc == 3 or inx_loc == 6:
+                    if inx_loc in {3, 6}:
                         loc_pos = loc_pos + (self.para2_length + self.inter_length) / 2
-                    if inx_loc == 4 or inx_loc == 5:
+                    if inx_loc in {4, 5}:
                         loc_pos = loc_pos + self.inter_length  # switch to mm from µm
                 loc_coords[inx_loc - 1] = loc_pos
             else:
@@ -768,7 +764,7 @@ class AxonModels:
 
     def _select_axon_morphology_model(self):
         if "MRG2002" in self.axon_model:
-            if "MRG2002_DS" == self.axon_model:
+            if self.axon_model == "MRG2002_DS":
                 ax_morph_model = AxonMorphologyMRG2002(downsampled=True)
             else:
                 ax_morph_model = AxonMorphologyMRG2002()
@@ -788,7 +784,7 @@ class AxonModels:
             )
 
         # multiple pathways in one .mat file (Lead-DBS dMRI_MultiTract connectome)
-        elif "Multi-Tract" in self.connectome_name:
+        if "Multi-Tract" in self.connectome_name:
             return self._deploy_axons_fibers(
                 self.pathway_mat_file[0],
                 self.projection_names[i],
@@ -797,13 +793,12 @@ class AxonModels:
             )
 
         # one .mat file without pathway differentiation (Lead-DBS dMRI connectome)
-        else:
-            return self._deploy_axons_fibers(
-                self.pathway_mat_file[0],
-                self.projection_names[i],
-                axon_morphology,
-                False,
-            )
+        return self._deploy_axons_fibers(
+            self.pathway_mat_file[0],
+            self.projection_names[i],
+            axon_morphology,
+            False,
+        )
 
     def convert_fibers_to_axons(self):
         """Seed axons iterating over all pathways."""
@@ -945,26 +940,22 @@ class AxonModels:
                 " No nodes were seeded."
             )
             return 0, 0, 0
+        # flip check
+        if fiber_array.shape[1] == 4 and fiber_array.shape[0] != 4:
+            fiber_array = fiber_array.T
+            idx_shape_inx = 0
         else:
-            # flip check
-            if fiber_array.shape[1] == 4 and fiber_array.shape[0] != 4:
-                fiber_array = fiber_array.T
-                idx_shape_inx = 0
-            else:
-                idx_shape_inx = 1
+            idx_shape_inx = 1
 
-            if multiple_projections_per_file is False:
-                if "origNum" in file:
-                    orig_N_fibers = int(file["origNum"][0][0])
-                else:
-                    orig_N_fibers = int(file["idx"][:].shape[idx_shape_inx])
+        if multiple_projections_per_file is False:
+            if "origNum" in file:
+                orig_N_fibers = int(file["origNum"][0][0])
             else:
-                if "origNum" in file[projection_name]:
-                    orig_N_fibers = int(file[projection_name]["origNum"][0][0])
-                else:
-                    orig_N_fibers = int(
-                        file[projection_name]["idx"][:].shape[idx_shape_inx]
-                    )
+                orig_N_fibers = int(file["idx"][:].shape[idx_shape_inx])
+        elif "origNum" in file[projection_name]:
+            orig_N_fibers = int(file[projection_name]["origNum"][0][0])
+        else:
+            orig_N_fibers = int(file[projection_name]["idx"][:].shape[idx_shape_inx])
 
         # covert fiber table to nibabel streamlines
         streamlines, inx_orig = convert_fibers_to_streamlines(fiber_array)

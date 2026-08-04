@@ -92,14 +92,13 @@ class VoxelLattice(PointModel):
         # Homogenize points for affine transformation
         points = np.concatenate([points, np.ones_like(base_xg)], axis=1).T
 
-        _coordinates = (
+        return (
             (self.affine @ points)[0:3, :].T
             - self.affine[:3, 3]
             + imp_vox_center_coord[0:3]
         )
 
         # Apply affine to homogenized points, center around center, and unhomogenize
-        return _coordinates
 
     def save_as_nifti(
         self,

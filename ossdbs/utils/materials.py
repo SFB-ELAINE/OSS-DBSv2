@@ -44,7 +44,7 @@ def have_dielectric_properties_changed(
     Example
     -------
     >>> changed = have_dielectric_properties_changed(
-    ...     dielectric_properties={'Gray matter': gray_model},
+    ...     dielectric_properties={"Gray matter": gray_model},
     ...     is_complex=True,
     ...     old_freq=100.0,
     ...     new_freq=1000.0,
@@ -53,7 +53,7 @@ def have_dielectric_properties_changed(
     """
     max_error = 0.0
 
-    for _material, model in dielectric_properties.items():
+    for model in dielectric_properties.values():
         old_omega = 2.0 * np.pi * old_freq
         new_omega = 2.0 * np.pi * new_freq
 
@@ -71,7 +71,6 @@ def have_dielectric_properties_changed(
             new_value = model.conductivity(new_omega)
             error = np.abs((old_value - new_value) / old_value)
 
-        if error > max_error:
-            max_error = error
+        max_error = max(max_error, error)
 
     return max_error > threshold

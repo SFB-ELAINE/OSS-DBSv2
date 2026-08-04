@@ -142,7 +142,7 @@ class TestElectrode:
                 4 / 3 * np.pi * contact_radius**3 * 0.5
             )
 
-        elif electrode_name == "MicroProbesSNEX100":
+        if electrode_name == "MicroProbesSNEX100":
             radius_1 = electrode._parameters.core_tubing_diameter * 0.5
             height_1 = electrode._parameters.core_tubing_length
 
@@ -175,7 +175,7 @@ class TestElectrode:
 
             return body1 + body2 + contact_1 + contact_2
 
-        elif "NeuroNexus" in electrode_name:
+        if "NeuroNexus" in electrode_name:
             total_length = electrode._parameters.total_length
             tip_length = electrode._parameters.tip_length
             contact_spacing = electrode._parameters.contact_spacing
@@ -202,33 +202,31 @@ class TestElectrode:
             tip_volume = tip_area * thickness
             return shaft_volume + middle_volume + tip_volume
 
-        else:
-            contact_length = electrode._parameters.contact_length
-            lead_radius = electrode._parameters.lead_diameter * 0.5
-            tip_length = electrode._parameters.tip_length
-            total_length = electrode._parameters.total_length
-            height = total_length - tip_length
+        contact_length = electrode._parameters.contact_length
+        lead_radius = electrode._parameters.lead_diameter * 0.5
+        tip_length = electrode._parameters.tip_length
+        total_length = electrode._parameters.total_length
+        height = total_length - tip_length
 
-            if electrode_name == "MicroElectrode":
-                tip_radius = electrode._parameters.tip_diameter * 0.5
-                filet_val = 0.001142187023875807
+        if electrode_name == "MicroElectrode":
+            tip_radius = electrode._parameters.tip_diameter * 0.5
+            filet_val = 0.001142187023875807
 
-                return (
-                    (contact_length * tip_radius**2 * np.pi)
-                    + (height * lead_radius**2 * np.pi)
-                    - filet_val
-                )
+            return (
+                (contact_length * tip_radius**2 * np.pi)
+                + (height * lead_radius**2 * np.pi)
+                - filet_val
+            )
 
-            else:
-                return (np.pi * lead_radius**2 * height) + (
-                    4 / 3 * np.pi * lead_radius**3 * 0.5
-                )
+        return (np.pi * lead_radius**2 * height) + (
+            4 / 3 * np.pi * lead_radius**3 * 0.5
+        )
 
     def _calculate_contacts_volume(self, electrode, electrode_name):
         if electrode_name == "MicroProbesRodentElectrode":
             contact_radius = electrode._parameters.contact_radius
             return 4 / 3 * np.pi * contact_radius**3 * 0.5
-        elif electrode_name == "MicroProbesSNEX100":
+        if electrode_name == "MicroProbesSNEX100":
             outer_electrode_radius = (
                 electrode._parameters.outer_electrode_diameter * 0.5
             )
@@ -245,61 +243,57 @@ class TestElectrode:
             )
 
             return contact_1 + contact_2
+        contact_length = electrode._parameters.contact_length
+        lead_radius = electrode._parameters.lead_diameter * 0.5
+        tip_length = electrode._parameters.tip_length
+        n_contacts = electrode._n_contacts
+
+        if electrode_name == "BostonScientificCartesiaHX":
+            return (np.pi * lead_radius**2 * contact_length) * 4 + (
+                np.pi * lead_radius**2 * contact_length * 90 / 360
+            ) * 12
+        if electrode_name == "BostonScientificCartesiaX":
+            return (np.pi * lead_radius**2 * contact_length) + (
+                np.pi * lead_radius**2 * contact_length * 90 / 360
+            ) * 15
+        if electrode_name == "BostonScientificVerciseDirected":
+            C1_height = tip_length - lead_radius
+            C1_volume = (4 / 3 * lead_radius**3 * np.pi * 0.5) + (
+                C1_height * lead_radius**2 * np.pi
+            )
+            return (
+                C1_volume
+                + (np.pi * lead_radius**2 * contact_length)
+                + (np.pi * lead_radius**2 * contact_length * 90 / 360) * 6
+            )
+
+        if (
+            electrode_name == "BostonScientificVercise"
+            or electrode_name in self.Medtronic
+            or electrode_name in self.NeuroPace
+            or electrode_name in self.PINSMedical
+            or electrode_name in self.SceneRay1242
+            or electrode_name in self.BFXR_SP21X_0C3
+            or electrode_name in self.BFXR_SP05X_0BH
+        ):
+            return (contact_length * lead_radius**2 * np.pi) * n_contacts
+        if (
+            electrode_name in self.AbbottStJudeDirected
+            or electrode_name in self.MedtronicSenSight
+        ):
+            return (np.pi * lead_radius**2 * contact_length * 2) + (
+                np.pi * lead_radius**2 * contact_length * 90 / 360
+            ) * 6
+        if electrode_name == "MicroElectrode":
+            tip_radius = electrode._parameters.tip_diameter * 0.5
+            filet_val = 0.00114218702387580
+            return (contact_length * tip_radius**2 * np.pi) - filet_val
+        if electrode_name in self.Dixi or electrode_name in self.PMTsEEG2102:
+            C1_height = contact_length - lead_radius
         else:
-            contact_length = electrode._parameters.contact_length
-            lead_radius = electrode._parameters.lead_diameter * 0.5
-            tip_length = electrode._parameters.tip_length
-            n_contacts = electrode._n_contacts
+            C1_height = tip_length - lead_radius
+        C1_volume = (4 / 3 * lead_radius**3 * np.pi * 0.5) + (
+            C1_height * lead_radius**2 * np.pi
+        )
 
-            if electrode_name == "BostonScientificCartesiaHX":
-                return (np.pi * lead_radius**2 * contact_length) * 4 + (
-                    np.pi * lead_radius**2 * contact_length * 90 / 360
-                ) * 12
-            elif electrode_name == "BostonScientificCartesiaX":
-                return (np.pi * lead_radius**2 * contact_length) + (
-                    np.pi * lead_radius**2 * contact_length * 90 / 360
-                ) * 15
-            elif electrode_name == "BostonScientificVerciseDirected":
-                C1_height = tip_length - lead_radius
-                C1_volume = (4 / 3 * lead_radius**3 * np.pi * 0.5) + (
-                    C1_height * lead_radius**2 * np.pi
-                )
-                return (
-                    C1_volume
-                    + (np.pi * lead_radius**2 * contact_length)
-                    + (np.pi * lead_radius**2 * contact_length * 90 / 360) * 6
-                )
-
-            elif (
-                electrode_name == "BostonScientificVercise"
-                or electrode_name in self.Medtronic
-                or electrode_name in self.NeuroPace
-                or electrode_name in self.PINSMedical
-                or electrode_name in self.SceneRay1242
-                or electrode_name in self.BFXR_SP21X_0C3
-                or electrode_name in self.BFXR_SP05X_0BH
-            ):
-                return (contact_length * lead_radius**2 * np.pi) * n_contacts
-            elif (
-                electrode_name in self.AbbottStJudeDirected
-                or electrode_name in self.MedtronicSenSight
-            ):
-                return (np.pi * lead_radius**2 * contact_length * 2) + (
-                    np.pi * lead_radius**2 * contact_length * 90 / 360
-                ) * 6
-            elif electrode_name == "MicroElectrode":
-                tip_radius = electrode._parameters.tip_diameter * 0.5
-                filet_val = 0.00114218702387580
-                return (contact_length * tip_radius**2 * np.pi) - filet_val
-            else:
-                if electrode_name in self.Dixi or electrode_name in self.PMTsEEG2102:
-                    C1_height = contact_length - lead_radius
-                else:
-                    C1_height = tip_length - lead_radius
-                C1_volume = (4 / 3 * lead_radius**3 * np.pi * 0.5) + (
-                    C1_height * lead_radius**2 * np.pi
-                )
-
-                return (contact_length * lead_radius**2 * np.pi) * (
-                    n_contacts - 1
-                ) + C1_volume
+        return (contact_length * lead_radius**2 * np.pi) * (n_contacts - 1) + C1_volume

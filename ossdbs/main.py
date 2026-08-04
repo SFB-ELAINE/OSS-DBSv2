@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
+import contextlib
 import json
 import logging
 import multiprocessing
@@ -262,10 +263,8 @@ def main() -> None:
         main_run(input_settings)
     finally:
         for handler in logging.getLogger("ossdbs").handlers:
-            try:
+            with contextlib.suppress(Exception):
                 handler.flush()
-            except Exception:
-                pass
         logging.shutdown()
 
 

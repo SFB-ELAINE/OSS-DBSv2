@@ -22,7 +22,7 @@ class TestBrainGeometry:
         (region_parameters, "Ellipsoid"),
     ]
 
-    @pytest.mark.parametrize("region_parameters, shape", TESTDATA)
+    @pytest.mark.parametrize(("region_parameters", "shape"), TESTDATA)
     def test_geometry(self, region_parameters, shape) -> None:
         brain_region = ossdbs.create_bounding_box(region_parameters)
         geometry = ossdbs.BrainGeometry(shape, brain_region)

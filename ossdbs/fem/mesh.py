@@ -105,11 +105,10 @@ class Mesh:
                 if not isinstance(custom_parameters, dict):
                     raise ValueError("CustomParameters have to passed as a dict.")
                 return netgen.meshing.MeshingParameters(**custom_parameters)
-            else:
-                raise ValueError(
-                    """You need to specify CustomParameters
+            raise ValueError(
+                """You need to specify CustomParameters
                     if you want to generate a custom mesh."""
-                )
+            )
 
         return {
             "Coarse": netgen.meshing.meshsize.coarse,

@@ -9,8 +9,8 @@ from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
 
 import netgen
-import netgen.occ as occ
 import numpy as np
+from netgen import occ
 from ngsolve import BND, Mesh, VTKOutput
 
 _logger = logging.getLogger(__name__)
@@ -204,9 +204,7 @@ class ElectrodeModel(ABC):
         occgeo = occ.OCCGeometry(cylinder * self.geometry)
         _logger.debug("Generating mesh")
         mesh_electrode = Mesh(occgeo.GenerateMesh())
-        bnd_dict = {}
-        for idx, contact in enumerate(self.boundaries):
-            bnd_dict[contact] = idx
+        bnd_dict = {contact: idx for idx, contact in enumerate(self.boundaries)}
         boundary_cf = mesh_electrode.BoundaryCF(bnd_dict, default=-1)
 
         # export Netgen mesh

@@ -90,8 +90,7 @@ class ConductivityCF:
 
         # remove materials that are not in MRI
         materials_to_delete = []
-        for material in materials:
-            material_idx = materials[material]
+        for material, material_idx in materials.items():
             if material_idx not in self._material_distribution:
                 materials_to_delete.append(material)
         for material in materials_to_delete:
@@ -313,7 +312,7 @@ class ConductivityCF:
         """
         start, end = dti_voxel_bounding_box.start, dti_voxel_bounding_box.end
         dti_flat_matrix = []
-        for _component, index in dti_image.components.items():
+        for index in dti_image.components.values():
             dti_component_data = dti_data[:, :, :, index]
             # account for ordering in NGSolve
             dti_component_data = np.swapaxes(dti_component_data, 0, 2)

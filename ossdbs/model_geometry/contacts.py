@@ -105,12 +105,11 @@ def check_contact(contact: Contact):
             raise ValueError(
                 "Surface impedance model was provided without parameter dictionary."
             )
-    else:
-        if contact.surface_impedance_parameters is not None:
-            _logger.warning(
-                "Surface impedance parameter dictionary was provided without model. "
-                "It will not be taken into account."
-            )
+    elif contact.surface_impedance_parameters is not None:
+        _logger.warning(
+            "Surface impedance parameter dictionary was provided without model. "
+            "It will not be taken into account."
+        )
 
 
 class Contacts:
@@ -242,6 +241,7 @@ class Contacts:
         for contact in self._all_contacts:
             if name == contact.name:
                 return contact
+        return None
 
     def __iter__(self):
         """Iterate over contacts."""

@@ -20,6 +20,8 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+        # also format Python code blocks embedded in Markdown files
+        types_or: [python, pyi, jupyter, markdown]
 
   - repo: https://github.com/kynan/nbstripout
     rev: 0.9.1

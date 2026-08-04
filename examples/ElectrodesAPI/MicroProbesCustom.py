@@ -3,7 +3,7 @@ Generates MicroProbes electrode for rodents.
 Custom parameters are used.
 """
 
-import netgen.occ as occ
+from netgen import occ
 from ngsolve import Draw, Mesh, TaskManager
 
 import ossdbs

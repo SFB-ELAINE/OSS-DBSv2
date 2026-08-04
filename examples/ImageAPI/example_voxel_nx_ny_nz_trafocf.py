@@ -19,8 +19,8 @@ Outcome:
 
 """
 
-import netgen.occ as occ
 import numpy as np
+from netgen import occ
 from ngsolve import (
     H1,
     CoefficientFunction,
