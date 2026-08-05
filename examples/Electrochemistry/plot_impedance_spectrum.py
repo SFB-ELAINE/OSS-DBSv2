@@ -35,6 +35,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+
+def apply_dark_style(fig, axes):
+    """Make background dark and axes white."""
+    fig.patch.set_facecolor("black")
+    for ax in axes:
+        ax.set_facecolor("black")
+        ax.xaxis.label.set_color("white")
+        ax.yaxis.label.set_color("white")
+        ax.title.set_color("white")
+        ax.tick_params(axis="both", colors="white")
+        for spine in ax.spines.values():
+            spine.set_color("white")
+        legend = ax.get_legend()
+        if legend is not None:
+            legend.set_frame_on(False)
+            for text in legend.get_texts():
+                text.set_color("white")
+
+
 # --- Lempka 2009 double-layer CPE only (the tissue part is taken from FEM) ---
 ecm_cpe = ifit.get_equivalent_circuit_model("CPE_dl")
 
@@ -74,23 +93,29 @@ fig, (ax_mag, ax_phase) = plt.subplots(2, 1, sharex=True, figsize=(7, 6))
 for name in param_sets:
     ax_mag.plot(sim_frequencies, np.abs(Z_model[name]), label=name)
     ax_phase.plot(sim_frequencies, np.angle(Z_model[name], deg=True), label=name)
-ax_mag.plot(sim_frequencies, np.abs(sim_Z), label="Full FEM", color="k", ls="dashed")
+ax_mag.plot(
+    sim_frequencies, np.abs(sim_Z), label="Full VCM", color="white", ls="dashed"
+)
 ax_phase.plot(
-    sim_frequencies, np.angle(sim_Z, deg=True), label="Full FEM", color="k", ls="dashed"
+    sim_frequencies,
+    np.angle(sim_Z, deg=True),
+    label="Full VCM",
+    color="white",
+    ls="dashed",
 )
 
 ax_mag.set_ylabel(r"|Z| / $\Omega$")
 ax_mag.set_xscale("log")
 ax_mag.set_yscale("log")
 ax_mag.legend()
-ax_mag.grid(True, which="both", ls=":", alpha=0.5)
-ax_mag.set_title("Full FEM vs FEM-tissue + CPE_dl (Lempka 2009 parameter sets)")
+ax_mag.grid(True, which="both", ls=":", alpha=0.5, color="0.4")
 
 ax_phase.set_xlabel("Frequency / Hz")
 ax_phase.set_ylabel("Phase / deg")
 ax_phase.set_xscale("log")
-ax_phase.grid(True, which="both", ls=":", alpha=0.5)
+ax_phase.grid(True, which="both", ls=":", alpha=0.5, color="0.4")
 
+apply_dark_style(fig, [ax_mag, ax_phase])
 fig.tight_layout()
 fig.savefig("impedance_spectrum_bode.pdf")
 fig.savefig("impedance_spectrum_bode.svg")
@@ -100,40 +125,57 @@ plt.show()
 fig2, (ax2_mag, ax2_phase) = plt.subplots(2, 1, sharex=True, figsize=(7, 6))
 
 ref_name = "Day 1"
-ax2_mag.plot(sim_frequencies, np.abs(sim_Z), label="Full FEM")
+markevery = max(1, len(sim_frequencies) // 20)
 ax2_mag.plot(
     sim_frequencies,
     np.abs(Z_model[ref_name]),
-    label=f"FEM tissue + CPE_dl ({ref_name})",
+    label="VCM impedance + equivalent circuit",
 )
 ax2_mag.plot(
-    sim_frequencies, np.abs(sim_no_interface_Z), label="FEM tissue only", ls="dashed"
+    sim_frequencies,
+    np.abs(sim_Z),
+    label="VCM with surface impedance",
+    ls="none",
+    marker="o",
+    ms=5,
+    markevery=markevery,
+)
+ax2_mag.plot(
+    sim_frequencies, np.abs(sim_no_interface_Z), label="VCM tissue only", ls="dashed"
 )
 ax2_mag.set_ylabel(r"|Z| / $\Omega$")
 ax2_mag.set_xscale("log")
 ax2_mag.set_yscale("log")
 ax2_mag.legend()
-ax2_mag.grid(True, which="both", ls=":", alpha=0.5)
-ax2_mag.set_title(f"Impedance decomposition ({ref_name} CPE_dl parameters)")
+ax2_mag.grid(True, which="both", ls=":", alpha=0.5, color="0.4")
 
-ax2_phase.plot(sim_frequencies, np.angle(sim_Z, deg=True), label="Full FEM")
 ax2_phase.plot(
     sim_frequencies,
     np.angle(Z_model[ref_name], deg=True),
-    label=f"FEM tissue + CPE_dl ({ref_name})",
+    label="VCM impedance + equivalent circuit",
+)
+ax2_phase.plot(
+    sim_frequencies,
+    np.angle(sim_Z, deg=True),
+    label="VCM with surface impedance",
+    ls="none",
+    marker="o",
+    ms=5,
+    markevery=markevery,
 )
 ax2_phase.plot(
     sim_frequencies,
     np.angle(sim_no_interface_Z, deg=True),
-    label="FEM tissue only",
+    label="VCM tissue only",
     ls="dashed",
 )
 ax2_phase.set_xlabel("Frequency / Hz")
 ax2_phase.set_ylabel("Phase / deg")
 ax2_phase.set_xscale("log")
 ax2_phase.legend()
-ax2_phase.grid(True, which="both", ls=":", alpha=0.5)
+ax2_phase.grid(True, which="both", ls=":", alpha=0.5, color="0.4")
 
+apply_dark_style(fig2, [ax2_mag, ax2_phase])
 fig2.tight_layout()
 fig2.savefig("impedance_spectrum_decomposition.pdf")
 fig2.savefig("impedance_spectrum_decomposition.svg")
@@ -144,15 +186,15 @@ fig3, ax3 = plt.subplots(figsize=(7, 6))
 
 for name in param_sets:
     ax3.plot(Z_model[name].real, -Z_model[name].imag, label=name)
-ax3.plot(sim_Z.real, -sim_Z.imag, label="Full FEM", color="k", ls="dashed")
+ax3.plot(sim_Z.real, -sim_Z.imag, label="Full VCM", color="white", ls="dashed")
 
 ax3.set_xlabel(r"Re(Z) / $\Omega$")
 ax3.set_ylabel(r"$-$Im(Z) / $\Omega$")
 ax3.set_aspect("equal")
 ax3.legend()
-ax3.grid(True, ls=":", alpha=0.5)
-ax3.set_title("Nyquist: full FEM vs FEM-tissue + CPE_dl")
+ax3.grid(True, ls=":", alpha=0.5, color="0.4")
 
+apply_dark_style(fig3, [ax3])
 fig3.tight_layout()
 fig3.savefig("impedance_spectrum_nyquist.pdf")
 fig3.savefig("impedance_spectrum_nyquist.svg")

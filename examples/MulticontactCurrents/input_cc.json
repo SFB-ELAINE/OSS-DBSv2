@@ -41,6 +41,7 @@
           "Current[A]": 0.004,
           "Voltage[V]": 0.0,
           "Floating": true,
+          "SurfaceImpedance": {"Model": null, "Parameters": {}},
           "MaxMeshSizeEdge": 0.05
         },
         {
@@ -49,6 +50,7 @@
           "Current[A]": -0.002,
           "Voltage[V]": 0.0,
           "Floating": true,
+          "SurfaceImpedance": {"Model": null, "Parameters": {}},
           "MaxMeshSizeEdge": 0.05
         },
         {
@@ -57,6 +59,7 @@
           "Current[A]": -0.002,
           "Voltage[V]": 0.0,
           "Floating": true,
+          "SurfaceImpedance": {"Model": null, "Parameters": {}},
           "MaxMeshSizeEdge": 0.05
         }
       ],

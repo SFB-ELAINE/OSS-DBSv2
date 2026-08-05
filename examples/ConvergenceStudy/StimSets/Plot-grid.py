@@ -13,44 +13,37 @@ plt.rcParams["text.latex.preamble"] = (
     r"\makeatletter \newcommand*{\rom}[1]{\expandafter\@slowromancap\romannumeral #1@} \makeatother"
 )
 
-convergence_threshold = 3.0  # in %
+convergence_threshold = 1.0  # rel. VTA volume error, in %
+dice_threshold = 0.98  # mean Dice vs. best
 
 data = pd.read_csv("vta_results_summary.csv")
 data["roman"] = data["roman"].astype("string")
 
-# Add "Best" row for absolute values
-best_df = data.filter(regex="best", axis=1).iloc[0].to_dict()
-best_df["time"] = best_df["best_time"]
-best_df["dofs"] = best_df["best_dofs"]
-best_df["ngs_vta_volume"] = best_df["best_ngs_vta_volume"]
-best_df["imp"] = best_df["best_impedance"]
-best_df["imp_rel_error"] = 0.0
-best_df["ngs_vta_volume_rel_error"] = 0.0
-best_df["roman"] = "Best"
-best_df = pd.DataFrame([best_df])
-data = pd.concat([data, best_df], ignore_index=True)
-data.fillna(0.0, inplace=True)
+# The summary already carries the reference run as a row labelled "Best"
+# (rel. error 0, Dice 1). Relative errors are stored as fractions, so
+# convert to percent for plotting.
+data["rel_err_pct"] = data["mean_rel_volume_error"] * 100.0
 
 columns_to_plot = [
     "time",
-    "dofs",
-    "ngs_vta_volume",
-    "imp",
-    "imp_rel_error",
-    "ngs_vta_volume_rel_error",
+    "DOF",
+    "mean_VTA_volume_mm3",
+    "rel_err_pct",
+    "mean_dice_vs_best",
+    "min_dice_vs_best",
 ]
 labels = [
     "Time / s",
     "DOFs",
-    r"VTA volume / mm$^3$",
-    r"Impedance / $\Omega$",
-    r"Rel. err. impedance / \%",
+    r"Mean VTA volume / mm$^3$",
     r"Rel. err. VTA / \%",
+    "Mean Dice",
+    "Min. Dice",
 ]
 scales = ["log", "log", "linear", "linear", "linear", "linear"]
 
-converged = (data["imp_rel_error"] <= convergence_threshold) & (
-    data["ngs_vta_volume_rel_error"] <= convergence_threshold
+converged = (data["rel_err_pct"] <= convergence_threshold) & (
+    data["mean_dice_vs_best"] >= dice_threshold
 )
 
 g = sns.PairGrid(data, x_vars=data[columns_to_plot], y_vars=["roman"], height=4)

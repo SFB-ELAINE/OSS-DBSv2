@@ -27,7 +27,7 @@ settings = {
                     "Current[A]": 0.0,
                     "Voltage[V]": 1.0,
                     "Floating": False,
-                    "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
+                    "SurfaceImpedance": {"Model": None, "Parameters": {}},
                     "MaxMeshSizeEdge": 0.05,
                 },
                 {
@@ -36,7 +36,7 @@ settings = {
                     "Current[A]": 0.0,
                     "Voltage[V]": 0.0,
                     "Floating": False,
-                    "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
+                    "SurfaceImpedance": {"Model": None, "Parameters": {}},
                     "MaxMeshSizeEdge": 0.05,
                 },
                 {
@@ -45,7 +45,7 @@ settings = {
                     "Current[A]": 0.0,
                     "Voltage[V]": 0.0,
                     "Floating": False,
-                    "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
+                    "SurfaceImpedance": {"Model": None, "Parameters": {}},
                     "MaxMeshSizeEdge": 0.05,
                 },
             ],

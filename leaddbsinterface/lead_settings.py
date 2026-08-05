@@ -886,10 +886,6 @@ class LeadSettings:
 
             if "Name" not in elec_dict:
                 raise KeyError("Need to provide name of electrode")
-            electrode_name = elec_dict["Name"].replace("Custom", "")
-            lead_diameter = default_electrode_parameters[electrode_name].lead_diameter
-            perimeter = np.pi * lead_diameter
-            edge_size = perimeter / 50.0
 
             for i in range(len(pulse_amp)):
                 # all (truly) non-active contacts are floating with 0A
@@ -913,7 +909,6 @@ class LeadSettings:
                             "Current[A]": pulse_amp[i],
                             "Voltage[V]": 0.0,
                             "Floating": True,
-                            "MaxMeshSizeEdge": edge_size,
                         }
                     else:
                         cntct_dicts[cntcts_made] = {
@@ -923,7 +918,6 @@ class LeadSettings:
                             "Current[A]": 0.0,
                             "Voltage[V]": pulse_amp[i],
                             "Floating": False,
-                            "MaxMeshSizeEdge": edge_size,
                         }
 
                 cntcts_made += 1

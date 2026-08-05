@@ -15,8 +15,15 @@ class FieldSolution:
     mesh: ngsolve.comp.Mesh
     is_complex: bool
 
-    def save(self, filename: str) -> None:
-        """Save solution to VTK file."""
+    def save(self, filename: str, subdivision: int = 0) -> None:
+        """Save solution to VTK file.
+
+        ``subdivision`` controls how many times each element is subdivided
+        before sampling — higher values resolve the higher-order
+        polynomial basis at the cost of larger files. ``0`` writes only
+        the corner DOFs and produces visibly faceted plots in ParaView
+        for HP-refined meshes.
+        """
         names = [f"{self.label}_real"]
         if self.is_complex:
             names.append(f"{self.label}_imag")
@@ -30,5 +37,5 @@ class FieldSolution:
             coefs=coefficients,
             names=names,
             filename=filename,
-            subdivision=0,
+            subdivision=subdivision,
         ).Do()
