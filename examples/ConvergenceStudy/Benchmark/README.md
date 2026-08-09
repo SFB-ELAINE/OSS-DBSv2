@@ -47,8 +47,12 @@ Linux or macOS. The benchmark times FEM **and** PAM, and PAM needs NEURON,
 which is unavailable on Windows — `run_benchmark.py` refuses to run there
 rather than silently reporting a partial number.
 
-The MRI input `../PAM_3/segmask.nii.gz` is required. It is not in the
-repository (`*.nii.gz` is gitignored), so copy it in before the first run.
+No other input is needed. The MRI input `../PAM_3/segmask.nii.gz` is tracked
+in the repository despite the `*.nii.gz` ignore rule, so the benchmark runs
+from a clean clone — a benchmark nobody else can run is of no use. Note it
+is *not* interchangeable with `../PAM/segmask.nii.gz`: the two share a grid
+but differ in 0.27 % of voxels, which changes the conductivity field and
+therefore the mesh.
 
 ## Running
 
