@@ -60,11 +60,14 @@ def flatten(record):
         "python": machine["python"],
         "commit": machine["ossdbs_commit"],
         "benchmark_version": record["benchmark_version"],
+        "case": record.get("strategy", {}).get("case"),
         "dofs": best["dofs"],
         "elements": best["elements"],
-        "fem_total": best["fem_total"],
-        "pam_total": best["pam_total"],
+        # the VTA workload has no NEURON stage, so pam_total is absent there
+        "fem_total": best.get("fem_total"),
+        "pam_total": best.get("pam_total"),
         "wall_total": best["wall_total"],
+        "vta_volume_mm3": best.get("vta_volume_mm3"),
     }
     row.update({phase: best.get(phase) for phase in PHASES})
     return row
@@ -75,6 +78,7 @@ def check_comparability(df):
     warnings = []
     for column, what in (
         ("benchmark_version", "benchmark version"),
+        ("case", "case"),
         ("dofs", "problem size (DOFs)"),
     ):
         values = df[column].dropna().unique()
