@@ -29,10 +29,26 @@ effect of the workload rather than of the refinement:
 | Time domain | reconstructed | skipped (single frequency) |
 | NEURON stage | yes | no |
 | Runs on Windows | no (NEURON) | yes |
-| Results directory | `results/` | `results_vta/` |
+| Results directory | `results/` | `results_vta/`, `results_vta_ngsolve/` |
 
 Both are small enough to run on a laptop — a benchmark is only useful if it
 gets run on more than one machine.
+
+**VTA variants** (`--variant`). The VTA volume is computed by integrating
+`|E| > threshold` over the FEM mesh in NGSolve, and never came from the
+lattice. The lattice exists only to produce the sampled CSV and the E-field /
+VTA NIfTI images. So the two variants report the *same* `vta_volume_mm3` and
+differ only in what else they do:
+
+| | `lattice` (default) | `ngsolve` |
+| --- | --- | --- |
+| 864000-point lattice sampled | yes | no |
+| `E_field_solution_*.nii.gz`, `VTA_solution_*.nii.gz` written | yes | no |
+| VTA volume from NGSolve mesh integration | yes | yes |
+
+Comparing them prices the lattice sampling and image export against the FEM
+work itself. Use `ngsolve` when you want to benchmark the solver rather than
+the output pipeline.
 
 **Phases**, from `run_report.json` (written by `main_run`) and
 `VCM_report.json` (written by the volume conductor):
@@ -55,6 +71,14 @@ conductor's own timings from the `VolumeConductor` phase, because mesh
 generation is not instrumented separately. It is worth isolating: Netgen
 meshing is largely single-threaded while the FEM solve is not, so the two
 scale very differently across machines.
+
+Being a residual, it also absorbs anything else in that phase that is not
+separately timed — in particular point-model preparation, which locates every
+evaluation point on the mesh to mark the ones inside CSF and the encapsulation
+layer. That is why the same mesh appears to take 15.6 s to build in the VTA
+`lattice` variant but 6.8 s in `ngsolve`: the difference is lattice setup, not
+meshing. Read the row as "mesh generation plus untimed setup", and take the
+`ngsolve` variant's value as the closer estimate of meshing alone.
 
 ## Requirements
 
@@ -82,6 +106,7 @@ uv run python run_benchmark.py --repeats 3        # keep the fastest of three
 uv run python run_benchmark.py --label hpc-node-01
 
 uv run python run_benchmark_vta.py --repeats 3    # same flags, VTA workload
+uv run python run_benchmark_vta.py --variant ngsolve   # no lattice, no NIfTI
 ```
 
 Each invocation writes `<results dir>/<label>-<timestamp>.json` containing the
@@ -91,8 +116,9 @@ full machine context, the pinned strategy, every run, and the fastest one —
 Then aggregate, one directory at a time:
 
 ```bash
-uv run python collect_results.py                            # PAM records
-uv run python collect_results.py --results-dir results_vta  # VTA records
+uv run python collect_results.py                                    # PAM
+uv run python collect_results.py --results-dir results_vta          # VTA
+uv run python collect_results.py --results-dir results_vta_ngsolve  # VTA, no lattice
 ```
 
 which writes `benchmark_summary.csv` and prints a Markdown table. Do not mix
