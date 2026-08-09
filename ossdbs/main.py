@@ -218,6 +218,12 @@ def main_run(input_settings: dict):
 
     _logger.info(f"Timings:\n {pprint.pformat(timings)}")
 
+    # persist the phase timings next to the VCM report so they can be analysed
+    # after the run (e.g. by examples/ConvergenceStudy/Benchmark) instead of
+    # only appearing in the log
+    with open(os.path.join(settings["OutputPath"], "run_report.json"), "w") as fp:
+        json.dump({"Timings": timings}, fp, indent=2)
+
     # write success file
     open(
         os.path.join(
