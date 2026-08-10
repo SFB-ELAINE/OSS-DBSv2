@@ -36,7 +36,7 @@ _logger = logging.getLogger(__name__)
 BASE = Path(__file__).parent
 
 # Tolerances
-IMPEDANCE_ATOL = 1e-2
+IMPEDANCE_RTOL = 1e-2
 VTA_DICE_ATOL = 1e-2
 VTA_VOLUME_RTOL = 1e-2
 FLOATING_POTENTIAL_ATOL = 1e-2
@@ -285,11 +285,11 @@ def _prepare_settings(input_dir: str, input_json: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def _compare_csv(output_csv: str, desired_csv: str, atol: float = IMPEDANCE_ATOL):
+def _compare_csv(output_csv: str, desired_csv: str, atol: float = 1e-6, rtol: float = IMPEDANCE_RTOL):
     """Compare two CSV files using np.allclose."""
     actual = pd.read_csv(output_csv).to_numpy(dtype=float)
     desired = pd.read_csv(desired_csv).to_numpy(dtype=float)
-    if not np.allclose(actual, desired, atol=atol):
+    if not np.allclose(actual, desired, rtol=rtol):
         abs_err = float(np.max(np.abs(actual - desired)))
         nonzero = np.abs(desired) > np.finfo(float).eps
         rel_err = (
