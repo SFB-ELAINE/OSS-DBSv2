@@ -371,6 +371,18 @@ def _compare_pathway_activation(output_dir: str, desired_dir: str):
         if f.startswith("Pathway_status") and f.endswith(".json")
     )
     assert output_files, f"No Pathway_status*.json found in {output_dir}"
+    # make sure all files are there
+    desired_files = sorted(
+        f
+        for f in os.listdir(desired_dir)
+        if f.startswith("Pathway_status") and f.endswith(".json")
+    )
+    assert output_files == desired_files, (
+        "Pathway status file set differs:\n"
+        f"  output:  {output_files}\n"
+        f"  desired: {desired_files}"
+    )
+    # compare file content
     for fname in output_files:
         output_json = os.path.join(output_dir, fname)
         desired_json = os.path.join(desired_dir, fname)
@@ -433,7 +445,21 @@ def test_simulation(test_case):
                 and os.path.isfile(os.path.join(input_dir_abs, d, "impedance.csv"))
             )
             assert stimset_dirs, f"No StimSets result dirs found in {input_dir_abs}"
-            for sd in stimset_dirs:
+
+            desired_dirs = sorted(
+                d
+                for d in os.listdir(desired_base)
+                if d.startswith("Results_")
+                and d != Path(output_dir).name
+                and os.path.isfile(os.path.join(desired_base, d, "impedance.csv"))
+            )
+            assert desired_dirs, f"No StimSets baseline dirs found in {desired_base}"
+            assert stimset_dirs == desired_dirs, (
+                "StimSets result dir set differs:\n"
+                f"  generated: {stimset_dirs}\n"
+                f"  desired:   {desired_dirs}"
+            )
+            for sd in desired_dirs:  # iterate the expected set, not the produced one
                 _compare_csv(
                     os.path.join(input_dir_abs, sd, "impedance.csv"),
                     os.path.join(desired_base, sd, "impedance.csv"),
