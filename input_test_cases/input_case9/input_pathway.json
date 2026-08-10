@@ -73,9 +73,6 @@
     },
     "MaterialRefinementSteps": 1,
     "HPRefinement": {
-      "Active": true
-    },
-    "HPRefinement": {
       "Active": true,
       "Levels": 2,
       "Factor": 0.125
