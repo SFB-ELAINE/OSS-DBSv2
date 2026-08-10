@@ -58,7 +58,7 @@ jobs:
             input_test_cases/**/Results*/
           retention-days: 7
 
- neuron-simulation-tests:
+  neuron-simulation-tests:
     name: NEURON Simulation Tests (${{ matrix.platform }})
     runs-on: ${{ matrix.platform }}
     if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
