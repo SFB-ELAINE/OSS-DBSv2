@@ -285,7 +285,9 @@ def _prepare_settings(input_dir: str, input_json: str) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def _compare_csv(output_csv: str, desired_csv: str, atol: float = 1e-6, rtol: float = IMPEDANCE_RTOL):
+def _compare_csv(
+    output_csv: str, desired_csv: str, atol: float = 1e-6, rtol: float = IMPEDANCE_RTOL
+):
     """Compare two CSV files using np.allclose."""
     actual = pd.read_csv(output_csv).to_numpy(dtype=float)
     desired = pd.read_csv(desired_csv).to_numpy(dtype=float)
