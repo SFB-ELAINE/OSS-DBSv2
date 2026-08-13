@@ -703,7 +703,7 @@ class AxonModels:
                 for i in range(total_contacts):
                     if (
                         not math.isnan(protocols_array[j, i])
-                        and protocols_array[j, i] != 0.0
+                        and not np.isclose(protocols_array[j, i], 0.0)
                     ):
                         ampl_vector[i] = 1.0
         else:
@@ -711,7 +711,7 @@ class AxonModels:
 
         self.centering_coordinates = []
         for i in range(len(ampl_vector)):
-            if not (math.isnan(ampl_vector[i])) and ampl_vector[i] != 0.0:
+            if not (math.isnan(ampl_vector[i])) and (not np.isclose(ampl_vector[i], 0.0)):
                 a_ref = file_inp["settings"]["contactLocation"][hemis_idx][0]
                 b = file_inp[a_ref]
                 self.centering_coordinates.append(b[:, i])
