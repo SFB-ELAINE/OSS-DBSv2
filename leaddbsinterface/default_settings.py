@@ -47,7 +47,7 @@ def load_default_for_lead(settings):
     settings["FEMOrder"] = 2
     settings["ComputeImpedance"] = False
 
-    settings["Solver"]["MaximumSteps"] = 500
+    settings["Solver"]["MaximumSteps"] = 2000
     settings["Solver"]["Precision"] = 1e-10
 
     return settings
