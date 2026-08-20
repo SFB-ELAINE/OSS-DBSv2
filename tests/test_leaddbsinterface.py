@@ -90,7 +90,7 @@ class TestDefaultSettings:
         assert settings["Mesh"]["MaterialRefinementSteps"] == 1
         assert settings["FEMOrder"] == 2
         assert settings["ComputeImpedance"] is False
-        assert settings["Solver"]["MaximumSteps"] == 500
+        assert settings["Solver"]["MaximumSteps"] == 2000
         assert settings["Solver"]["Precision"] == 1e-10
 
     def test_update_default_dict_simple(self):
