@@ -733,7 +733,7 @@ class NeuronSimulator(ABC):
         percent_csf = np.round(
             100.0 * np.sum(np.isclose(pre_status, -2.0)) / float(orig_N_neurons), 2
         )
-        
+
         _logger.info(f"Activated neurons: {percent_activated}%")
         _logger.info(f"Neurons damaged: {percent_damaged}%")
         _logger.info(f"Neurons in CSF {percent_csf}%")
