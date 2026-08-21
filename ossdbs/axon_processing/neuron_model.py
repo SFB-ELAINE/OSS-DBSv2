@@ -592,6 +592,7 @@ class NeuronSimulator(ABC):
         Activated_models = 0
 
         # Pre-extract neuron data and prepare simulation tasks
+        _logger.info(f"\n\nPathway {pathway_name} :")
         _logger.info(f"Pre-extracting data for {N_neurons} neurons...")
         simulation_tasks = []  # List of (neuron_index, v_ext)
         for neuron_index in range(N_neurons):
@@ -732,8 +733,7 @@ class NeuronSimulator(ABC):
         percent_csf = np.round(
             100.0 * np.sum(np.isclose(pre_status, -2.0)) / float(orig_N_neurons), 2
         )
-
-        _logger.info(f"\n\nPathway {pathway_name} :")
+        
         _logger.info(f"Activated neurons: {percent_activated}%")
         _logger.info(f"Neurons damaged: {percent_damaged}%")
         _logger.info(f"Neurons in CSF {percent_csf}%")
