@@ -174,6 +174,33 @@ def configure_hp_material_refinement(base, mri_image, perimeter):
     return cfg
 
 
+def configure_hp_double_material_refinement(base, mri_image, perimeter):
+    """Default mesh + HP ref. + 2x material ref."""
+    cfg = deepcopy(base)
+    cfg["Mesh"]["HPRefinement"] = {
+        "Active": True,
+        "Levels": 2,
+        "Factor": 0.125,
+    }
+    cfg["Mesh"]["MaterialRefinementSteps"] = 2
+    cfg["OutputPath"] = "Results_PAM_hp_double_material_refinement"
+    return cfg
+
+
+def configure_fine_hp_material_refinement(base, mri_image, perimeter):
+    """Fine mesh + HP ref. + 1x material ref."""
+    cfg = deepcopy(base)
+    cfg["Mesh"]["MeshingHypothesis"]["Type"] = "Fine"
+    cfg["Mesh"]["HPRefinement"] = {
+        "Active": True,
+        "Levels": 2,
+        "Factor": 0.125,
+    }
+    cfg["Mesh"]["MaterialRefinementSteps"] = 1
+    cfg["OutputPath"] = "Results_PAM_fine_hp_material_refinement"
+    return cfg
+
+
 def configure_best(base, mri_image, perimeter):
     """Gold standard: voxel mesh + material ref. + adaptive."""
     cfg = deepcopy(base)
@@ -202,12 +229,20 @@ STRATEGIES = [
         "hp_material_refinement",
         configure_hp_material_refinement,
     ),
+    (
+        "hp_double_material_refinement",
+        configure_hp_double_material_refinement,
+    ),
+    (
+        "fine_hp_material_refinement",
+        configure_fine_hp_material_refinement,
+    ),
     ("best", configure_best),
 ]
 STRATEGY_MAP = dict(STRATEGIES)
 
-# Roman numeral lookup (I..IX → strategy name)
-_ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX"]
+# Roman numeral lookup (I..XI → strategy name)
+_ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI"]
 ROMAN_TO_NAME = {r: name for r, (name, _) in zip(_ROMAN, STRATEGIES, strict=False)}
 
 

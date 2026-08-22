@@ -553,7 +553,14 @@ def _run_impedance_analysis(
     analyzer.export(settings["OutputPath"])
 
 
-def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_signal):
+def run_stim_sets(
+    settings,
+    geometry,
+    conductivity,
+    solver,
+    frequency_domain_signal,
+    truncation_time=None,
+):
     """Run StimSets batch workflow: compute unit solutions per contact.
 
     For each non-ground contact, sets up a unit-current solve (1 A on
@@ -573,6 +580,11 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
         Configured FEM solver.
     frequency_domain_signal : FrequencyDomainSignal
         Signal defining the frequencies and amplitudes to solve.
+    truncation_time : float, optional
+        If set, truncate the time-domain reconstruction of every unit
+        solution to this duration. All contacts are truncated
+        identically, so the superposition in :func:`run_PAM` stays
+        consistent.
     """
     _logger.info("Run StimSets volume conductor model")
 
@@ -650,6 +662,7 @@ def run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_sig
             adaptive_mesh_refinement_settings=settings["Mesh"][
                 "AdaptiveMeshRefinement"
             ],
+            truncation_time=truncation_time,
             vtk_subdivision=vtk_subdivision,
         )
         _logger.info(f"Timing for contact {contact.name}: {vcm_timings}")
