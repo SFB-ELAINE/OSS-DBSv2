@@ -274,7 +274,7 @@ class VolumeConductor(ABC):
 
         if compute_impedance:
             # scalar 1-D array, one entry per frequency
-            self._impedances = np.ndarray(
+            self._impedances = np.zeros(
                 shape=(len(self.signal.frequencies),), dtype=dtype
             )
 
