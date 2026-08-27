@@ -1,3 +1,6 @@
+import pytest
+
+from ossdbs.utils.settings import Settings
 from ossdbs.utils.type_check import TypeChecker
 
 setting = {
@@ -65,6 +68,7 @@ setting = {
         "PrintRates": False,
         "MaximumSteps": 10000,
         "Precision": 1e-12,
+        "AbsoluteTolerance": None,
     },
     "SpectrumMode": "FullSpectrum",
     "StimulationSignal": {
@@ -89,3 +93,19 @@ setting = {
 
 def test_type_check():
     TypeChecker().check(setting)
+
+
+@pytest.mark.parametrize("absolute_tolerance", [None, 1e-8])
+def test_absolute_tolerance_type_check(absolute_tolerance):
+    settings = Settings(
+        {"Solver": {"AbsoluteTolerance": absolute_tolerance}}
+    ).complete_settings()
+
+    TypeChecker.check(settings)
+
+
+def test_absolute_tolerance_rejects_string():
+    settings = Settings({"Solver": {"AbsoluteTolerance": "1e-8"}}).complete_settings()
+
+    with pytest.raises(TypeError, match="AbsoluteTolerance"):
+        TypeChecker.check(settings)

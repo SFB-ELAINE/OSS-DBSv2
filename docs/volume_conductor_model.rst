@@ -287,15 +287,22 @@ Convergence parameters
 - ``Precision`` (default: 1e-12) — relative residual tolerance. For most
   applications, 1e-8 to 1e-10 is sufficient. Very tight values (1e-12 and
   below) increase iteration count without visible improvement in the solution.
+- ``AbsoluteTolerance`` (default: ``null``) — optional positive absolute residual
+  tolerance. When both tolerances are configured, NGSolve stops when the
+  residual reaches the larger of ``initial residual * Precision`` and
+  ``AbsoluteTolerance``. Leave this unset unless an absolute residual threshold
+  has been validated for the problem and preconditioner.
 - ``PrintRates`` — when ``true``, the solver prints the residual norm at each
   iteration. Useful for monitoring convergence.
 
 Troubleshooting
 ^^^^^^^^^^^^^^^
 
-- **Solver does not converge**: try increasing ``MaximumSteps`` or relaxing
-  ``Precision``. If that does not help, switch from ``local`` to
-  ``customized_local`` or from CG to GMRES.
+- **Solver does not converge**: the error reports the initial, target, and final
+  residuals together with both tolerances. Try increasing ``MaximumSteps``. If
+  that does not help, switch from ``local`` to ``customized_local`` or from CG
+  to GMRES. Relax a tolerance only after checking that solution accuracy remains
+  acceptable.
 - **Warning about non-finite preconditioner values**: switch from ``local`` to
   ``customized_local``. This is most common with the ``FloatingImpedance``
   formulation.

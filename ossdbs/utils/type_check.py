@@ -72,6 +72,7 @@ class TypeChecker:
             "PreconditionerKwargs": dict,
             "MaximumSteps": int,
             "Precision": (int, float),
+            "AbsoluteTolerance": (type(None), int, float),
         },
         "StimulationSignal": {
             "Type": str,

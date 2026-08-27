@@ -5,6 +5,7 @@ import subprocess
 import sys
 import textwrap
 from copy import deepcopy
+from types import SimpleNamespace
 
 import ngsolve
 import numpy as np
@@ -21,7 +22,13 @@ from ossdbs.fem.preconditioner import (
     LocalPreconditioner,
     MultigridPreconditioner,
 )
-from ossdbs.fem.solver import CGSolver, DirectSolver, GMRESSolver
+from ossdbs.fem.solver import (
+    CGSolver,
+    DirectSolver,
+    GMRESSolver,
+    _finalize_krylov_solve,
+    _krylov_convergence_status,
+)
 from ossdbs.fem.volume_conductor.floating import VolumeConductorFloating
 from ossdbs.fem.volume_conductor.floating_impedance import (
     VolumeConductorFloatingImpedance,
@@ -55,11 +62,177 @@ class TestSolver:
     def test_solver(self, solver_class):
         try:
             solver = solver_class(
-                precond_par=BDDCPreconditioner(), maxsteps=10000, precision=1e-12
+                precond_par=BDDCPreconditioner(),
+                maxsteps=10000,
+                precision=1e-12,
+                absolute_tolerance=1e-14,
             )
             assert solver is not None
+            assert solver._absolute_tolerance == 1e-14
         except Exception:
             pytest.fail("Cannot be instantiated.")
+
+    def test_absolute_tolerance_from_settings(self):
+        settings = Settings({"Solver": {"AbsoluteTolerance": 1e-8}}).complete_settings()
+
+        solver = ossdbs.prepare_solver(settings)
+
+        assert solver._absolute_tolerance == 1e-8
+
+    def test_absolute_tolerance_disabled_by_default(self):
+        settings = Settings({}).complete_settings()
+
+        solver = ossdbs.prepare_solver(settings)
+
+        assert solver._absolute_tolerance is None
+
+    def test_absolute_tolerance_must_be_positive(self):
+        settings = Settings({"Solver": {"AbsoluteTolerance": 0.0}}).complete_settings()
+
+        with pytest.raises(ValueError, match="AbsoluteTolerance must be positive"):
+            ossdbs.prepare_solver(settings)
+
+    @pytest.mark.parametrize(
+        ("solver_class", "ngsolve_solver_name"),
+        [(CGSolver, "CGSolver"), (GMRESSolver, "GMResSolver")],
+    )
+    def test_absolute_tolerance_forwarded_to_ngsolve(
+        self, solver_class, ngsolve_solver_name, mocker
+    ):
+        ngsolve_solver = SimpleNamespace(Solve=mocker.Mock())
+        constructor = mocker.patch(
+            f"ossdbs.fem.solver.ngsolve.krylovspace.{ngsolve_solver_name}",
+            return_value=ngsolve_solver,
+        )
+        mocker.patch("ossdbs.fem.solver.ngsolve.Preconditioner")
+        residual = mocker.MagicMock()
+        mocker.patch(
+            "ossdbs.fem.solver._log_initial_system_state", return_value=residual
+        )
+        mocker.patch("ossdbs.fem.solver._get_debug_mode", return_value=(False, False))
+        finalize = mocker.patch("ossdbs.fem.solver._finalize_krylov_solve")
+        bilinear_form = mocker.MagicMock()
+        linear_form = mocker.MagicMock()
+        grid_function = mocker.MagicMock()
+
+        solver = solver_class(
+            precond_par=BDDCPreconditioner(),
+            maxsteps=100,
+            precision=1e-8,
+            absolute_tolerance=1e-10,
+        )
+        solver.bvp(bilinear_form, linear_form, grid_function)
+
+        assert constructor.call_args.kwargs["tol"] == 1e-8
+        assert constructor.call_args.kwargs["atol"] == 1e-10
+        finalize.assert_called_once()
+
+    @pytest.mark.parametrize(
+        (
+            "residuals",
+            "relative_tolerance",
+            "absolute_tolerance",
+            "expected_target",
+            "expected_converged",
+        ),
+        [
+            ([2.0, 0.02], 1e-2, None, 0.02, True),
+            ([2.0, 0.021], 1e-2, None, 0.02, False),
+            ([2.0, 0.04], 1e-2, 0.05, 0.05, True),
+            ([2.0, 0.06], None, 0.05, 0.05, False),
+        ],
+    )
+    def test_krylov_convergence_status(
+        self,
+        residuals,
+        relative_tolerance,
+        absolute_tolerance,
+        expected_target,
+        expected_converged,
+    ):
+        solver = SimpleNamespace(
+            residuals=residuals,
+            tol=relative_tolerance,
+            atol=absolute_tolerance,
+        )
+
+        initial, final, target, converged = _krylov_convergence_status(solver)
+
+        assert initial == residuals[0]
+        assert final == residuals[-1]
+        assert target == pytest.approx(expected_target)
+        assert converged is expected_converged
+
+    def test_convergence_at_maximum_steps_does_not_raise(self, mocker):
+        solver = SimpleNamespace(
+            residuals=[1.0, 1e-8],
+            tol=1e-8,
+            atol=None,
+            iterations=500,
+        )
+        mocker.patch("ossdbs.fem.solver._warn_local_preconditioner_issue")
+
+        _finalize_krylov_solve(
+            solver,
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            False,
+            "CG",
+            500,
+        )
+
+    def test_nonconvergence_message_reports_effective_target(self, mocker):
+        solver = SimpleNamespace(
+            residuals=[0.1, 4.448e-9],
+            tol=1e-8,
+            atol=None,
+            iterations=500,
+        )
+        mocker.patch("ossdbs.fem.solver._warn_local_preconditioner_issue")
+
+        with pytest.raises(RuntimeError) as error:
+            _finalize_krylov_solve(
+                solver,
+                mocker.MagicMock(),
+                mocker.MagicMock(),
+                mocker.MagicMock(),
+                mocker.MagicMock(),
+                mocker.MagicMock(),
+                False,
+                "CG",
+                500,
+            )
+
+        message = str(error.value)
+        assert "Initial residual: 0.1" in message
+        assert "relative tolerance: 1e-08" in message
+        assert "absolute tolerance: None" in message
+        assert "target residual: 1e-09" in message
+        assert "final residual: 4.448e-09" in message
+
+    def test_absolute_tolerance_accepts_previous_final_residual(self, mocker):
+        solver = SimpleNamespace(
+            residuals=[0.1, 4.448e-9],
+            tol=1e-8,
+            atol=1e-8,
+            iterations=500,
+        )
+        mocker.patch("ossdbs.fem.solver._warn_local_preconditioner_issue")
+
+        _finalize_krylov_solve(
+            solver,
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            False,
+            "CG",
+            500,
+        )
 
 
 @pytest.fixture

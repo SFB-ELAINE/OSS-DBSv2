@@ -103,6 +103,7 @@ class Settings:
             "PreconditionerKwargs": {},
             "MaximumSteps": 10000,
             "Precision": 1e-12,
+            "AbsoluteTolerance": None,
         },
         "PointModel": {
             "Pathway": {"Active": False, "FileName": "", "ExportField": False},

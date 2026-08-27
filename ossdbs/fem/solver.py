@@ -358,6 +358,34 @@ def _warn_local_preconditioner_issue(
         )
 
 
+def _krylov_convergence_status(
+    solver: Any,
+) -> tuple[Any | None, Any | None, Any | None, bool]:
+    """Return residual values and convergence status for an NGSolve solver.
+
+    NGSolve interprets ``tol`` as a relative tolerance and ``atol`` as an
+    optional absolute tolerance. When both are set, the effective target is the
+    larger of ``initial_residual * tol`` and ``atol``.
+    """
+    if not solver.residuals:
+        return None, None, None, False
+
+    initial_residual = solver.residuals[0]
+    final_residual = solver.residuals[-1]
+    target_residual = None
+    if solver.tol is not None:
+        target_residual = initial_residual * solver.tol
+    if solver.atol is not None:
+        target_residual = (
+            solver.atol
+            if target_residual is None
+            else max(target_residual, solver.atol)
+        )
+
+    converged = target_residual is not None and final_residual <= target_residual
+    return initial_residual, final_residual, target_residual, converged
+
+
 def _finalize_krylov_solve(
     solver: Any,
     bilinear_form: ngsolve.BilinearForm,
@@ -374,7 +402,8 @@ def _finalize_krylov_solve(
 
     The helper applies the computed correction to the grid function, logs final
     residual information in debug mode, warns about suspicious ``local``
-    preconditioner behaviour, and raises if the iteration budget was exhausted.
+    preconditioner behaviour, and raises if the effective residual target was
+    not reached.
 
     Parameters
     ----------
@@ -401,13 +430,21 @@ def _finalize_krylov_solve(
     """
     grid_function.vec.data += correction
 
+    initial_residual, final_residual, target_residual, converged = (
+        _krylov_convergence_status(solver)
+    )
+
     residual_after = None
     if debug_enabled:
         residual_after = linear_form.vec.CreateVector()
         residual_after.data = linear_form.vec - bilinear_form.mat * grid_function.vec
-        _logger.debug("Converged after %s iterations", solver.iterations)
-        if solver.residuals:
-            _logger.debug("Final %s residual = %s", solver_name, solver.residuals[-1])
+        _logger.debug(
+            "%s after %s iterations",
+            "Converged" if converged else "Stopped",
+            solver.iterations,
+        )
+        if final_residual is not None:
+            _logger.debug("Final %s residual = %s", solver_name, final_residual)
         _logger.debug("Residual norm after %s = %s", solver_name, residual_after.Norm())
 
     _warn_local_preconditioner_issue(
@@ -419,15 +456,26 @@ def _finalize_krylov_solve(
         debug_enabled,
     )
 
-    if solver.iterations >= maxsteps:
-        final_residual = solver.residuals[-1] if solver.residuals else "unknown"
+    if not converged:
         message = (
-            "Did not converge after %s iterations with precision %s. Final "
-            "residual was %s. Increase the maximum number of steps, or try a "
-            "looser solver precision."
+            "%s did not converge after %s iterations (MaximumSteps: %s). "
+            "Initial residual: %s; relative tolerance: %s; absolute tolerance: "
+            "%s; target residual: %s; final residual: %s. Increase "
+            "MaximumSteps, choose a more suitable solver or preconditioner, or "
+            "relax the tolerances only after verifying solution accuracy."
         )
-        _logger.warning(message, solver.iterations, solver.tol, final_residual)
-        raise RuntimeError(message % (solver.iterations, solver.tol, final_residual))
+        values = (
+            solver_name,
+            solver.iterations,
+            maxsteps,
+            initial_residual,
+            solver.tol,
+            solver.atol,
+            target_residual,
+            final_residual,
+        )
+        _logger.warning(message, *values)
+        raise RuntimeError(message % values)
 
 
 class Solver(ABC):
@@ -440,6 +488,7 @@ class Solver(ABC):
         precond_par: Preconditioner = DEFAULT_PRECONDITIONER,
         maxsteps: int = 10000,
         precision: float = 1e-12,
+        absolute_tolerance: float | None = None,
     ) -> None:
         """Initialize the solver.
 
@@ -450,11 +499,15 @@ class Solver(ABC):
         maxsteps : int
             Maximum steps before solver ends
         precision : float
-            Desired precision
+            Relative residual tolerance.
+        absolute_tolerance : float | None
+            Absolute residual tolerance. If provided, NGSolve uses the larger
+            of this value and the relative residual target.
         """
         self._precond_par = precond_par.to_dictionary()
         self._maxsteps = maxsteps
         self._precision = precision
+        self._absolute_tolerance = absolute_tolerance
 
     @abstractmethod
     def bvp(
@@ -540,6 +593,7 @@ class CGSolver(Solver):
             printrates=printrates,
             maxiter=self._maxsteps,
             tol=self._precision,
+            atol=self._absolute_tolerance,
         )
         corr = grid_function.vec.CreateVector()
         corr[:] = 0.0
@@ -630,6 +684,7 @@ class GMRESSolver(Solver):
             printrates=printrates,
             maxiter=self._maxsteps,
             tol=self._precision,
+            atol=self._absolute_tolerance,
         )
         corr = grid_function.vec.CreateVector()
         corr[:] = 0.0

@@ -298,6 +298,9 @@ def prepare_solver(settings):
     """Set up solver and preconditioner."""
     _logger.info("Preparing solver")
     parameters = settings["Solver"]
+    absolute_tolerance = parameters.get("AbsoluteTolerance")
+    if absolute_tolerance is not None and absolute_tolerance <= 0:
+        raise ValueError("Solver.AbsoluteTolerance must be positive or null.")
     solver_type = parameters["Type"]
     solver = SOLVERS[solver_type]
     preconditioner_kwargs = parameters["PreconditionerKwargs"]
@@ -309,6 +312,7 @@ def prepare_solver(settings):
         precond_par=preconditioner,
         maxsteps=parameters["MaximumSteps"],
         precision=parameters["Precision"],
+        absolute_tolerance=absolute_tolerance,
     )
 
 
