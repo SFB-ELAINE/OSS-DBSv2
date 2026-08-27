@@ -1,3 +1,4 @@
+import contextlib
 import fileinput
 import logging
 import multiprocessing as mp
@@ -85,16 +86,15 @@ def _run_neuron_simulation(
     tuple
         (neuron_index, activated) or (neuron_index, None, error_message)
     """
-    global _mechanisms_loaded
+    # module-level flag memoizes the load once per worker process
+    global _mechanisms_loaded  # noqa: PLW0603
 
     try:
         # Load mechanisms once per worker process
         if not _mechanisms_loaded:
-            try:
+            # Mechanisms already loaded (can happen if pool reuses process)
+            with contextlib.suppress(RuntimeError):
                 neuron.load_mechanisms(neuron_workdir)
-            except RuntimeError:
-                # Mechanisms already loaded (can happen if pool reuses process)
-                pass
             _mechanisms_loaded = True
 
         # Load HOC file
@@ -131,11 +131,12 @@ def _run_neuron_simulation(
         neuron.h.stimul()
         neuron.h.run()
 
+    except Exception as e:  # noqa: BLE001
+        # a worker must report any failure back to the parent process
+        return (neuron_index, None, str(e))
+    else:
         activated = bool(neuron.h.stoprun)
         return (neuron_index, activated)
-
-    except Exception as e:
-        return (neuron_index, None, str(e))
 
 
 class NeuronSimulator(ABC):
@@ -269,7 +270,6 @@ class NeuronSimulator(ABC):
     @abstractmethod
     def modify_hoc_file(self, nRanvier, stepsPerMs, axon_morphology):
         """Update parameters in the hoc file."""
-        pass
 
     @property
     def neuron_executable(self) -> str:
@@ -279,7 +279,6 @@ class NeuronSimulator(ABC):
     @abstractmethod
     def paste_to_hoc(self, parameters_dict: dict):
         """Paste Python parameters into HOC file."""
-        pass
 
     def compile_neuron_files(self):
         """Compile a NEURON file."""
@@ -292,6 +291,7 @@ class NeuronSimulator(ABC):
             stderr=subprocess.STDOUT,
             cwd=os.path.abspath(self._neuron_workdir),
             shell=(sys.platform == "win32"),
+            check=False,
         )
         _logger.info("Load mechanisms into environment")
         # TODO should be written in a safer way
@@ -303,7 +303,6 @@ class NeuronSimulator(ABC):
                 " with loaded mechanism. "
                 "Run a new Python instance to circumvent this error."
             )
-            pass
 
     def load_solution(self, time_domain_h5_file: str):
         """Load solution from h5 file.
@@ -318,9 +317,7 @@ class NeuronSimulator(ABC):
         td_solution: h5 dataset
             Time-domain solution
         """
-        td_solution = h5py.File(time_domain_h5_file, "r")
-
-        return td_solution
+        return h5py.File(time_domain_h5_file, "r")
 
     def load_unit_solutions(self, time_domain_h5_files: list):
         """Load solutions from h5 file for each contact-ground.
@@ -362,7 +359,7 @@ class NeuronSimulator(ABC):
         td_solution = h5py.File(
             os.path.join(self.output_path, "combined_solution.h5"), mode="w"
         )
-        for obj in td_unit_solutions[0].keys():
+        for obj in td_unit_solutions[0]:
             td_unit_solutions[0].copy(obj, td_solution)
 
         pathways = list(td_unit_solutions[0].keys())
@@ -526,8 +523,7 @@ class NeuronSimulator(ABC):
         neuron.h.stimul()
         neuron.h.run()
         # decide if activated
-        activated = bool(neuron.h.stoprun)
-        return activated
+        return bool(neuron.h.stoprun)
 
     # ruff: noqa: C901
     def check_pathway_activation(
@@ -661,6 +657,7 @@ class NeuronSimulator(ABC):
                     future_to_idx,
                     timeout=NEURON_PROCESS_TIMEOUT * len(simulation_tasks),
                 ):
+                    # per-future error handling; the try cannot be hoisted out
                     try:
                         result = future.result(timeout=NEURON_PROCESS_TIMEOUT)
                         neuron_idx = result[0]
@@ -678,13 +675,14 @@ class NeuronSimulator(ABC):
                         else:
                             not_activated_neurons.add(neuron_idx)
 
-                    except TimeoutError:
+                    except TimeoutError:  # noqa: PERF203
                         neuron_idx = future_to_idx[future]
                         _logger.warning(
                             f"NEURON simulation timed out for neuron {neuron_idx}"
                         )
                         not_activated_neurons.add(neuron_idx)
-                    except Exception as e:
+                    except Exception as e:  # noqa: BLE001
+                        # keep processing remaining futures if one worker fails
                         neuron_idx = future_to_idx[future]
                         _logger.warning(
                             f"NEURON simulation error for neuron {neuron_idx}: {e}"
@@ -791,26 +789,24 @@ class MRG2002(NeuronSimulator):
         if not set(info_to_update) == set(parameters_dict.keys()):
             raise ValueError("Need to provide all parameters: {info_to_update}")
 
-        hoc_file = fileinput.input(
+        with fileinput.input(
             files=os.path.join(self._neuron_workdir, "axon4pyfull.hoc"), inplace=1
-        )
-        for line in hoc_file:
-            if any(line.startswith(matched_info := info) for info in info_to_update):
-                _logger.debug(f"Matched: {matched_info}")
-                _logger.debug(line)
-                replacement_line = f"{matched_info}={parameters_dict[matched_info]}\n"
-                line = replacement_line
-                _logger.debug(line)
-            print(line, end="")
-        hoc_file.close()
+        ) as hoc_file:
+            for line in hoc_file:
+                output_line = line
+                if any(
+                    line.startswith(matched_info := info) for info in info_to_update
+                ):
+                    _logger.debug(f"Matched: {matched_info}")
+                    _logger.debug(line)
+                    output_line = f"{matched_info}={parameters_dict[matched_info]}\n"
+                    _logger.debug(output_line)
+                print(output_line, end="")
 
     def modify_hoc_file(self, nRanvier, stepsPerMs, axon_morphology):
         """Update parameters in the hoc file."""
         fiber_diam = axon_morphology.fiber_diam
-        if fiber_diam >= 5.7:
-            axoninter = (nRanvier - 1) * 6
-        else:
-            axoninter = (nRanvier - 1) * 3
+        axoninter = (nRanvier - 1) * 6 if fiber_diam >= 5.7 else (nRanvier - 1) * 3
 
         parameters_dict = {
             "axonnodes": nRanvier,
@@ -1041,33 +1037,31 @@ class McNeal1976(NeuronSimulator):
         if not set(info_to_update) == set(parameters_dict.keys()):
             raise ValueError("Need to provide all parameters: {info_to_update}")
 
-        hoc_file = fileinput.input(
+        with fileinput.input(
             files=os.path.join(self._neuron_workdir, "init_B5_extracellular.hoc"),
             inplace=1,
-        )
-
-        for line in hoc_file:
-            if any(line.startswith(matched_info := info) for info in info_to_update):
-                _logger.debug(f"Matched: {matched_info}")
-                _logger.debug(line)
-                replacement_line = f"{matched_info}={parameters_dict[matched_info]}\n"
-                line = replacement_line
-                _logger.debug(line)
-            print(line, end="")
-        hoc_file.close()
+        ) as hoc_file:
+            for line in hoc_file:
+                output_line = line
+                if any(
+                    line.startswith(matched_info := info) for info in info_to_update
+                ):
+                    _logger.debug(f"Matched: {matched_info}")
+                    _logger.debug(line)
+                    output_line = f"{matched_info}={parameters_dict[matched_info]}\n"
+                    _logger.debug(output_line)
+                print(output_line, end="")
 
         NNODES_line = "NNODES ="
         axonnodes = parameters_dict["axonnodes"]
         NNODES_input = f"NNODES = {axonnodes}\n"
 
-        hoc_file = fileinput.input(
+        with fileinput.input(
             files=os.path.join(self._neuron_workdir, "axon5.hoc"), inplace=1
-        )
-        for line in hoc_file:
-            if line.startswith(NNODES_line):
-                line = NNODES_input
-            print(line, end="")
-        hoc_file.close()
+        ) as hoc_file:
+            for line in hoc_file:
+                output_line = NNODES_input if line.startswith(NNODES_line) else line
+                print(output_line, end="")
 
         return True
 

@@ -20,8 +20,7 @@ def get_timesteps(
     """Return list with timesteps."""
     cutoff_frequency = adjust_cutoff_frequency(2.0 * cutoff_frequency, base_frequency)
     dt = 1.0 / cutoff_frequency
-    timesteps = dt * np.arange(n_frequencies)
-    return timesteps
+    return dt * np.arange(n_frequencies)
 
 
 def retrieve_time_domain_signal_from_fft(
@@ -63,15 +62,13 @@ def reconstruct_time_signals(
 
     """
     # run irfft with maximum possible amount of workers
-    result_in_time = irfft(freq_domain_signal, n=signal_length, axis=0, workers=-1)
-    return result_in_time
+    return irfft(freq_domain_signal, n=signal_length, axis=0, workers=-1)
 
 
 def get_octave_band_indices(frequencies: np.ndarray) -> np.ndarray:
     """Return indices of octave band frequencies."""
     n_octaves = int(np.log2(len(frequencies) - 1)) + 1
-    octave_indices = 2 ** np.arange(0, n_octaves)
-    return octave_indices
+    return 2 ** np.arange(0, n_octaves)
 
 
 def get_minimum_octave_band_index(freq_idx: int) -> int:

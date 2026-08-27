@@ -81,3 +81,7 @@ class BoundingBox:
     def __eq__(self, other: "BoundingBox") -> bool:
         """Copy other bounding box."""
         return self.start == other.start and self.end == other.end
+
+    def __hash__(self) -> int:
+        """Hash consistent with __eq__ (based on start and end points)."""
+        return hash((self.start, self.end))

@@ -5,8 +5,8 @@
 from dataclasses import asdict, dataclass
 
 import netgen
-import netgen.occ as occ
 import numpy as np
+from netgen import occ
 
 from .electrode_model_template import ElectrodeModel
 from .utilities import get_highest_edge, get_lowest_edge
@@ -66,7 +66,7 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         for param_name, param_value in asdict(self._parameters).items():
             if param_name != "exposed_wire" and param_value < 0:
                 raise ValueError(f"Parameter {param_name} cannot be less than zero.")
-            elif param_name == "exposed_wire":
+            if param_name == "exposed_wire":
                 contact_radius = getattr(self._parameters, "contact_radius", None)
                 if contact_radius is not None and param_value < -contact_radius:
                     raise ValueError(
@@ -84,12 +84,13 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
                    than the length of exposed wire and contact radius."""
             )
         # check that wire is thick enough
-        if self._parameters.exposed_wire > 0:
-            if np.isclose(self._parameters.wire_radius, 0):
-                raise ValueError(
-                    """If exposed wire length is greater than zero,
-                    must specify wire radius to be greater than zero."""
-                )
+        if self._parameters.exposed_wire > 0 and np.isclose(
+            self._parameters.wire_radius, 0
+        ):
+            raise ValueError(
+                """If exposed wire length is greater than zero,
+                must specify wire radius to be greater than zero."""
+            )
         # wire cannot be wider than contact
         if self._parameters.wire_radius > self._parameters.contact_radius:
             raise ValueError("Wire radius cannot be bigger than contact radius")

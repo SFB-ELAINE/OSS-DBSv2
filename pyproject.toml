@@ -76,7 +76,7 @@ version_file = "ossdbs/_version.py"
 [tool.ruff]
 line-length = 88
 target-version = "py310"
-lint.extend-select = [
+lint.select = [
     "E", # style errors
     "W", # style warnings
     "F", # flakes
@@ -87,6 +87,40 @@ lint.extend-select = [
     "B",    # flake8-bugbear
     "A001", # flake8-builtins
     "RUF",  # ruff-specific rules
+    # --- rule sets reviewed and adopted with the ruff 0.16 upgrade ---
+    "SIM",   # flake8-simplify
+    "RET",   # flake8-return
+    "PIE",   # flake8-pie
+    "FLY",   # flynt
+    "FURB",  # refurb
+    "PERF",  # perflint
+    "PT",    # flake8-pytest-style
+    "LOG",   # flake8-logging
+    "G",     # flake8-logging-format
+    "TRY",   # tryceratops
+    "BLE",   # flake8-blind-except
+    "PLE",   # pylint errors
+    "DTZ",   # flake8-datetimez
+    "ASYNC", # flake8-async
+    "YTT",   # flake8-2020
+    "FA",    # flake8-future-annotations
+    "TC",    # flake8-type-checking
+    "INT",   # flake8-gettext
+    "PGH",   # pygrep-hooks
+    "EXE",   # flake8-executable
+    # curated pylint refactor/warning rules (family selected piecemeal to
+    # avoid the noisy PLR2004/PLR09xx/PLC0415 rules)
+    "PLC0206",
+    "PLR0402",
+    "PLR1704",
+    "PLR1711",
+    "PLR1714",
+    "PLR1730",
+    "PLR5501",
+    "PLW0603",
+    "PLW1510",
+    "PLW1641",
+    "PLW2901",
 ]
 
 lint.extend-ignore = [
@@ -99,11 +133,64 @@ lint.extend-ignore = [
     "D401", # First line should be in imperative mood
     "D413", # Missing blank line after last section
     "D416", # Section name should end with a colon
+    "TRY003", # Avoid specifying long messages outside the exception class
+    "G004",   # Logging statement uses f-string (accepted in this project)
 ]
 
+[tool.ruff.format]
+# Format Python code embedded in docstrings (and Markdown code blocks,
+# see the ruff-format pre-commit hook which also runs on *.md).
+docstring-code-format = true
+
 [tool.ruff.lint.per-file-ignores]
-"tests/*.py" = ["D", "S", "E501"]
+"tests/**" = [
+    "D",
+    "S",
+    "E501",
+    "BLE001", # broad `except Exception` is common/acceptable in test helpers
+    "PT011",  # broad `pytest.raises(...)` without match (opt-in follow-up)
+]
 "setup.py" = ["D"]
+# Examples and helper scripts are illustrative / not shipped: keep them on the
+# original rule set instead of the stricter sets adopted for the library.
+"examples/**" = [
+    "SIM",
+    "RET",
+    "PIE",
+    "FLY",
+    "FURB",
+    "PERF",
+    "PT",
+    "LOG",
+    "G",
+    "TRY",
+    "BLE",
+    "PLC",
+    "PLR",
+    "PLW",
+    "PLE",
+    "PGH",
+    "EXE",
+]
+"input_test_cases/**" = [
+    "SIM",
+    "RET",
+    "PIE",
+    "FLY",
+    "FURB",
+    "PERF",
+    "PT",
+    "LOG",
+    "G",
+    "TRY",
+    "BLE",
+    "PLC",
+    "PLR",
+    "PLW",
+    "PLE",
+    "PGH",
+    "EXE",
+]
 
 [tool.coverage.report]
 exclude_lines = [

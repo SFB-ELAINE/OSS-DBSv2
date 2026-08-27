@@ -84,12 +84,12 @@ class VolumeConductorFloating(VolumeConductor):
             )
         boundaries_floating = [contact.name for contact in self.contacts.floating]
         space_field = self.h1_space(boundaries, self.is_complex)
-        plateaus = []
-        for boundary in boundaries_floating:
-            plateaus.append(self.mesh.ngsolvemesh.Boundaries(boundary))
+        plateaus = [
+            self.mesh.ngsolvemesh.Boundaries(boundary)
+            for boundary in boundaries_floating
+        ]
         _logger.debug("Create finite element space")
-        finite_element_space = ngsolve.PlateauFESpace(space_field, plateaus)
-        return finite_element_space
+        return ngsolve.PlateauFESpace(space_field, plateaus)
 
     def __bilinear_form(self, sigma, space) -> ngsolve.BilinearForm:
         u = space.TrialFunction()

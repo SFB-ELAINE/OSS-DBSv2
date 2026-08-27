@@ -62,7 +62,7 @@ class ModelGeometry:
             try:
                 self._geometry = netgen.occ.OCCGeometry(self._shape)
             except netgen.occ.OCCException:
-                _logger.error(
+                _logger.exception(
                     "The geometry couldn't be constructed. "
                     "Tip: reduce the size of the brain geometry "
                     "or remove the encapsulation layer."
@@ -230,8 +230,6 @@ class ModelGeometry:
                     f"Tried to update contact with invalid setting {setting}"
                 )
 
-        return
-
     def update_encapsulation_layer(self, idx: int, settings: dict) -> None:
         """Overwrite encapsulation layer properties."""
         encapsulation_layer = self._encapsulation_layers[idx]
@@ -251,8 +249,6 @@ class ModelGeometry:
                 raise ValueError(
                     f"Tried to update encapsulation layer with setting {setting}"
                 )
-
-        return
 
     @property
     def encapsulation_layers(self) -> list:

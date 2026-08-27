@@ -3,8 +3,8 @@
 
 import logging
 
-import netgen.occ as occ
 import numpy as np
+from netgen import occ
 from scipy.spatial.transform import Rotation
 
 _logger = logging.getLogger(__name__)
@@ -32,7 +32,7 @@ def get_highest_edge(contact: occ.Face) -> occ.Edge:
 
 def get_signed_angle(
     v_in: np.ndarray, v_out: np.ndarray, rotation_axis: np.ndarray
-) -> None | float:
+) -> float | None:
     """Get signed angle between two vectors.
 
     Parameters

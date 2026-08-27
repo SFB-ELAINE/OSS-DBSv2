@@ -36,7 +36,7 @@ class TestNeuroNexusA1x16_5mm_50_177(TestElectrode):
 
     def test_custom_exists(self, electrode_name):
         customname = electrode_name + "Custom"
-        assert customname in ELECTRODE_MODELS.keys()
+        assert customname in ELECTRODE_MODELS
 
     def test_contact_area(self, electrode):
         """Check the contact area."""
@@ -44,8 +44,9 @@ class TestNeuroNexusA1x16_5mm_50_177(TestElectrode):
         contact_diameter = electrode._parameters.contact_diameter
 
         desired = np.pi * (0.5 * contact_diameter) ** 2
-        actual = []
-        for face in geometry.faces:
-            if face.name is not None and "Contact" in face.name:
-                actual.append(face.mass)
+        actual = [
+            face.mass
+            for face in geometry.faces
+            if face.name is not None and "Contact" in face.name
+        ]
         assert np.all(np.isclose(np.array(actual), desired))

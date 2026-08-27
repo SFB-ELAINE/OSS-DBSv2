@@ -20,7 +20,7 @@ class TestWhiteMatterModel:
     ]
 
     @pytest.mark.parametrize(
-        "frequency, permittivity, tolerance", TESTDATA_PERMITTIVITY
+        ("frequency", "permittivity", "tolerance"), TESTDATA_PERMITTIVITY
     )
     def test_permittivity(self, frequency, permittivity, tolerance):
         omega = 2 * np.pi * frequency
@@ -29,7 +29,7 @@ class TestWhiteMatterModel:
         np.testing.assert_allclose(actual, permittivity, atol=tolerance)
 
     @pytest.mark.parametrize(
-        "frequency, conductivity, tolerance", TESTDATA_CONDUCTIVITY
+        ("frequency", "conductivity", "tolerance"), TESTDATA_CONDUCTIVITY
     )
     def test_conductivity(self, frequency, conductivity, tolerance):
         omega = 2 * np.pi * frequency
@@ -52,7 +52,7 @@ class TestGrayMatterModel:
     ]
 
     @pytest.mark.parametrize(
-        "frequency, permittivity, tolerance", TESTDATA_PERMITTIVITY
+        ("frequency", "permittivity", "tolerance"), TESTDATA_PERMITTIVITY
     )
     def test_permittivity(self, frequency, permittivity, tolerance):
         omega = 2 * np.pi * frequency
@@ -61,7 +61,7 @@ class TestGrayMatterModel:
         np.testing.assert_allclose(actual, permittivity, atol=tolerance)
 
     @pytest.mark.parametrize(
-        "frequency, conductivity, tolerance", TESTDATA_CONDUCTIVITY
+        ("frequency", "conductivity", "tolerance"), TESTDATA_CONDUCTIVITY
     )
     def test_conductivity(self, frequency, conductivity, tolerance):
         omega = 2 * np.pi * frequency
@@ -84,7 +84,7 @@ class TestCerebroSpinalFluidModel:
     ]
 
     @pytest.mark.parametrize(
-        "frequency, permittivity, tolerance", TESTDATA_PERMITTIVITY
+        ("frequency", "permittivity", "tolerance"), TESTDATA_PERMITTIVITY
     )
     def test_permittivity(self, frequency, permittivity, tolerance):
         omega = 2 * np.pi * frequency
@@ -93,7 +93,7 @@ class TestCerebroSpinalFluidModel:
         np.testing.assert_allclose(actual, permittivity, atol=tolerance)
 
     @pytest.mark.parametrize(
-        "frequency, conductivity, tolerance", TESTDATA_CONDUCTIVITY
+        ("frequency", "conductivity", "tolerance"), TESTDATA_CONDUCTIVITY
     )
     def test_conductivity(self, frequency, conductivity, tolerance):
         omega = 2 * np.pi * frequency

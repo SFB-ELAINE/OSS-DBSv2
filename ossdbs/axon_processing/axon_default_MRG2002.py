@@ -76,7 +76,7 @@ def get_axon_parameters_template(diameter: float):
     # condg for fiber diameter was determined
     # using the polyfit from the data with 5.7 um and larger.
     # Resulting fitting function: 0.0001x^2+0.0139x+0.5235
-    elif np.isclose(diameter, 3.0):
+    if np.isclose(diameter, 3.0):
         return {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -97,7 +97,7 @@ def get_axon_parameters_template(diameter: float):
     # (fiberD==5.7)
     # {g=0.605 axonD=3.4 nodeD=1.9 paraD1=1.9 paraD2=3.4
     # deltax=500 paralength2=35 nl=80}
-    elif np.isclose(diameter, 5.7):
+    if np.isclose(diameter, 5.7):
         return {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -117,7 +117,7 @@ def get_axon_parameters_template(diameter: float):
     # (fiberD==7.3)
     # {g=0.630 axonD=4.6 nodeD=2.4 paraD1=2.4 paraD2=4.6
     # deltax=750 paralength2=38 nl=100}
-    elif np.isclose(diameter, 7.3):
+    if np.isclose(diameter, 7.3):
         return {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -137,7 +137,7 @@ def get_axon_parameters_template(diameter: float):
     # (fiberD==8.7)
     # {g=0.661 axonD=5.8 nodeD=2.8 paraD1=2.8 paraD2=5.8
     # deltax=1000 paralength2=40 nl=110}
-    elif np.isclose(diameter, 8.7):
+    if np.isclose(diameter, 8.7):
         return {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -157,7 +157,7 @@ def get_axon_parameters_template(diameter: float):
     # (fiberD==10.0)
     # {g=0.690 axonD=6.9 nodeD=3.3 paraD1=3.3 paraD2=6.9
     # deltax=1150 paralength2=46 nl=120}
-    elif np.isclose(diameter, 10.0):
+    if np.isclose(diameter, 10.0):
         return {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -177,7 +177,7 @@ def get_axon_parameters_template(diameter: float):
     # (fiberD==11.5)
     # {g=0.700 axonD=8.1 nodeD=3.7 paraD1=3.7 paraD2=8.1
     # deltax=1250 paralength2=50 nl=130}
-    elif np.isclose(diameter, 11.5):
+    if np.isclose(diameter, 11.5):
         return {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -197,7 +197,7 @@ def get_axon_parameters_template(diameter: float):
     # (fiberD==12.8)
     # {g=0.719 axonD=9.2 nodeD=4.2 paraD1=4.2 paraD2=9.2
     # deltax=1350 paralength2=54 nl=135}
-    elif np.isclose(diameter, 12.8):
+    if np.isclose(diameter, 12.8):
         return {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -217,7 +217,7 @@ def get_axon_parameters_template(diameter: float):
     # (fiberD==14.0)
     # {g=0.739 axonD=10.4 nodeD=4.7 paraD1=4.7 paraD2=10.4
     # deltax=1400 paralength2=56 nl=140}
-    elif np.isclose(diameter, 14.0):
+    if np.isclose(diameter, 14.0):
         return {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -237,7 +237,7 @@ def get_axon_parameters_template(diameter: float):
     # (fiberD==15.0)
     # {g=0.767 axonD=11.5 nodeD=5.0 paraD1=5.0 paraD2=11.5
     # deltax=1450 paralength2=58 nl=145}
-    elif np.isclose(diameter, 15.0):
+    if np.isclose(diameter, 15.0):
         return {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -257,7 +257,7 @@ def get_axon_parameters_template(diameter: float):
     # (fiberD==16.0)
     # {g=0.791 axonD=12.7 nodeD=5.5 paraD1=5.5 paraD2=12.7
     # deltax=1500 paralength2=60 nl=150}
-    elif np.isclose(diameter, 16.0):
+    if np.isclose(diameter, 16.0):
         return {
             "ranvier_nodes": 21,
             "para1_nodes": 40,
@@ -274,7 +274,6 @@ def get_axon_parameters_template(diameter: float):
             "condg": 0.791,
             "lamellas": 150,
         }
-    else:
-        raise NotImplementedError(
-            f"Axon parameters for diameter {diameter} are not yet implemented."
-        )
+    raise NotImplementedError(
+        f"Axon parameters for diameter {diameter} are not yet implemented."
+    )

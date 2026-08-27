@@ -69,8 +69,7 @@ def settings_fixture():
     )
     with open(json_path) as file:
         settings = json.load(file)
-    settings = Settings(settings).complete_settings()
-    return settings
+    return Settings(settings).complete_settings()
 
 
 @pytest.fixture
@@ -543,6 +542,7 @@ class TestRefineAfterRefineHPIsBroken:
             capture_output=True,
             text=True,
             timeout=300,
+            check=False,
         )
 
         true_vol = self._true_volume()

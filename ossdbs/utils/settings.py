@@ -161,7 +161,7 @@ class Settings:
         return settings
 
     def _update(self, target: dict, settings: dict) -> None:
-        for key in [key for key in target.keys() if key in settings.keys()]:
+        for key in [key for key in target if key in settings]:
             is_dict = False
             if isinstance(target[key], dict):
                 # empty dicts yield False

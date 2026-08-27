@@ -15,7 +15,8 @@ class TestBoundingBox:
         bbox2 = BoundingBox(start=(1.0, -1.0, 2.0), end=(1.0, 3.0, 5.0))
         intersect = bbox.intersection(bbox2)
 
-        assert intersect.start == (1.0, 1.0, 2.0) and intersect.end == (1.0, 3.0, 2.05)
+        assert intersect.start == (1.0, 1.0, 2.0)
+        assert intersect.end == (1.0, 3.0, 2.05)
 
     def test_points(self, bbox):
         desired = [

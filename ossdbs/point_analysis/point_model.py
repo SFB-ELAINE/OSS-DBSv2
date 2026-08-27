@@ -41,7 +41,7 @@ class PointModel(ABC):
     def collapse_VTA(self, value: bool):
         """Remove electrode from VTA."""
         if not isinstance(value, bool):
-            raise ValueError("Provide a boolean value for VTA collapse")
+            raise TypeError("Provide a boolean value for VTA collapse")
         self._collapse_VTA = value
 
     @property
@@ -61,7 +61,6 @@ class PointModel(ABC):
     @abstractmethod
     def _initialize_coordinates(self) -> np.ndarray:
         """Create grid / list of points."""
-        pass
 
     def save(self, data: TimeResult, file_name: str) -> None:
         """Save time-domain result to HDF5 file."""
@@ -131,7 +130,6 @@ class PointModel(ABC):
         activation_threshold: float
             Activation threshold for VTA estimate
         """
-        pass
 
     def _write_file(self, data: TimeResult, file: h5py.File):
         """Create datasets in HDF5 file.
@@ -698,8 +696,9 @@ class PointModel(ABC):
             # write points to file
             fp.write(f"{len(points)}\n")
             fp.write("\n")
-            for point in points:
-                fp.write(f"{point[0]} {point[1]} {point[2]} {meshsize}\n")
+            fp.writelines(
+                f"{point[0]} {point[1]} {point[2]} {meshsize}\n" for point in points
+            )
             # we could also write lines but we do not
             fp.write("\n")
             fp.write("0\n")

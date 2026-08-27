@@ -98,16 +98,13 @@ def create_leaddbs_outputs(
             savemat(os.path.join(output_path, "Axon_state.mat"), mdic)
         else:
             savemat(os.path.join(output_path, f"Axon_state_{pathway_name}.mat"), mdic)
+    elif pathway_name is None:
+        savemat(os.path.join(output_path, f"Axon_state_{scaling_index}.mat"), mdic)
     else:
-        if pathway_name is None:
-            savemat(os.path.join(output_path, f"Axon_state_{scaling_index}.mat"), mdic)
-        else:
-            savemat(
-                os.path.join(
-                    output_path, f"Axon_state_{pathway_name}_{scaling_index}.mat"
-                ),
-                mdic,
-            )
+        savemat(
+            os.path.join(output_path, f"Axon_state_{pathway_name}_{scaling_index}.mat"),
+            mdic,
+        )
 
 
 def create_paraview_outputs(
@@ -148,23 +145,20 @@ def create_paraview_outputs(
                 delimiter=",",
                 header="x-pt,y-pt,z-pt,idx,status",
             )
+    elif pathway_name is None:
+        np.savetxt(
+            os.path.join(output_path, f"Axon_state_{scaling_index}.csv"),
+            Axon_Lead_DBS,
+            delimiter=",",
+            header="x-pt,y-pt,z-pt,idx,status",
+        )
     else:
-        if pathway_name is None:
-            np.savetxt(
-                os.path.join(output_path, f"Axon_state_{scaling_index}.csv"),
-                Axon_Lead_DBS,
-                delimiter=",",
-                header="x-pt,y-pt,z-pt,idx,status",
-            )
-        else:
-            np.savetxt(
-                os.path.join(
-                    output_path, f"Axon_state_{pathway_name}_{scaling_index}.csv"
-                ),
-                Axon_Lead_DBS,
-                delimiter=",",
-                header="x-pt,y-pt,z-pt,idx,status",
-            )
+        np.savetxt(
+            os.path.join(output_path, f"Axon_state_{pathway_name}_{scaling_index}.csv"),
+            Axon_Lead_DBS,
+            delimiter=",",
+            header="x-pt,y-pt,z-pt,idx,status",
+        )
 
 
 def store_axon_statuses(
@@ -276,11 +270,7 @@ def resample_streamline_for_Ranvier(streamline_array, estim_axon_length, n_Ranvi
         last_segment_length * v_hat + streamline_array[cut_index + 1, :]
     )
 
-    streamline_resampled = set_number_of_points(
-        streamline_array_Ranvier, nb_points=n_Ranvier
-    )
-
-    return streamline_resampled
+    return set_number_of_points(streamline_array_Ranvier, nb_points=n_Ranvier)
 
 
 def index_for_length(xyz, req_length, along=True):
@@ -422,7 +412,7 @@ def place_axons_on_streamlines(
         # choose where to start seeding the axon
         if index < int(n_Ranvier / 2):
             # axon---fiber---fiber---fiber---fiber---#
-            for i in range(0, int(n_Ranvier)):
+            for i in range(int(n_Ranvier)):
                 single_streamline_ROI_centered[loc_index, :] = A[i]
                 loc_index += 1
         elif index + int(n_Ranvier / 2) + 1 > A.shape[0]:
@@ -430,22 +420,21 @@ def place_axons_on_streamlines(
             for i in range(A.shape[0] - n_Ranvier, A.shape[0]):
                 single_streamline_ROI_centered[loc_index, :] = A[i]
                 loc_index += 1
+        # ---fiber---fiber---axon---fiber---fiber---#
+        elif n_Ranvier % 2 == 0:
+            for i in range(
+                index - int(n_Ranvier / 2),
+                index + int(n_Ranvier / 2),
+            ):
+                single_streamline_ROI_centered[loc_index, :] = A[i]
+                loc_index += 1
         else:
-            # ---fiber---fiber---axon---fiber---fiber---#
-            if n_Ranvier % 2 == 0:
-                for i in range(
-                    index - int(n_Ranvier / 2),
-                    index + int(n_Ranvier / 2),
-                ):
-                    single_streamline_ROI_centered[loc_index, :] = A[i]
-                    loc_index += 1
-            else:
-                for i in range(
-                    index - int(n_Ranvier / 2),
-                    index + int(n_Ranvier / 2) + 1,
-                ):
-                    single_streamline_ROI_centered[loc_index, :] = A[i]
-                    loc_index += 1
+            for i in range(
+                index - int(n_Ranvier / 2),
+                index + int(n_Ranvier / 2) + 1,
+            ):
+                single_streamline_ROI_centered[loc_index, :] = A[i]
+                loc_index += 1
 
         axons_ROI_centered.append(single_streamline_ROI_centered)
 

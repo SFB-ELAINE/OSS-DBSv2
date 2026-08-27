@@ -44,9 +44,8 @@ class LeadSettings:
 
         # Check that both electrodes are either CC or VC
         cur_ctrl_arr = self.get_cur_ctrl()
-        if all(~np.isnan(cur_ctrl_arr)):
-            if cur_ctrl_arr[0] != cur_ctrl_arr[1]:
-                raise RuntimeError("Simultaneous use of VC and CC is not allowed!")
+        if all(~np.isnan(cur_ctrl_arr)) and cur_ctrl_arr[0] != cur_ctrl_arr[1]:
+            raise RuntimeError("Simultaneous use of VC and CC is not allowed!")
 
         # for now restrict to one electrode per simulation
         self.NUM_ELECS = 1
@@ -277,9 +276,8 @@ class LeadSettings:
         # do not use h1amg as coarsetype preconditioner
         # if floating potentials are involved
         # set also to floating if multicontact current-controlled
-        if not floating:
-            if current_controlled:
-                floating = True
+        if not floating and current_controlled:
+            floating = True
         if floating:
             partial_dict["Solver"]["Preconditioner"] = "local"
 
@@ -371,10 +369,9 @@ class LeadSettings:
 
     def get_cntct_loc(self, hemis_idx):
         """Contact location."""
-        contactCoords = np.asarray(
+        return np.asarray(
             self._file[self._settings["contactLocation"][hemis_idx, 0]][:, :]
         )
-        return contactCoords
 
     # Used to re-compute rot_z
     def get_y_mark_nat(self):
@@ -427,11 +424,8 @@ class LeadSettings:
             y = self.get_y_mark_nat()[index_side, :] - head_nat
 
         norm_y = np.linalg.norm(y)
-        if norm_y < 1e-10:
-            # If norm is too small, use zero vector (rotation angle will be 0)
-            y_postop = np.zeros_like(y)
-        else:
-            y_postop = y / norm_y
+        # if norm is too small, use zero vector (rotation angle will be 0)
+        y_postop = np.zeros_like(y) if norm_y < 1e-10 else y / norm_y
 
         phi = np.arctan2(-y_postop[0], y_postop[1])
         return phi * 180.0 / np.pi
@@ -670,17 +664,17 @@ class LeadSettings:
             len(phi_vector_valid) > 0 and np.max(np.abs(phi_vector_valid)) > 5.0
         )
 
-        if (
-            electrode_name == "BostonScientificVercise"
-            or electrode_name == "BostonScientificVerciseCustom"
-            or electrode_name == "SceneRay1202"
-            or electrode_name == "SceneRay1202Custom"
-            or electrode_name == "SceneRay1212"
-            or electrode_name == "SceneRay1212Custom"
-            or electrode_name == "SceneRay1242"
-            or electrode_name == "SceneRay1242Custom"
-            or has_large_amplitude
-        ):
+        fine_grid_electrodes = {
+            "BostonScientificVercise",
+            "BostonScientificVerciseCustom",
+            "SceneRay1202",
+            "SceneRay1202Custom",
+            "SceneRay1212",
+            "SceneRay1212Custom",
+            "SceneRay1242",
+            "SceneRay1242Custom",
+        }
+        if electrode_name in fine_grid_electrodes or has_large_amplitude:
             grid_resolution = 0.4
         else:
             grid_resolution = 0.33
@@ -760,13 +754,12 @@ class LeadSettings:
             "AdTech BF12R-SP05X": "BF12R_SP05X_0BH",
         }
 
-        for lead in electrode_names.keys():
-            if lead == electrode_name:
-                electrode_name = electrode_names[lead]
+        if electrode_name in electrode_names:
+            electrode_name = electrode_names[electrode_name]
 
         # Check that oss electrode name is valid
-        if electrode_name not in default_electrode_parameters.keys():
-            raise Exception(electrode_name + " is not a recognized electrode type")
+        if electrode_name not in default_electrode_parameters:
+            raise ValueError(f"{electrode_name} is not a recognized electrode type")
 
         stretched_parameters = self.stretch_electrode(electrode_name, hemis_idx)
 
@@ -809,8 +802,9 @@ class LeadSettings:
 
         return elec_dict, unit_directions, specs_array_length
 
-    # ruff: noqa C901
-    def import_stimulation_settings(self, hemis_idx, current_controlled, elec_dict):
+    def import_stimulation_settings(  # noqa: C901
+        self, hemis_idx, current_controlled, elec_dict
+    ):
         """Convert Lead-DBS stim settings to OSS-DBS parameters,
         update electrode dictionary.
 
@@ -876,7 +870,6 @@ class LeadSettings:
             # for this electrode
 
             cntct_dicts = np.empty(len(pulse_amp), dtype=object)
-            cntcts_made = 0
 
             # get edge size from lead diameter
             # used in mesh refinement
@@ -888,7 +881,7 @@ class LeadSettings:
                 # all (truly) non-active contacts are floating with 0A
                 if np.isnan(pulse_amp[i]):
                     floating = True
-                    cntct_dicts[cntcts_made] = {
+                    cntct_dicts[i] = {
                         # Assuming one-indexed contact ids
                         "Contact_ID": i + 1,
                         "Active": False,
@@ -896,28 +889,25 @@ class LeadSettings:
                         "Voltage[V]": 0.0,
                         "Floating": True,
                     }
+                # for current-controlled, we have a pseudo non-active contact
+                elif current_controlled:
+                    cntct_dicts[i] = {
+                        # Assuming one-indexed contact ids
+                        "Contact_ID": i + 1,
+                        "Active": False,
+                        "Current[A]": pulse_amp[i],
+                        "Voltage[V]": 0.0,
+                        "Floating": True,
+                    }
                 else:
-                    # for current-controlled, we have a pseudo non-active contact
-                    if current_controlled:
-                        cntct_dicts[cntcts_made] = {
-                            # Assuming one-indexed contact ids
-                            "Contact_ID": i + 1,
-                            "Active": False,
-                            "Current[A]": pulse_amp[i],
-                            "Voltage[V]": 0.0,
-                            "Floating": True,
-                        }
-                    else:
-                        cntct_dicts[cntcts_made] = {
-                            # Assuming one-indexed contact ids
-                            "Contact_ID": i + 1,
-                            "Active": True,
-                            "Current[A]": 0.0,
-                            "Voltage[V]": pulse_amp[i],
-                            "Floating": False,
-                        }
-
-                cntcts_made += 1
+                    cntct_dicts[i] = {
+                        # Assuming one-indexed contact ids
+                        "Contact_ID": i + 1,
+                        "Active": True,
+                        "Current[A]": 0.0,
+                        "Voltage[V]": pulse_amp[i],
+                        "Floating": False,
+                    }
 
         elec_dict["Contacts"] = cntct_dicts.tolist()
 
@@ -932,8 +922,7 @@ class LeadSettings:
     def _get_num(self, field_name):
         if self._is_h5():
             return self._settings[field_name][0][0]
-        else:
-            return self._settings[field_name][0][0][0][0]
+        return self._settings[field_name][0][0][0][0]
 
     def _get_str(self, field_name):
         entry = ""
@@ -949,8 +938,6 @@ class LeadSettings:
     def _get_arr(self, field_name):
         if self._is_h5():
             return self._settings[field_name][:, :].T
-        else:
-            if len(self._settings[field_name][0][0]) == 1:
-                return self._settings[field_name][0][0][0]
-            else:
-                return self._settings[field_name][0][0].astype(float)
+        if len(self._settings[field_name][0][0]) == 1:
+            return self._settings[field_name][0][0][0]
+        return self._settings[field_name][0][0].astype(float)

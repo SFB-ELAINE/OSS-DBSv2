@@ -2,6 +2,7 @@
 # Copyright 2023, 2024 Johannes Reding, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import contextlib
 import json
 import logging
 import os
@@ -546,12 +547,10 @@ class VolumeConductor(ABC):
         # and write point model reports
         for point_model in point_models:
             point_model.close_output_file()
-            try:
+            with contextlib.suppress(NotImplementedError):
                 point_model.export_point_model_information(
                     os.path.join(point_model.output_path, point_model.name + ".json")
                 )
-            except NotImplementedError:
-                pass
 
         if len(self.signal.frequencies) > 1 and not multisine_mode:
             self.export_solution_at_contacts()
@@ -749,8 +748,7 @@ class VolumeConductor(ABC):
         """
         mesh = self.mesh.ngsolvemesh
         x, y, z = lattice.T
-        pots = self.potential(mesh(x, y, z))
-        return pots
+        return self.potential(mesh(x, y, z))
 
     def evaluate_field_at_points(self, lattice: np.ndarray) -> np.ndarray:
         """Return electric field components at specifed 3-D coordinates.
@@ -767,8 +765,7 @@ class VolumeConductor(ABC):
         """
         mesh = self.mesh.ngsolvemesh
         x, y, z = lattice.T
-        fields = self.electric_field(mesh(x, y, z))
-        return fields
+        return self.electric_field(mesh(x, y, z))
 
     @property
     def current_density(self) -> ngsolve.GridFunction:
@@ -785,10 +782,9 @@ class VolumeConductor(ABC):
         """Compute power in domain."""
         mesh = self.mesh.ngsolvemesh
         # do not need to account for mm because of integration
-        power = ngsolve.Integrate(
+        return ngsolve.Integrate(
             ngsolve.Conj(self.electric_field) * self.current_density, mesh
         )
-        return power
 
     def compute_impedance(self) -> complex:
         """Compute scalar impedance at most recent solution.
@@ -1086,30 +1082,29 @@ class VolumeConductor(ABC):
                 else:
                     contact_voltage = float(contact_idx) + 1
                     self.contacts[contact.name].voltage = contact_voltage
+        elif len(self.contacts.active) == 0:
+            # All contacts are floating (e.g. FloatingImpedance).
+            # The Lagrange multiplier constrains the sum of floating
+            # potentials to zero, providing the voltage reference.
+            _logger.info(
+                "No active contacts — all floating with surface "
+                "impedance. Sum-of-potentials constraint is used."
+            )
+        elif len(self.contacts.active) == 1:
+            for contact in self.contacts.active:
+                if not np.isclose(contact.voltage, 0):
+                    raise ValueError(
+                        "In multicontact current-controlled mode, "
+                        "only ground voltage (0V) can be set on "
+                        "active contacts!"
+                    )
         else:
-            if len(self.contacts.active) == 0:
-                # All contacts are floating (e.g. FloatingImpedance).
-                # The Lagrange multiplier constrains the sum of floating
-                # potentials to zero, providing the voltage reference.
-                _logger.info(
-                    "No active contacts — all floating with surface "
-                    "impedance. Sum-of-potentials constraint is used."
-                )
-            elif len(self.contacts.active) == 1:
-                for contact in self.contacts.active:
-                    if not np.isclose(contact.voltage, 0):
-                        raise ValueError(
-                            "In multicontact current-controlled mode, "
-                            "only ground voltage (0V) can be set on "
-                            "active contacts!"
-                        )
-            else:
-                raise ValueError(
-                    "In multicontact current-controlled mode, "
-                    "currently only one active contact with fixed "
-                    "voltage can be used. "
-                    "Its voltage has to be 0V (ground)."
-                )
+            raise ValueError(
+                "In multicontact current-controlled mode, "
+                "currently only one active contact with fixed "
+                "voltage can be used. "
+                "Its voltage has to be 0V (ground)."
+            )
 
     def setup_timings_dict(
         self, export_vtk: bool, point_models: list[PointModel]
@@ -1195,17 +1190,16 @@ class VolumeConductor(ABC):
         """Check if conductivity has changed."""
         if self._sigma is None:
             return True
-        else:
-            dielectric_properties = self._conductivity_cf.dielectric_properties
-            old_frequency = frequency_indices[freq_idx - 1] * self.signal.base_frequency
-            new_frequency = frequency_indices[freq_idx] * self.signal.base_frequency
-            return have_dielectric_properties_changed(
-                dielectric_properties,
-                self.is_complex,
-                old_frequency,
-                new_frequency,
-                threshold,
-            )
+        dielectric_properties = self._conductivity_cf.dielectric_properties
+        old_frequency = frequency_indices[freq_idx - 1] * self.signal.base_frequency
+        new_frequency = frequency_indices[freq_idx] * self.signal.base_frequency
+        return have_dielectric_properties_changed(
+            dielectric_properties,
+            self.is_complex,
+            old_frequency,
+            new_frequency,
+            threshold,
+        )
 
     def _frequency_domain_exports(
         self,

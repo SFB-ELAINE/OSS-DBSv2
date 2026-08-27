@@ -148,10 +148,9 @@ def generate_brain_model(settings, rotate_initial_geo: bool = False):
     brain_region_parameters = settings["BrainRegion"]
     brain_shape = brain_region_parameters["Shape"]
     brain_region = create_bounding_box(brain_region_parameters)
-    brain_model = BrainGeometry(
+    return BrainGeometry(
         brain_shape, brain_region, rotate_initial_geo=rotate_initial_geo
     )
-    return brain_model
 
 
 def generate_model_geometry(settings):
@@ -182,24 +181,21 @@ def build_brain_model(
         brain_region = create_bounding_box(region_parameters)
         shape = settings["BrainRegion"]["Shape"]
         return BrainGeometry(shape, brain_region, rotate_initial_geo=rotate_initial_geo)
-    else:
-        _logger.debug("Generating model geometry from MRI image")
-        if mri_image is None:
-            raise ValueError("Need to provide MRI image to build geo.")
-        # attention: bounding box is given in voxel space!
-        brain_region = mri_image.bounding_box
-        shape = "Ellipsoid"
-        # transformation to real space in geometry creation
-        _logger.debug(
-            "Generate OCC model, passing transformation matrix from MRI image"
-        )
-        return BrainGeometry(
-            shape,
-            brain_region,
-            trafo_matrix=mri_image.trafo_matrix,
-            translation=mri_image.translation,
-            rotate_intial_geo=rotate_initial_geo,
-        )
+    _logger.debug("Generating model geometry from MRI image")
+    if mri_image is None:
+        raise ValueError("Need to provide MRI image to build geo.")
+    # attention: bounding box is given in voxel space!
+    brain_region = mri_image.bounding_box
+    shape = "Ellipsoid"
+    # transformation to real space in geometry creation
+    _logger.debug("Generate OCC model, passing transformation matrix from MRI image")
+    return BrainGeometry(
+        shape,
+        brain_region,
+        trafo_matrix=mri_image.trafo_matrix,
+        translation=mri_image.translation,
+        rotate_intial_geo=rotate_initial_geo,
+    )
 
 
 def set_contact_and_encapsulation_layer_properties(settings, model_geometry):
@@ -284,14 +280,13 @@ def validate_solver_settings(settings: dict, model_geometry: ModelGeometry) -> N
     floating_mode = model_geometry.get_floating_mode()
     preconditioner = settings["Solver"].get("Preconditioner", "bddc")
 
-    if floating_mode == "FloatingImpedance":
-        if preconditioner == "bddc":
-            _logger.warning(
-                "BDDC preconditioner is not compatible with FloatingImpedance "
-                "formulation. Switching to 'local' preconditioner."
-            )
-            settings["Solver"]["Preconditioner"] = "local"
-            settings["Solver"]["PreconditionerKwargs"] = {}
+    if floating_mode == "FloatingImpedance" and preconditioner == "bddc":
+        _logger.warning(
+            "BDDC preconditioner is not compatible with FloatingImpedance "
+            "formulation. Switching to 'local' preconditioner."
+        )
+        settings["Solver"]["Preconditioner"] = "local"
+        settings["Solver"]["PreconditionerKwargs"] = {}
 
 
 def prepare_solver(settings):
@@ -410,7 +405,7 @@ def prepare_volume_conductor_model(
             model_geometry, conductivity, solver, order, mesh_parameters, output_path
         )
 
-    elif floating_mode == "FloatingImpedance":
+    if floating_mode == "FloatingImpedance":
         _logger.debug("FloatingImpedance mode selected")
         return VolumeConductorFloatingImpedance(
             model_geometry, conductivity, solver, order, mesh_parameters, output_path
@@ -444,7 +439,7 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
         fft_frequencies, fft_coefficients, signal_length = signal.get_fft_spectrum(
             cutoff_frequency
         )
-    frequency_domain_signal = FrequencyDomainSignal(
+    return FrequencyDomainSignal(
         frequencies=fft_frequencies,
         amplitudes=fft_coefficients,
         current_controlled=current_controlled,
@@ -453,7 +448,6 @@ def prepare_stimulation_signal(settings) -> FrequencyDomainSignal:
         signal_length=signal_length,
         octave_band_approximation=octave_band_approximation,
     )
-    return frequency_domain_signal
 
 
 def run_volume_conductor_model(
@@ -480,15 +474,13 @@ def run_volume_conductor_model(
 
     out_of_core = settings["OutOfCore"]
     compute_impedance = False
-    if "ComputeImpedance" in settings:
-        if settings["ComputeImpedance"]:
-            _logger.info("Will compute impedance at each frequency")
-            compute_impedance = True
+    if settings.get("ComputeImpedance"):
+        _logger.info("Will compute impedance at each frequency")
+        compute_impedance = True
     compute_currents = False
-    if "ComputeCurrents" in settings:
-        if settings["ComputeCurrents"]:
-            _logger.info("Will estimate currents at each frequency")
-            compute_currents = True
+    if settings.get("ComputeCurrents"):
+        _logger.info("Will estimate currents at each frequency")
+        compute_currents = True
     if "ExportVTK" in settings:
         export_vtk = settings["ExportVTK"]
         if export_vtk:
@@ -689,8 +681,6 @@ def run_PAM(settings):
     if settings["StimSets"]["Active"]:
         settings.setdefault("CurrentVector", None)
         # files to load individual solutions from
-        time_domain_solution_files = []
-
         if settings["StimSets"]["StimSetsFile"] is not None:
             _logger.info("Load current vectors form file.")
             stim_protocols = np.genfromtxt(
@@ -712,13 +702,13 @@ def run_PAM(settings):
 
         # load unit solutions once
         _logger.info("Load unit solutions")
-        for contact_i in range(n_contacts):
-            time_domain_solution_files.append(
-                os.path.join(
-                    settings["OutputPath"] + f"E1C{contact_i + 1}",
-                    "oss_time_result_PAM.h5",
-                )
+        time_domain_solution_files = [
+            os.path.join(
+                settings["OutputPath"] + f"E1C{contact_i + 1}",
+                "oss_time_result_PAM.h5",
             )
+            for contact_i in range(n_contacts)
+        ]
 
         td_unit_solutions = neuron_model.load_unit_solutions(time_domain_solution_files)
 

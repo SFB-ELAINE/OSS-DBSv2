@@ -114,12 +114,12 @@ def _log_info(msg):
 def _check_pyinstaller():
     try:
         import PyInstaller
-
-        _log_ok(f"PyInstaller {PyInstaller.__version__} found")
-        return True
     except ImportError:
         _log_err("PyInstaller is not installed. Run: pip install pyinstaller")
         return False
+    else:
+        _log_ok(f"PyInstaller {PyInstaller.__version__} found")
+        return True
 
 
 def _check_entry_points():
@@ -165,7 +165,7 @@ def _check_importable(label, modules):
         try:
             importlib.import_module(mod)
             _log_ok(f"{mod}")
-        except ImportError as e:
+        except ImportError as e:  # noqa: PERF203
             _log_warn(f"{mod} -> not importable: {e}")
 
 
@@ -203,11 +203,11 @@ def _preflight():
 
 
 def _resolve_binaries():
-    result = []
-    for pattern, dest in ADD_BINARIES_PATTERNS:
-        for m in glob.glob(pattern):
-            result.append((_safe_path(os.path.abspath(m)), dest))
-    return result
+    return [
+        (_safe_path(os.path.abspath(m)), dest)
+        for pattern, dest in ADD_BINARIES_PATTERNS
+        for m in glob.glob(pattern)
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -364,7 +364,7 @@ def _build_entry(name, spec_content):
     cmd.append(str(spec_path))
 
     _log_info(f"Command: {' '.join(cmd)}")
-    result = subprocess.run(cmd)
+    result = subprocess.run(cmd, check=False)
 
     if result.returncode != 0:
         _log_err(f"Build FAILED for '{name}' (exit code {result.returncode})")
@@ -412,7 +412,7 @@ def _copy_tree_items(src_dir, bundle, errors, entry_name=None):
                 shutil.copytree(item, dest)
             else:
                 shutil.copy2(item, dest)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             errors.append(f"Copy failed: {item} -> {dest}: {e}")
 
 

@@ -143,10 +143,8 @@ class Nifti1Image:
         bbox_start = [start.x, start.y, start.z]
         bbox_end = [end.x, end.y, end.z]
         for i in range(3):
-            if bbox_start[i] < 0:
-                bbox_start[i] = 0
-            if bbox_end[i] > self.xyz_shape[i]:
-                bbox_end[i] = self.xyz_shape[i]
+            bbox_start[i] = max(bbox_start[i], 0)
+            bbox_end[i] = min(bbox_end[i], self.xyz_shape[i])
         return BoundingBox(
             np.floor(np.array(bbox_start)).astype(int),
             np.floor(np.array(bbox_end)).astype(int),
@@ -234,7 +232,7 @@ class VTAImage(MagneticResonanceImage):
     def compute_dice_coefficent(self, reference_image) -> float:
         """Compute dice coefficient with image of same shape."""
         if not isinstance(reference_image, VTAImage):
-            raise ValueError("Can compute Dice coefficient only for VTAImage type.")
+            raise TypeError("Can compute Dice coefficient only for VTAImage type.")
         affines_equal = np.all(np.isclose(self.affine, reference_image.affine))
         if not affines_equal:
             raise ValueError("Need to provide a reference_image from same space.")
@@ -251,8 +249,7 @@ class VTAImage(MagneticResonanceImage):
         # take size of entire voxel image
         data_size = self.data.size + reference_image.data.size
         # compute dice coefficient
-        dice_coefficient = 2.0 * intersection / data_size
-        return dice_coefficient
+        return 2.0 * intersection / data_size
 
     def get_vta_volume(self) -> float:
         """Compute volume of VTA."""

@@ -15,11 +15,13 @@ repos:
       - id: validate-pyproject
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.20
+    rev: v0.16.1
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+        # also format Python code blocks embedded in Markdown files
+        types_or: [python, pyi, jupyter, markdown]
 
   - repo: https://github.com/kynan/nbstripout
     rev: 0.9.1
