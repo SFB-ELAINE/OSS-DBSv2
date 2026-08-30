@@ -102,7 +102,7 @@
     "PreconditionerKwargs": {},
     "PrintRates": true,
     "MaximumSteps": 2000,
-    "Precision": 1e-8
+    "RelativeTolerance": 1e-8
   },
   "PointModel": {
     "Pathway": {
