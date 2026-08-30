@@ -48,7 +48,8 @@ def load_default_for_lead(settings):
     settings["ComputeImpedance"] = False
 
     settings["Solver"]["MaximumSteps"] = 2000
-    settings["Solver"]["Precision"] = 1e-10
+    settings["Solver"]["RelativeTolerance"] = 1e-8
+    settings["Solver"]["AbsoluteTolerance"] = 1e-8
 
     return settings
 
