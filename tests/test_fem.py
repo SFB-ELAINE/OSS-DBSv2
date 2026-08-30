@@ -64,7 +64,7 @@ class TestSolver:
             solver = solver_class(
                 precond_par=BDDCPreconditioner(),
                 maxsteps=10000,
-                precision=1e-12,
+                relative_tolerance=1e-12,
                 absolute_tolerance=1e-14,
             )
             assert solver is not None
@@ -79,12 +79,12 @@ class TestSolver:
 
         assert solver._absolute_tolerance == 1e-8
 
-    def test_absolute_tolerance_disabled_by_default(self):
+    def test_absolute_tolerance_default(self):
         settings = Settings({}).complete_settings()
 
         solver = ossdbs.prepare_solver(settings)
 
-        assert solver._absolute_tolerance is None
+        assert np.isclose(solver._absolute_tolerance, 1e-12)
 
     def test_absolute_tolerance_must_be_positive(self):
         settings = Settings({"Solver": {"AbsoluteTolerance": 0.0}}).complete_settings()
@@ -118,7 +118,7 @@ class TestSolver:
         solver = solver_class(
             precond_par=BDDCPreconditioner(),
             maxsteps=100,
-            precision=1e-8,
+            relative_tolerance=1e-8,
             absolute_tolerance=1e-10,
         )
         solver.bvp(bilinear_form, linear_form, grid_function)
@@ -486,7 +486,7 @@ class TestCustomizedLocalPreconditioner:
         solver = CGSolver(
             precond_par=CustomizedLocalPreconditioner(),
             maxsteps=2000,
-            precision=1e-10,
+            relative_tolerance=1e-10,
         )
 
         conductivity = ossdbs.ConductivityCF(
@@ -532,12 +532,12 @@ class TestCustomizedLocalPreconditioner:
         local_solver = CGSolver(
             precond_par=LocalPreconditioner(),
             maxsteps=2000,
-            precision=1e-10,
+            relative_tolerance=1e-10,
         )
         customized_solver = CGSolver(
             precond_par=CustomizedLocalPreconditioner(),
             maxsteps=2000,
-            precision=1e-10,
+            relative_tolerance=1e-10,
         )
 
         local_volume_conductor = _build_volume_conductor_with_solver(

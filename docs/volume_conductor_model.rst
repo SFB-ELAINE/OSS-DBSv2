@@ -284,12 +284,12 @@ Convergence parameters
 - ``MaximumSteps`` (default: 10000) — upper limit on Krylov iterations. If
   the solver hits this limit, it raises a ``RuntimeError``. Increase this
   value for very large problems or tight precision targets.
-- ``Precision`` (default: 1e-12) — relative residual tolerance. For most
+- ``RelativeTolerance`` (default: 1e-12) — relative residual tolerance. For most
   applications, 1e-8 to 1e-10 is sufficient. Very tight values (1e-12 and
   below) increase iteration count without visible improvement in the solution.
 - ``AbsoluteTolerance`` (default: ``null``) — optional positive absolute residual
   tolerance. When both tolerances are configured, NGSolve stops when the
-  residual reaches the larger of ``initial residual * Precision`` and
+  residual reaches the larger of ``initial residual * RelativeTolerance`` and
   ``AbsoluteTolerance``. Leave this unset unless an absolute residual threshold
   has been validated for the problem and preconditioner.
 - ``PrintRates`` — when ``true``, the solver prints the residual norm at each

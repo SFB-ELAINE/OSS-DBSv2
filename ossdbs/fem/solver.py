@@ -487,8 +487,8 @@ class Solver(ABC):
         self,
         precond_par: Preconditioner = DEFAULT_PRECONDITIONER,
         maxsteps: int = 10000,
-        precision: float = 1e-12,
-        absolute_tolerance: float | None = None,
+        relative_tolerance: float = 1e-12,
+        absolute_tolerance: None | float = None,
     ) -> None:
         """Initialize the solver.
 
@@ -498,7 +498,7 @@ class Solver(ABC):
             Preconditioner
         maxsteps : int
             Maximum steps before solver ends
-        precision : float
+        relative_tolerance : float
             Relative residual tolerance.
         absolute_tolerance : float | None
             Absolute residual tolerance. If provided, NGSolve uses the larger
@@ -506,7 +506,7 @@ class Solver(ABC):
         """
         self._precond_par = precond_par.to_dictionary()
         self._maxsteps = maxsteps
-        self._precision = precision
+        self._relative_tolerance = relative_tolerance
         self._absolute_tolerance = absolute_tolerance
 
     @abstractmethod
@@ -592,7 +592,7 @@ class CGSolver(Solver):
             pre=preconditioner,
             printrates=printrates,
             maxiter=self._maxsteps,
-            tol=self._precision,
+            tol=self._relative_tolerance,
             atol=self._absolute_tolerance,
         )
         corr = grid_function.vec.CreateVector()
@@ -683,7 +683,7 @@ class GMRESSolver(Solver):
             pre=preconditioner,
             printrates=printrates,
             maxiter=self._maxsteps,
-            tol=self._precision,
+            tol=self._relative_tolerance,
             atol=self._absolute_tolerance,
         )
         corr = grid_function.vec.CreateVector()

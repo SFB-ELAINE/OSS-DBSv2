@@ -311,8 +311,8 @@ def prepare_solver(settings):
     return solver(
         precond_par=preconditioner,
         maxsteps=parameters["MaximumSteps"],
-        precision=parameters["Precision"],
-        absolute_tolerance=absolute_tolerance,
+        relative_tolerance=parameters["RelativeTolerance"],
+        absolute_tolerance=parameters["AbsoluteTolerance"],
     )
 
 

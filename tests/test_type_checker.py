@@ -67,8 +67,8 @@ setting = {
         "Preconditioner": "bddc",
         "PrintRates": False,
         "MaximumSteps": 10000,
-        "Precision": 1e-12,
-        "AbsoluteTolerance": None,
+        "RelativeTolerance": 1e-12,
+        "AbsoluteTolerance": 1e-12,
     },
     "SpectrumMode": "FullSpectrum",
     "StimulationSignal": {
