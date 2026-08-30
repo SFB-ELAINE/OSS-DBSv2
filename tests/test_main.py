@@ -109,7 +109,8 @@ class TestMainRun:
                 "Preconditioner": "bddc",
                 "PreconditionerKwargs": {},
                 "MaximumSteps": 100,
-                "Precision": 1e-8,
+                "RelativeTolerance": 1e-8,
+                "AbsoluteTolerance": 1e-8,
             },
             "StimulationSignal": {
                 "Type": "Multisine",

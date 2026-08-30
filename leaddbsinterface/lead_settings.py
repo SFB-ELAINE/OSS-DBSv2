@@ -282,9 +282,6 @@ class LeadSettings:
                 floating = True
         if floating:
             partial_dict["Solver"]["Preconditioner"] = "local"
-            # increase number of iterations for FFEM
-            if partial_dict["CalcAxonActivation"]:
-                partial_dict["Solver"]["MaximumSteps"] = 2000
 
         return partial_dict
 
