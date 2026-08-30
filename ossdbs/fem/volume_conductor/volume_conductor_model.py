@@ -274,15 +274,17 @@ class VolumeConductor(ABC):
 
         if compute_impedance:
             # scalar 1-D array, one entry per frequency
-            self._impedances = np.zeros(
-                shape=(len(self.signal.frequencies),), dtype=dtype
+            # filled with NaNs to detect indexing errors
+            self._impedances = np.full(
+                shape=(len(self.signal.frequencies),), fill_value=np.nan, dtype=dtype
             )
 
         if estimate_currents:
             self._currents = {}
             for contact in self.contacts:
-                self._currents[contact.name] = np.ndarray(
-                    shape=(len(self.signal.frequencies)), dtype=dtype
+                # filled with NaNs to detect indexing errors
+                self._currents[contact.name] = np.full(
+                    shape=(len(self.signal.frequencies)), fill_value=np.nan, dtype=dtype
                 )
 
         for computing_idx, freq_idx in enumerate(frequency_indices):
@@ -393,13 +395,15 @@ class VolumeConductor(ABC):
                 _logger.info(f"Skipped computation at {frequency} Hz")
                 if compute_impedance:
                     # copy from previous frequency
-                    impedance = self._impedances[computing_idx - 1]
+                    previous_freq_idx = frequency_indices[computing_idx - 1]
+                    impedance = self._impedances[previous_freq_idx]
                     self._impedances[band_indices] = impedance
                 if estimate_currents:
+                    previous_freq_idx = frequency_indices[computing_idx - 1]
                     for contact in self.contacts:
                         self._currents[contact.name][band_indices] = self._currents[
                             contact.name
-                        ][computing_idx - 1]
+                        ][previous_freq_idx]
             # scale factor: is one for VC and depends on impedance for other case
             self._scale_factor = self.get_scale_factor(freq_idx)
             _logger.debug(f"Scale factor: {self._scale_factor}")
@@ -463,6 +467,15 @@ class VolumeConductor(ABC):
             self._surface_impedances = None
         # save impedance at all frequencies to file!
         if compute_impedance:
+            missing = np.flatnonzero(np.isnan(self._impedances))
+            if missing.size > 0:
+                missing_freqs = self.signal.frequencies[missing]
+                raise RuntimeError(
+                    "Impedance was not computed for "
+                    f"{missing.size} frequency/-ies: {missing_freqs}. "
+                    "This indicates a bug in the octave-band / skip-frequency "
+                    "bookkeeping in run_full_analysis()."
+                )
             _logger.info("Saving impedance")
             df = pd.DataFrame(
                 {
@@ -473,6 +486,16 @@ class VolumeConductor(ABC):
             )
             df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
         if estimate_currents:
+            for contact in self.contacts:
+                missing = np.flatnonzero(np.isnan(self._currents[contact.name]))
+                if missing.size > 0:
+                    missing_freqs = self.signal.frequencies[missing]
+                    raise RuntimeError(
+                        f"Current for contact {contact.name} was not computed for "
+                        f"{missing.size} frequency/-ies: {missing_freqs}. "
+                        "This indicates a bug in the octave-band / skip-frequency "
+                        "bookkeeping in run_full_analysis()."
+                    )
             df = pd.DataFrame(
                 {
                     "freq": self.signal.frequencies,

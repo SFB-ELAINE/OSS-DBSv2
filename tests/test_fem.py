@@ -34,6 +34,7 @@ from ossdbs.fem.volume_conductor.floating_impedance import (
     VolumeConductorFloatingImpedance,
 )
 from ossdbs.fem.volume_conductor.nonfloating import VolumeConductorNonFloating
+from ossdbs.fem.volume_conductor.volume_conductor_model import VolumeConductor
 from ossdbs.utils.settings import Settings
 
 
@@ -899,3 +900,101 @@ class TestScalarImpedanceOnly:
 
         with pytest.raises(NotImplementedError, match="exactly 2 active"):
             VolumeConductor.compute_impedance(_Stub())
+
+
+class _FakeContact:
+    def __init__(self, name, current):
+        self.name = name
+        self.current = current
+        self.voltage = 0.0
+
+
+class _FakeContacts:
+    def __init__(self, contacts):
+        self._contacts = contacts
+        self.active = contacts
+        self.floating = []
+
+    def __iter__(self):
+        return iter(self._contacts)
+
+
+class _SkipBookkeepingVolumeConductor(VolumeConductor):
+    """Stub exercising only the octave-band skip-frequency bookkeeping."""
+
+    def __init__(self, output_path):
+        self._contacts = _FakeContacts(
+            [_FakeContact("E0", 1.0), _FakeContact("E1", -1.0)]
+        )
+        self.is_complex = True
+        self.output_path = output_path
+        self._floating_potentials = None
+        self.solved_frequencies = []
+
+    def compute_solution(self, frequency):
+        self.solved_frequencies.append(frequency)
+
+    def update_space(self):
+        pass
+
+    def prepare_current_controlled_mode(self):
+        pass
+
+    def _save_report(self, timings):
+        pass
+
+    def compute_impedance(self):
+        freq_idx = round(self.solved_frequencies[-1] / 100.0)
+        return complex(100.0 + freq_idx, 0.0)
+
+    def estimate_currents(self):
+        freq_idx = round(self.solved_frequencies[-1] / 100.0)
+        return {contact.name: 50.0 + freq_idx for contact in self.contacts}
+
+    def _has_sigma_changed(self, computing_idx, frequency_indices, threshold):
+        # Force exactly one skip, at the representative frequency 8 * 100 Hz,
+        # so that computing_idx (4) and the previous representative
+        # frequency's real array index (4) diverge from a naive
+        # `computing_idx - 1` (3).
+        return computing_idx != 4
+
+
+class TestOctaveBandSkipBookkeeping:
+    """Regression test for the octave-band "skip frequency" bookkeeping.
+
+    ``run_full_analysis`` reuses the impedance/current of the previous
+    *representative* frequency when the conductivity has not changed
+    enough to warrant a new solve. Under octave-band approximation the
+    loop counter (``computing_idx``, a position in the sparse
+    ``frequency_indices`` array) and the actual frequency-array index
+    (``freq_idx``) diverge, so the reused value must be looked up via
+    ``frequency_indices[computing_idx - 1]`` rather than
+    ``computing_idx - 1`` directly.
+    """
+
+    def _run(self, tmp_path):
+        vc = _SkipBookkeepingVolumeConductor(str(tmp_path))
+        signal = SimpleNamespace(
+            frequencies=np.arange(20) * 100.0,
+            amplitudes=np.ones(20),
+            octave_band_approximation=True,
+            current_controlled=True,
+        )
+        vc.run_full_analysis(signal, compute_impedance=True, estimate_currents=True)
+        return vc
+
+    def test_skipped_impedance_matches_previous_representative_frequency(
+        self, tmp_path
+    ):
+        vc = self._run(tmp_path)
+        # Band for freq_idx=8 (Hz 800) is [7, 8, 9, 10, 11]; it must copy
+        # the impedance computed at freq_idx=4 (104), not the stale value
+        # sitting at raw array position `computing_idx - 1 == 3` (102).
+        assert np.allclose(vc.impedances[[7, 8, 9, 10, 11]], 104.0)
+        assert not np.any(np.isnan(vc.impedances))
+
+    def test_skipped_currents_match_previous_representative_frequency(self, tmp_path):
+        vc = self._run(tmp_path)
+        currents = vc._currents["E0"]
+        assert np.allclose(currents[[7, 8, 9, 10, 11]], 54.0)
+        assert not np.any(np.isnan(currents))
