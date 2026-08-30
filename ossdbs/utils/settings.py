@@ -102,8 +102,8 @@ class Settings:
             "Preconditioner": "bddc",
             "PreconditionerKwargs": {},
             "MaximumSteps": 10000,
-            "RelativeTolerance": 1e-12,
-            "AbsoluteTolerance": 1e-12,
+            "RelativeTolerance": 1e-8,
+            "AbsoluteTolerance": 1e-8,
         },
         "PointModel": {
             "Pathway": {"Active": False, "FileName": "", "ExportField": False},

@@ -85,7 +85,7 @@ class TestSolver:
 
         solver = ossdbs.prepare_solver(settings)
 
-        assert np.isclose(solver._absolute_tolerance, 1e-12)
+        assert np.isclose(solver._absolute_tolerance, 1e-8)
 
     def test_absolute_tolerance_must_be_positive(self):
         settings = Settings({"Solver": {"AbsoluteTolerance": 0.0}}).complete_settings()
