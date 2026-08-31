@@ -1,0 +1,121 @@
+{
+  "benchmark_version": 1,
+  "label": "ringeltaube",
+  "timestamp_utc": "2026-08-31T20:03:45+00:00",
+  "variant": "lattice",
+  "strategy": {
+    "meshing_hypothesis": "Fine",
+    "hp_refinement": {
+      "Active": true,
+      "Levels": 2,
+      "Factor": 0.125
+    },
+    "material_refinement_steps": 1,
+    "case": "VTA/BostonScientificVerciseDirected, case grounding"
+  },
+  "machine": {
+    "hostname": "ringeltaube",
+    "os": "Ubuntu 24.04.4 LTS",
+    "platform": "Linux",
+    "kernel": "6.8.0-124-generic",
+    "arch": "x86_64",
+    "cpu_model": "Intel(R) Xeon(R) CPU E5-2687W v4 @ 3.00GHz",
+    "cores_physical": 24,
+    "cores_logical": 48,
+    "memory_gb": 131.9,
+    "python": "3.13.2",
+    "packages": {
+      "ngsolve": "6.2.2601",
+      "netgen": "6.2.2601",
+      "neuron": "8.2.7",
+      "numpy": "2.5.2",
+      "scipy": "1.18.0"
+    },
+    "thread_env": {
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": null,
+      "OPENBLAS_NUM_THREADS": "1",
+      "NGSOLVE_NUM_THREADS": null
+    },
+    "ossdbs_commit": "81da943"
+  },
+  "repeats": 3,
+  "best": {
+    "fem_total": 74.421,
+    "pam_total": null,
+    "wall_total": 74.421,
+    "load_images": 0.58,
+    "geometry": 0.488,
+    "contact_properties": 0.0,
+    "dielectric_model": 0.0,
+    "conductivity": 0.299,
+    "meshing_and_refinement_derived": 13.94,
+    "fem_solve": 1.623,
+    "point_model_copy": 35.358,
+    "time_reconstruction": 0.0,
+    "field_export": 21.968,
+    "n_frequencies": 1,
+    "dofs": 337823,
+    "elements": 243795,
+    "vta_volume_mm3": 9.079239027521748
+  },
+  "all_runs": [
+    {
+      "fem_total": 74.421,
+      "pam_total": null,
+      "wall_total": 74.421,
+      "load_images": 0.58,
+      "geometry": 0.488,
+      "contact_properties": 0.0,
+      "dielectric_model": 0.0,
+      "conductivity": 0.299,
+      "meshing_and_refinement_derived": 13.94,
+      "fem_solve": 1.623,
+      "point_model_copy": 35.358,
+      "time_reconstruction": 0.0,
+      "field_export": 21.968,
+      "n_frequencies": 1,
+      "dofs": 337823,
+      "elements": 243795,
+      "vta_volume_mm3": 9.079239027521748
+    },
+    {
+      "fem_total": 74.653,
+      "pam_total": null,
+      "wall_total": 74.653,
+      "load_images": 0.501,
+      "geometry": 0.483,
+      "contact_properties": 0.0,
+      "dielectric_model": 0.0,
+      "conductivity": 0.288,
+      "meshing_and_refinement_derived": 13.708,
+      "fem_solve": 1.678,
+      "point_model_copy": 35.856,
+      "time_reconstruction": 0.0,
+      "field_export": 21.971,
+      "n_frequencies": 1,
+      "dofs": 337823,
+      "elements": 243795,
+      "vta_volume_mm3": 9.079239027521746
+    },
+    {
+      "fem_total": 74.825,
+      "pam_total": null,
+      "wall_total": 74.825,
+      "load_images": 0.496,
+      "geometry": 0.486,
+      "contact_properties": 0.0,
+      "dielectric_model": 0.0,
+      "conductivity": 0.265,
+      "meshing_and_refinement_derived": 14.266,
+      "fem_solve": 1.527,
+      "point_model_copy": 35.594,
+      "time_reconstruction": 0.0,
+      "field_export": 22.026,
+      "n_frequencies": 1,
+      "dofs": 337823,
+      "elements": 243795,
+      "vta_volume_mm3": 9.079239027521746
+    }
+  ]
+}
