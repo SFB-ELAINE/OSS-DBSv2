@@ -363,7 +363,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
                         loc_pos = loc_pos + (self.para2_length + self.inter_length) / 2
                     if inx_loc in [4, 5, 6, 7, 8]:
                         loc_pos = loc_pos + self.inter_length / 1
-                loc_coords[inx_loc - 1] = loc_pos
+                    loc_coords[inx_loc - 1] = loc_pos
             else:
                 # node -- -- internodal -- -- -- -- internodal -- -- node
                 for inx_loc in np.arange(1, self.n_comp):
@@ -380,7 +380,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
                         loc_pos = loc_pos + 5 * self.inter_length
                     else:
                         raise RuntimeError("Wrong number of compartments")
-                loc_coords[inx_loc - 1] = loc_pos
+                    loc_coords[inx_loc - 1] = loc_pos
 
         elif self.fiber_diam < 5.7:
             if not self.downsampled:
@@ -393,7 +393,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
                         loc_pos = loc_pos + (self.para2_length + self.inter_length) / 2
                     if inx_loc == 4 or inx_loc == 5:
                         loc_pos = loc_pos + self.inter_length  # switch to mm from µm
-                loc_coords[inx_loc - 1] = loc_pos
+                    loc_coords[inx_loc - 1] = loc_pos
             else:
                 # mode -- -- -- internodal -- -- -- node
                 loc_coords[0] = (
@@ -701,14 +701,18 @@ class AxonModels:
             for j in range(total_protocols):
                 protocols_array[j, :] = list(stim_protocols[j])
                 for i in range(total_contacts):
-                    if not math.isnan(protocols_array[j, i]):
+                    if not math.isnan(protocols_array[j, i]) and not np.isclose(
+                        protocols_array[j, i], 0.0
+                    ):
                         ampl_vector[i] = 1.0
         else:
             ampl_vector = list(file_inp["settings"]["Phi_vector"][:, hemis_idx])
 
         self.centering_coordinates = []
         for i in range(len(ampl_vector)):
-            if not (math.isnan(ampl_vector[i])):
+            if not (math.isnan(ampl_vector[i])) and (
+                not np.isclose(ampl_vector[i], 0.0)
+            ):
                 a_ref = file_inp["settings"]["contactLocation"][hemis_idx][0]
                 b = file_inp[a_ref]
                 self.centering_coordinates.append(b[:, i])
