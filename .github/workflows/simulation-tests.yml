@@ -24,13 +24,15 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-          cache-dependency-path: "pyproject.toml"
-          cache: "pip"
+
+      - name: ⚡ Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
 
       - name: Install Dependencies
-        run: |
-          python -m pip install -U pip
-          python -m pip install .[test,impedance]
+        run: uv pip install --system ".[test,impedance]"
 
       - name: Run Fast Simulation Tests
         run: |
@@ -74,13 +76,15 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
-          cache-dependency-path: "pyproject.toml"
-          cache: "pip"
+
+      - name: ⚡ Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
 
       - name: Install Dependencies (with NEURON)
-        run: |
-          python -m pip install -U pip
-          python -m pip install .[test,impedance] neuron
+        run: uv pip install --system ".[test,impedance]" neuron
 
       - name: Verify NEURON is importable
         run: python -c "import neuron; print('NEURON', neuron.__version__)"

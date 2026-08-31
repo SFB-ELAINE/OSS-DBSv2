@@ -8,9 +8,16 @@ Each entry point is built as a separate --onedir target (no MERGE — it is
 broken in PyInstaller >= 6.x).  The resulting per-entry folders are then
 merged into one shared bundle so that DLLs and packages are not duplicated.
 
+This script freezes whatever is installed in the *current* environment. For
+reproducible bundles, provision that environment from the checked-in uv.lock
+first (uv sync). On Windows this environment is also where NEURON is installed
+and compiled before freezing, so that end users get PAM support without
+installing NEURON themselves.
+
 Usage:
-    pip install pyinstaller
-    python build_merged.py [--debug]
+    uv sync                       # or: pip install -e .
+    uv run pip install pyinstaller
+    uv run python build_merged.py [--debug]
 
     --debug     Enable PyInstaller --log-level=DEBUG and print the
                 generated .spec file contents
