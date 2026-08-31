@@ -245,9 +245,11 @@ class VolumeConductor(ABC):
         if self.signal.octave_band_approximation:
             frequency_indices = get_octave_band_indices(self.signal.frequencies)
             # add DC component
-            if not np.isclose(self.signal.amplitudes[0], 0.0):
+            skip_dc = np.isclose(self.signal.amplitudes[0], 0.0)
+            if not skip_dc:
                 frequency_indices = np.insert(frequency_indices, 0, 0)
         else:
+            skip_dc = False
             frequency_indices = np.arange(len(self.signal.frequencies))
 
         if export_frequency is None:
@@ -278,6 +280,10 @@ class VolumeConductor(ABC):
             self._impedances = np.full(
                 shape=(len(self.signal.frequencies),), fill_value=np.nan, dtype=dtype
             )
+            if skip_dc:
+                # DC has zero amplitude and is never solved for; its
+                # impedance is not needed and is reported as zero
+                self._impedances[0] = 0.0
 
         if estimate_currents:
             self._currents = {}
@@ -286,6 +292,8 @@ class VolumeConductor(ABC):
                 self._currents[contact.name] = np.full(
                     shape=(len(self.signal.frequencies)), fill_value=np.nan, dtype=dtype
                 )
+                if skip_dc:
+                    self._currents[contact.name][0] = 0.0
 
         for computing_idx, freq_idx in enumerate(frequency_indices):
             frequency = self.signal.frequencies[freq_idx]
