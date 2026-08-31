@@ -82,7 +82,9 @@
       "Faces": {},
       "Volumes": {}
     },
-    "SaveMesh": false
+    "SaveMesh": false,
+    "LoadMesh": true,
+    "LoadPath": "precomputed_mesh.vol.gz"
   },
   "Solver": {
     "Type": "CG",

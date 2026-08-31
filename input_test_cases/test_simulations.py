@@ -268,6 +268,12 @@ def _prepare_settings(input_dir: str, input_json: str) -> dict:
             BASE / input_dir / settings["StimSets"]["StimSetsFile"]
         )
 
+    # Mesh LoadPath
+    if settings.get("Mesh", {}).get("LoadMesh") and settings["Mesh"].get("LoadPath"):
+        settings["Mesh"]["LoadPath"] = str(
+            (json_path.parent / settings["Mesh"]["LoadPath"]).resolve()
+        )
+
     # PathwayFile for run_PAM (pathway_parameters.json next to data.h5)
     pathway_fn = settings.get("PointModel", {}).get("Pathway", {}).get("FileName", "")
     if pathway_fn and settings.get("PointModel", {}).get("Pathway", {}).get("Active"):
