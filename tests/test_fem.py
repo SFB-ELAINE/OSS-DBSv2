@@ -330,6 +330,113 @@ class TestMesh:
             pytest.fail("Cannot be instantiated.")
 
 
+class TestLocatePointsCache:
+    """``Mesh.locate_points`` caches, and refinement invalidates the cache.
+
+    Locating points is the dominant cost of the point analysis, so the
+    result is reused across the CSF / encapsulation masks and the
+    potential / field evaluations at every frequency. Element numbers
+    change under refinement, so a stale entry would silently evaluate the
+    solution at the wrong elements.
+    """
+
+    @staticmethod
+    def _mesh():
+        box = Box(Pnt(0, 0, 0), Pnt(10, 10, 10))
+        box.bc("brain")
+        mesh = Mesh(OCCGeometry(box), order=2)
+        mesh.generate_mesh({"MeshingHypothesis": {"Type": "Default"}})
+        return mesh
+
+    @staticmethod
+    def _points():
+        return np.array([[1.0, 1.0, 1.0], [5.0, 5.0, 5.0], [9.0, 9.0, 9.0]])
+
+    @staticmethod
+    def _located_afresh(mesh, points):
+        # a copy is a different object, so it bypasses the id-keyed cache
+        return np.array(mesh.ngsolvemesh(*points.copy().T)["nr"])
+
+    def test_repeated_call_is_cached(self):
+        mesh = self._mesh()
+        points = self._points()
+        assert mesh.locate_points(points) is mesh.locate_points(points)
+
+    def test_refinement_invalidates_cache(self):
+        mesh = self._mesh()
+        points = self._points()
+        n_elements_before = mesh.ngsolvemesh.ne
+        mesh.locate_points(points)
+
+        mesh.ngsolvemesh.ngmesh.Elements3D().NumPy()["refine"] = 1
+        mesh.refine()
+        assert mesh.ngsolvemesh.ne > n_elements_before
+
+        located = np.array(mesh.locate_points(points)["nr"])
+        assert np.array_equal(located, self._located_afresh(mesh, points))
+
+    def test_mesh_token_catches_refinement_without_invalidation(self):
+        """The token alone must catch a refinement, as defense in depth."""
+        mesh = self._mesh()
+        points = self._points()
+        mesh.locate_points(points)
+
+        mesh.invalidate_point_location_cache = lambda: None
+        mesh.ngsolvemesh.ngmesh.Elements3D().NumPy()["refine"] = 1
+        mesh.refine()
+
+        located = np.array(mesh.locate_points(points)["nr"])
+        assert np.array_equal(located, self._located_afresh(mesh, points))
+
+    def test_not_included_is_boolean_mask(self):
+        mesh = self._mesh()
+        points = np.array([[100.0, 100.0, 100.0], [5.0, 5.0, 5.0]])
+        not_included = mesh.not_included(points)
+        assert not_included.dtype == bool
+        assert not_included[0]
+        assert not not_included[1]
+
+    def test_several_point_models_are_cached_independently(self):
+        """A Pathway and a Lattice can be active in the same run.
+
+        They hold different point arrays, so both must be cached side by
+        side without evicting or shadowing each other.
+        """
+        mesh = self._mesh()
+        pathway_points = self._points()
+        lattice_points = np.array([[2.0, 3.0, 4.0], [6.0, 7.0, 8.0]])
+
+        # interleaved, as the pipeline evaluates them per frequency
+        first_pathway = mesh.locate_points(pathway_points)
+        first_lattice = mesh.locate_points(lattice_points)
+        assert mesh.locate_points(pathway_points) is first_pathway
+        assert mesh.locate_points(lattice_points) is first_lattice
+        assert first_pathway is not first_lattice
+
+        assert np.array_equal(
+            np.array(first_pathway["nr"]),
+            self._located_afresh(mesh, pathway_points),
+        )
+        assert np.array_equal(
+            np.array(first_lattice["nr"]),
+            self._located_afresh(mesh, lattice_points),
+        )
+
+    def test_refinement_invalidates_every_point_model(self):
+        mesh = self._mesh()
+        pathway_points = self._points()
+        lattice_points = np.array([[2.0, 3.0, 4.0], [6.0, 7.0, 8.0]])
+        mesh.locate_points(pathway_points)
+        mesh.locate_points(lattice_points)
+
+        mesh.ngsolvemesh.ngmesh.Elements3D().NumPy()["refine"] = 1
+        mesh.refine()
+
+        for points in (pathway_points, lattice_points):
+            located = np.array(mesh.locate_points(points)["nr"])
+            assert np.array_equal(located, self._located_afresh(mesh, points))
+
+
 class TestConductivity:
     def test_conductivityCF(self, settings_fixture, mri_fixture, geometry_fixture):
         try:

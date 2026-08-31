@@ -112,12 +112,6 @@ class VolumeConductor(ABC):
         # whenever an ActivationThreshold is configured.
         self._vta_volume = None
 
-        # Cache of located points, see _mapped_points(). Mapping a lattice
-        # onto the mesh is a spatial search that costs orders of magnitude
-        # more than the field evaluation it enables, and the same lattice is
-        # mapped again for every frequency and for both potential and field.
-        self._point_mapping_cache = {}
-
     @abstractmethod
     def compute_solution(self, frequency: float) -> None:
         """Compute solution at frequency.
@@ -139,7 +133,6 @@ class VolumeConductor(ABC):
         # HP refinement must come after bisection-based material refinement
         self.mesh.apply_hp_refinement()
         self.update_space()
-        self.invalidate_point_mapping_cache()
 
     def apply_h_refinements(self, material_mesh_refinement_steps: int = 0):
         """Apply only h-refinements (material bisection).
@@ -149,7 +142,6 @@ class VolumeConductor(ABC):
         applied on each loaded mesh instance.
         """
         self.refine_mesh_by_material(material_mesh_refinement_steps)
-        self.invalidate_point_mapping_cache()
 
     def apply_hp_and_update_space(self):
         """Apply deferred HP refinement and rebuild the FEM space.
@@ -159,7 +151,6 @@ class VolumeConductor(ABC):
         """
         self.mesh.apply_hp_refinement()
         self.update_space()
-        self.invalidate_point_mapping_cache()
 
     # ruff: noqa: C901
     def run_full_analysis(
@@ -774,49 +765,6 @@ class VolumeConductor(ABC):
         """Most recent frequency, not equal to the frequency of the signal!."""
         return self._frequency
 
-    def _mesh_token(self) -> tuple:
-        """Return a value that changes whenever the mesh topology changes.
-
-        Used to invalidate cached point mappings. Any refinement adds
-        elements and vertices, so a token built from those counts cannot
-        miss a change -- including adaptive refinement, which re-meshes
-        part way through ``run_full_analysis``.
-        """
-        ngmesh = self.mesh.ngsolvemesh
-        return (id(ngmesh), ngmesh.ne, ngmesh.nv)
-
-    def invalidate_point_mapping_cache(self) -> None:
-        """Drop cached point mappings, e.g. after the mesh has changed."""
-        self._point_mapping_cache.clear()
-
-    def _mapped_points(self, lattice: np.ndarray):
-        """Return the lattice points located on the mesh, cached.
-
-        Locating points is a spatial search over the whole mesh and costs
-        far more than evaluating a GridFunction at the result, so the
-        mapping is reused across frequencies and between the potential and
-        field evaluations.
-
-        The cache is keyed on the identity of the lattice array -- the
-        array itself is stored alongside the mapping, which keeps it alive
-        and therefore keeps its ``id`` from being reused by another object.
-        Entries are additionally validated against the mesh token, so a
-        refinement invalidates them even if nothing calls
-        ``invalidate_point_mapping_cache``.
-        """
-        token = self._mesh_token()
-        key = id(lattice)
-        cached = self._point_mapping_cache.get(key)
-        if cached is not None:
-            cached_token, cached_lattice, mapping = cached
-            if cached_token == token and cached_lattice is lattice:
-                return mapping
-
-        x, y, z = lattice.T
-        mapping = self.mesh.ngsolvemesh(x, y, z)
-        self._point_mapping_cache[key] = (token, lattice, mapping)
-        return mapping
-
     def evaluate_potential_at_points(self, lattice: np.ndarray) -> np.ndarray:
         """Return electric potential at specifed 3-D coordinates.
 
@@ -830,7 +778,7 @@ class VolumeConductor(ABC):
         Requires that points outside of the computational domain
         have been filtered!
         """
-        return self.potential(self._mapped_points(lattice))
+        return self.potential(self.mesh.locate_points(lattice))
 
     def evaluate_field_at_points(self, lattice: np.ndarray) -> np.ndarray:
         """Return electric field components at specifed 3-D coordinates.
@@ -845,7 +793,7 @@ class VolumeConductor(ABC):
         Requires that points outside of the computational domain
         have been filtered!
         """
-        return self.electric_field(self._mapped_points(lattice))
+        return self.electric_field(self.mesh.locate_points(lattice))
 
     @property
     def current_density(self) -> ngsolve.GridFunction:
@@ -1349,8 +1297,6 @@ class VolumeConductor(ABC):
         error = difference * ngsolve.Conj(difference)
         self.mesh.refine_by_error_cf(error)
         self.update_space()
-        # the mesh changed under any previously located points
-        self.invalidate_point_mapping_cache()
 
     def _check_AMR_settings(self, adaptive_mesh_refinement_settings: dict) -> None:
         if not {"ErrorTolerance", "MaxIterations"}.issubset(

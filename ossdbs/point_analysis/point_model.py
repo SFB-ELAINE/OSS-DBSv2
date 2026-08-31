@@ -317,9 +317,7 @@ class PointModel(ABC):
         encap_cf = mesh.ngsolvemesh.RegionCF(
             ngsolve.VOL, {"EncapsulationLayer_*": 1.0}, default=0
         )
-        ngmesh = mesh.ngsolvemesh
-        x, y, z = self.lattice.T
-        return np.isclose(encap_cf(ngmesh(x, y, z)), 1.0)
+        return np.isclose(encap_cf(mesh.locate_points(self.lattice)), 1.0)
 
     def get_points_in_csf(self, mesh: Mesh, conductivity_cf) -> np.ndarray:
         """Return mask for points in CSF.
@@ -336,15 +334,15 @@ class PointModel(ABC):
         TODO Type hint
         """
         material_distribution = conductivity_cf.material_distribution(mesh)
-        ngmesh = mesh.ngsolvemesh
-        x, y, z = self.lattice.T
         # always false (no CSF detected)
         csf_index = -1
         # only do real check when CSF is defined
         if "CSF" in conductivity_cf.materials:
             csf_index = conductivity_cf.materials["CSF"]
 
-        return np.isclose(material_distribution(ngmesh(x, y, z)), csf_index)
+        return np.isclose(
+            material_distribution(mesh.locate_points(self.lattice)), csf_index
+        )
 
     @property
     def output_path(self):
