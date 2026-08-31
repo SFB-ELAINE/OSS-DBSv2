@@ -765,40 +765,56 @@ class VolumeConductor(ABC):
         """Most recent frequency, not equal to the frequency of the signal!."""
         return self._frequency
 
-    def evaluate_potential_at_points(self, lattice: np.ndarray) -> np.ndarray:
+    def evaluate_potential_at_points(
+        self, lattice: np.ndarray, mesh_points=None
+    ) -> np.ndarray:
         """Return electric potential at specifed 3-D coordinates.
 
         Parameters
         ----------
         lattice : np.ndarray
             Nx3 numpy.ndarray of lattice points
+        mesh_points : optional
+            Points of ``lattice`` already located in the mesh, as provided
+            by :attr:`PointModel.mesh_points`. Locating points is the
+            expensive step, so pass this to avoid repeating it.
 
         Notes
         -----
         Requires that points outside of the computational domain
         have been filtered!
         """
-        mesh = self.mesh.ngsolvemesh
-        x, y, z = lattice.T
-        pots = self.potential(mesh(x, y, z))
+        if mesh_points is None:
+            mesh = self.mesh.ngsolvemesh
+            x, y, z = lattice.T
+            mesh_points = mesh(x, y, z)
+        pots = self.potential(mesh_points)
         return pots
 
-    def evaluate_field_at_points(self, lattice: np.ndarray) -> np.ndarray:
+    def evaluate_field_at_points(
+        self, lattice: np.ndarray, mesh_points=None
+    ) -> np.ndarray:
         """Return electric field components at specifed 3-D coordinates.
 
         Parameters
         ----------
         lattice : np.ndarray
             Nx3 numpy.ndarray of lattice points
+        mesh_points : optional
+            Points of ``lattice`` already located in the mesh, as provided
+            by :attr:`PointModel.mesh_points`. Locating points is the
+            expensive step, so pass this to avoid repeating it.
 
         Notes
         -----
         Requires that points outside of the computational domain
         have been filtered!
         """
-        mesh = self.mesh.ngsolvemesh
-        x, y, z = lattice.T
-        fields = self.electric_field(mesh(x, y, z))
+        if mesh_points is None:
+            mesh = self.mesh.ngsolvemesh
+            x, y, z = lattice.T
+            mesh_points = mesh(x, y, z)
+        fields = self.electric_field(mesh_points)
         return fields
 
     @property
@@ -1278,8 +1294,12 @@ class VolumeConductor(ABC):
     ):
         """Copy results to points."""
         for point_model in point_models:
-            potentials = self.evaluate_potential_at_points(point_model.lattice)
-            fields = self.evaluate_field_at_points(point_model.lattice)
+            # reuse the located points, locating them is the expensive part
+            mesh_points = point_model.mesh_points
+            potentials = self.evaluate_potential_at_points(
+                point_model.lattice, mesh_points
+            )
+            fields = self.evaluate_field_at_points(point_model.lattice, mesh_points)
 
             # copy values for time-domain analysis
             self._copy_frequency_domain_solution(

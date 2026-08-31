@@ -417,6 +417,7 @@ class Pathway(PointModel):
         grid_pts = self.points_in_mesh(mesh)
         self._lattice_mask = np.invert(grid_pts.mask)
         self._lattice = self.filter_for_geometry(grid_pts)
+        self.locate_lattice_in_mesh(mesh)
         self._inside_csf = self.get_points_in_csf(mesh, conductivity_cf)
         self._inside_encap = self.get_points_in_encapsulation_layer(mesh)
 

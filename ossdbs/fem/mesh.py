@@ -206,7 +206,9 @@ class Mesh:
         """
         x, y, z = points.T
         mips = self._mesh(x, y, z)
-        return np.array([mip[5] == -1 for mip in mips])
+        # mips is a numpy structured array, "nr" is the element number
+        # and -1 marks a point that could not be located in the mesh
+        return mips["nr"] == -1
 
     def refine(self, at_surface: bool = False) -> None:
         """Refine the mesh.
