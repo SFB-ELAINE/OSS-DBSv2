@@ -11,9 +11,9 @@ Bug reports are highly welcome, though!
 Installation
 ------------
 
-OSS-DBS is tested with Python 3.8, 3.9, 3.10, and 3.11.
+OSS-DBS is tested with Python 3.10, 3.11, 3.12, and 3.13.
 
-**Windows users and Mac users with Python 3.8: Please install NEURON separately before
+**Windows users: Please install NEURON separately before
 installing OSS-DBS. The instructions can be found [here](https://www.neuron.yale.edu/neuron/download).**
 
 
@@ -25,36 +25,48 @@ pip install ossdbs
 
 
 ## Developers
-To install OSS-DBS, clone it into a local directory,
-`cd` into this directory and run
+
+We recommend [`uv`](https://docs.astral.sh/uv/) for development. It is a fast,
+drop-in replacement for `pip`/`virtualenv` that manages the virtual environment
+and Python interpreter for you and uses the checked-in `uv.lock` for fully
+reproducible installs. See the [installation instructions](https://docs.astral.sh/uv/getting-started/installation/).
+
+Clone OSS-DBS into a local directory, `cd` into it, and create the environment
+with the exact locked dependencies:
 
 ```
-pip install -e .
+uv sync
 ```
 
-To also run the test suite of OSS-DBS, run
+`uv sync` creates a `.venv/` and installs OSS-DBS in editable mode. Select
+optional dependency groups with `--extra`:
 
 ```
-pip install -e ".[test]"
+uv sync --extra test    # to run the test suite
+uv sync --extra dev     # to develop OSS-DBS
+uv sync --extra doc     # to locally build the docs
+uv sync --extra all     # everything of the above
 ```
 
-To develop OSS-DBS, run
+Run commands inside the environment with `uv run`, e.g. `uv run pytest` or
+`uv run ossdbs input.json` (no manual activation needed).
+
+<details>
+<summary>Prefer plain <code>pip</code>? Click to expand.</summary>
+
+Everything above also works with `pip`. Clone OSS-DBS, `cd` into the directory
+and run one of:
 
 ```
-pip install -e ".[dev]"
+pip install -e .            # base install
+pip install -e ".[test]"    # to run the test suite
+pip install -e ".[dev]"     # to develop OSS-DBS
+pip install -e ".[doc]"     # to locally build the docs
+pip install -e ".[all]"     # everything of the above
 ```
 
-To locally build the docs of OSS-DBS, run
-
-```
-pip install -e ".[doc]"
-```
-
-To do everything of the above, run
-
-```
-pip install -e ".[all]"
-```
+Note that `pip` resolves dependencies fresh and does not use `uv.lock`.
+</details>
 
 Run OSS-DBS
 -----------
@@ -73,8 +85,8 @@ Development
 
 The code development follows different coding styles that are checked
 by git pre-commit hooks.
-Install `pre-commit` via `pip install pre-commit` and run
-`pre-commit install` to activate it.
+After `uv sync --extra dev` (or `pip install -e ".[dev]"`), activate the hooks
+with `uv run pre-commit install` (or `pre-commit install`).
 
 ### Testing
 
@@ -99,4 +111,31 @@ See [`input_test_cases/README.md`](input_test_cases/README.md) for detailed docu
 - `tests/` - Unit tests (run on every commit)
 - `input_test_cases/` - Simulation tests (run on PR only)
 - `input_files/` - Reference input files
-- `examples/` - Example code for users (may be resource-intensive) 
+- `examples/` - Example code for users (may be resource-intensive)
+
+Standalone executables
+----------------------
+
+`build_merged.py` freezes OSS-DBS and all of its dependencies into a
+self-contained bundle with [PyInstaller](https://pyinstaller.org/), so that
+end users do not need a Python toolchain. On Windows this is also how NEURON is
+shipped: install and compile NEURON into the build environment first, then
+freeze it into the bundle so users get PAM support without installing NEURON
+themselves.
+
+PyInstaller freezes whatever is present in the *current* environment, so
+provision that environment reproducibly with `uv` and the checked-in
+`uv.lock` before building:
+
+```bash
+uv sync                       # install the exact locked dependency graph
+# (Windows only) install + compile NEURON into .venv here, see
+# docs/windows_neuron_setup.md
+uv run pip install pyinstaller
+uv run python build_merged.py
+```
+
+The bundle is written to `dist/ossdbs_bundle/`. Because the environment comes
+from `uv.lock`, the frozen dependency set is identical across rebuilds; run
+`uv lock` (and commit the result) whenever you intentionally update a
+dependency.
