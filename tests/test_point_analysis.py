@@ -46,7 +46,7 @@ def settings():
     settings["PointModel"]["VoxelLattice"]["Active"] = True
     settings["MaterialDistribution"]["MRIPath"] = "input_files/homogeneous.nii.gz"
     settings["PointModel"]["Pathway"]["Active"] = True
-    settings["PointModel"]["Pathway"]["FileName"] = "input_files/data.h5"
+    settings["PointModel"]["Pathway"]["FileName"] = "input_files/sub-John_Doe/data.h5"
 
     return settings
 

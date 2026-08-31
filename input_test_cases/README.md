@@ -41,7 +41,7 @@ In this case, we use a custom-designed monopolar electrode by MicroProbes (`Micr
 Case 4: Current Controlled Stimulation
 --------------------------------------
 
-To conduct current-controlled stimulations, a fixed current for the stimulation amplitude can be provided in the settings. In this example, an electrode from Abbott St. Jude (`AbbottStJudeDirected6172`) is used with 0.1mA on the first and -0.1mA on the second contact. Also, current-controlled stimulation on multiple contacts is possible. To do so, we specify the amplitudes as follows: `C1: -3mA, C2: 1mA, C3: 1mA, C4: 1mA`.
+To conduct current-controlled stimulations, a fixed current for the stimulation amplitude can be provided in the settings. In `input_current_controlled.json`, an electrode from Abbott St. Jude (`AbbottStJudeDirected6172`) is used with 0.1mA on the first and -0.1mA on the second contact. Current-controlled stimulation on multiple contacts is demonstrated in `input_multi_current.json`, where four contacts are driven simultaneously with `C1: -3mA, C2: 1mA, C3: 1mA, C4: 1mA`. The per-contact (floating) potentials resulting from such a multi-contact configuration are written to `floating_potentials.csv`.
 
 Case 5: Stimulation Signals
 ---------------------------
@@ -66,4 +66,45 @@ Using a DBS electrode from Medtronic (`Medtronic3387`) placed in the STN, the el
 Case 9: StimSets
 ----------------
 
-Run simulation at multiple contacts. Detailed documentation will follow.
+Run pathway activation modeling (PAM) for multiple stimulation protocols in a single FEM solve. The `Medtronic3387` electrode is used together with the same axon `.h5` file as in Case 8. Each contact is solved once in unit-current mode, and the resulting per-contact fields are then linearly combined according to the rows of a stimulation-set table provided as `Current_protocol.csv`. Each row of that CSV lists the current (in mA) applied to every contact for one protocol; the PAM step is then repeated for every row. Results for each contact's unit solution are written to `Results_PAME1C1`, `Results_PAME1C2`, … (one folder per contact), while the pathway-activation outcomes for each protocol are written alongside the main `Results_PAM` folder.
+
+Case 10: Floating Contacts with Surface Impedance
+-------------------------------------------------
+
+This case extends Case 6 to contacts with a lumped surface impedance (Robin boundary condition), using the `PINSMedicalL303` electrode. The following variants are provided:
+
+* `input_floating.json`: baseline, identical in spirit to Case 6 (1V active contact, floating middle contact, grounded third contact, no surface impedance).
+* `input_floating_encap.json`: same configuration but with a 0.2 mm encapsulation layer around the electrode.
+* `input_floating_impedance.json`: the floating middle contact is assigned a surface impedance (resistive model `R = 1e3 Ohm*mm^2`) to mimic a non-ideal electrode-tissue interface. `HPRefinement` is enabled.
+* `input_floating_impedance_noground.json`: all three contacts are floating and current-controlled (C1: +1 mA, C3: -1 mA, C2: 0 mA), each with its own surface impedance. The computed per-contact floating potentials and currents are written to `floating_potentials.csv` / `currents.csv`.
+
+The helper script `plot_comparison.py` produces a side-by-side comparison of the different variants.
+
+Case 11: Surface Impedance (Lempka2009 models)
+----------------------------------------------
+
+This case demonstrates the difference between interface impedance modeled as a lumped equivalent circuit and surface impedance modeled as a per-contact Robin boundary condition. A `BostonScientificVercise` electrode is placed in a homogeneous medium, and the stimulation signal is a multisine sweep from 1 Hz to 10 kHz so that the impedance spectrum can be evaluated. The provided input files are:
+
+* `input_no_interface.json`: no electrode–tissue interface (baseline).
+* `input_homogeneous.json` / `input_homogeneous_lempka2009.json`: interface impedance via a lumped circuit.
+* `input_homogeneous_surface_impedance_lempka2009.json` / `input_surface_impedance_lempka2009.json`: per-contact surface impedance using the CPE double-layer model of Lempka et al. (2009), i.e. `"SurfaceImpedance": {"Model": "CPE_dl", "Parameters": {"dl_k": 1.5e6, "dl_alpha": 0.8}}`.
+
+The helper script `get_mesh.py` can be used to generate the shared mesh, and `_impedance_overview.pdf` shows the resulting impedance spectra for the different models.
+
+Running the test suite
+----------------------
+
+The cases above are wired into a pytest-based runner (`test_simulations.py`). Tests are marked with `simulation`, and with additional marks (`slow`, `requires_neuron`, `vta`, `pam`, `surface_impedance`) so that subsets can be selected:
+
+```bash
+# run everything
+pytest input_test_cases/test_simulations.py -m simulation -v
+
+# fast cases only
+pytest input_test_cases/test_simulations.py -m "simulation and not slow" -v
+
+# a specific case by its ID
+pytest input_test_cases/test_simulations.py -k "brain_material" -v
+```
+
+Each test runs the simulation (and, where applicable, the PAM step) and compares the generated outputs against the baselines stored under `desired_output/`. Baselines can be refreshed with `update_desired_output.py`.

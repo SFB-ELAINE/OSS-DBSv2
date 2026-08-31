@@ -105,7 +105,7 @@ Important solver settings include:
 
 - ``Type`` such as ``CG``, ``GMRES``, or ``Direct``
 - ``Preconditioner`` such as ``bddc`` or ``local``
-- ``MaximumSteps`` and ``Precision``
+- ``MaximumSteps``, ``RelativeTolerance``, and ``AbsoluteTolerance``
 
 For most new users, the example defaults are a good starting point. Solver and
 mesh tuning usually becomes important only for large studies or demanding

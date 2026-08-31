@@ -120,7 +120,7 @@ exclude_lines = [
 source = ["ossdbs"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["tests", "input_test_cases"]
 # Markers for test categorization
 markers = [
     "simulation: marks tests as full simulation tests (run on PR only, deselect with '-m not simulation')",
