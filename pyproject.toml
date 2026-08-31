@@ -143,6 +143,7 @@ ignore = [
     ".pre-commit-config.yaml",
     ".readthedocs.yaml",
     ".ruff_cache/**/*",
+    "uv.lock",  # dev/build lockfile, not needed by sdist consumers
     "setup.py",
     "tests/**/*",
     "examples/**/*",
