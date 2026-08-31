@@ -22,6 +22,9 @@ _logger = logging.getLogger(__name__)
 class PointModel(ABC):
     """Class to support evaluation of VCM at points."""
 
+    # located mesh points of the filtered lattice, see locate_lattice_in_mesh
+    _mesh_points = None
+
     @property
     def name(self) -> str:
         """Name to distinguish model type."""
@@ -193,6 +196,41 @@ class PointModel(ABC):
         """Points inside encapsulation layer."""
         return self._inside_encap
 
+    @property
+    def mesh_points(self):
+        """Mesh points of :attr:`lattice` located in the mesh.
+
+        Notes
+        -----
+        Locating points in the mesh is by far the most expensive part of
+        the point analysis, while evaluating a CoefficientFunction on
+        already-located points is almost free. The points are therefore
+        located once in :meth:`locate_lattice_in_mesh` and reused by all
+        consumers (CSF / encapsulation masks, potential, electric field).
+        """
+        if self._mesh_points is None:
+            raise RuntimeError(
+                "Points have not been located in the mesh yet. "
+                "Please call first prepare_VCM_specific_evaluation "
+                "(or locate_lattice_in_mesh)."
+            )
+        return self._mesh_points
+
+    def locate_lattice_in_mesh(self, mesh: Mesh) -> None:
+        """Locate the filtered lattice in the mesh and cache the result.
+
+        Must be called after :attr:`lattice` has been set and after all
+        mesh refinements (including AMR) are complete, because the cached
+        mesh points are invalidated by any change of the mesh.
+
+        Parameters
+        ----------
+        mesh: Mesh
+            Mesh object on which VCM is defined
+        """
+        x, y, z = self.lattice.T
+        self._mesh_points = mesh.ngsolvemesh(x, y, z)
+
     def prepare_VCM_specific_evaluation(self, mesh: Mesh, conductivity_cf):
         """Prepare data structure according to mesh.
 
@@ -217,6 +255,7 @@ class PointModel(ABC):
         self._axon_index = np.reshape(
             np.arange(len(self.lattice)), (len(self.lattice), 1)
         )
+        self.locate_lattice_in_mesh(mesh)
         self._inside_csf = self.get_points_in_csf(mesh, conductivity_cf)
         self._inside_encap = self.get_points_in_encapsulation_layer(mesh)
 
@@ -306,9 +345,7 @@ class PointModel(ABC):
         encap_cf = mesh.ngsolvemesh.RegionCF(
             ngsolve.VOL, {"EncapsulationLayer_*": 1.0}, default=0
         )
-        ngmesh = mesh.ngsolvemesh
-        x, y, z = self.lattice.T
-        return np.isclose(encap_cf(ngmesh(x, y, z)), 1.0)
+        return np.isclose(encap_cf(self.mesh_points), 1.0)
 
     def get_points_in_csf(self, mesh: Mesh, conductivity_cf) -> np.ndarray:
         """Return mask for points in CSF.
@@ -325,15 +362,13 @@ class PointModel(ABC):
         TODO Type hint
         """
         material_distribution = conductivity_cf.material_distribution(mesh)
-        ngmesh = mesh.ngsolvemesh
-        x, y, z = self.lattice.T
         # always false (no CSF detected)
         csf_index = -1
         # only do real check when CSF is defined
         if "CSF" in conductivity_cf.materials:
             csf_index = conductivity_cf.materials["CSF"]
 
-        return np.isclose(material_distribution(ngmesh(x, y, z)), csf_index)
+        return np.isclose(material_distribution(self.mesh_points), csf_index)
 
     @property
     def output_path(self):
