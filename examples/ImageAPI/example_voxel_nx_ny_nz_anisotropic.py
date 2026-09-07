@@ -16,8 +16,8 @@ Outcome:
 
 """
 
-import netgen.occ as occ
 import numpy as np
+from netgen import occ
 from ngsolve import H1, Draw, GridFunction, Mesh, VoxelCoefficient
 
 Origin = (-1, -0.5, -0.25)

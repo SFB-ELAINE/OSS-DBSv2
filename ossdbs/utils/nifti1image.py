@@ -143,10 +143,8 @@ class Nifti1Image:
         bbox_start = [start.x, start.y, start.z]
         bbox_end = [end.x, end.y, end.z]
         for i in range(3):
-            if bbox_start[i] < 0:
-                bbox_start[i] = 0
-            if bbox_end[i] > self.xyz_shape[i]:
-                bbox_end[i] = self.xyz_shape[i]
+            bbox_start[i] = max(bbox_start[i], 0)
+            bbox_end[i] = min(bbox_end[i], self.xyz_shape[i])
         return BoundingBox(
             np.floor(np.array(bbox_start)).astype(int),
             np.floor(np.array(bbox_end)).astype(int),
