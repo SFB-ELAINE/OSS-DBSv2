@@ -29,14 +29,14 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-          cache-dependency-glob: "pyproject.toml"
+          cache-dependency-glob: "uv.lock"
 
       - name: Install Dependencies
-        run: uv pip install --system ".[test,impedance]"
+        run: uv sync --locked --extra test --extra impedance
 
       - name: Run Fast Simulation Tests
         run: |
-          pytest input_test_cases/test_simulations.py \
+          uv run --no-sync pytest input_test_cases/test_simulations.py \
             -m "simulation and not slow" \
             -v \
             --tb=short \
@@ -45,7 +45,7 @@ jobs:
       - name: Run Slow Simulation Tests
         if: success()
         run: |
-          pytest input_test_cases/test_simulations.py \
+          uv run --no-sync pytest input_test_cases/test_simulations.py \
             -m "simulation and slow and not requires_neuron" \
             -v \
             --tb=short \
@@ -81,17 +81,19 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-          cache-dependency-glob: "pyproject.toml"
+          cache-dependency-glob: "uv.lock"
 
       - name: Install Dependencies (with NEURON)
-        run: uv pip install --system ".[test,impedance]" neuron
+        # NEURON is a locked runtime dependency on Linux/macOS, so the lockfile
+        # already includes it — no separate install needed.
+        run: uv sync --locked --extra test --extra impedance
 
       - name: Verify NEURON is importable
-        run: python -c "import neuron; print('NEURON', neuron.__version__)"
+        run: uv run --no-sync python -c "import neuron; print('NEURON', neuron.__version__)"
 
       - name: Run NEURON Simulation Tests
         run: |
-          pytest input_test_cases/test_simulations.py \
+          uv run --no-sync pytest input_test_cases/test_simulations.py \
             -m "simulation and requires_neuron" \
             -v --tb=short --color=yes
 

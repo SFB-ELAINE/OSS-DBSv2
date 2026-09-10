@@ -15,8 +15,7 @@ and compiled before freezing, so that end users get PAM support without
 installing NEURON themselves.
 
 Usage:
-    uv sync                       # or: pip install -e .
-    uv run pip install pyinstaller
+    uv sync --locked --group bundle   # installs deps + PyInstaller from the lock
     uv run python build_merged.py [--debug]
 
     --debug     Enable PyInstaller --log-level=DEBUG and print the

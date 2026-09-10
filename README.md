@@ -128,12 +128,15 @@ provision that environment reproducibly with `uv` and the checked-in
 `uv.lock` before building:
 
 ```bash
-uv sync                       # install the exact locked dependency graph
+uv sync --locked --group bundle   # locked deps + PyInstaller, from uv.lock
 # (Windows only) install + compile NEURON into .venv here, see
 # docs/windows_neuron_setup.md
-uv run pip install pyinstaller
 uv run python build_merged.py
 ```
+
+PyInstaller lives in the `bundle` [dependency group](https://peps.python.org/pep-0735/),
+so it is pinned in `uv.lock` and installed from there rather than pulled from an
+external `pip`.
 
 The bundle is written to `dist/ossdbs_bundle/`. Because the environment comes
 from `uv.lock`, the frozen dependency set is identical across rebuilds; run
