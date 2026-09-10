@@ -124,9 +124,7 @@ def _check_pyinstaller():
         _log_ok(f"PyInstaller {PyInstaller.__version__} found")
         return True
     except ImportError:
-        _log_err(
-            "PyInstaller is not installed. Run: uv sync --locked --group bundle"
-        )
+        _log_err("PyInstaller is not installed. Run: uv sync --locked --group bundle")
         return False
 
 
