@@ -147,8 +147,12 @@ def main():
         return
 
     df = pd.DataFrame([flatten(record) for record in records])
-    df.to_csv("benchmark_summary.csv", index=False)
-    print(f"Wrote benchmark_summary.csv ({len(df)} record(s))")
+    # Written alongside the records it summarises rather than into the working
+    # directory: the result directories hold different workloads, and a single
+    # shared file name meant collecting one overwrote the previous summary.
+    summary_path = os.path.join(args.results_dir, "benchmark_summary.csv")
+    df.to_csv(summary_path, index=False)
+    print(f"Wrote {summary_path} ({len(df)} record(s))")
 
     for warning in check_comparability(df):
         print(f"WARNING: {warning} -- these records are not directly comparable")

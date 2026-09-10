@@ -195,13 +195,16 @@ class Mesh:
         return self._mesh
 
     def _mesh_token(self) -> tuple:
-        """Return a value that changes whenever the mesh topology changes.
+        """Return a value that changes whenever located points would move.
 
-        Used to validate cached point locations. Any refinement adds
-        elements and vertices, so a token built from those counts cannot
-        miss a change.
+        Used to validate cached point locations. A refinement adds elements
+        and vertices, so the counts catch that. Curving moves the elements
+        without changing either count, which is why the curvature order is
+        part of the token too: a located point holds reference coordinates
+        inside an element, and where those land depends on how the element
+        is curved.
         """
-        return (id(self._mesh), self._mesh.ne, self._mesh.nv)
+        return (id(self._mesh), self._mesh.ne, self._mesh.nv, self._order)
 
     def invalidate_point_location_cache(self) -> None:
         """Drop cached point locations, e.g. after the mesh has changed."""
@@ -288,6 +291,10 @@ class Mesh:
         """
         self._order = order
         self._mesh.Curve(order=order)
+        # Curving leaves the element and vertex counts alone but moves the
+        # elements, so a cached location keeps reference coordinates that now
+        # resolve to a slightly different position.
+        self.invalidate_point_location_cache()
 
     def save(self, file_name: str) -> None:
         """Save netgen mesh.

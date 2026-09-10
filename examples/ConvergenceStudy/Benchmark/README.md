@@ -121,7 +121,9 @@ uv run python collect_results.py --results-dir results_vta          # VTA
 uv run python collect_results.py --results-dir results_vta_ngsolve  # VTA, no lattice
 ```
 
-which writes `benchmark_summary.csv` and prints a Markdown table. Do not mix
+which writes `benchmark_summary.csv` into the results directory it read and
+prints a Markdown table. The summary lives beside its own records, so
+collecting one directory does not overwrite another's. Do not mix
 the two directories: the workloads solve different problems, and comparing
 their timings is meaningless.
 

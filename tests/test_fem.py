@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import ngsolve
 import numpy as np
 import pytest
-from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Z
+from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Sphere, Z
 
 import ossdbs
 from ossdbs.fem.mesh import Mesh
@@ -387,6 +387,59 @@ class TestLocatePointsCache:
 
         located = np.array(mesh.locate_points(points)["nr"])
         assert np.array_equal(located, self._located_afresh(mesh, points))
+
+    @staticmethod
+    def _curved_mesh():
+        """A mesh whose elements actually move when curved.
+
+        The box used elsewhere in this class has flat faces, so curving it
+        changes nothing and cannot expose a stale location.
+        """
+        sphere = Sphere(Pnt(0, 0, 0), 10)
+        sphere.bc("brain")
+        mesh = Mesh(OCCGeometry(sphere), order=1)
+        mesh.generate_mesh({"MeshingHypothesis": {"Type": "Default"}})
+        return mesh
+
+    @staticmethod
+    def _positions_of(mesh, mapping):
+        """Physical coordinates the located points resolve to."""
+        coordinates = ngsolve.CoefficientFunction((ngsolve.x, ngsolve.y, ngsolve.z))
+        return np.array(coordinates(mapping)).reshape(-1, 3)
+
+    def test_curving_invalidates_cache(self):
+        """Curving moves the elements, so cached locations must be dropped.
+
+        A location holds reference coordinates inside an element. Curving
+        keeps the element and vertex counts, so nothing about the cache key
+        changes, but the position those coordinates map to does.
+        """
+        mesh = self._curved_mesh()
+        points = np.array([[9.4, 0.0, 0.0], [0.0, 9.4, 0.0], [0.0, 0.0, 9.4]])
+
+        mesh.locate_points(points)
+        mesh.curve(order=3)
+
+        after = self._positions_of(mesh, mesh.locate_points(points))
+        fresh = self._positions_of(mesh, mesh.ngsolvemesh(*points.copy().T))
+        np.testing.assert_allclose(after, fresh, atol=1e-12)
+
+    def test_mesh_token_catches_curving_without_invalidation(self):
+        """The token alone must catch curving, as defense in depth.
+
+        The element and vertex counts are unchanged by curving, so the
+        curvature order has to be part of the token.
+        """
+        mesh = self._curved_mesh()
+        points = np.array([[9.4, 0.0, 0.0], [0.0, 9.4, 0.0], [0.0, 0.0, 9.4]])
+
+        mesh.locate_points(points)
+        mesh.invalidate_point_location_cache = lambda: None
+        mesh.curve(order=3)
+
+        after = self._positions_of(mesh, mesh.locate_points(points))
+        fresh = self._positions_of(mesh, mesh.ngsolvemesh(*points.copy().T))
+        np.testing.assert_allclose(after, fresh, atol=1e-12)
 
     def test_not_included_is_boolean_mask(self):
         mesh = self._mesh()
@@ -796,7 +849,7 @@ class TestRefineAfterRefineHPIsBroken:
             """
             import math
             import ngsolve
-            from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Z
+            from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Sphere, Z
 
             box = Box(Pnt(-2, -2, -2), Pnt(2, 2, 2))
             cyl = Cylinder(Pnt(0, 0, -1), Z, r=0.5, h=2)
