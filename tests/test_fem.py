@@ -10,7 +10,7 @@ from types import SimpleNamespace
 import ngsolve
 import numpy as np
 import pytest
-from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Z
+from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Sphere, Z
 
 import ossdbs
 from ossdbs.fem.mesh import Mesh
@@ -328,6 +328,166 @@ class TestMesh:
             assert mesh is not None
         except Exception:
             pytest.fail("Cannot be instantiated.")
+
+
+class TestLocatePointsCache:
+    """``Mesh.locate_points`` caches, and refinement invalidates the cache.
+
+    Locating points is the dominant cost of the point analysis, so the
+    result is reused across the CSF / encapsulation masks and the
+    potential / field evaluations at every frequency. Element numbers
+    change under refinement, so a stale entry would silently evaluate the
+    solution at the wrong elements.
+    """
+
+    @staticmethod
+    def _mesh():
+        box = Box(Pnt(0, 0, 0), Pnt(10, 10, 10))
+        box.bc("brain")
+        mesh = Mesh(OCCGeometry(box), order=2)
+        mesh.generate_mesh({"MeshingHypothesis": {"Type": "Default"}})
+        return mesh
+
+    @staticmethod
+    def _points():
+        return np.array([[1.0, 1.0, 1.0], [5.0, 5.0, 5.0], [9.0, 9.0, 9.0]])
+
+    @staticmethod
+    def _located_afresh(mesh, points):
+        # a copy is a different object, so it bypasses the id-keyed cache
+        return np.array(mesh.ngsolvemesh(*points.copy().T)["nr"])
+
+    def test_repeated_call_is_cached(self):
+        mesh = self._mesh()
+        points = self._points()
+        assert mesh.locate_points(points) is mesh.locate_points(points)
+
+    def test_refinement_invalidates_cache(self):
+        mesh = self._mesh()
+        points = self._points()
+        n_elements_before = mesh.ngsolvemesh.ne
+        mesh.locate_points(points)
+
+        mesh.ngsolvemesh.ngmesh.Elements3D().NumPy()["refine"] = 1
+        mesh.refine()
+        assert mesh.ngsolvemesh.ne > n_elements_before
+
+        located = np.array(mesh.locate_points(points)["nr"])
+        assert np.array_equal(located, self._located_afresh(mesh, points))
+
+    def test_mesh_token_catches_refinement_without_invalidation(self):
+        """The token alone must catch a refinement, as defense in depth."""
+        mesh = self._mesh()
+        points = self._points()
+        mesh.locate_points(points)
+
+        mesh.invalidate_point_location_cache = lambda: None
+        mesh.ngsolvemesh.ngmesh.Elements3D().NumPy()["refine"] = 1
+        mesh.refine()
+
+        located = np.array(mesh.locate_points(points)["nr"])
+        assert np.array_equal(located, self._located_afresh(mesh, points))
+
+    @staticmethod
+    def _curved_mesh():
+        """A mesh whose elements actually move when curved.
+
+        The box used elsewhere in this class has flat faces, so curving it
+        changes nothing and cannot expose a stale location.
+        """
+        sphere = Sphere(Pnt(0, 0, 0), 10)
+        sphere.bc("brain")
+        mesh = Mesh(OCCGeometry(sphere), order=1)
+        mesh.generate_mesh({"MeshingHypothesis": {"Type": "Default"}})
+        return mesh
+
+    @staticmethod
+    def _positions_of(mesh, mapping):
+        """Physical coordinates the located points resolve to."""
+        coordinates = ngsolve.CoefficientFunction((ngsolve.x, ngsolve.y, ngsolve.z))
+        return np.array(coordinates(mapping)).reshape(-1, 3)
+
+    def test_curving_invalidates_cache(self):
+        """Curving moves the elements, so cached locations must be dropped.
+
+        A location holds reference coordinates inside an element. Curving
+        keeps the element and vertex counts, so nothing about the cache key
+        changes, but the position those coordinates map to does.
+        """
+        mesh = self._curved_mesh()
+        points = np.array([[9.4, 0.0, 0.0], [0.0, 9.4, 0.0], [0.0, 0.0, 9.4]])
+
+        mesh.locate_points(points)
+        mesh.curve(order=3)
+
+        after = self._positions_of(mesh, mesh.locate_points(points))
+        fresh = self._positions_of(mesh, mesh.ngsolvemesh(*points.copy().T))
+        np.testing.assert_allclose(after, fresh, atol=1e-12)
+
+    def test_mesh_token_catches_curving_without_invalidation(self):
+        """The token alone must catch curving, as defense in depth.
+
+        The element and vertex counts are unchanged by curving, so the
+        curvature order has to be part of the token.
+        """
+        mesh = self._curved_mesh()
+        points = np.array([[9.4, 0.0, 0.0], [0.0, 9.4, 0.0], [0.0, 0.0, 9.4]])
+
+        mesh.locate_points(points)
+        mesh.invalidate_point_location_cache = lambda: None
+        mesh.curve(order=3)
+
+        after = self._positions_of(mesh, mesh.locate_points(points))
+        fresh = self._positions_of(mesh, mesh.ngsolvemesh(*points.copy().T))
+        np.testing.assert_allclose(after, fresh, atol=1e-12)
+
+    def test_not_included_is_boolean_mask(self):
+        mesh = self._mesh()
+        points = np.array([[100.0, 100.0, 100.0], [5.0, 5.0, 5.0]])
+        not_included = mesh.not_included(points)
+        assert not_included.dtype == bool
+        assert not_included[0]
+        assert not not_included[1]
+
+    def test_several_point_models_are_cached_independently(self):
+        """A Pathway and a Lattice can be active in the same run.
+
+        They hold different point arrays, so both must be cached side by
+        side without evicting or shadowing each other.
+        """
+        mesh = self._mesh()
+        pathway_points = self._points()
+        lattice_points = np.array([[2.0, 3.0, 4.0], [6.0, 7.0, 8.0]])
+
+        # interleaved, as the pipeline evaluates them per frequency
+        first_pathway = mesh.locate_points(pathway_points)
+        first_lattice = mesh.locate_points(lattice_points)
+        assert mesh.locate_points(pathway_points) is first_pathway
+        assert mesh.locate_points(lattice_points) is first_lattice
+        assert first_pathway is not first_lattice
+
+        assert np.array_equal(
+            np.array(first_pathway["nr"]),
+            self._located_afresh(mesh, pathway_points),
+        )
+        assert np.array_equal(
+            np.array(first_lattice["nr"]),
+            self._located_afresh(mesh, lattice_points),
+        )
+
+    def test_refinement_invalidates_every_point_model(self):
+        mesh = self._mesh()
+        pathway_points = self._points()
+        lattice_points = np.array([[2.0, 3.0, 4.0], [6.0, 7.0, 8.0]])
+        mesh.locate_points(pathway_points)
+        mesh.locate_points(lattice_points)
+
+        mesh.ngsolvemesh.ngmesh.Elements3D().NumPy()["refine"] = 1
+        mesh.refine()
+
+        for points in (pathway_points, lattice_points):
+            located = np.array(mesh.locate_points(points)["nr"])
+            assert np.array_equal(located, self._located_afresh(mesh, points))
 
 
 class TestConductivity:
@@ -689,7 +849,7 @@ class TestRefineAfterRefineHPIsBroken:
             """
             import math
             import ngsolve
-            from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Z
+            from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Sphere, Z
 
             box = Box(Pnt(-2, -2, -2), Pnt(2, 2, 2))
             cyl = Cylinder(Pnt(0, 0, -1), Z, r=0.5, h=2)

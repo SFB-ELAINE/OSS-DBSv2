@@ -172,3 +172,123 @@ class TestPointAnalysis:
             assert voxelLattice is not None
         except Exception:
             pytest.fail("Cannot be instantiated.")
+
+
+class TestScaleFactorOnCopy:
+    """``scale_factor`` is folded into the write rather than pre-multiplied.
+
+    A solved octave band covers many spectrum indices that share the same
+    potentials and fields and differ only by that scalar, so scaling the
+    arrays before the call allocated a full-size temporary per index. The
+    values written must be unchanged by that: the factor is complex in
+    current-controlled mode, where dropping the imaginary part would rotate
+    the phase of every harmonic in the band.
+    """
+
+    @staticmethod
+    def _model(n_points=4, signal_length=3):
+        from ossdbs.point_analysis.point_model import PointModel
+
+        class _Model:
+            copy_frequency_domain_solution_from_vcm = (
+                PointModel.copy_frequency_domain_solution_from_vcm
+            )
+
+            def __init__(self):
+                shape = (n_points, signal_length)
+                self.tmp_potential_freq_domain = np.zeros(shape, dtype=complex)
+                self.tmp_Ex_freq_domain = np.zeros(shape, dtype=complex)
+                self.tmp_Ey_freq_domain = np.zeros(shape, dtype=complex)
+                self.tmp_Ez_freq_domain = np.zeros(shape, dtype=complex)
+
+        return _Model()
+
+    @staticmethod
+    def _inputs(n_points=4):
+        rng = np.random.default_rng(20260910)
+        potentials = rng.standard_normal((n_points, 1)) + 1j * rng.standard_normal(
+            (n_points, 1)
+        )
+        fields = rng.standard_normal((n_points, 3)) + 1j * rng.standard_normal(
+            (n_points, 3)
+        )
+        return potentials, fields
+
+    @pytest.mark.parametrize("scale_factor", [1.0, 2.5, -0.75, 1e-3, 0.5 + 2.0j, -1.5j])
+    def test_matches_pre_multiplication(self, scale_factor):
+        """Folding the factor into the write equals scaling the array first."""
+        potentials, fields = self._inputs()
+
+        folded = self._model()
+        folded.copy_frequency_domain_solution_from_vcm(
+            1, potentials, fields, scale_factor=scale_factor
+        )
+
+        pre_multiplied = self._model()
+        pre_multiplied.copy_frequency_domain_solution_from_vcm(
+            1, scale_factor * potentials, scale_factor * fields
+        )
+
+        for component in ("potential", "Ex", "Ey", "Ez"):
+            name = f"tmp_{component}_freq_domain"
+            np.testing.assert_allclose(
+                getattr(folded, name), getattr(pre_multiplied, name)
+            )
+
+    def test_complex_factor_is_not_truncated(self):
+        """A real-only write would silently drop the phase."""
+        potentials, fields = self._inputs()
+        scale_factor = 0.5 + 2.0j
+
+        model = self._model()
+        model.copy_frequency_domain_solution_from_vcm(
+            0, potentials, fields, scale_factor=scale_factor
+        )
+
+        np.testing.assert_allclose(
+            model.tmp_potential_freq_domain[:, 0], scale_factor * potentials[:, 0]
+        )
+        np.testing.assert_allclose(
+            model.tmp_Ez_freq_domain[:, 0], scale_factor * fields[:, 2]
+        )
+        assert np.any(model.tmp_potential_freq_domain[:, 0].imag != 0)
+
+    def test_default_factor_leaves_values_untouched(self):
+        """Voltage-controlled runs pass no factor at all."""
+        potentials, fields = self._inputs()
+
+        model = self._model()
+        model.copy_frequency_domain_solution_from_vcm(2, potentials, fields)
+
+        np.testing.assert_allclose(
+            model.tmp_potential_freq_domain[:, 2], potentials[:, 0]
+        )
+        np.testing.assert_allclose(model.tmp_Ex_freq_domain[:, 2], fields[:, 0])
+
+    def test_other_columns_are_not_written(self):
+        """Each index writes exactly its own column of the band."""
+        potentials, fields = self._inputs()
+
+        model = self._model()
+        model.copy_frequency_domain_solution_from_vcm(
+            1, potentials, fields, scale_factor=3.0
+        )
+
+        assert np.all(model.tmp_potential_freq_domain[:, 0] == 0)
+        assert np.all(model.tmp_potential_freq_domain[:, 2] == 0)
+
+    def test_fields_none_writes_potential_only(self):
+        """VTA runs without field export must not touch the field arrays."""
+        potentials, _ = self._inputs()
+
+        model = self._model()
+        model.copy_frequency_domain_solution_from_vcm(
+            0, potentials, None, scale_factor=2.0
+        )
+
+        np.testing.assert_allclose(
+            model.tmp_potential_freq_domain[:, 0], 2.0 * potentials[:, 0]
+        )
+        assert np.all(model.tmp_Ex_freq_domain == 0)
+        assert np.all(model.tmp_Ey_freq_domain == 0)
+        assert np.all(model.tmp_Ez_freq_domain == 0)
