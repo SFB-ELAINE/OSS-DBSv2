@@ -281,14 +281,25 @@ class PointModel(ABC):
             )
 
     def copy_frequency_domain_solution_from_vcm(
-        self, freq_idx: int, potentials: np.ndarray, fields: np.ndarray | None = None
+        self,
+        freq_idx: int,
+        potentials: np.ndarray,
+        fields: np.ndarray | None = None,
+        scale_factor: complex = 1.0,
     ) -> None:
-        """Copy potentials and fields from volume conductor model."""
-        self.tmp_potential_freq_domain[:, freq_idx] = potentials[:, 0]
+        """Copy potentials and fields from volume conductor model.
+
+        ``scale_factor`` is applied column by column while writing. Scaling
+        the whole array before the call would allocate a full-size copy of
+        the potentials and fields for every frequency index, which is by
+        far the dominant cost when a single solved band covers hundreds of
+        indices.
+        """
+        self.tmp_potential_freq_domain[:, freq_idx] = scale_factor * potentials[:, 0]
         if fields is not None:
-            self.tmp_Ex_freq_domain[:, freq_idx] = fields[:, 0]
-            self.tmp_Ey_freq_domain[:, freq_idx] = fields[:, 1]
-            self.tmp_Ez_freq_domain[:, freq_idx] = fields[:, 2]
+            self.tmp_Ex_freq_domain[:, freq_idx] = scale_factor * fields[:, 0]
+            self.tmp_Ey_freq_domain[:, freq_idx] = scale_factor * fields[:, 1]
+            self.tmp_Ez_freq_domain[:, freq_idx] = scale_factor * fields[:, 2]
 
     def close_output_file(self):
         """Close out-of-core file."""
@@ -306,9 +317,7 @@ class PointModel(ABC):
         encap_cf = mesh.ngsolvemesh.RegionCF(
             ngsolve.VOL, {"EncapsulationLayer_*": 1.0}, default=0
         )
-        ngmesh = mesh.ngsolvemesh
-        x, y, z = self.lattice.T
-        return np.isclose(encap_cf(ngmesh(x, y, z)), 1.0)
+        return np.isclose(encap_cf(mesh.locate_points(self.lattice)), 1.0)
 
     def get_points_in_csf(self, mesh: Mesh, conductivity_cf) -> np.ndarray:
         """Return mask for points in CSF.
@@ -325,15 +334,15 @@ class PointModel(ABC):
         TODO Type hint
         """
         material_distribution = conductivity_cf.material_distribution(mesh)
-        ngmesh = mesh.ngsolvemesh
-        x, y, z = self.lattice.T
         # always false (no CSF detected)
         csf_index = -1
         # only do real check when CSF is defined
         if "CSF" in conductivity_cf.materials:
             csf_index = conductivity_cf.materials["CSF"]
 
-        return np.isclose(material_distribution(ngmesh(x, y, z)), csf_index)
+        return np.isclose(
+            material_distribution(mesh.locate_points(self.lattice)), csf_index
+        )
 
     @property
     def output_path(self):

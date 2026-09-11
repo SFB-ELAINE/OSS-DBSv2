@@ -177,7 +177,7 @@
     "Preconditioner": "local",
     "PreconditionerKwargs": {},
     "MaximumSteps": 2000,
-    "Precision": 1e-10
+    "RelativeTolerance": 1e-10
   },
   "PointModel": {
     "Pathway": {

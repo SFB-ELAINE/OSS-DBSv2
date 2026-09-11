@@ -4,6 +4,7 @@ __pycache__/
 *.egg-info/
 .env/
 venv/
+.venv/
 .tox/
 
 # Auto-generated version file
@@ -65,3 +66,6 @@ figures/
 examples/Electrochemistry/*.csv
 # Other generated files
 *.spec
+
+# Derived from the benchmark records it sits beside; regenerate with collect_results.py
+examples/ConvergenceStudy/Benchmark/results*/benchmark_summary.csv

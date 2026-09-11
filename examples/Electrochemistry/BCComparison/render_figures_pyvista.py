@@ -17,7 +17,7 @@ side-by-side comparison:
 Lead overlay
 ------------
 The Vercise lead is rendered with two face groups (Body = silver,
-Contact_1…8 = gold) built from the ngsolve surface tessellation, plus
+Contact_1…8 = dark grey) built from the ngsolve surface tessellation, plus
 pyvista-cad B-rep edges from the STEP export. Both artefacts are cached
 on disk so subsequent runs are fast.  Edge appearance is controlled by
 EDGE_LINE_WIDTH and EDGE_AS_TUBES at the top of the file.
@@ -62,7 +62,7 @@ LEAD_VTM = "vercise_lead.vtm"  # per-boundary surface mesh cache
 
 # ---- Lead appearance ----
 BODY_COLOR = (0.78, 0.78, 0.80)  # titanium / silver
-CONTACT_COLOR = (0.90, 0.78, 0.20)  # gold / platinum  (non-active fallback)
+CONTACT_COLOR = (0.66, 0.66, 0.66)  # dark grey  (non-active fallback)
 LEAD_OPACITY = 0.85
 EDGE_COLOR = "dimgray"
 

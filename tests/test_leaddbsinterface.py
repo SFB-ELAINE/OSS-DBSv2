@@ -86,12 +86,13 @@ class TestDefaultSettings:
 
         # Check other settings
         assert settings["ExportVTK"] is True
-        assert settings["Mesh"]["MeshingHypothesis"]["Type"] == "Default"
+        assert settings["Mesh"]["MeshingHypothesis"]["Type"] == "Fine"
         assert settings["Mesh"]["MaterialRefinementSteps"] == 1
         assert settings["FEMOrder"] == 2
         assert settings["ComputeImpedance"] is False
-        assert settings["Solver"]["MaximumSteps"] == 500
-        assert settings["Solver"]["Precision"] == 1e-10
+        assert settings["Solver"]["MaximumSteps"] == 2000
+        assert settings["Solver"]["RelativeTolerance"] == 1e-8
+        assert settings["Solver"]["AbsoluteTolerance"] == 1e-8
 
     def test_update_default_dict_simple(self):
         """Test updating default dict with simple values."""

@@ -195,6 +195,15 @@ class ModelGeometry:
                 contact.floating = value
             elif setting == "Voltage[V]":
                 contact.voltage = value
+            elif setting == "SurfaceImpedance[Ohmm]":
+                # Deprecated key from before PR #104. The old scalar impedance
+                # was never applied in the FEM, so silently treat it as no
+                # surface impedance (identical to the new default).
+                _logger.warning(
+                    "Contact setting 'SurfaceImpedance[Ohmm]' is deprecated. "
+                    "Use 'SurfaceImpedance': {'Model': ..., 'Parameters': {}} instead."
+                    "The old value will be ignored."
+                )
             elif setting == "SurfaceImpedance":
                 if "Model" not in value:
                     raise ValueError("No surface impedance model provided.")

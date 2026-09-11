@@ -35,6 +35,50 @@ from ossdbs.utils.type_check import TypeChecker
 _logger = logging.getLogger(__name__)
 
 
+def _configure_stimsets_mesh(settings: dict) -> bool:
+    """Prepare Mesh settings for StimSets; return whether to reuse a mesh."""
+    reuse_precomputed_mesh = settings["Mesh"]["LoadMesh"]
+    if not reuse_precomputed_mesh:
+        settings["Mesh"]["SavePath"] = os.path.join(settings["OutputPath"], "tmp_mesh")
+        settings["Mesh"]["LoadPath"] = os.path.join(
+            settings["OutputPath"], "tmp_mesh.vol.gz"
+        )
+    settings["Mesh"]["SaveMesh"] = False
+    # because of floating
+    settings["Solver"]["Preconditioner"] = "local"
+    settings["Solver"]["PreconditionerKwargs"] = {}
+    return reuse_precomputed_mesh
+
+
+def _run_stim_sets_with_mesh(
+    volume_conductor,
+    settings,
+    geometry,
+    conductivity,
+    solver,
+    frequency_domain_signal,
+    reuse_precomputed_mesh: bool,
+    truncation_time=None,
+):
+    """Run StimSets, generating and saving the shared mesh if needed."""
+    if not reuse_precomputed_mesh:
+        # Apply h-refinement (material bisection) and save the h-refined
+        # mesh; HP refinement is applied per-contact after loading it.
+        volume_conductor.apply_h_refinements(
+            settings["Mesh"]["MaterialRefinementSteps"]
+        )
+        volume_conductor.mesh.save(settings["Mesh"]["SavePath"])
+        settings["Mesh"]["LoadMesh"] = True
+    run_stim_sets(
+        settings,
+        geometry,
+        conductivity,
+        solver,
+        frequency_domain_signal,
+        truncation_time=truncation_time,
+    )
+
+
 def main_run(input_settings: dict):
     """Run OSS-DBS from input dictionary.
 
@@ -153,16 +197,9 @@ def main_run(input_settings: dict):
             truncation_time = truncation_ratio * time_domain_signal.get_active_time()
 
     # save Mesh for StimSets
+    reuse_precomputed_mesh = False
     if settings["StimSets"]["Active"]:
-        settings["Mesh"]["SavePath"] = os.path.join(settings["OutputPath"], "tmp_mesh")
-        settings["Mesh"]["LoadPath"] = os.path.join(
-            settings["OutputPath"], "tmp_mesh.vol.gz"
-        )
-        settings["Mesh"]["SaveMesh"] = False
-        settings["Mesh"]["LoadMesh"] = False
-        # because of floating
-        settings["Solver"]["Preconditioner"] = "local"
-        settings["Solver"]["PreconditionerKwargs"] = {}
+        reuse_precomputed_mesh = _configure_stimsets_mesh(settings)
     # run in parallel
     with ngsolve.TaskManager():
         solver = prepare_solver(settings)
@@ -182,20 +219,14 @@ def main_run(input_settings: dict):
             )
             _logger.info(f"Volume conductor timings:\n{pprint.pformat(vcm_timings)}")
         else:
-            # Apply h-refinement (material bisection) and save the
-            # h-refined mesh.  HP refinement is deferred: it will be
-            # applied on each per-contact VCM after loading the mesh.
-            volume_conductor.apply_h_refinements(
-                settings["Mesh"]["MaterialRefinementSteps"]
-            )
-            volume_conductor.mesh.save(settings["Mesh"]["SavePath"])
-            settings["Mesh"]["LoadMesh"] = True
-            run_stim_sets(
+            _run_stim_sets_with_mesh(
+                volume_conductor,
                 settings,
                 geometry,
                 conductivity,
                 solver,
                 frequency_domain_signal,
+                reuse_precomputed_mesh,
                 truncation_time=truncation_time,
             )
 
@@ -222,6 +253,12 @@ def main_run(input_settings: dict):
         """
 
     _logger.info(f"Timings:\n {pprint.pformat(timings)}")
+
+    # persist the phase timings next to the VCM report so they can be analysed
+    # after the run (e.g. by examples/ConvergenceStudy/Benchmark) instead of
+    # only appearing in the log
+    with open(os.path.join(settings["OutputPath"], "run_report.json"), "w") as fp:
+        json.dump({"Timings": timings}, fp, indent=2)
 
     # write success file
     open(

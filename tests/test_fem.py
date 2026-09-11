@@ -5,11 +5,12 @@ import subprocess
 import sys
 import textwrap
 from copy import deepcopy
+from types import SimpleNamespace
 
 import ngsolve
 import numpy as np
 import pytest
-from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Z
+from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Sphere, Z
 
 import ossdbs
 from ossdbs.fem.mesh import Mesh
@@ -21,12 +22,19 @@ from ossdbs.fem.preconditioner import (
     LocalPreconditioner,
     MultigridPreconditioner,
 )
-from ossdbs.fem.solver import CGSolver, DirectSolver, GMRESSolver
+from ossdbs.fem.solver import (
+    CGSolver,
+    DirectSolver,
+    GMRESSolver,
+    _finalize_krylov_solve,
+    _krylov_convergence_status,
+)
 from ossdbs.fem.volume_conductor.floating import VolumeConductorFloating
 from ossdbs.fem.volume_conductor.floating_impedance import (
     VolumeConductorFloatingImpedance,
 )
 from ossdbs.fem.volume_conductor.nonfloating import VolumeConductorNonFloating
+from ossdbs.fem.volume_conductor.volume_conductor_model import VolumeConductor
 from ossdbs.utils.settings import Settings
 
 
@@ -55,11 +63,177 @@ class TestSolver:
     def test_solver(self, solver_class):
         try:
             solver = solver_class(
-                precond_par=BDDCPreconditioner(), maxsteps=10000, precision=1e-12
+                precond_par=BDDCPreconditioner(),
+                maxsteps=10000,
+                relative_tolerance=1e-12,
+                absolute_tolerance=1e-14,
             )
             assert solver is not None
+            assert solver._absolute_tolerance == 1e-14
         except Exception:
             pytest.fail("Cannot be instantiated.")
+
+    def test_absolute_tolerance_from_settings(self):
+        settings = Settings({"Solver": {"AbsoluteTolerance": 1e-8}}).complete_settings()
+
+        solver = ossdbs.prepare_solver(settings)
+
+        assert solver._absolute_tolerance == 1e-8
+
+    def test_absolute_tolerance_default(self):
+        settings = Settings({}).complete_settings()
+
+        solver = ossdbs.prepare_solver(settings)
+
+        assert np.isclose(solver._absolute_tolerance, 1e-8)
+
+    def test_absolute_tolerance_must_be_positive(self):
+        settings = Settings({"Solver": {"AbsoluteTolerance": 0.0}}).complete_settings()
+
+        with pytest.raises(ValueError, match="AbsoluteTolerance must be positive"):
+            ossdbs.prepare_solver(settings)
+
+    @pytest.mark.parametrize(
+        ("solver_class", "ngsolve_solver_name"),
+        [(CGSolver, "CGSolver"), (GMRESSolver, "GMResSolver")],
+    )
+    def test_absolute_tolerance_forwarded_to_ngsolve(
+        self, solver_class, ngsolve_solver_name, mocker
+    ):
+        ngsolve_solver = SimpleNamespace(Solve=mocker.Mock())
+        constructor = mocker.patch(
+            f"ossdbs.fem.solver.ngsolve.krylovspace.{ngsolve_solver_name}",
+            return_value=ngsolve_solver,
+        )
+        mocker.patch("ossdbs.fem.solver.ngsolve.Preconditioner")
+        residual = mocker.MagicMock()
+        mocker.patch(
+            "ossdbs.fem.solver._log_initial_system_state", return_value=residual
+        )
+        mocker.patch("ossdbs.fem.solver._get_debug_mode", return_value=(False, False))
+        finalize = mocker.patch("ossdbs.fem.solver._finalize_krylov_solve")
+        bilinear_form = mocker.MagicMock()
+        linear_form = mocker.MagicMock()
+        grid_function = mocker.MagicMock()
+
+        solver = solver_class(
+            precond_par=BDDCPreconditioner(),
+            maxsteps=100,
+            relative_tolerance=1e-8,
+            absolute_tolerance=1e-10,
+        )
+        solver.bvp(bilinear_form, linear_form, grid_function)
+
+        assert constructor.call_args.kwargs["tol"] == 1e-8
+        assert constructor.call_args.kwargs["atol"] == 1e-10
+        finalize.assert_called_once()
+
+    @pytest.mark.parametrize(
+        (
+            "residuals",
+            "relative_tolerance",
+            "absolute_tolerance",
+            "expected_target",
+            "expected_converged",
+        ),
+        [
+            ([2.0, 0.02], 1e-2, None, 0.02, True),
+            ([2.0, 0.021], 1e-2, None, 0.02, False),
+            ([2.0, 0.04], 1e-2, 0.05, 0.05, True),
+            ([2.0, 0.06], None, 0.05, 0.05, False),
+        ],
+    )
+    def test_krylov_convergence_status(
+        self,
+        residuals,
+        relative_tolerance,
+        absolute_tolerance,
+        expected_target,
+        expected_converged,
+    ):
+        solver = SimpleNamespace(
+            residuals=residuals,
+            tol=relative_tolerance,
+            atol=absolute_tolerance,
+        )
+
+        initial, final, target, converged = _krylov_convergence_status(solver)
+
+        assert initial == residuals[0]
+        assert final == residuals[-1]
+        assert target == pytest.approx(expected_target)
+        assert converged is expected_converged
+
+    def test_convergence_at_maximum_steps_does_not_raise(self, mocker):
+        solver = SimpleNamespace(
+            residuals=[1.0, 1e-8],
+            tol=1e-8,
+            atol=None,
+            iterations=500,
+        )
+        mocker.patch("ossdbs.fem.solver._warn_local_preconditioner_issue")
+
+        _finalize_krylov_solve(
+            solver,
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            False,
+            "CG",
+            500,
+        )
+
+    def test_nonconvergence_message_reports_effective_target(self, mocker):
+        solver = SimpleNamespace(
+            residuals=[0.1, 4.448e-9],
+            tol=1e-8,
+            atol=None,
+            iterations=500,
+        )
+        mocker.patch("ossdbs.fem.solver._warn_local_preconditioner_issue")
+
+        with pytest.raises(RuntimeError) as error:
+            _finalize_krylov_solve(
+                solver,
+                mocker.MagicMock(),
+                mocker.MagicMock(),
+                mocker.MagicMock(),
+                mocker.MagicMock(),
+                mocker.MagicMock(),
+                False,
+                "CG",
+                500,
+            )
+
+        message = str(error.value)
+        assert "Initial residual: 0.1" in message
+        assert "relative tolerance: 1e-08" in message
+        assert "absolute tolerance: None" in message
+        assert "target residual: 1e-09" in message
+        assert "final residual: 4.448e-09" in message
+
+    def test_absolute_tolerance_accepts_previous_final_residual(self, mocker):
+        solver = SimpleNamespace(
+            residuals=[0.1, 4.448e-9],
+            tol=1e-8,
+            atol=1e-8,
+            iterations=500,
+        )
+        mocker.patch("ossdbs.fem.solver._warn_local_preconditioner_issue")
+
+        _finalize_krylov_solve(
+            solver,
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            mocker.MagicMock(),
+            False,
+            "CG",
+            500,
+        )
 
 
 @pytest.fixture
@@ -156,6 +330,166 @@ class TestMesh:
             pytest.fail("Cannot be instantiated.")
 
 
+class TestLocatePointsCache:
+    """``Mesh.locate_points`` caches, and refinement invalidates the cache.
+
+    Locating points is the dominant cost of the point analysis, so the
+    result is reused across the CSF / encapsulation masks and the
+    potential / field evaluations at every frequency. Element numbers
+    change under refinement, so a stale entry would silently evaluate the
+    solution at the wrong elements.
+    """
+
+    @staticmethod
+    def _mesh():
+        box = Box(Pnt(0, 0, 0), Pnt(10, 10, 10))
+        box.bc("brain")
+        mesh = Mesh(OCCGeometry(box), order=2)
+        mesh.generate_mesh({"MeshingHypothesis": {"Type": "Default"}})
+        return mesh
+
+    @staticmethod
+    def _points():
+        return np.array([[1.0, 1.0, 1.0], [5.0, 5.0, 5.0], [9.0, 9.0, 9.0]])
+
+    @staticmethod
+    def _located_afresh(mesh, points):
+        # a copy is a different object, so it bypasses the id-keyed cache
+        return np.array(mesh.ngsolvemesh(*points.copy().T)["nr"])
+
+    def test_repeated_call_is_cached(self):
+        mesh = self._mesh()
+        points = self._points()
+        assert mesh.locate_points(points) is mesh.locate_points(points)
+
+    def test_refinement_invalidates_cache(self):
+        mesh = self._mesh()
+        points = self._points()
+        n_elements_before = mesh.ngsolvemesh.ne
+        mesh.locate_points(points)
+
+        mesh.ngsolvemesh.ngmesh.Elements3D().NumPy()["refine"] = 1
+        mesh.refine()
+        assert mesh.ngsolvemesh.ne > n_elements_before
+
+        located = np.array(mesh.locate_points(points)["nr"])
+        assert np.array_equal(located, self._located_afresh(mesh, points))
+
+    def test_mesh_token_catches_refinement_without_invalidation(self):
+        """The token alone must catch a refinement, as defense in depth."""
+        mesh = self._mesh()
+        points = self._points()
+        mesh.locate_points(points)
+
+        mesh.invalidate_point_location_cache = lambda: None
+        mesh.ngsolvemesh.ngmesh.Elements3D().NumPy()["refine"] = 1
+        mesh.refine()
+
+        located = np.array(mesh.locate_points(points)["nr"])
+        assert np.array_equal(located, self._located_afresh(mesh, points))
+
+    @staticmethod
+    def _curved_mesh():
+        """A mesh whose elements actually move when curved.
+
+        The box used elsewhere in this class has flat faces, so curving it
+        changes nothing and cannot expose a stale location.
+        """
+        sphere = Sphere(Pnt(0, 0, 0), 10)
+        sphere.bc("brain")
+        mesh = Mesh(OCCGeometry(sphere), order=1)
+        mesh.generate_mesh({"MeshingHypothesis": {"Type": "Default"}})
+        return mesh
+
+    @staticmethod
+    def _positions_of(mesh, mapping):
+        """Physical coordinates the located points resolve to."""
+        coordinates = ngsolve.CoefficientFunction((ngsolve.x, ngsolve.y, ngsolve.z))
+        return np.array(coordinates(mapping)).reshape(-1, 3)
+
+    def test_curving_invalidates_cache(self):
+        """Curving moves the elements, so cached locations must be dropped.
+
+        A location holds reference coordinates inside an element. Curving
+        keeps the element and vertex counts, so nothing about the cache key
+        changes, but the position those coordinates map to does.
+        """
+        mesh = self._curved_mesh()
+        points = np.array([[9.4, 0.0, 0.0], [0.0, 9.4, 0.0], [0.0, 0.0, 9.4]])
+
+        mesh.locate_points(points)
+        mesh.curve(order=3)
+
+        after = self._positions_of(mesh, mesh.locate_points(points))
+        fresh = self._positions_of(mesh, mesh.ngsolvemesh(*points.copy().T))
+        np.testing.assert_allclose(after, fresh, atol=1e-12)
+
+    def test_mesh_token_catches_curving_without_invalidation(self):
+        """The token alone must catch curving, as defense in depth.
+
+        The element and vertex counts are unchanged by curving, so the
+        curvature order has to be part of the token.
+        """
+        mesh = self._curved_mesh()
+        points = np.array([[9.4, 0.0, 0.0], [0.0, 9.4, 0.0], [0.0, 0.0, 9.4]])
+
+        mesh.locate_points(points)
+        mesh.invalidate_point_location_cache = lambda: None
+        mesh.curve(order=3)
+
+        after = self._positions_of(mesh, mesh.locate_points(points))
+        fresh = self._positions_of(mesh, mesh.ngsolvemesh(*points.copy().T))
+        np.testing.assert_allclose(after, fresh, atol=1e-12)
+
+    def test_not_included_is_boolean_mask(self):
+        mesh = self._mesh()
+        points = np.array([[100.0, 100.0, 100.0], [5.0, 5.0, 5.0]])
+        not_included = mesh.not_included(points)
+        assert not_included.dtype == bool
+        assert not_included[0]
+        assert not not_included[1]
+
+    def test_several_point_models_are_cached_independently(self):
+        """A Pathway and a Lattice can be active in the same run.
+
+        They hold different point arrays, so both must be cached side by
+        side without evicting or shadowing each other.
+        """
+        mesh = self._mesh()
+        pathway_points = self._points()
+        lattice_points = np.array([[2.0, 3.0, 4.0], [6.0, 7.0, 8.0]])
+
+        # interleaved, as the pipeline evaluates them per frequency
+        first_pathway = mesh.locate_points(pathway_points)
+        first_lattice = mesh.locate_points(lattice_points)
+        assert mesh.locate_points(pathway_points) is first_pathway
+        assert mesh.locate_points(lattice_points) is first_lattice
+        assert first_pathway is not first_lattice
+
+        assert np.array_equal(
+            np.array(first_pathway["nr"]),
+            self._located_afresh(mesh, pathway_points),
+        )
+        assert np.array_equal(
+            np.array(first_lattice["nr"]),
+            self._located_afresh(mesh, lattice_points),
+        )
+
+    def test_refinement_invalidates_every_point_model(self):
+        mesh = self._mesh()
+        pathway_points = self._points()
+        lattice_points = np.array([[2.0, 3.0, 4.0], [6.0, 7.0, 8.0]])
+        mesh.locate_points(pathway_points)
+        mesh.locate_points(lattice_points)
+
+        mesh.ngsolvemesh.ngmesh.Elements3D().NumPy()["refine"] = 1
+        mesh.refine()
+
+        for points in (pathway_points, lattice_points):
+            located = np.array(mesh.locate_points(points)["nr"])
+            assert np.array_equal(located, self._located_afresh(mesh, points))
+
+
 class TestConductivity:
     def test_conductivityCF(self, settings_fixture, mri_fixture, geometry_fixture):
         try:
@@ -222,10 +556,10 @@ class TestDTIMasking:
                 vals = cf(mp)  # 9 components (flattened 3x3)
                 return np.array(vals, dtype=float).reshape((3, 3))
 
-            # Tissue-specific test points (updated by you)
+            # Tissue-specific test points in JD MRI frame
             test_points = {
-                "GM": (-11.2, -2.5, 5.2),
-                "WM": (-10.9, -2.6, -2.3),
+                "GM": (1.9, -34.6, 4.4),
+                "WM": (0.8, -33.7, -0.6),
             }
 
             # Evaluate tensors
@@ -313,7 +647,7 @@ class TestCustomizedLocalPreconditioner:
         solver = CGSolver(
             precond_par=CustomizedLocalPreconditioner(),
             maxsteps=2000,
-            precision=1e-10,
+            relative_tolerance=1e-10,
         )
 
         conductivity = ossdbs.ConductivityCF(
@@ -359,12 +693,12 @@ class TestCustomizedLocalPreconditioner:
         local_solver = CGSolver(
             precond_par=LocalPreconditioner(),
             maxsteps=2000,
-            precision=1e-10,
+            relative_tolerance=1e-10,
         )
         customized_solver = CGSolver(
             precond_par=CustomizedLocalPreconditioner(),
             maxsteps=2000,
-            precision=1e-10,
+            relative_tolerance=1e-10,
         )
 
         local_volume_conductor = _build_volume_conductor_with_solver(
@@ -515,7 +849,7 @@ class TestRefineAfterRefineHPIsBroken:
             """
             import math
             import ngsolve
-            from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Z
+            from netgen.occ import Box, Cylinder, OCCGeometry, Pnt, Sphere, Z
 
             box = Box(Pnt(-2, -2, -2), Pnt(2, 2, 2))
             cyl = Cylinder(Pnt(0, 0, -1), Z, r=0.5, h=2)
@@ -726,3 +1060,101 @@ class TestScalarImpedanceOnly:
 
         with pytest.raises(NotImplementedError, match="exactly 2 active"):
             VolumeConductor.compute_impedance(_Stub())
+
+
+class _FakeContact:
+    def __init__(self, name, current):
+        self.name = name
+        self.current = current
+        self.voltage = 0.0
+
+
+class _FakeContacts:
+    def __init__(self, contacts):
+        self._contacts = contacts
+        self.active = contacts
+        self.floating = []
+
+    def __iter__(self):
+        return iter(self._contacts)
+
+
+class _SkipBookkeepingVolumeConductor(VolumeConductor):
+    """Stub exercising only the octave-band skip-frequency bookkeeping."""
+
+    def __init__(self, output_path):
+        self._contacts = _FakeContacts(
+            [_FakeContact("E0", 1.0), _FakeContact("E1", -1.0)]
+        )
+        self.is_complex = True
+        self.output_path = output_path
+        self._floating_potentials = None
+        self.solved_frequencies = []
+
+    def compute_solution(self, frequency):
+        self.solved_frequencies.append(frequency)
+
+    def update_space(self):
+        pass
+
+    def prepare_current_controlled_mode(self):
+        pass
+
+    def _save_report(self, timings):
+        pass
+
+    def compute_impedance(self):
+        freq_idx = round(self.solved_frequencies[-1] / 100.0)
+        return complex(100.0 + freq_idx, 0.0)
+
+    def estimate_currents(self):
+        freq_idx = round(self.solved_frequencies[-1] / 100.0)
+        return {contact.name: 50.0 + freq_idx for contact in self.contacts}
+
+    def _has_sigma_changed(self, computing_idx, frequency_indices, threshold):
+        # Force exactly one skip, at the representative frequency 8 * 100 Hz,
+        # so that computing_idx (4) and the previous representative
+        # frequency's real array index (4) diverge from a naive
+        # `computing_idx - 1` (3).
+        return computing_idx != 4
+
+
+class TestOctaveBandSkipBookkeeping:
+    """Regression test for the octave-band "skip frequency" bookkeeping.
+
+    ``run_full_analysis`` reuses the impedance/current of the previous
+    *representative* frequency when the conductivity has not changed
+    enough to warrant a new solve. Under octave-band approximation the
+    loop counter (``computing_idx``, a position in the sparse
+    ``frequency_indices`` array) and the actual frequency-array index
+    (``freq_idx``) diverge, so the reused value must be looked up via
+    ``frequency_indices[computing_idx - 1]`` rather than
+    ``computing_idx - 1`` directly.
+    """
+
+    def _run(self, tmp_path):
+        vc = _SkipBookkeepingVolumeConductor(str(tmp_path))
+        signal = SimpleNamespace(
+            frequencies=np.arange(20) * 100.0,
+            amplitudes=np.ones(20),
+            octave_band_approximation=True,
+            current_controlled=True,
+        )
+        vc.run_full_analysis(signal, compute_impedance=True, estimate_currents=True)
+        return vc
+
+    def test_skipped_impedance_matches_previous_representative_frequency(
+        self, tmp_path
+    ):
+        vc = self._run(tmp_path)
+        # Band for freq_idx=8 (Hz 800) is [7, 8, 9, 10, 11]; it must copy
+        # the impedance computed at freq_idx=4 (104), not the stale value
+        # sitting at raw array position `computing_idx - 1 == 3` (102).
+        assert np.allclose(vc.impedances[[7, 8, 9, 10, 11]], 104.0)
+        assert not np.any(np.isnan(vc.impedances))
+
+    def test_skipped_currents_match_previous_representative_frequency(self, tmp_path):
+        vc = self._run(tmp_path)
+        currents = vc._currents["E0"]
+        assert np.allclose(currents[[7, 8, 9, 10, 11]], 54.0)
+        assert not np.any(np.isnan(currents))
