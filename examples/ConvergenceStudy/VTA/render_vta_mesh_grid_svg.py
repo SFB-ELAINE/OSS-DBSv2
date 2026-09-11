@@ -102,7 +102,7 @@ OUTFILE = "vta_mesh_grid"
 # so the hp panel gets a zoomed contact-edge inset -- its own <image>.
 HP_PANEL_INDEX = 5
 HP_INSET_RESULT = "Results_VTA_hp_refinement"
-HP_INSET_WINDOW = (300, 320)  # px
+HP_INSET_WINDOW = (230, 250)  # px (narrow, to clear the centred lead)
 HP_INSET_SCALE = 0.4  # mm half-height of the zoomed contact-corner view
 
 
@@ -327,14 +327,20 @@ def _compose_hp_inset(fig, axes, lead, M, fig_w, fig_h, cols, rows):
         )
     )
 
-    # independent inset axes, anchored at the hp panel's bottom-left
+    # independent inset axes, anchored at the hp panel's top-right corner
+    # (clear of the centred lead and the top-left label)
     iw, ih = HP_INSET_WINDOW
     r_hp, c_hp = divmod(HP_PANEL_INDEX, cols)
     x0_hp = MARGIN + c_hp * (PANEL_W + GAP)
     y0_hp = MARGIN + (rows - 1 - r_hp) * (PANEL_H + GAP)
     pad = 12
     ax_in = fig.add_axes(
-        ((x0_hp + pad) / fig_w, (y0_hp + pad) / fig_h, iw / fig_w, ih / fig_h)
+        (
+            (x0_hp + PANEL_W - iw - pad) / fig_w,
+            (y0_hp + PANEL_H - ih - pad) / fig_h,
+            iw / fig_w,
+            ih / fig_h,
+        )
     )
     ax_in.imshow(plt.imread("_hp_inset.png"))
     ax_in.set_xlim(0, iw)
@@ -353,8 +359,11 @@ def _compose_hp_inset(fig, axes, lead, M, fig_w, fig_h, cols, rows):
     )
     ax_in.text(8, 16, "hp @ contact edge", fontsize=11, color="black", va="top")
 
-    # connectors: source-box bottom corners -> inset top corners
-    for (box_x, box_y), (in_x, in_y) in [((bx0, bbot), (0, 0)), ((bx1, bbot), (iw, 0))]:
+    # connectors: source-box top corners -> inset bottom corners (inset above)
+    for (box_x, box_y), (in_x, in_y) in [
+        ((bx0, btop), (0, ih)),
+        ((bx1, btop), (iw, ih)),
+    ]:
         fig.add_artist(
             ConnectionPatch(
                 xyA=(in_x, in_y),
