@@ -79,8 +79,9 @@ g.map(
     edgecolor="w",
 )
 
-ax_count = 0
-for ax, label, scale in zip(g.axes.flat, labels, scales, strict=False):
+for ax_count, (ax, label, scale) in enumerate(
+    zip(g.axes.flat, labels, scales, strict=False)
+):
     # Make the grid horizontal instead of vertical
     ax.xaxis.grid(False)
     ax.yaxis.grid(True)
@@ -94,7 +95,6 @@ for ax, label, scale in zip(g.axes.flat, labels, scales, strict=False):
             ax.set(xlim=(-0.1, 2.5))
         else:
             ax.set(xlim=(-0.1, None))
-    ax_count += 1
 sns.despine(left=True, bottom=False)
 plt.savefig("pam_convergence_overview_errors.pdf")
 plt.savefig("pam_convergence_overview_errors.svg")

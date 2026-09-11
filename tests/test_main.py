@@ -16,48 +16,52 @@ class TestMainCLI:
         input_file = tmp_path / "input.json"
         input_file.write_text('{"test": "data"}')
 
-        with patch("ossdbs.main.main_run") as mock_main_run:
-            with patch.object(sys, "argv", ["ossdbs", str(input_file)]):
-                from ossdbs.main import main
+        with (
+            patch("ossdbs.main.main_run") as mock_main_run,
+            patch.object(sys, "argv", ["ossdbs", str(input_file)]),
+        ):
+            from ossdbs.main import main
 
-                main()
+            main()
 
-                # Verify main_run was called with the loaded settings
-                mock_main_run.assert_called_once()
-                call_args = mock_main_run.call_args[0][0]
-                assert call_args["test"] == "data"
-                assert "StimulationFolder" in call_args
+            # Verify main_run was called with the loaded settings
+            mock_main_run.assert_called_once()
+            call_args = mock_main_run.call_args[0][0]
+            assert call_args["test"] == "data"
+            assert "StimulationFolder" in call_args
 
     def test_cli_with_loglevel(self, tmp_path):
         """Test CLI with custom log level."""
         input_file = tmp_path / "input.json"
         input_file.write_text('{"test": "data"}')
 
-        with patch("ossdbs.main.main_run") as mock_main_run:
-            with patch("ossdbs.main.set_logger") as mock_set_logger:
-                with patch.object(
-                    sys, "argv", ["ossdbs", "--loglevel", "10", str(input_file)]
-                ):
-                    from ossdbs.main import main
+        with (
+            patch("ossdbs.main.main_run") as mock_main_run,
+            patch("ossdbs.main.set_logger") as mock_set_logger,
+            patch.object(sys, "argv", ["ossdbs", "--loglevel", "10", str(input_file)]),
+        ):
+            from ossdbs.main import main
 
-                    main()
+            main()
 
-                    mock_set_logger.assert_called_once_with(level=10)
-                    mock_main_run.assert_called_once()
+            mock_set_logger.assert_called_once_with(level=10)
+            mock_main_run.assert_called_once()
 
     def test_cli_stimulation_folder_set(self, tmp_path):
         """Test that StimulationFolder is set correctly."""
         input_file = tmp_path / "input.json"
         input_file.write_text('{"key": "value"}')
 
-        with patch("ossdbs.main.main_run") as mock_main_run:
-            with patch.object(sys, "argv", ["ossdbs", str(input_file)]):
-                from ossdbs.main import main
+        with (
+            patch("ossdbs.main.main_run") as mock_main_run,
+            patch.object(sys, "argv", ["ossdbs", str(input_file)]),
+        ):
+            from ossdbs.main import main
 
-                main()
+            main()
 
-                call_args = mock_main_run.call_args[0][0]
-                assert call_args["StimulationFolder"] == str(tmp_path)
+            call_args = mock_main_run.call_args[0][0]
+            assert call_args["StimulationFolder"] == str(tmp_path)
 
 
 class TestMainRun:

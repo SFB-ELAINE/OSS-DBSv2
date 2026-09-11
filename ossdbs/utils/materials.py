@@ -53,7 +53,7 @@ def have_dielectric_properties_changed(
     """
     max_error = 0.0
 
-    for _material, model in dielectric_properties.items():
+    for model in dielectric_properties.values():
         old_omega = 2.0 * np.pi * old_freq
         new_omega = 2.0 * np.pi * new_freq
 

@@ -232,7 +232,7 @@ class VTAImage(MagneticResonanceImage):
     def compute_dice_coefficent(self, reference_image) -> float:
         """Compute dice coefficient with image of same shape."""
         if not isinstance(reference_image, VTAImage):
-            raise ValueError("Can compute Dice coefficient only for VTAImage type.")
+            raise TypeError("Can compute Dice coefficient only for VTAImage type.")
         affines_equal = np.all(np.isclose(self.affine, reference_image.affine))
         if not affines_equal:
             raise ValueError("Need to provide a reference_image from same space.")

@@ -284,14 +284,13 @@ def validate_solver_settings(settings: dict, model_geometry: ModelGeometry) -> N
     floating_mode = model_geometry.get_floating_mode()
     preconditioner = settings["Solver"].get("Preconditioner", "bddc")
 
-    if floating_mode == "FloatingImpedance":
-        if preconditioner == "bddc":
-            _logger.warning(
-                "BDDC preconditioner is not compatible with FloatingImpedance "
-                "formulation. Switching to 'local' preconditioner."
-            )
-            settings["Solver"]["Preconditioner"] = "local"
-            settings["Solver"]["PreconditionerKwargs"] = {}
+    if floating_mode == "FloatingImpedance" and preconditioner == "bddc":
+        _logger.warning(
+            "BDDC preconditioner is not compatible with FloatingImpedance "
+            "formulation. Switching to 'local' preconditioner."
+        )
+        settings["Solver"]["Preconditioner"] = "local"
+        settings["Solver"]["PreconditionerKwargs"] = {}
 
 
 def prepare_solver(settings):
@@ -484,15 +483,13 @@ def run_volume_conductor_model(
 
     out_of_core = settings["OutOfCore"]
     compute_impedance = False
-    if "ComputeImpedance" in settings:
-        if settings["ComputeImpedance"]:
-            _logger.info("Will compute impedance at each frequency")
-            compute_impedance = True
+    if settings.get("ComputeImpedance"):
+        _logger.info("Will compute impedance at each frequency")
+        compute_impedance = True
     compute_currents = False
-    if "ComputeCurrents" in settings:
-        if settings["ComputeCurrents"]:
-            _logger.info("Will estimate currents at each frequency")
-            compute_currents = True
+    if settings.get("ComputeCurrents"):
+        _logger.info("Will estimate currents at each frequency")
+        compute_currents = True
     if "ExportVTK" in settings:
         export_vtk = settings["ExportVTK"]
         if export_vtk:

@@ -41,7 +41,7 @@ class PointModel(ABC):
     def collapse_VTA(self, value: bool):
         """Remove electrode from VTA."""
         if not isinstance(value, bool):
-            raise ValueError("Provide a boolean value for VTA collapse")
+            raise TypeError("Provide a boolean value for VTA collapse")
         self._collapse_VTA = value
 
     @property

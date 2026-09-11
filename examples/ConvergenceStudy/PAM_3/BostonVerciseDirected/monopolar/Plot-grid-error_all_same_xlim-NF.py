@@ -74,8 +74,9 @@ g.map(
     edgecolor="w",
 )
 
-ax_count = 0
-for ax, label, scale in zip(g.axes.flat, labels, scales, strict=False):
+for ax_count, (ax, label, scale) in enumerate(
+    zip(g.axes.flat, labels, scales, strict=False)
+):
     # Make the grid horizontal instead of vertical
     ax.xaxis.grid(False)
     ax.yaxis.grid(True)
@@ -86,7 +87,6 @@ for ax, label, scale in zip(g.axes.flat, labels, scales, strict=False):
     # set consistent limit
     if ax_count > 1:
         ax.set(xlim=(-0.5, 18))
-    ax_count += 1
 sns.despine(left=True, bottom=False)
 plt.savefig("nf_convergence_overview_errors_all_same.pdf")
 plt.savefig("nf_convergence_overview_errors_all_same.svg")

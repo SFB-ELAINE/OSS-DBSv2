@@ -71,11 +71,8 @@ def pathway_fixture(settings):
 
 class TestPointAnalysis:
     def test_pathway(self, pathway_fixture):
-        try:
-            pathway = pathway_fixture
-            assert pathway is not None
-        except Exception:
-            pytest.fail("Cannot be instantiated.")
+        pathway = pathway_fixture
+        assert pathway is not None
 
     def test_pathway_signal_assignment(
         self, pathway_fixture, mesh_fixture, conductivity_fixture
@@ -137,41 +134,33 @@ class TestPointAnalysis:
         assert all(test_values)
 
     def test_lattice(self, parameters):
-        try:
-            shape, center, distance, direction, collapse_vta = parameters
+        shape, center, distance, direction, collapse_vta = parameters
 
-            lattice = Lattice(
-                shape=shape,
-                center=center,
-                distance=distance,
-                direction=direction,
-                collapse_vta=collapse_vta,
-            )
-            assert lattice is not None
-        except Exception:
-            pytest.fail("Cannot be instantiated.")
+        lattice = Lattice(
+            shape=shape,
+            center=center,
+            distance=distance,
+            direction=direction,
+            collapse_vta=collapse_vta,
+        )
+        assert lattice is not None
 
     def test_voxelLattice(self, settings, parameters):
-        try:
-            _, center, _, _, _ = parameters
-            mri_image = MagneticResonanceImage(
-                settings["MaterialDistribution"]["MRIPath"]
-            )
-            affine = mri_image.affine
-            header = mri_image.header
-            voxel_shape_par = settings["PointModel"]["VoxelLattice"]["Shape"]
-            voxel_shape = np.array(
-                [
-                    voxel_shape_par["x"] + 1,
-                    voxel_shape_par["y"] + 1,
-                    voxel_shape_par["z"] + 1,
-                ]
-            )
+        _, center, _, _, _ = parameters
+        mri_image = MagneticResonanceImage(settings["MaterialDistribution"]["MRIPath"])
+        affine = mri_image.affine
+        header = mri_image.header
+        voxel_shape_par = settings["PointModel"]["VoxelLattice"]["Shape"]
+        voxel_shape = np.array(
+            [
+                voxel_shape_par["x"] + 1,
+                voxel_shape_par["y"] + 1,
+                voxel_shape_par["z"] + 1,
+            ]
+        )
 
-            voxelLattice = VoxelLattice(center, affine, voxel_shape, header)
-            assert voxelLattice is not None
-        except Exception:
-            pytest.fail("Cannot be instantiated.")
+        voxelLattice = VoxelLattice(center, affine, voxel_shape, header)
+        assert voxelLattice is not None
 
 
 class TestScaleFactorOnCopy:

@@ -213,7 +213,7 @@ def _add_lead(
     if lead_parts is None:
         return
 
-    for name in lead_parts.keys():
+    for name in lead_parts:
         block = lead_parts[name]
         if not name.startswith("Contact"):
             color = BODY_COLOR

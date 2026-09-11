@@ -78,7 +78,7 @@ class BehnkeFriedSEEGModel(ElectrodeModel):
                 raise ValueError("Parameter values cannot be less than zero")
         # check that number of contacts has been set correctly
         if not isinstance(self.n_contacts, int):
-            raise ValueError(
+            raise TypeError(
                 "The number of contacts has to be supplied as an integer value."
             )
 

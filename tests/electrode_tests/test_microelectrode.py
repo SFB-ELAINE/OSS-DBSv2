@@ -32,4 +32,4 @@ class TestMicroElectrode(TestElectrode):
 
     def test_custom_exists(self, electrode_name):
         customname = electrode_name + "Custom"
-        assert customname in ELECTRODE_MODELS.keys()
+        assert customname in ELECTRODE_MODELS

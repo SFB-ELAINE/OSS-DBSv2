@@ -74,7 +74,7 @@ class Pathway(PointModel):
         with h5py.File(self._path, "r") as file:
             populations = [
                 self.Population(group, self._create_axons(file, group))
-                for group in file.keys()
+                for group in file
             ]
 
         self._populations = populations
@@ -108,7 +108,7 @@ class Pathway(PointModel):
             Returns list of all axons within one group.
         """
         axons = []
-        for sub_group in file[group].keys():
+        for sub_group in file[group]:
             dataset = file[group][sub_group]
             if "inx" in dataset.attrs:
                 orig_inx = dataset.attrs["inx"]

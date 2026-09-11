@@ -84,12 +84,13 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
                    than the length of exposed wire and contact radius."""
             )
         # check that wire is thick enough
-        if self._parameters.exposed_wire > 0:
-            if np.isclose(self._parameters.wire_radius, 0):
-                raise ValueError(
-                    """If exposed wire length is greater than zero,
-                    must specify wire radius to be greater than zero."""
-                )
+        if self._parameters.exposed_wire > 0 and np.isclose(
+            self._parameters.wire_radius, 0
+        ):
+            raise ValueError(
+                """If exposed wire length is greater than zero,
+                must specify wire radius to be greater than zero."""
+            )
         # wire cannot be wider than contact
         if self._parameters.wire_radius > self._parameters.contact_radius:
             raise ValueError("Wire radius cannot be bigger than contact radius")

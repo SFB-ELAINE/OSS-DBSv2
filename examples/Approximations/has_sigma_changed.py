@@ -91,7 +91,7 @@ for idx, frequency in enumerate(frequencies):
     else:
         changed_cc4 = True
 
-    for material_test in material_modelCC4:
+    for material_test, model_cc4 in material_modelCC4.items():
         if changed_cc3:
             conductivitiesCC3needed[material_test][idx] = material_modelCC3[
                 material_test
@@ -102,20 +102,20 @@ for idx, frequency in enumerate(frequencies):
             ].complex_conductivity(2.0 * np.pi * frequency)
 
         if changed_cc4:
-            conductivitiesCC4needed[material_test][idx] = material_modelCC4[
-                material_test
-            ].complex_conductivity(2.0 * np.pi * frequency)
+            conductivitiesCC4needed[material_test][idx] = (
+                model_cc4.complex_conductivity(2.0 * np.pi * frequency)
+            )
         else:
-            conductivitiesCC4notneeded[material_test][idx] = material_modelCC4[
-                material_test
-            ].complex_conductivity(2.0 * np.pi * frequency)
+            conductivitiesCC4notneeded[material_test][idx] = (
+                model_cc4.complex_conductivity(2.0 * np.pi * frequency)
+            )
 
         conductivitiesCC3[material_test][idx] = material_modelCC3[
             material_test
         ].complex_conductivity(2.0 * np.pi * frequency)
-        conductivitiesCC4[material_test][idx] = material_modelCC4[
-            material_test
-        ].complex_conductivity(2.0 * np.pi * frequency)
+        conductivitiesCC4[material_test][idx] = model_cc4.complex_conductivity(
+            2.0 * np.pi * frequency
+        )
 
 
 omega = 2.0 * np.pi * frequencies

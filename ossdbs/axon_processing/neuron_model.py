@@ -134,7 +134,9 @@ def _run_neuron_simulation(
         activated = bool(neuron.h.stoprun)
         return (neuron_index, activated)
 
-    except Exception as e:
+    # Worker boundary: a failure has to come back as a value, because an
+    # exception cannot cross the process boundary to the parent.
+    except Exception as e:  # noqa: BLE001
         return (neuron_index, None, str(e))
 
 
@@ -290,6 +292,7 @@ class NeuronSimulator(ABC):
             stderr=subprocess.STDOUT,
             cwd=os.path.abspath(self._neuron_workdir),
             shell=(sys.platform == "win32"),
+            check=False,
         )
         _logger.info("Load mechanisms into environment")
         # TODO should be written in a safer way
@@ -359,7 +362,7 @@ class NeuronSimulator(ABC):
         td_solution = h5py.File(
             os.path.join(self.output_path, "combined_solution.h5"), mode="w"
         )
-        for obj in td_unit_solutions[0].keys():
+        for obj in td_unit_solutions[0]:
             td_unit_solutions[0].copy(obj, td_solution)
 
         pathways = list(td_unit_solutions[0].keys())
@@ -681,7 +684,8 @@ class NeuronSimulator(ABC):
                             f"NEURON simulation timed out for neuron {neuron_idx}"
                         )
                         not_activated_neurons.add(neuron_idx)
-                    except Exception as e:
+                    # One axon failing must not abandon the rest of the pathway.
+                    except Exception as e:  # noqa: BLE001
                         neuron_idx = future_to_idx[future]
                         _logger.warning(
                             f"NEURON simulation error for neuron {neuron_idx}: {e}"
@@ -788,18 +792,21 @@ class MRG2002(NeuronSimulator):
         if not set(info_to_update) == set(parameters_dict.keys()):
             raise ValueError("Need to provide all parameters: {info_to_update}")
 
-        hoc_file = fileinput.input(
+        with fileinput.input(
             files=os.path.join(self._neuron_workdir, "axon4pyfull.hoc"), inplace=1
-        )
-        for line in hoc_file:
-            if any(line.startswith(matched_info := info) for info in info_to_update):
-                _logger.debug(f"Matched: {matched_info}")
-                _logger.debug(line)
-                replacement_line = f"{matched_info}={parameters_dict[matched_info]}\n"
-                line = replacement_line
-                _logger.debug(line)
-            print(line, end="")
-        hoc_file.close()
+        ) as hoc_file:
+            for line in hoc_file:
+                if any(
+                    line.startswith(matched_info := info) for info in info_to_update
+                ):
+                    _logger.debug(f"Matched: {matched_info}")
+                    _logger.debug(line)
+                    replacement_line = (
+                        f"{matched_info}={parameters_dict[matched_info]}\n"
+                    )
+                    line = replacement_line
+                    _logger.debug(line)
+                print(line, end="")
 
     def modify_hoc_file(self, nRanvier, stepsPerMs, axon_morphology):
         """Update parameters in the hoc file."""
@@ -1038,33 +1045,34 @@ class McNeal1976(NeuronSimulator):
         if not set(info_to_update) == set(parameters_dict.keys()):
             raise ValueError("Need to provide all parameters: {info_to_update}")
 
-        hoc_file = fileinput.input(
+        with fileinput.input(
             files=os.path.join(self._neuron_workdir, "init_B5_extracellular.hoc"),
             inplace=1,
-        )
-
-        for line in hoc_file:
-            if any(line.startswith(matched_info := info) for info in info_to_update):
-                _logger.debug(f"Matched: {matched_info}")
-                _logger.debug(line)
-                replacement_line = f"{matched_info}={parameters_dict[matched_info]}\n"
-                line = replacement_line
-                _logger.debug(line)
-            print(line, end="")
-        hoc_file.close()
+        ) as hoc_file:
+            for line in hoc_file:
+                if any(
+                    line.startswith(matched_info := info) for info in info_to_update
+                ):
+                    _logger.debug(f"Matched: {matched_info}")
+                    _logger.debug(line)
+                    replacement_line = (
+                        f"{matched_info}={parameters_dict[matched_info]}\n"
+                    )
+                    line = replacement_line
+                    _logger.debug(line)
+                print(line, end="")
 
         NNODES_line = "NNODES ="
         axonnodes = parameters_dict["axonnodes"]
         NNODES_input = f"NNODES = {axonnodes}\n"
 
-        hoc_file = fileinput.input(
+        with fileinput.input(
             files=os.path.join(self._neuron_workdir, "axon5.hoc"), inplace=1
-        )
-        for line in hoc_file:
-            if line.startswith(NNODES_line):
-                line = NNODES_input
-            print(line, end="")
-        hoc_file.close()
+        ) as hoc_file:
+            for line in hoc_file:
+                if line.startswith(NNODES_line):
+                    line = NNODES_input
+                print(line, end="")
 
         return True
 

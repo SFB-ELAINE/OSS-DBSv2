@@ -48,6 +48,7 @@ def _check_neuron_compiler():
             capture_output=True,
             timeout=30,
             shell=(sys.platform == "win32"),
+            check=False,
         )
         # Exit code 0 or 1 is OK (1 means no .mod files found, which is expected)
         return result.returncode in (0, 1)

@@ -41,14 +41,16 @@ best_directory = "Results_PAM_best"
 best_df = pd.read_csv(f"{best_directory}_overview.csv")
 
 # Get best DOF and timing
-best_vcm = json.load(open(f"{best_directory}E1C1/VCM_report.json"))
+with open(f"{best_directory}E1C1/VCM_report.json") as fp:
+    best_vcm = json.load(fp)
 best_dofs = best_vcm["DOF"]
 best_time = sum(best_vcm["Timings"]["ComputeSolution"])
 # Sum across all 8 contacts
 for i in range(2, 9):
     vcm_path = f"{best_directory}E1C{i}/VCM_report.json"
     if os.path.isfile(vcm_path):
-        vcm = json.load(open(vcm_path))
+        with open(vcm_path) as fp:
+            vcm = json.load(fp)
         best_time += sum(vcm["Timings"]["ComputeSolution"])
 
 # Build summary
@@ -68,13 +70,15 @@ for idx, result_dir in enumerate(result_directories):
 
     # DOF and timing from E1C1 VCM report
     vcm_path = f"{result_dir}E1C1/VCM_report.json"
-    vcm = json.load(open(vcm_path))
+    with open(vcm_path) as fp:
+        vcm = json.load(fp)
     dofs = vcm["DOF"]
     time_total = sum(vcm["Timings"]["ComputeSolution"])
     for i in range(2, 9):
         vcm_path_i = f"{result_dir}E1C{i}/VCM_report.json"
         if os.path.isfile(vcm_path_i):
-            vcm_i = json.load(open(vcm_path_i))
+            with open(vcm_path_i) as fp:
+                vcm_i = json.load(fp)
             time_total += sum(vcm_i["Timings"]["ComputeSolution"])
 
     results_dict["roman"].append(r"\rom{" f"{idx + 1}" "}")

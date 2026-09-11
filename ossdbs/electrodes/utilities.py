@@ -32,7 +32,7 @@ def get_highest_edge(contact: occ.Face) -> occ.Edge:
 
 def get_signed_angle(
     v_in: np.ndarray, v_out: np.ndarray, rotation_axis: np.ndarray
-) -> None | float:
+) -> float | None:
     """Get signed angle between two vectors.
 
     Parameters
