@@ -19,7 +19,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: pipx run check-manifest
+      - uses: astral-sh/setup-uv@v6
+      - run: uvx check-manifest
+
+  lock-check:
+    # Ensure uv.lock stays in sync with pyproject.toml. The lockfile pins the
+    # full transitive dependency graph and is what makes the PyInstaller bundle
+    # reproducible (see build_merged.py / docs).
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv lock --check
 
   test:
     name: ${{ matrix.platform }} (${{ matrix.python-version }})
@@ -36,24 +47,56 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          cache-dependency-path: "pyproject.toml"
-          cache: "pip"
+
+      - name: ⚡ Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
       - name: Install Dependencies
+        # On PRs/pushes, install straight from the committed lockfile
+        # (`--locked`) so the exact pinned graph is what gets tested. On the
+        # weekly scheduled run, resolve fresh (ignoring the lock) and allow
+        # pre-releases to catch upstream breakage early.
+        shell: bash
         run: |
-          python -m pip install -U pip
-          # if running a cron job, we add the --pre flag to test against pre-releases
-          python -m pip install .[test] ${{ github.event_name == 'schedule' && '--pre' || ''  }}
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            uv sync --python "${{ matrix.python-version }}" --extra test --upgrade --prerelease allow
+          else
+            uv sync --python "${{ matrix.python-version }}" --extra test --locked
+          fi
 
       - name: 🧪 Run Tests
-        run: pytest --color=yes --cov --cov-report=xml --cov-report=term-missing
+        # --no-sync: use the environment installed above verbatim (don't let
+        # `uv run` re-sync it back to the lockfile on the scheduled run).
+        run: uv run --no-sync pytest --color=yes --cov --cov-report=xml --cov-report=term-missing
 
       - name: Coverage
         uses: codecov/codecov-action@v5
 
+  locked-install-intel-mac:
+    # Guard against the lockfile regressing on Intel macOS (x86_64), where some
+    # dependencies (e.g. openturns) ship no x86_64-macOS wheel for the newest
+    # version. Installs the full impedance stack straight from the lockfile.
+    name: Locked install (Intel macOS)
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - name: Install from lockfile (incl. impedance)
+        run: uv sync --locked --extra test --extra impedance
+      - name: Smoke-import and run unit tests
+        run: |
+          uv run --no-sync python -c "import ossdbs, openturns; print('openturns', openturns.__version__)"
+          uv run --no-sync pytest --color=yes
+
   deploy:
     name: Release
-    needs: test
+    needs: [test, lock-check, check-manifest]
     if: success() && startsWith(github.ref, 'refs/tags/') && github.event_name != 'schedule'
     runs-on: ubuntu-latest
 
@@ -66,15 +109,11 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.10"
+      - name: ⚡ Set up uv
+        uses: astral-sh/setup-uv@v6
 
       - name: Build
-        run: |
-          python -m pip install build
-          python -m build
+        run: uv build
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1

@@ -1,0 +1,107 @@
+# Simulation Tests - Run only on Pull Requests
+#
+# These are full simulation tests that compare outputs against expected results.
+# Separated from main CI to avoid slowing down regular development.
+
+name: Simulation Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  simulation-tests:
+    name: Simulation Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: ⚡ Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install Dependencies
+        run: uv sync --locked --extra test --extra impedance
+
+      - name: Run Fast Simulation Tests
+        run: |
+          uv run --no-sync pytest input_test_cases/test_simulations.py \
+            -m "simulation and not slow" \
+            -v \
+            --tb=short \
+            --color=yes
+
+      - name: Run Slow Simulation Tests
+        if: success()
+        run: |
+          uv run --no-sync pytest input_test_cases/test_simulations.py \
+            -m "simulation and slow and not requires_neuron" \
+            -v \
+            --tb=short \
+            --color=yes
+
+      - name: Upload Test Outputs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: simulation-test-outputs
+          path: |
+            input_test_cases/**/Results*/
+          retention-days: 7
+
+  neuron-simulation-tests:
+    name: NEURON Simulation Tests (${{ matrix.platform }})
+    runs-on: ${{ matrix.platform }}
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ubuntu-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: ⚡ Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Install Dependencies (with NEURON)
+        # NEURON is a locked runtime dependency on Linux/macOS, so the lockfile
+        # already includes it — no separate install needed.
+        run: uv sync --locked --extra test --extra impedance
+
+      - name: Verify NEURON is importable
+        run: uv run --no-sync python -c "import neuron; print('NEURON', neuron.__version__)"
+
+      - name: Run NEURON Simulation Tests
+        run: |
+          uv run --no-sync pytest input_test_cases/test_simulations.py \
+            -m "simulation and requires_neuron" \
+            -v --tb=short --color=yes
+
+      - name: Upload Test Outputs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: neuron-simulation-test-outputs-${{ matrix.platform }}
+          path: |
+            input_test_cases/**/Results*/
+          retention-days: 7

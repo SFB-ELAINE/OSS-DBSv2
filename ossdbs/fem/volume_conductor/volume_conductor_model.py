@@ -245,9 +245,11 @@ class VolumeConductor(ABC):
         if self.signal.octave_band_approximation:
             frequency_indices = get_octave_band_indices(self.signal.frequencies)
             # add DC component
-            if not np.isclose(self.signal.amplitudes[0], 0.0):
+            skip_dc = np.isclose(self.signal.amplitudes[0], 0.0)
+            if not skip_dc:
                 frequency_indices = np.insert(frequency_indices, 0, 0)
         else:
+            skip_dc = False
             frequency_indices = np.arange(len(self.signal.frequencies))
 
         if export_frequency is None:
@@ -274,16 +276,24 @@ class VolumeConductor(ABC):
 
         if compute_impedance:
             # scalar 1-D array, one entry per frequency
-            self._impedances = np.ndarray(
-                shape=(len(self.signal.frequencies),), dtype=dtype
+            # filled with NaNs to detect indexing errors
+            self._impedances = np.full(
+                shape=(len(self.signal.frequencies),), fill_value=np.nan, dtype=dtype
             )
+            if skip_dc:
+                # DC has zero amplitude and is never solved for; its
+                # impedance is not needed and is reported as zero
+                self._impedances[0] = 0.0
 
         if estimate_currents:
             self._currents = {}
             for contact in self.contacts:
-                self._currents[contact.name] = np.ndarray(
-                    shape=(len(self.signal.frequencies)), dtype=dtype
+                # filled with NaNs to detect indexing errors
+                self._currents[contact.name] = np.full(
+                    shape=(len(self.signal.frequencies)), fill_value=np.nan, dtype=dtype
                 )
+                if skip_dc:
+                    self._currents[contact.name][0] = 0.0
 
         for computing_idx, freq_idx in enumerate(frequency_indices):
             frequency = self.signal.frequencies[freq_idx]
@@ -393,13 +403,15 @@ class VolumeConductor(ABC):
                 _logger.info(f"Skipped computation at {frequency} Hz")
                 if compute_impedance:
                     # copy from previous frequency
-                    impedance = self._impedances[computing_idx - 1]
+                    previous_freq_idx = frequency_indices[computing_idx - 1]
+                    impedance = self._impedances[previous_freq_idx]
                     self._impedances[band_indices] = impedance
                 if estimate_currents:
+                    previous_freq_idx = frequency_indices[computing_idx - 1]
                     for contact in self.contacts:
                         self._currents[contact.name][band_indices] = self._currents[
                             contact.name
-                        ][computing_idx - 1]
+                        ][previous_freq_idx]
             # scale factor: is one for VC and depends on impedance for other case
             self._scale_factor = self.get_scale_factor(freq_idx)
             _logger.debug(f"Scale factor: {self._scale_factor}")
@@ -463,6 +475,15 @@ class VolumeConductor(ABC):
             self._surface_impedances = None
         # save impedance at all frequencies to file!
         if compute_impedance:
+            missing = np.flatnonzero(np.isnan(self._impedances))
+            if missing.size > 0:
+                missing_freqs = self.signal.frequencies[missing]
+                raise RuntimeError(
+                    "Impedance was not computed for "
+                    f"{missing.size} frequency/-ies: {missing_freqs}. "
+                    "This indicates a bug in the octave-band / skip-frequency "
+                    "bookkeeping in run_full_analysis()."
+                )
             _logger.info("Saving impedance")
             df = pd.DataFrame(
                 {
@@ -473,6 +494,16 @@ class VolumeConductor(ABC):
             )
             df.to_csv(os.path.join(self.output_path, "impedance.csv"), index=False)
         if estimate_currents:
+            for contact in self.contacts:
+                missing = np.flatnonzero(np.isnan(self._currents[contact.name]))
+                if missing.size > 0:
+                    missing_freqs = self.signal.frequencies[missing]
+                    raise RuntimeError(
+                        f"Current for contact {contact.name} was not computed for "
+                        f"{missing.size} frequency/-ies: {missing_freqs}. "
+                        "This indicates a bug in the octave-band / skip-frequency "
+                        "bookkeeping in run_full_analysis()."
+                    )
             df = pd.DataFrame(
                 {
                     "freq": self.signal.frequencies,
@@ -747,10 +778,7 @@ class VolumeConductor(ABC):
         Requires that points outside of the computational domain
         have been filtered!
         """
-        mesh = self.mesh.ngsolvemesh
-        x, y, z = lattice.T
-        pots = self.potential(mesh(x, y, z))
-        return pots
+        return self.potential(self.mesh.locate_points(lattice))
 
     def evaluate_field_at_points(self, lattice: np.ndarray) -> np.ndarray:
         """Return electric field components at specifed 3-D coordinates.
@@ -765,10 +793,7 @@ class VolumeConductor(ABC):
         Requires that points outside of the computational domain
         have been filtered!
         """
-        mesh = self.mesh.ngsolvemesh
-        x, y, z = lattice.T
-        fields = self.electric_field(mesh(x, y, z))
-        return fields
+        return self.electric_field(self.mesh.locate_points(lattice))
 
     @property
     def current_density(self) -> ngsolve.GridFunction:
@@ -1161,7 +1186,14 @@ class VolumeConductor(ABC):
         potentials: np.ndarray,
         fields: np.ndarray,
     ) -> None:
-        """Copy values to time-domain vector."""
+        """Copy values to time-domain vector.
+
+        The scale factor is handed over rather than applied here: every
+        index in the band shares the same potentials and fields and differs
+        only by that scalar, so scaling up front would build a full-size
+        temporary of both arrays once per frequency index. The point model
+        folds the factor into the per-column write instead.
+        """
         for freq_idx in band_indices:
             scale_factor = self._scale_factor * self.signal.amplitudes[freq_idx]
             # cast scale_factor to complex
@@ -1169,7 +1201,7 @@ class VolumeConductor(ABC):
             if not isinstance(scale_factor, complex):
                 scale_factor = complex(scale_factor)
             point_model.copy_frequency_domain_solution_from_vcm(
-                freq_idx, scale_factor * potentials, scale_factor * fields
+                freq_idx, potentials, fields, scale_factor=scale_factor
             )
 
     def threshold_frequency_domain_Efield(
