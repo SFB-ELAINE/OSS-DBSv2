@@ -20,6 +20,15 @@ Cost columns are per-run totals over the eight per-contact unit solves
 (``...E1C1`` ... ``...E1C8``), since a StimSets run needs all of them.
 
 Run ``evaluate_truncation.py`` first to produce the overview CSVs.
+
+This script does not run from a clean checkout, by design. Activation comes
+from the overview CSVs, which are committed, but the cost columns are
+measured from the raw StimSets output -- the solution H5 and
+``VCM_report.json`` of all eight unit solves per ratio, several GB in total
+-- which is not in the repository. Regenerating the summary therefore means
+running the study first (``run_sweep.sh``). Reproducing the *figure* does
+not: ``plot_truncation.py`` reads the committed
+``truncation_results_summary.csv`` and needs nothing else.
 """
 
 import argparse
@@ -69,7 +78,16 @@ def run_costs(result_dir):
     """Return time steps, H5 size, DOFs and solve time of one StimSets run."""
     dirs = contact_dirs(result_dir)
     if not dirs:
-        raise FileNotFoundError(f"No per-contact directories found for {result_dir}")
+        raise FileNotFoundError(
+            f"No per-contact directories ({result_dir}E1C1 ... "
+            f"E1C{N_CONTACTS}) found. The cost columns are measured from the "
+            "raw StimSets output -- the solution H5 and VCM_report.json of "
+            "every unit solve -- which runs to several GB and is therefore "
+            "not in the repository. Produce it with run_sweep.sh (or "
+            "run_truncation_study.py per ratio) before regenerating the "
+            "summary. Plotting needs none of this: plot_truncation.py reads "
+            "the committed truncation_results_summary.csv."
+        )
 
     h5_paths = [os.path.join(d, "oss_time_result_PAM.h5") for d in dirs]
     with h5py.File(h5_paths[0], "r") as f:

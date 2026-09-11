@@ -39,7 +39,11 @@ best_df["ngs_vta_volume_rel_error"] = 0.0
 best_df["roman"] = "Best"
 best_df = pd.DataFrame([best_df])
 data = pd.concat([data, best_df], ignore_index=True)
-data.fillna(0.0, inplace=True)
+# Only the numeric gaps mean anything here. The synthetic "Best" row carries
+# no study_name, so that column is left missing rather than filled: pandas 3
+# gives string columns their own dtype and rejects a float fill on one.
+numeric_columns = data.select_dtypes(include="number").columns
+data[numeric_columns] = data[numeric_columns].fillna(0.0)
 
 columns_to_plot = [
     "time",
