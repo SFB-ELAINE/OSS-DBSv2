@@ -18,9 +18,14 @@ but for the VTA study meshes. Two differences on purpose:
    appear axis-aligned (vertical) exactly like the MeshRefinement panels.
 
 This script NEVER generates meshes. It expects the ``Results_VTA_*`` result
-dirs (each with a ``material.vtu``) to be precomputed by
-``Medtronic3389/<scenario>/run_convergence_study.py`` and errors out listing
-anything that is missing.
+dirs (each with a ``material.vtu``) to be precomputed, and errors out listing
+anything that is missing. In ``Medtronic3389/<scenario>``, run:
+
+1. ``generate_vta_meshes.py`` -- writes all six panels, with a coarse
+   placeholder for the Benchmark one.
+2. ``generate_best_amr.py`` -- replaces that placeholder with the figure's
+   Benchmark panel (voxel-0.5 mm + material + adaptive refinement), or
+   ``generate_best_slab.py`` for the static 0.5 mm variant.
 """
 
 import json
@@ -385,8 +390,10 @@ def main():
     ]
     if missing:
         raise SystemExit(
-            "Missing precomputed meshes (run run_convergence_study.py in "
-            f"{SCENARIO} first); not recomputing here: {missing}"
+            f"Missing precomputed meshes: {missing}. Not recomputing here. "
+            f"Run generate_vta_meshes.py in {SCENARIO} first, then "
+            "generate_best_amr.py (or generate_best_slab.py) for the "
+            "Benchmark panel."
         )
 
     M = transform_matrix()

@@ -47,7 +47,11 @@ def base_config():
     """Load base_settings and replicate the case-grounding study setup."""
     with open("../../base_settings.json") as fp:
         cfg = json.load(fp)
-    cfg["MaterialDistribution"]["MRIPath"] = "../../segmask.nii.gz"
+    # PAM_3's copy is the one tracked in the repository, so the figure builds
+    # from a clean checkout. It is byte-identical to the VTA working copy.
+    # Not PAM's: that one differs in 0.27% of voxels, which changes the
+    # conductivity field and therefore the mesh being drawn.
+    cfg["MaterialDistribution"]["MRIPath"] = "../../../PAM_3/segmask.nii.gz"
     cfg["Electrodes"][0]["Name"] = ELECTRODE_NAME
     # active contact (contact 2), as in run_convergence_study.py
     contact = BASE_CONTACT.copy()
