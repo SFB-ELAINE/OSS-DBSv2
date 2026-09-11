@@ -1,0 +1,16 @@
+% Requires \usepackage{booktabs} and \usepackage{siunitx}
+\begin{table}[htbp]
+  \centering
+  \caption{Runtime breakdown of the best convergence-study strategy (\texttt{Fine} mesh, HP refinement with two levels and factor $0.125$, one material refinement step). Times in \si{\second}, fastest of three runs. \emph{Points} is the evaluation of the solution at the pathway or lattice points, \emph{Recon.} the reconstruction of the time domain.}
+  \label{tab:benchmark}
+  \begin{tabular}{l S S S S S S S S}
+    \toprule
+    Workload & {DOFs} & {Mesh} & {Solve} & {Points} & {Recon.} & {Export} & {PAM} & {Total} \\
+    \midrule
+    \multicolumn{9}{l}{\itshape Intel Xeon E5-2687W v4 @ \SI{3.00}{\giga\hertz}, 24 cores / 48 threads, \SI{132}{\giga\byte} RAM, Ubuntu 24.04.4 LTS} \\
+    PAM & 357499 & 8.3 & 19.3 & 13.7 & 10.1 & 0.8 & 41.9 & 95.7 \\
+    VTA (lattice) & 337823 & 13.9 & 1.6 & 35.4 & 0.0 & 22.0 & {--} & 74.4 \\
+    VTA (NGSolve only) & 337823 & 6.7 & 1.5 & 0.0 & 0.0 & 0.0 & {--} & 9.6 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
