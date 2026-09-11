@@ -38,6 +38,8 @@ meshsizes.txt
 # Ignore specific file types
 *.vol.gz
 *.vtu
+*.vtm
+*.vtp
 *.nii.gz
 *.nii
 *.stp
