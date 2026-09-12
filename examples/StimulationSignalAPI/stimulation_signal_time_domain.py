@@ -42,7 +42,7 @@ elif signal_type == "Trapezoid":
     )
 
 time_domain_signal = signal.get_time_domain_signal(dt, timesteps)
-fft_frequencies, fft_signal = signal.get_fft_spectrum(cutoff_frequency)
+fft_frequencies, fft_signal, signal_length = signal.get_fft_spectrum(cutoff_frequency)
 
 # Select only the positive frequencies
 positive_indices = fft_frequencies >= 0
@@ -60,7 +60,7 @@ plt.show()
 
 # Plot time domain signals (original and retrieved ones)
 timesteps_retrieved, retrieved_signal = signal.retrieve_time_domain_signal(
-    fft_signal, cutoff_frequency
+    fft_signal, cutoff_frequency, signal_length
 )
 plt.plot(dt * np.arange(timesteps), time_domain_signal, label="Original signal")
 plt.plot(timesteps_retrieved, retrieved_signal, "--", label="Retrieved signal")

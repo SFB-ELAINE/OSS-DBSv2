@@ -70,6 +70,18 @@ class TestElectrode:
     ]
     SceneRay1242: ClassVar[list[str]] = ["SceneRay1242"]
 
+    BFXR_SP21X_0C3: ClassVar[list[str]] = [
+        "BF08R_SP21X_0C3",
+        "BF10R_SP21X_0C3",
+        "BF12R_SP21X_0C3",
+    ]
+
+    BFXR_SP05X_0BH: ClassVar[list[str]] = [
+        "BF08R_SP05X_0BH",
+        "BF10R_SP05X_0BH",
+        "BF12R_SP05X_0BH",
+    ]
+
     def check_rename_boundaries(self, electrode, electrode_name):
         """Check whether set_contact_names() works."""
         changes = {
@@ -264,12 +276,9 @@ class TestElectrode:
                 or electrode_name in self.NeuroPace
                 or electrode_name in self.PINSMedical
                 or electrode_name in self.SceneRay1242
+                or electrode_name in self.BFXR_SP21X_0C3
+                or electrode_name in self.BFXR_SP05X_0BH
             ):
-                C1_height = tip_length - lead_radius
-                C1_volume = (4 / 3 * lead_radius**3 * np.pi * 0.5) + (
-                    C1_height * lead_radius**2 * np.pi
-                )
-
                 return (contact_length * lead_radius**2 * np.pi) * n_contacts
             elif (
                 electrode_name in self.AbbottStJudeDirected

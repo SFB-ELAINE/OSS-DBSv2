@@ -24,6 +24,7 @@ class TypeChecker:
         "AdaptiveMeshRefinement": bool,
         # TODO add more tests
         "PathwayFile": (type(None), str),
+        "DielectricAccuracy": float,
         "ActivationThresholdVTA[V-per-m]": (type(None), float),
         "Contacts": {"MaxMeshSize": float, "MaxMeshSizeEdge": float},
         "EncapsulationLayer": {
@@ -70,7 +71,8 @@ class TypeChecker:
             "Preconditioner": str,
             "PreconditionerKwargs": dict,
             "MaximumSteps": int,
-            "Precision": (int, float),
+            "RelativeTolerance": (int, float),
+            "AbsoluteTolerance": (type(None), int, float),
         },
         "StimulationSignal": {
             "Type": str,
@@ -132,7 +134,7 @@ class TypeChecker:
         "Current[A]": (int, float),
         "Voltage[V]": (int, float),
         "Floating": bool,
-        "SurfaceImpedance[Ohmm]": {"real": (int, float), "imag": (int, float)},
+        "SurfaceImpedance": {"Model": (type(None), str), "Parameters": dict},
     }
 
     @classmethod

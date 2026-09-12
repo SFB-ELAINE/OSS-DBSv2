@@ -30,6 +30,10 @@ class Mesh:
         self._geometry = geometry
         self._order = order
         self._mesh = None
+        self._hp_refinement_params = None
+        self._hp_refinement_applied = False
+        # Cache of located points, see locate_points().
+        self._point_location_cache = {}
 
     def generate_mesh(self, meshing_parameters: dict) -> None:
         """Generate NGSolve mesh."""
@@ -41,16 +45,49 @@ class Mesh:
         self._mesh = ngsolve.Mesh(
             self.geometry.GenerateMesh(netgen_hypothesis, **netgen_mp)
         )
+        self.invalidate_point_location_cache()
         if (
             "HPRefinement" in meshing_parameters
             and meshing_parameters["HPRefinement"]["Active"]
         ):
+            # Store HP refinement parameters for deferred application.
+            # HP refinement must be applied after any bisection-based
+            # refinement (e.g. material refinement), because RefineHP
+            # introduces element types that Netgen's bisection cannot handle.
+            self._hp_refinement_params = meshing_parameters["HPRefinement"]
+        self._mesh.Curve(order=self.order)
+
+    def set_hp_refinement_params(self, hp_params: dict) -> None:
+        """Store HP refinement parameters for deferred application.
+
+        This is used when loading a pre-existing mesh so that
+        apply_hp_refinement() can still be called later.
+        Existing stored parameters are overwritten.
+        """
+        if not self._hp_refinement_applied:
+            self._hp_refinement_params = hp_params
+
+    @property
+    def hp_refinement_applied(self) -> bool:
+        """Whether HP refinement has been applied to this mesh."""
+        return self._hp_refinement_applied
+
+    def apply_hp_refinement(self) -> None:
+        """Apply deferred HP refinement.
+
+        Must be called after all bisection-based refinement steps
+        (e.g. material refinement) are complete.
+        """
+        if self._hp_refinement_params is not None:
             _logger.info("Applying HP Refinement")
             self._mesh.RefineHP(
-                levels=meshing_parameters["HPRefinement"]["Levels"],
-                factor=meshing_parameters["HPRefinement"]["Factor"],
+                levels=self._hp_refinement_params["Levels"],
+                factor=self._hp_refinement_params["Factor"],
             )
-        self._mesh.Curve(order=self.order)
+            self._mesh.Curve(order=self._order)
+            self._hp_refinement_params = None
+            self._hp_refinement_applied = True
+            self.invalidate_point_location_cache()
 
     def load_mesh(self, filename: str) -> None:
         """Load NGSolve mesh from file."""
@@ -61,6 +98,7 @@ class Mesh:
         self._mesh = ngsolve.Mesh(filename=filename)
         self._mesh.ngmesh.SetGeometry(self._geometry)
         self._mesh.Curve(order=self.order)
+        self.invalidate_point_location_cache()
 
     def get_mesh_hypothesis(self, mesh_parameters: dict):
         """Get meshing hypothesis from Netgen/NGSolve."""
@@ -89,16 +127,18 @@ class Mesh:
 
     def get_meshing_parameters(self, mesh_parameters: dict):
         """Prepare NGSolve meshing parameters deviating from default."""
-        meshing_hypothesis = {}
-        if "MaxMeshSize" in mesh_parameters:
-            meshing_hypothesis["maxh"] = mesh_parameters["MaxMeshSize"]
-        if "CurvatureSafety" in mesh_parameters:
-            meshing_hypothesis["curvaturesafety"] = mesh_parameters["CurvatureSafety"]
-        if "Grading" in mesh_parameters:
-            meshing_hypothesis["grading"] = mesh_parameters["Grading"]
-        if "MeshSizeFilename" in mesh_parameters:
-            meshing_hypothesis["meshsizefilename"] = mesh_parameters["MeshSizeFilename"]
-        return meshing_hypothesis
+        # Map input parameter names to NGSolve parameter names
+        param_mapping = {
+            "MaxMeshSize": "maxh",
+            "CurvatureSafety": "curvaturesafety",
+            "Grading": "grading",
+            "MeshSizeFilename": "meshsizefilename",
+        }
+        return {
+            ngsolve_key: mesh_parameters[input_key]
+            for input_key, ngsolve_key in param_mapping.items()
+            if input_key in mesh_parameters
+        }
 
     @property
     def order(self) -> int:
@@ -154,6 +194,56 @@ class Mesh:
         """
         return self._mesh
 
+    def _mesh_token(self) -> tuple:
+        """Return a value that changes whenever located points would move.
+
+        Used to validate cached point locations. A refinement adds elements
+        and vertices, so the counts catch that. Curving moves the elements
+        without changing either count, which is why the curvature order is
+        part of the token too: a located point holds reference coordinates
+        inside an element, and where those land depends on how the element
+        is curved.
+        """
+        return (id(self._mesh), self._mesh.ne, self._mesh.nv, self._order)
+
+    def invalidate_point_location_cache(self) -> None:
+        """Drop cached point locations, e.g. after the mesh has changed."""
+        self._point_location_cache.clear()
+
+    def locate_points(self, points: np.ndarray):
+        """Return the points located on the mesh, cached.
+
+        Locating points is a spatial search over the whole mesh and costs
+        orders of magnitude more than evaluating a CoefficientFunction at
+        the result. The same lattice is located for the CSF and
+        encapsulation masks and again for the potential and the field at
+        every frequency, so the result is cached and reused.
+
+        The cache is keyed on the identity of the point array -- the array
+        itself is stored alongside the result, which keeps it alive and
+        therefore keeps its ``id`` from being reused by another object.
+        Entries are additionally validated against the mesh token, so a
+        refinement invalidates them even if nothing calls
+        ``invalidate_point_location_cache``.
+
+        Parameters
+        ----------
+        points: np.ndarray
+            Nx3 array of point coordinates (x, y, z).
+        """
+        token = self._mesh_token()
+        key = id(points)
+        cached = self._point_location_cache.get(key)
+        if cached is not None:
+            cached_token, cached_points, mapping = cached
+            if cached_token == token and cached_points is points:
+                return mapping
+
+        x, y, z = points.T
+        mapping = self._mesh(x, y, z)
+        self._point_location_cache[key] = (token, points, mapping)
+        return mapping
+
     def not_included(self, points: np.ndarray) -> np.ndarray:
         """Check each point in collection for collision with geometry.
         True if point is included in geometry, false otherwise.
@@ -169,9 +259,15 @@ class Mesh:
             Array representing the state of collision for each point.
             True if point is included in geometry, False otherwise.
         """
+        # Not cached: this is called once, on the unfiltered coordinates,
+        # while the cached lattice is the filtered subset -- a different
+        # array, so there would be nothing to reuse and the result would
+        # only be retained for the lifetime of the mesh.
         x, y, z = points.T
         mips = self._mesh(x, y, z)
-        return np.array([mip[5] == -1 for mip in mips])
+        # mips is a numpy structured array, "nr" is the element number
+        # and -1 marks a point that could not be located in the mesh
+        return mips["nr"] == -1
 
     def refine(self, at_surface: bool = False) -> None:
         """Refine the mesh.
@@ -183,6 +279,7 @@ class Mesh:
         """
         self._mesh.Refine(mark_surface_elements=at_surface)
         self._mesh.Curve(order=self._order)
+        self.invalidate_point_location_cache()
 
     def curve(self, order: int) -> None:
         """Curve mesh and overwrite mesh order.
@@ -194,6 +291,10 @@ class Mesh:
         """
         self._order = order
         self._mesh.Curve(order=order)
+        # Curving leaves the element and vertex counts alone but moves the
+        # elements, so a cached location keeps reference coordinates that now
+        # resolve to a slightly different position.
+        self.invalidate_point_location_cache()
 
     def save(self, file_name: str) -> None:
         """Save netgen mesh.
@@ -204,45 +305,6 @@ class Mesh:
             File name of the mesh data.
         """
         self._mesh.ngmesh.Save(file_name)
-
-    def refine_at_voxel(self, start: tuple, end: tuple, data: np.ndarray) -> None:
-        """Refine the mesh at the marked locations.
-
-        Parameters
-        ----------
-        start : tuple
-            Lower coordinates of voxel space.
-
-        end : tuple
-            Upper coordinates of voxel space.
-
-        data : np.ndarray
-            Voxelvalues.
-        """
-        space = ngsolve.L2(self._mesh, order=0)
-        grid_function = ngsolve.GridFunction(space=space)
-        cf = ngsolve.VoxelCoefficient(
-            start=start, end=end, values=data.astype(float), linear=False
-        )
-        grid_function.Set(cf)
-        flags = grid_function.vec.FV().NumPy()
-
-        for element, flag in zip(self._mesh.Elements(ngsolve.VOL), flags, strict=True):
-            self._mesh.SetRefinementFlag(ei=element, refine=flag)
-        self.refine()
-
-    def refine_at_materials(self, materials: list[str]) -> None:
-        """Refine the mesh by the boundaries.
-
-        Parameters
-        ----------
-        materials : list[str]
-            Collection of material names.
-
-        """
-        for element in self._mesh.Elements(ngsolve.VOL):
-            to_refine = element.mat in materials
-            self._mesh.SetRefinementFlag(ei=element, refine=to_refine)
 
     def refine_at_boundaries(self, boundaries: list) -> None:
         """Refine the mesh by the boundaries.
@@ -313,6 +375,16 @@ class Mesh:
         self._mesh.ngmesh.Elements3D().NumPy()["refine"] = to_refine
         # refine
         self.refine()
+
+    def get_boundary_areas(self) -> dict:
+        """Integrate over boundaries to obtain surface areas."""
+        surface_area_dict = {}
+        for boundary in self.boundaries:
+            area = ngsolve.Integrate(
+                ngsolve.CF(1.0) * ngsolve.ds(boundary), mesh=self.ngsolvemesh
+            )
+            surface_area_dict[boundary] = area
+        return surface_area_dict
 
     @property
     def n_elements(self) -> int:

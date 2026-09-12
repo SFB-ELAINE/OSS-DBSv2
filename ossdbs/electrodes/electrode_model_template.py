@@ -2,6 +2,8 @@
 # Copyright 2023, 2024 Jan Philipp Payonk, Julius Zimmermann
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from __future__ import annotations
+
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
@@ -176,23 +178,6 @@ class ElectrodeModel(ABC):
     def index(self, index: int) -> None:
         self._index = index
 
-    def get_max_mesh_size_contacts(self, ratio: float) -> float:
-        """Use electrode's contact size to estimate maximal mesh size.
-
-        Parameters
-        ----------
-        ratio: float
-            Ratio between characteristic contact size and maximal mesh size.
-
-        Notes
-        -----
-        For most of the electrodes, the electrode diameter is used.
-        Exemptions are:
-        * :class:`ossdbs.electrodes.MicroProbesSNEX100Model`
-
-        """
-        return self._parameters.lead_diameter / ratio
-
     def export_electrode(self, output_path, brain_dict, n_electrode) -> None:
         """Export electrode as Netgen and VTK file."""
         _logger.info("Export electrode as Netgen and VTK file")
@@ -260,10 +245,10 @@ class ElectrodeModel(ABC):
             raise RuntimeError("Faces have not been named correctly")
 
     def set_hp_flag(self, electrode_parameters: dict):
-        """Set hp-flags only on active contacts."""
+        """Set hp-flags only on active and floating contacts."""
         if "Contacts" in electrode_parameters:
             for contact_info in electrode_parameters["Contacts"]:
-                if contact_info["Active"]:
+                if contact_info["Active"] or contact_info["Floating"]:
                     contact_idx = contact_info["Contact_ID"]
                     self._set_edge_hp_flag({f"Contact_{contact_idx}": 1})
                     self._set_vertex_hp_flag({f"Contact_{contact_idx}": 1})
@@ -279,3 +264,19 @@ class ElectrodeModel(ABC):
         for vertex in self.geometry.vertices:
             if vertex.name in vertex_sizes:
                 vertex.hpref = vertex_sizes[vertex.name]
+
+    def get_contact_areas(self) -> dict:
+        """Measure contact areas from the electrode geometry.
+
+        Returns
+        -------
+        dict
+            Mapping of face name to area (in mm^2).
+        """
+        surface_areas = {}
+        for face in self.geometry.faces:
+            if face.name not in surface_areas:
+                surface_areas[face.name] = face.mass
+            else:
+                surface_areas[face.name] += face.mass
+        return surface_areas

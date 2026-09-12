@@ -4,6 +4,9 @@
 import logging
 from abc import ABC, abstractmethod
 
+import ngsolve
+import numpy as np
+
 _logger = logging.getLogger(__name__)
 
 
@@ -39,6 +42,53 @@ class LocalPreconditioner(Preconditioner):
     def to_dictionary(self) -> dict:
         """Prepare dictionary to be passed to NGSolve."""
         return {"type": self.type}
+
+
+class CustomizedLocalPreconditioner(Preconditioner):
+    """Custom diagonal Jacobi preconditioner."""
+
+    def __init__(self) -> None:
+        _logger.debug("Initialized customized Jacobi preconditioner")
+        self.type = "customized_local"
+
+    def to_dictionary(self) -> dict:
+        """Prepare dictionary to be passed to the solver."""
+        return {"type": self.type}
+
+
+class JacobiPreconditioner(ngsolve.BaseMatrix):
+    """Simple diagonal Jacobi preconditioner as an NGSolve operator."""
+
+    def __init__(self, inv_diag: np.ndarray, freedofs, template_vec) -> None:
+        super().__init__()
+        self._inv_diag = inv_diag
+        self._freedofs = np.array(freedofs, dtype=bool)
+        self._template_vec = template_vec
+
+    def Mult(self, x, y) -> None:
+        """Apply the preconditioner to ``x`` and store the result in ``y``."""
+        x_np = x.FV().NumPy()
+        y_np = y.FV().NumPy()
+        y_np[:] = self._inv_diag * x_np
+        y_np[~self._freedofs] = 0.0
+
+    def CreateColVector(self):
+        """Create a compatible column vector."""
+        return self._template_vec.CreateVector()
+
+    def CreateRowVector(self):
+        """Create a compatible row vector."""
+        return self._template_vec.CreateVector()
+
+    @property
+    def height(self) -> int:
+        """Return the operator height."""
+        return len(self._inv_diag)
+
+    @property
+    def width(self) -> int:
+        """Return the operator width."""
+        return len(self._inv_diag)
 
 
 class MultigridPreconditioner(Preconditioner):

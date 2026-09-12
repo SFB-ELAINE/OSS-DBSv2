@@ -1,0 +1,561 @@
+nohup: ignoring input
+Warning: no DISPLAY environment variable.
+--No graphics will be displayed.
+INFO:ossdbs.api:Load MRI image
+INFO:ossdbs.api:Generate electrode geometries
+INFO:ossdbs.main:Generate full model geometry
+INFO:ossdbs.electrodes.electrode_model_template:Boundary names updated
+WARNING:ossdbs.model_geometry.model_geometry:Trying to set area twice for E1C1
+INFO:ossdbs.api:Set values on contacts and encapsulation layers
+INFO:ossdbs.api:Prepare dielectric model
+INFO:ossdbs.main:Prepare conductivity coefficient function
+INFO:ossdbs.fem.volume_conductor.conductivity:Remove material Blood because not present in MRI.
+INFO:ossdbs.api:Preparing solver
+INFO:ossdbs.api:Generate volume conductor model
+INFO:ossdbs.api:Output path set to: Results_VTA_default
+WARNING:ossdbs.model_geometry.contacts:Surface impedance parameter dictionary was provided without model. It will not be taken into account.
+INFO:ossdbs.api:Run volume conductor model
+INFO:ossdbs.api:Will compute impedance at each frequency
+INFO:ossdbs.api:Will export solution to VTK
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Set export frequency to 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements before material refinement:33169
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements after material refinement:33169
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting at 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting results at 10000.0 Hz.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting for point model type <class 'ossdbs.point_analysis.lattice.Lattice'>.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:VTA volume is: 10.138
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Saving impedance
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Launching reconstruction of time domain
+INFO:ossdbs.main:Volume conductor timings:
+{'ComputeSolution': [0.5070288181304932],
+ 'CopyValues': [28.371626615524292],
+ 'FieldExport': 15.834217309951782,
+ 'ReconstructTimeSignals_PointModel_0': 0.0,
+ 'VTKExport': [0.4469780921936035]}
+INFO:ossdbs.main:Timings:
+ {'ConductivityCF': 0.29089832305908203,
+ 'ContactProperties': 0.0004591941833496094,
+ 'DielectricModel': 9.036064147949219e-05,
+ 'Electrodes': 0.11118149757385254,
+ 'MRI': 0.4370894432067871,
+ 'ModelGeometry': 0.49147820472717285,
+ 'Settings': 0.0004215240478515625,
+ 'VolumeConductor': 58.52341866493225}
+INFO:ossdbs.main:Process Completed
+INFO:ossdbs.api:Load MRI image
+INFO:ossdbs.api:Generate electrode geometries
+INFO:ossdbs.main:Generate full model geometry
+INFO:ossdbs.electrodes.electrode_model_template:Boundary names updated
+WARNING:ossdbs.model_geometry.model_geometry:Trying to set area twice for E1C1
+INFO:ossdbs.api:Set values on contacts and encapsulation layers
+INFO:ossdbs.api:Prepare dielectric model
+INFO:ossdbs.main:Prepare conductivity coefficient function
+INFO:ossdbs.api:Preparing solver
+INFO:ossdbs.api:Generate volume conductor model
+INFO:ossdbs.api:Output path set to: Results_VTA_fine
+WARNING:ossdbs.model_geometry.contacts:Surface impedance parameter dictionary was provided without model. It will not be taken into account.
+INFO:ossdbs.api:Run volume conductor model
+INFO:ossdbs.api:Will compute impedance at each frequency
+INFO:ossdbs.api:Will export solution to VTK
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Set export frequency to 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements before material refinement:127145
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements after material refinement:127145
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting at 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting results at 10000.0 Hz.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting for point model type <class 'ossdbs.point_analysis.lattice.Lattice'>.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:VTA volume is: 9.770
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Saving impedance
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Launching reconstruction of time domain
+INFO:ossdbs.main:Volume conductor timings:
+{'ComputeSolution': [0.9290084838867188],
+ 'CopyValues': [51.254976987838745],
+ 'FieldExport': 15.568342208862305,
+ 'ReconstructTimeSignals_PointModel_0': 0.0,
+ 'VTKExport': [1.6225652694702148]}
+INFO:ossdbs.main:Timings:
+ {'ConductivityCF': 0.26367855072021484,
+ 'ContactProperties': 0.0003876686096191406,
+ 'DielectricModel': 0.00013899803161621094,
+ 'Electrodes': 0.11021757125854492,
+ 'MRI': 0.39869141578674316,
+ 'ModelGeometry': 0.49094533920288086,
+ 'Settings': 0.0006086826324462891,
+ 'VolumeConductor': 87.82030272483826}
+INFO:ossdbs.main:Process Completed
+INFO:ossdbs.api:Load MRI image
+INFO:ossdbs.api:Generate electrode geometries
+INFO:ossdbs.main:Generate full model geometry
+INFO:ossdbs.electrodes.electrode_model_template:Boundary names updated
+WARNING:ossdbs.model_geometry.model_geometry:Trying to set area twice for E1C1
+INFO:ossdbs.api:Set values on contacts and encapsulation layers
+INFO:ossdbs.api:Prepare dielectric model
+INFO:ossdbs.main:Prepare conductivity coefficient function
+INFO:ossdbs.api:Preparing solver
+INFO:ossdbs.api:Generate volume conductor model
+INFO:ossdbs.api:Output path set to: Results_VTA_very_fine
+WARNING:ossdbs.model_geometry.contacts:Surface impedance parameter dictionary was provided without model. It will not be taken into account.
+INFO:ossdbs.api:Run volume conductor model
+INFO:ossdbs.api:Will compute impedance at each frequency
+INFO:ossdbs.api:Will export solution to VTK
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Set export frequency to 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements before material refinement:603174
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements after material refinement:603174
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting at 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting results at 10000.0 Hz.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting for point model type <class 'ossdbs.point_analysis.lattice.Lattice'>.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:VTA volume is: 9.408
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Saving impedance
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Launching reconstruction of time domain
+INFO:ossdbs.main:Volume conductor timings:
+{'ComputeSolution': [2.391538143157959],
+ 'CopyValues': [127.22727084159851],
+ 'FieldExport': 15.88852858543396,
+ 'ReconstructTimeSignals_PointModel_0': 0.0,
+ 'VTKExport': [8.542711019515991]}
+INFO:ossdbs.main:Timings:
+ {'ConductivityCF': 0.2839822769165039,
+ 'ContactProperties': 0.000396728515625,
+ 'DielectricModel': 0.00011587142944335938,
+ 'Electrodes': 0.11103415489196777,
+ 'MRI': 0.37044477462768555,
+ 'ModelGeometry': 0.49428391456604004,
+ 'Settings': 0.0005707740783691406,
+ 'VolumeConductor': 187.00009512901306}
+INFO:ossdbs.main:Process Completed
+INFO:ossdbs.api:Load MRI image
+INFO:ossdbs.api:Generate electrode geometries
+INFO:ossdbs.main:Generate full model geometry
+INFO:ossdbs.electrodes.electrode_model_template:Boundary names updated
+WARNING:ossdbs.model_geometry.model_geometry:Trying to set area twice for E1C1
+INFO:ossdbs.api:Set values on contacts and encapsulation layers
+INFO:ossdbs.api:Prepare dielectric model
+INFO:ossdbs.main:Prepare conductivity coefficient function
+INFO:ossdbs.api:Preparing solver
+INFO:ossdbs.api:Generate volume conductor model
+INFO:ossdbs.api:Output path set to: Results_VTA_material_refinement
+WARNING:ossdbs.model_geometry.contacts:Surface impedance parameter dictionary was provided without model. It will not be taken into account.
+INFO:ossdbs.api:Run volume conductor model
+INFO:ossdbs.api:Will compute impedance at each frequency
+INFO:ossdbs.api:Will export solution to VTK
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Set export frequency to 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements before material refinement:603174
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements after material refinement:3462451
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting at 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting results at 10000.0 Hz.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting for point model type <class 'ossdbs.point_analysis.lattice.Lattice'>.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:VTA volume is: 9.403
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Saving impedance
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Launching reconstruction of time domain
+INFO:ossdbs.main:Volume conductor timings:
+{'ComputeSolution': [18.375818490982056],
+ 'CopyValues': [253.98107481002808],
+ 'FieldExport': 16.42720675468445,
+ 'ReconstructTimeSignals_PointModel_0': 0.0,
+ 'VTKExport': [50.06575679779053]}
+INFO:ossdbs.main:Timings:
+ {'ConductivityCF': 0.27399253845214844,
+ 'ContactProperties': 0.0003864765167236328,
+ 'DielectricModel': 0.00012683868408203125,
+ 'Electrodes': 0.12079429626464844,
+ 'MRI': 0.37677669525146484,
+ 'ModelGeometry': 0.48989033699035645,
+ 'Settings': 0.0006763935089111328,
+ 'VolumeConductor': 382.5678219795227}
+INFO:ossdbs.main:Process Completed
+INFO:ossdbs.api:Load MRI image
+INFO:ossdbs.api:Generate electrode geometries
+INFO:ossdbs.main:Generate full model geometry
+INFO:ossdbs.electrodes.electrode_model_template:Boundary names updated
+WARNING:ossdbs.model_geometry.model_geometry:Trying to set area twice for E1C1
+INFO:ossdbs.api:Set values on contacts and encapsulation layers
+INFO:ossdbs.api:Prepare dielectric model
+INFO:ossdbs.main:Prepare conductivity coefficient function
+INFO:ossdbs.api:Preparing solver
+INFO:ossdbs.api:Generate volume conductor model
+INFO:ossdbs.api:Output path set to: Results_VTA_edge_refinement
+WARNING:ossdbs.model_geometry.contacts:Surface impedance parameter dictionary was provided without model. It will not be taken into account.
+INFO:ossdbs.api:Run volume conductor model
+INFO:ossdbs.api:Will compute impedance at each frequency
+INFO:ossdbs.api:Will export solution to VTK
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Set export frequency to 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements before material refinement:33366
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements after material refinement:33366
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting at 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting results at 10000.0 Hz.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting for point model type <class 'ossdbs.point_analysis.lattice.Lattice'>.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:VTA volume is: 9.998
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Saving impedance
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Launching reconstruction of time domain
+INFO:ossdbs.main:Volume conductor timings:
+{'ComputeSolution': [0.6793308258056641],
+ 'CopyValues': [28.59553074836731],
+ 'FieldExport': 15.631906270980835,
+ 'ReconstructTimeSignals_PointModel_0': 0.0,
+ 'VTKExport': [0.3969414234161377]}
+INFO:ossdbs.main:Timings:
+ {'ConductivityCF': 0.22572112083435059,
+ 'ContactProperties': 0.0003075599670410156,
+ 'DielectricModel': 0.00011348724365234375,
+ 'Electrodes': 0.11176156997680664,
+ 'MRI': 0.3256857395172119,
+ 'ModelGeometry': 0.48917460441589355,
+ 'Settings': 0.0005862712860107422,
+ 'VolumeConductor': 58.90725135803223}
+INFO:ossdbs.main:Process Completed
+INFO:ossdbs.api:Load MRI image
+INFO:ossdbs.api:Generate electrode geometries
+INFO:ossdbs.main:Generate full model geometry
+INFO:ossdbs.electrodes.electrode_model_template:Boundary names updated
+WARNING:ossdbs.model_geometry.model_geometry:Trying to set area twice for E1C1
+INFO:ossdbs.api:Set values on contacts and encapsulation layers
+INFO:ossdbs.api:Prepare dielectric model
+INFO:ossdbs.main:Prepare conductivity coefficient function
+INFO:ossdbs.api:Preparing solver
+INFO:ossdbs.api:Generate volume conductor model
+INFO:ossdbs.api:Output path set to: Results_VTA_fine_edge_refinement
+WARNING:ossdbs.model_geometry.contacts:Surface impedance parameter dictionary was provided without model. It will not be taken into account.
+INFO:ossdbs.api:Run volume conductor model
+INFO:ossdbs.api:Will compute impedance at each frequency
+INFO:ossdbs.api:Will export solution to VTK
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Set export frequency to 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements before material refinement:36052
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements after material refinement:36052
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting at 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting results at 10000.0 Hz.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting for point model type <class 'ossdbs.point_analysis.lattice.Lattice'>.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:VTA volume is: 9.276
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Saving impedance
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Launching reconstruction of time domain
+INFO:ossdbs.main:Volume conductor timings:
+{'ComputeSolution': [0.4657108783721924],
+ 'CopyValues': [29.53292417526245],
+ 'FieldExport': 15.60142183303833,
+ 'ReconstructTimeSignals_PointModel_0': 0.0,
+ 'VTKExport': [0.42722463607788086]}
+INFO:ossdbs.main:Timings:
+ {'ConductivityCF': 0.22886419296264648,
+ 'ContactProperties': 0.00032901763916015625,
+ 'DielectricModel': 7.724761962890625e-05,
+ 'Electrodes': 0.11052393913269043,
+ 'MRI': 0.3282310962677002,
+ 'ModelGeometry': 0.4878568649291992,
+ 'Settings': 0.0006339550018310547,
+ 'VolumeConductor': 59.807148694992065}
+INFO:ossdbs.main:Process Completed
+INFO:ossdbs.api:Load MRI image
+INFO:ossdbs.api:Load MRI image
+INFO:ossdbs.api:Generate electrode geometries
+INFO:ossdbs.main:Generate full model geometry
+INFO:ossdbs.electrodes.electrode_model_template:Boundary names updated
+WARNING:ossdbs.model_geometry.model_geometry:Trying to set area twice for E1C1
+INFO:ossdbs.api:Set values on contacts and encapsulation layers
+INFO:ossdbs.api:Prepare dielectric model
+INFO:ossdbs.main:Prepare conductivity coefficient function
+INFO:ossdbs.api:Preparing solver
+INFO:ossdbs.api:Generate volume conductor model
+INFO:ossdbs.api:Output path set to: Results_VTA_edge_voxel_refinement
+WARNING:ossdbs.model_geometry.contacts:Surface impedance parameter dictionary was provided without model. It will not be taken into account.
+INFO:ossdbs.api:Run volume conductor model
+INFO:ossdbs.api:Will compute impedance at each frequency
+INFO:ossdbs.api:Will export solution to VTK
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Set export frequency to 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements before material refinement:38699
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements after material refinement:38699
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting at 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting results at 10000.0 Hz.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting for point model type <class 'ossdbs.point_analysis.lattice.Lattice'>.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:VTA volume is: 9.227
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Saving impedance
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Launching reconstruction of time domain
+INFO:ossdbs.main:Volume conductor timings:
+{'ComputeSolution': [0.496441125869751],
+ 'CopyValues': [32.7339973449707],
+ 'FieldExport': 15.795587539672852,
+ 'ReconstructTimeSignals_PointModel_0': 0.0,
+ 'VTKExport': [0.4556877613067627]}
+INFO:ossdbs.main:Timings:
+ {'ConductivityCF': 0.23825454711914062,
+ 'ContactProperties': 0.00033545494079589844,
+ 'DielectricModel': 8.726119995117188e-05,
+ 'Electrodes': 0.11133360862731934,
+ 'MRI': 0.327805757522583,
+ 'ModelGeometry': 0.48851966857910156,
+ 'Settings': 0.0006670951843261719,
+ 'VolumeConductor': 63.22508668899536}
+INFO:ossdbs.main:Process Completed
+INFO:ossdbs.api:Load MRI image
+INFO:ossdbs.api:Generate electrode geometries
+INFO:ossdbs.main:Generate full model geometry
+INFO:ossdbs.electrodes.electrode_model_template:Boundary names updated
+WARNING:ossdbs.model_geometry.model_geometry:Trying to set area twice for E1C1
+INFO:ossdbs.api:Set values on contacts and encapsulation layers
+INFO:ossdbs.api:Prepare dielectric model
+INFO:ossdbs.main:Prepare conductivity coefficient function
+INFO:ossdbs.api:Preparing solver
+INFO:ossdbs.api:Generate volume conductor model
+INFO:ossdbs.api:Output path set to: Results_VTA_edge_single_material_refinement
+WARNING:ossdbs.model_geometry.contacts:Surface impedance parameter dictionary was provided without model. It will not be taken into account.
+INFO:ossdbs.api:Run volume conductor model
+INFO:ossdbs.api:Will compute impedance at each frequency
+INFO:ossdbs.api:Will export solution to VTK
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Set export frequency to 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements before material refinement:36052
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements after material refinement:76292
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting at 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting results at 10000.0 Hz.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting for point model type <class 'ossdbs.point_analysis.lattice.Lattice'>.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:VTA volume is: 9.310
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Saving impedance
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Launching reconstruction of time domain
+INFO:ossdbs.main:Volume conductor timings:
+{'ComputeSolution': [0.6940619945526123],
+ 'CopyValues': [51.72506785392761],
+ 'FieldExport': 15.789204597473145,
+ 'ReconstructTimeSignals_PointModel_0': 0.0,
+ 'VTKExport': [0.8367137908935547]}
+INFO:ossdbs.main:Timings:
+ {'ConductivityCF': 0.22946786880493164,
+ 'ContactProperties': 0.0003159046173095703,
+ 'DielectricModel': 8.273124694824219e-05,
+ 'Electrodes': 0.1125037670135498,
+ 'MRI': 0.3292410373687744,
+ 'ModelGeometry': 0.48436522483825684,
+ 'Settings': 0.00052642822265625,
+ 'VolumeConductor': 82.69422316551208}
+INFO:ossdbs.main:Process Completed
+INFO:ossdbs.api:Load MRI image
+INFO:ossdbs.api:Generate electrode geometries
+INFO:ossdbs.main:Generate full model geometry
+INFO:ossdbs.electrodes.electrode_model_template:Boundary names updated
+WARNING:ossdbs.model_geometry.model_geometry:Trying to set area twice for E1C1
+INFO:ossdbs.api:Set values on contacts and encapsulation layers
+INFO:ossdbs.api:Prepare dielectric model
+INFO:ossdbs.main:Prepare conductivity coefficient function
+INFO:ossdbs.api:Preparing solver
+INFO:ossdbs.api:Generate volume conductor model
+INFO:ossdbs.api:Output path set to: Results_VTA_edge_double_material_refinement
+WARNING:ossdbs.model_geometry.contacts:Surface impedance parameter dictionary was provided without model. It will not be taken into account.
+INFO:ossdbs.api:Run volume conductor model
+INFO:ossdbs.api:Will compute impedance at each frequency
+INFO:ossdbs.api:Will export solution to VTK
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Set export frequency to 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements before material refinement:36052
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements after material refinement:290941
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting at 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting results at 10000.0 Hz.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting for point model type <class 'ossdbs.point_analysis.lattice.Lattice'>.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:VTA volume is: 9.319
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Saving impedance
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Launching reconstruction of time domain
+INFO:ossdbs.main:Volume conductor timings:
+{'ComputeSolution': [1.8330750465393066],
+ 'CopyValues': [91.78081035614014],
+ 'FieldExport': 15.897608280181885,
+ 'ReconstructTimeSignals_PointModel_0': 0.0,
+ 'VTKExport': [3.711775541305542]}
+INFO:ossdbs.main:Timings:
+ {'ConductivityCF': 0.24093341827392578,
+ 'ContactProperties': 0.00035953521728515625,
+ 'DielectricModel': 8.082389831542969e-05,
+ 'Electrodes': 0.11878633499145508,
+ 'MRI': 0.32802534103393555,
+ 'ModelGeometry': 0.4907693862915039,
+ 'Settings': 0.0005080699920654297,
+ 'VolumeConductor': 127.78579521179199}
+INFO:ossdbs.main:Process Completed
+INFO:ossdbs.api:Load MRI image
+INFO:ossdbs.api:Generate electrode geometries
+INFO:ossdbs.main:Generate full model geometry
+INFO:ossdbs.electrodes.electrode_model_template:Boundary names updated
+WARNING:ossdbs.model_geometry.model_geometry:Trying to set area twice for E1C1
+INFO:ossdbs.api:Set values on contacts and encapsulation layers
+INFO:ossdbs.api:Prepare dielectric model
+INFO:ossdbs.main:Prepare conductivity coefficient function
+INFO:ossdbs.api:Preparing solver
+INFO:ossdbs.api:Generate volume conductor model
+INFO:ossdbs.api:Output path set to: Results_VTA_very_fine_edge_refinement
+WARNING:ossdbs.model_geometry.contacts:Surface impedance parameter dictionary was provided without model. It will not be taken into account.
+INFO:ossdbs.api:Run volume conductor model
+INFO:ossdbs.api:Will compute impedance at each frequency
+INFO:ossdbs.api:Will export solution to VTK
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Set export frequency to 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements before material refinement:39498
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements after material refinement:39498
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting at 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting results at 10000.0 Hz.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting for point model type <class 'ossdbs.point_analysis.lattice.Lattice'>.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:VTA volume is: 9.170
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Saving impedance
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Launching reconstruction of time domain
+INFO:ossdbs.main:Volume conductor timings:
+{'ComputeSolution': [0.4703202247619629],
+ 'CopyValues': [34.07189631462097],
+ 'FieldExport': 15.889441013336182,
+ 'ReconstructTimeSignals_PointModel_0': 0.0,
+ 'VTKExport': [0.47493672370910645]}
+INFO:ossdbs.main:Timings:
+ {'ConductivityCF': 0.2402515411376953,
+ 'ContactProperties': 0.0004031658172607422,
+ 'DielectricModel': 0.000102996826171875,
+ 'Electrodes': 0.12021398544311523,
+ 'MRI': 0.33776307106018066,
+ 'ModelGeometry': 0.48996591567993164,
+ 'Settings': 0.0006351470947265625,
+ 'VolumeConductor': 64.57836842536926}
+INFO:ossdbs.main:Process Completed
+INFO:ossdbs.api:Load MRI image
+INFO:ossdbs.api:Generate electrode geometries
+INFO:ossdbs.main:Generate full model geometry
+INFO:ossdbs.electrodes.electrode_model_template:Boundary names updated
+WARNING:ossdbs.model_geometry.model_geometry:Trying to set area twice for E1C1
+INFO:ossdbs.api:Set values on contacts and encapsulation layers
+INFO:ossdbs.api:Prepare dielectric model
+INFO:ossdbs.main:Prepare conductivity coefficient function
+INFO:ossdbs.api:Preparing solver
+INFO:ossdbs.api:Generate volume conductor model
+INFO:ossdbs.api:Output path set to: Results_VTA_fine_edge_single_material_refinement
+WARNING:ossdbs.model_geometry.contacts:Surface impedance parameter dictionary was provided without model. It will not be taken into account.
+INFO:ossdbs.api:Run volume conductor model
+INFO:ossdbs.api:Will compute impedance at each frequency
+INFO:ossdbs.api:Will export solution to VTK
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Set export frequency to 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements before material refinement:39498
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements after material refinement:80336
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting at 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting results at 10000.0 Hz.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting for point model type <class 'ossdbs.point_analysis.lattice.Lattice'>.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:VTA volume is: 9.192
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Saving impedance
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Launching reconstruction of time domain
+INFO:ossdbs.main:Volume conductor timings:
+{'ComputeSolution': [0.8457586765289307],
+ 'CopyValues': [53.856141090393066],
+ 'FieldExport': 16.1411771774292,
+ 'ReconstructTimeSignals_PointModel_0': 0.0,
+ 'VTKExport': [1.0704071521759033]}
+INFO:ossdbs.main:Timings:
+ {'ConductivityCF': 0.2367844581604004,
+ 'ContactProperties': 0.0003330707550048828,
+ 'DielectricModel': 9.441375732421875e-05,
+ 'Electrodes': 0.1136467456817627,
+ 'MRI': 0.34610581398010254,
+ 'ModelGeometry': 0.4917452335357666,
+ 'Settings': 0.0005927085876464844,
+ 'VolumeConductor': 87.03895139694214}
+INFO:ossdbs.main:Process Completed
+INFO:ossdbs.api:Load MRI image
+INFO:ossdbs.api:Generate electrode geometries
+INFO:ossdbs.main:Generate full model geometry
+INFO:ossdbs.electrodes.electrode_model_template:Boundary names updated
+WARNING:ossdbs.model_geometry.model_geometry:Trying to set area twice for E1C1
+INFO:ossdbs.api:Set values on contacts and encapsulation layers
+INFO:ossdbs.api:Prepare dielectric model
+INFO:ossdbs.main:Prepare conductivity coefficient function
+INFO:ossdbs.api:Preparing solver
+INFO:ossdbs.api:Generate volume conductor model
+INFO:ossdbs.api:Output path set to: Results_VTA_fine_edge_double_material_refinement
+WARNING:ossdbs.model_geometry.contacts:Surface impedance parameter dictionary was provided without model. It will not be taken into account.
+INFO:ossdbs.api:Run volume conductor model
+INFO:ossdbs.api:Will compute impedance at each frequency
+INFO:ossdbs.api:Will export solution to VTK
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Set export frequency to 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements before material refinement:39498
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements after material refinement:298924
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting at 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting results at 10000.0 Hz.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting for point model type <class 'ossdbs.point_analysis.lattice.Lattice'>.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:VTA volume is: 9.206
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Saving impedance
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Launching reconstruction of time domain
+INFO:ossdbs.main:Volume conductor timings:
+{'ComputeSolution': [2.0033340454101562],
+ 'CopyValues': [100.23632621765137],
+ 'FieldExport': 16.154134511947632,
+ 'ReconstructTimeSignals_PointModel_0': 0.0,
+ 'VTKExport': [3.8298871517181396]}
+INFO:ossdbs.main:Timings:
+ {'ConductivityCF': 0.2397305965423584,
+ 'ContactProperties': 0.000476837158203125,
+ 'DielectricModel': 0.00012040138244628906,
+ 'Electrodes': 0.12117195129394531,
+ 'MRI': 0.3844618797302246,
+ 'ModelGeometry': 0.4952101707458496,
+ 'Settings': 0.0005862712860107422,
+ 'VolumeConductor': 138.67881965637207}
+INFO:ossdbs.main:Process Completed
+INFO:ossdbs.api:Load MRI image
+INFO:ossdbs.api:Generate electrode geometries
+INFO:ossdbs.main:Generate full model geometry
+INFO:ossdbs.electrodes.electrode_model_template:Boundary names updated
+WARNING:ossdbs.model_geometry.model_geometry:Trying to set area twice for E1C1
+INFO:ossdbs.api:Set values on contacts and encapsulation layers
+INFO:ossdbs.api:Prepare dielectric model
+INFO:ossdbs.main:Prepare conductivity coefficient function
+INFO:ossdbs.api:Preparing solver
+INFO:ossdbs.api:Generate volume conductor model
+INFO:ossdbs.api:Output path set to: Results_VTA_best
+WARNING:ossdbs.model_geometry.contacts:Surface impedance parameter dictionary was provided without model. It will not be taken into account.
+INFO:ossdbs.api:Run volume conductor model
+INFO:ossdbs.api:Will compute impedance at each frequency
+INFO:ossdbs.api:Will export solution to VTK
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Set export frequency to 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements before material refinement:6692546
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements after material refinement:18475083
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Computing at frequency: 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements before refinement:18475083
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Adaptive refinement step 1, error 3.898%.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Adaptive refinement step 2, error 2.581%.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Adaptive refinement step 3, error 1.243%.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Adaptive refinement step 4, error 0.549%.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Adaptive refinement step 5, error 0.469%.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Adaptive refinement step 6, error 0.076%.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Number of elements after refinement:18504042
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Adaptive mesh refinement converged after 6 refinement steps with an error in the impedance of 0.076%
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Copy solution to point models
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting at 10000.0
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting results at 10000.0 Hz.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Exporting for point model type <class 'ossdbs.point_analysis.lattice.Lattice'>.
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:VTA volume is: 9.056
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Saving impedance
+INFO:ossdbs.fem.volume_conductor.volume_conductor_model:Launching reconstruction of time domain
+INFO:ossdbs.main:Volume conductor timings:
+{'ComputeSolution': [1327.3697001934052],
+ 'CopyValues': [675.43914270401],
+ 'FieldExport': 17.43654990196228,
+ 'ReconstructTimeSignals_PointModel_0': 0.0,
+ 'VTKExport': [303.2266116142273]}
+INFO:ossdbs.main:Timings:
+ {'ConductivityCF': 0.22811150550842285,
+ 'ContactProperties': 0.00043272972106933594,
+ 'DielectricModel': 0.00010728836059570312,
+ 'Electrodes': 0.12241411209106445,
+ 'MRI': 0.413419246673584,
+ 'ModelGeometry': 0.4936339855194092,
+ 'Settings': 0.0007176399230957031,
+ 'VolumeConductor': 2627.9683833122253}
+INFO:ossdbs.main:Process Completed
+Imposing max mesh size of: 5.00

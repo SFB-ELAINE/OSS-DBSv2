@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
+from copy import deepcopy
 from typing import ClassVar
 
 from .materials import MATERIALS
@@ -34,7 +35,7 @@ class Settings:
         "Current[A]": 0.0,
         "Voltage[V]": 0.0,
         "Floating": False,
-        "SurfaceImpedance[Ohmm]": {"real": 0.0, "imag": 0.0},
+        "SurfaceImpedance": {"Model": None, "Parameters": {}},
         "MaxMeshSize": 1e6,
         "MaxMeshSizeEdge": 1e6,
     }
@@ -101,7 +102,8 @@ class Settings:
             "Preconditioner": "bddc",
             "PreconditionerKwargs": {},
             "MaximumSteps": 10000,
-            "Precision": 1e-12,
+            "RelativeTolerance": 1e-8,
+            "AbsoluteTolerance": 1e-8,
         },
         "PointModel": {
             "Pathway": {"Active": False, "FileName": "", "ExportField": False},
@@ -123,11 +125,19 @@ class Settings:
         },
         "OutputPath": "Results",
         "ComputeImpedance": False,
+        "ImpedanceAnalysis": {
+            "Enabled": False,
+            "Frequencies": None,
+            "IncludeFloating": True,
+        },
+        "ComputeCurrents": False,
         "ExportVTK": False,
+        "ExportVTKSubdivision": 0,
         "ExportFrequency": None,
         "ExportElectrode": False,
         "ModelSide": 0,
         "CalcAxonActivation": False,
+        "DielectricAccuracy": 0.01,
         "ActivationThresholdVTA[V-per-m]": None,
         "FailFlag": "oss",
         "OutOfCore": False,
@@ -145,8 +155,8 @@ class Settings:
 
     def complete_settings(self) -> dict:
         """Complete dictionary provided by user with default settings."""
-        settings = self.CUSTOM_SETTING.copy()
-        settings.update(self.SETTING.copy())
+        settings = deepcopy(self.CUSTOM_SETTING)
+        settings.update(deepcopy(self.SETTING))
         self._update(settings, self._partial_settings)
         self._update_electrodes(settings)
         return settings

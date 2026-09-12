@@ -1,0 +1,6 @@
+truncation_ratio,timesteps,h5_size_MB,dofs,vcm_time,M1_cf_face_right_activated,M1_cf_face_right_error,M1_cf_lowerex_right_activated,M1_cf_lowerex_right_error,M1_cf_upperex_right_activated,M1_cf_upperex_right_error,R_M1_hdp_face_right_activated,R_M1_hdp_face_right_error,R_M1_hdp_lowerex_right_activated,R_M1_hdp_lowerex_right_error,R_M1_hdp_upperex_right_activated,R_M1_hdp_upperex_right_error,cerebellothalamic_right_activated,cerebellothalamic_right_error,gpe2stn_ass_right_activated,gpe2stn_ass_right_error,gpe2stn_sm_right_activated,gpe2stn_sm_right_error,medial_lemniscus_right_activated,medial_lemniscus_right_error
+none,3846,2343.8,117839,6.9,0.0,0.0,20.0,0.0,46.8,0.0,60.0,0.0,50.0,0.0,61.0,0.0,11.2,0.0,9.6,0.0,47.6,0.0,0.0,0.0
+5,150,97.1,117839,7.0,0.0,0.0,0.0,20.0,1.6,45.199999999999996,55.0,5.0,44.0,6.0,59.0,2.0,0.0,11.2,9.2,0.40000000000000036,44.8,2.8000000000000043,0.0,0.0
+10,300,188.2,117839,7.0,0.0,0.0,20.0,0.0,45.2,1.5999999999999943,60.0,0.0,50.0,0.0,61.0,0.0,0.0,11.2,9.6,0.0,47.6,0.0,0.0,0.0
+20,600,370.6,117839,7.0,0.0,0.0,20.0,0.0,46.8,0.0,60.0,0.0,50.0,0.0,61.0,0.0,11.2,0.0,9.6,0.0,47.6,0.0,0.0,0.0
+30,900,553.0,117839,6.9,0.0,0.0,20.0,0.0,46.8,0.0,60.0,0.0,50.0,0.0,61.0,0.0,11.2,0.0,9.6,0.0,47.6,0.0,0.0,0.0

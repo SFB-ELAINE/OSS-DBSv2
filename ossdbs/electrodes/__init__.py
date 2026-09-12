@@ -10,6 +10,7 @@ from .abbott_stjude import (
     AbbottStJudeDirectedModel,
     AbbottStJudeParameters,
 )
+from .behnke_fried import BehnkeFriedSEEGModel, BehnkeFriedSEEGParameters
 from .boston_scientific_cartesia import (
     BostonScientificCartesiaHXModel,
     BostonScientificCartesiaParameters,
@@ -22,6 +23,12 @@ from .boston_scientific_vercise import (
     BostonScientificVerciseParameters,
 )
 from .defaults import (
+    BF08R_SP05X_0BH,
+    BF08R_SP21X_0C3,
+    BF10R_SP05X_0BH,
+    BF10R_SP21X_0C3,
+    BF12R_SP05X_0BH,
+    BF12R_SP21X_0C3,
     AbbottStJudeActiveTip6142_6145,
     AbbottStJudeActiveTip6146_6149,
     AbbottStJudeDirected6172,
@@ -121,6 +128,12 @@ ELECTRODES = {
     "SceneRay1202": SceneRay1202,
     "SceneRay1211": SceneRay1211,
     "SceneRay1212": SceneRay1212,
+    "BF08R_SP21X_0C3": BF08R_SP21X_0C3,
+    "BF10R_SP21X_0C3": BF10R_SP21X_0C3,
+    "BF12R_SP21X_0C3": BF12R_SP21X_0C3,
+    "BF08R_SP05X_0BH": BF08R_SP05X_0BH,
+    "BF10R_SP05X_0BH": BF10R_SP05X_0BH,
+    "BF12R_SP05X_0BH": BF12R_SP05X_0BH,
 }
 
 ELECTRODE_MODELS = {
@@ -161,6 +174,12 @@ ELECTRODE_MODELS = {
     "SceneRay1211Custom": MedtronicModel,
     "SceneRay1202Custom": BostonScientificVerciseModel,
     "SceneRay1212Custom": BostonScientificVerciseModel,
+    "BF08R_SP21X_0C3Custom": BehnkeFriedSEEGModel,
+    "BF10R_SP21X_0C3Custom": BehnkeFriedSEEGModel,
+    "BF12R_SP21X_0C3Custom": BehnkeFriedSEEGModel,
+    "BF08R_SP05X_0BHCustom": BehnkeFriedSEEGModel,
+    "BF10R_SP05X_0BHCustom": BehnkeFriedSEEGModel,
+    "BF12R_SP05X_0BHCustom": BehnkeFriedSEEGModel,
 }
 
 
@@ -182,6 +201,7 @@ ELECTRODE_PARAMETERS = {
     "PINSMedicalModel": PINSMedicalParameters,
     "NeuroNexusElectrodeModel": NeuroNexusParameters,
     "SceneRay1242Model": SceneRay1242Parameters,
+    "BehnkeFriedSEEGModel": BehnkeFriedSEEGParameters,
 }
 
 __all__ = (
@@ -193,6 +213,14 @@ __all__ = (
     "AbbottStJudeDirected6173",
     "AbbottStJudeDirectedModel",
     "AbbottStJudeParameters",
+    "BF08R_SP05X_0BHCustom",
+    "BF08R_SP21X_0C3Custom",
+    "BF10R_SP05X_0BHCustom",
+    "BF10R_SP21X_0C3Custom",
+    "BF12R_SP05X_0BHCustom",
+    "BF12R_SP21X_0C3Custom",
+    "BehnkeFriedSEEGModel",
+    "BehnkeFriedSEEGParameters",
     "BostonScientificCartesiaHX",
     "BostonScientificCartesiaHXModel",
     "BostonScientificCartesiaParameters",

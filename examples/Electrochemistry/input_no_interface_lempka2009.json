@@ -1,0 +1,136 @@
+{
+  "BrainRegion": {
+    "Center": {
+      "x[mm]": 0.794,
+      "y[mm]": -32.671,
+      "z[mm]": -0.618
+    },
+    "Dimension": {
+      "x[mm]": 40.0,
+      "y[mm]": 40.0,
+      "z[mm]": 70.0
+    },
+    "Shape": "Ellipsoid"
+  },
+  "Electrodes": [
+    {
+      "Name": "BostonScientificVercise",
+      "Rotation[Degrees]": 0,
+      "Direction": {
+        "x[mm]": 0.0,
+        "y[mm]": 0.0,
+        "z[mm]": 1.0
+      },
+      "TipPosition": {
+        "x[mm]": 0.794,
+        "y[mm]": -32.671,
+        "z[mm]": -0.618
+      },
+      "Contacts": [
+        {
+          "Contact_ID": 1,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 1.0,
+          "Floating": false,
+	  "MaxMeshSizeEdge": 0.05
+       },
+        {
+          "Contact_ID": 7,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
+	  "MaxMeshSizeEdge": 0.05,
+          "Floating": false
+        }
+      ],
+      "EncapsulationLayer": {
+        "Thickness[mm]": 0.0,
+        "Material": "Blood",
+        "DielectricModel": "ColeCole4",
+        "MaxMeshSize": 0.1
+      }
+    }
+  ],
+  "MaterialDistribution": {
+    "MRIPath": "../../input_files/sub-John_Doe/JD_segmask.nii.gz",
+    "MRIMapping": {
+      "Gray matter": 1,
+      "White matter": 2,
+      "CSF": 3,
+      "Blood": 4,
+      "Unknown": 0
+    },
+    "DiffusionTensorActive": false,
+    "DTIPath": ""
+  },
+  "DielectricModel": {
+    "Type": "ColeCole4"
+  },
+  "StimulationSignal": {
+    "CurrentControlled": false,
+    "Type": "Multisine",
+    "ListOfFrequencies": [
+	    1.0e+2
+    ]
+  },
+  "Mesh": {
+    "LoadMesh": false,
+    "MeshElementOrder": 2,
+    "MeshingHypothesis": {
+      "Type": "Fine"
+    },
+    "MaterialRefinementSteps": 1,
+    "HPRefinement": {
+      "Active": true
+    },
+    "MeshSize": {
+      "Edges": {},
+      "Faces": {},
+      "Volumes": {}
+    },
+    "SaveMesh": false
+  },
+  "Solver": {
+    "Type": "CG",
+    "Preconditioner": "bddc",
+    "PreconditionerKwargs": {},
+    "PrintRates": true,
+    "MaximumSteps": 500,
+    "RelativeTolerance": 1e-8
+  },
+  "PointModel": {
+    "Pathway": {
+      "Active": false,
+      "FileName": ""
+    },
+    "Lattice": {
+      "Active": false,
+      "Center": {
+        "x[mm]": 0.794,
+        "y[mm]": -32.671,
+        "z[mm]": -0.618
+      },
+      "Shape": {
+        "x": 40,
+        "y": 40,
+        "z": 160
+      },
+      "Direction": {
+        "x[mm]": 0,
+        "y[mm]": 0,
+        "z[mm]": 1
+      },
+      "PointDistance[mm]": 0.125
+    }
+  },
+  "ActivationThresholdVTA[V-per-m]": 200.0,
+  "CollapseVTA": false,
+  "EQSMode": true,
+  "FEMOrder": 2,
+  "OutputPath": "Results_NoInterface_Lempka",
+  "ComputeImpedance": true,
+  "ComputeCurrents": true,
+  "ExportVTK": false,
+  "ExportElectrode": false
+}

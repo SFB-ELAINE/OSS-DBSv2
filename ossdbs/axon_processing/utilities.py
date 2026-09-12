@@ -6,7 +6,6 @@ import logging
 import os
 
 import numpy as np
-import pandas as pd
 from dipy.tracking.metrics import length as dipy_length
 from dipy.tracking.streamline import set_number_of_points
 from nibabel.streamlines import ArraySequence
@@ -14,37 +13,6 @@ from scipy import spatial
 from scipy.io import savemat
 
 _logger = logging.getLogger(__name__)
-
-
-def compare_pathways(pam_df: pd.DataFrame, pam_df_to_compare: pd.DataFrame) -> dict:
-    """Use data loaded from CSV files to compare axon activation."""
-    try:
-        import sklearn.metrics as metrics
-    except ImportError as exc:
-        raise ImportError("Please install scikit-learn to use their metrics.") from exc
-
-    status = pam_df["status"].to_numpy()
-    status_to_compare = pam_df_to_compare["status"].to_numpy()
-    if np.all(np.isclose(status, 0)) and np.all(np.isclose(status_to_compare, 0)):
-        _logger.warning("No axon activation found, returning None")
-        return None
-    if not status.shape == status_to_compare.shape:
-        raise ValueError(
-            "The provided DataFrames do not contain the same number of axons."
-        )
-    confusion_matrix = metrics.confusion_matrix(
-        status, status_to_compare, labels=[-1, 0, 1]
-    )
-    precision, recall, f1, support = metrics.precision_recall_fscore_support(
-        status, status_to_compare
-    )
-    return {
-        "confusion matrix": confusion_matrix,
-        "recall:": recall,
-        "precision": precision,
-        "f1": f1,
-        "support": support,
-    }
 
 
 def find_nearest(array: np.ndarray, value: float):
@@ -67,9 +35,12 @@ def convert_fibers_to_streamlines(fibers: np.ndarray):
     list
         streamlines stored as ArraySequence(),
         i.e. list that describes each fiber in a sublist
+    list
+        original indices of these streamlines
 
     """
     streamlines = ArraySequence()
+    inx_orig = []
 
     # yes, indexing starts with one in those .mat files
     N_streamlines = int(fibers[3, :].max())
@@ -78,19 +49,19 @@ def convert_fibers_to_streamlines(fibers: np.ndarray):
     i_previous = 0
     for i in range(N_streamlines):
         loc_counter = 0
-        while (i + 1) == fibers[
-            3, k
-        ]:  # this is not optimal, you need to extract a pack by np.count?
+        while (i + 1) == fibers[3, k]:
+            # this is not optimal, you need to extract a pack by np.count?
             k += 1
             loc_counter += 1
             if k == fibers[3, :].shape[0]:
                 break
 
         stream_line = fibers[:3, i_previous : i_previous + loc_counter].T
+        inx_orig.append(int(fibers[3, i_previous]))
         i_previous = k
         streamlines.append(stream_line)
 
-    return streamlines
+    return streamlines, inx_orig
 
 
 def create_leaddbs_outputs(
@@ -277,6 +248,19 @@ def resample_streamline_for_Ranvier(streamline_array, estim_axon_length, n_Ranvi
     # (do not mix up with truncation to the actual axon!)
     cut_index, cummulated_length = index_for_length(streamline_array, estim_axon_length)
 
+    # Handle edge case: ensure we have enough points in the streamline
+    # We need at least cut_index + 3 points to access streamline_array[cut_index + 2]
+    n_points = len(streamline_array)
+    if cut_index + 2 >= n_points:
+        # Clamp cut_index to ensure valid array access
+        cut_index = max(0, n_points - 3)
+        if cut_index == 0 and n_points < 3:
+            # Streamline too short - just resample what we have
+            _logger.warning(
+                f"Streamline has only {n_points} points, resampling directly"
+            )
+            return set_number_of_points(streamline_array, nb_points=n_Ranvier)
+
     # Don't mix up sums and positions.
     # +1 for the last Ranvier node, +1 for the sum, +1 for index
     streamline_array_Ranvier = np.zeros((cut_index + 1 + 1 + 1, 3), float)
@@ -338,7 +322,9 @@ def index_for_length(xyz, req_length, along=True):
     return idx, cummulated_lengths[idx]
 
 
-def resample_fibers_to_Ranviers(streamlines: list, node_step: int, n_Ranvier: int):
+def resample_fibers_to_Ranviers(
+    streamlines: list, node_step: int, n_Ranvier: int, inx_orig: list
+):
     """Get streamlines resampled by nodes of Ranvier for a specific axonal morphology.
 
     Parameters
@@ -349,15 +335,19 @@ def resample_fibers_to_Ranviers(streamlines: list, node_step: int, n_Ranvier: in
         Length from a node of Ranvier to the next
     n_Ranvier: int
         Number of nodes of Ranvier
+    inx_orig: list
+        original indices of the streamlines
 
     Returns
     -------
     list, resampled streamlines, stored as ArraySequence()
+    list, original indices of the resampled streamlines
 
     """
     # resampling to nodes of Ranvier for arbitrary fiber length
     lengths_streamlines_filtered = list(map(dipy_length, streamlines))
     streamlines_resampled = ArraySequence()
+    inx_orig_resampled = []
 
     excluded_streamlines = []
     # total_points = 0
@@ -371,13 +361,15 @@ def resample_fibers_to_Ranviers(streamlines: list, node_step: int, n_Ranvier: in
             n_Ranvier_this_axon,
         )
         if len(streamline_resampled) < n_Ranvier:
-            _logger.info(f"Streamline {streamline_index} is too short")
+            streamline_orig_inx = inx_orig[streamline_index]
+            _logger.info(f"Streamline {streamline_orig_inx} is too short")
             excluded_streamlines.append(streamline_index)
         else:
             streamlines_resampled.append(streamline_resampled)
             # total_points = total_points + len(streamline_resampled)
+            inx_orig_resampled.append(inx_orig[streamline_index])
 
-    return streamlines_resampled, excluded_streamlines
+    return streamlines_resampled, excluded_streamlines, inx_orig_resampled
 
 
 def normalized(vector: np.ndarray, axis: int = -1, order: int = 2):

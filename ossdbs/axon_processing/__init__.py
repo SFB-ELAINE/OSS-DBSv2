@@ -2,7 +2,6 @@
 
 from .axon_models import AxonModels
 from .neuron_model import MRG2002, McNeal1976, NeuronSimulator
-from .utilities import compare_pathways
 
 
 def get_neuron_model(model_type: str, pathways_dict: dict, pathway_solution_dir: str):
@@ -16,4 +15,4 @@ def get_neuron_model(model_type: str, pathways_dict: dict, pathway_solution_dir:
     return neuron_model
 
 
-__all__ = ("MRG2002", "AxonModels", "McNeal1976", "NeuronSimulator", "compare_pathways")
+__all__ = ("MRG2002", "AxonModels", "McNeal1976", "NeuronSimulator")

@@ -88,13 +88,25 @@ class ConductivityCF:
             self._material_distribution.shape, dtype=self._get_datatype()
         )
 
+        # remove materials that are not in MRI
+        materials_to_delete = []
+        for material in materials:
+            material_idx = materials[material]
+            if material_idx not in self._material_distribution:
+                materials_to_delete.append(material)
+        for material in materials_to_delete:
+            _logger.info(f"Remove material {material} because not present in MRI.")
+            del self._dielectric_properties[material]
+            del materials[material]
+
         self._materials = materials
-        self._masks = [None] * len(self.materials)
-        self._trafo_cf = mri_image.trafo_cf
+
         # Creates a boolean mask for the indices that material is present in
+        self._masks = {}
+        self._trafo_cf = mri_image.trafo_cf
         for material in self.materials:
             material_idx = self.materials[material]
-            self._masks[material_idx] = np.isclose(
+            self._masks[material] = np.isclose(
                 self._material_distribution, material_idx
             )
 
@@ -151,6 +163,8 @@ class ConductivityCF:
                 encapsulation_layer_properties = (
                     encapsulation_layer.dielectric_properties.conductivity(omega)
                 )
+            # change unit system from S/m to S/mm
+            encapsulation_layer_properties *= 1e-3
             if self._dti_voxel_cf is not None:
                 # reshape CoefficientFunction for isotropic encapsulation layer
                 encapsulation_layer_properties_cf = ngsolve.CoefficientFunction(
@@ -198,14 +212,16 @@ class ConductivityCF:
 
         # Update scalar conductivity data for all materials
         for material in self.materials:
-            material_idx = self.materials[material]
             if self.is_complex:
-                sigma = self._dielectric_properties[material].complex_conductivity(
-                    omega
-                )
+                self._data[self._masks[material]] = self._dielectric_properties[
+                    material
+                ].complex_conductivity(omega)
             else:
-                sigma = self._dielectric_properties[material].conductivity(omega)
-            self._data[self._masks[material_idx]] = sigma
+                self._data[self._masks[material]] = self._dielectric_properties[
+                    material
+                ].conductivity(omega)
+        # change units from S/m to S/mm
+        self._data *= 1e-3
 
         start = self._mri_voxel_bounding_box.start
         end = self._mri_voxel_bounding_box.end

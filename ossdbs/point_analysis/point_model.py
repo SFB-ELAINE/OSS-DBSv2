@@ -143,9 +143,6 @@ class PointModel(ABC):
         file: h5py.File
             HDF5 file that shall contain data.
 
-        Notes
-        -----
-        TODO documentation
         """
         file.create_dataset("TimeSteps[s]", data=data.time_steps)
         file.create_dataset("Points[mm]", data=data.points)
@@ -284,14 +281,25 @@ class PointModel(ABC):
             )
 
     def copy_frequency_domain_solution_from_vcm(
-        self, freq_idx: int, potentials: np.ndarray, fields: np.ndarray | None = None
+        self,
+        freq_idx: int,
+        potentials: np.ndarray,
+        fields: np.ndarray | None = None,
+        scale_factor: complex = 1.0,
     ) -> None:
-        """Copy potentials and fields from volume conductor model."""
-        self.tmp_potential_freq_domain[:, freq_idx] = potentials[:, 0]
+        """Copy potentials and fields from volume conductor model.
+
+        ``scale_factor`` is applied column by column while writing. Scaling
+        the whole array before the call would allocate a full-size copy of
+        the potentials and fields for every frequency index, which is by
+        far the dominant cost when a single solved band covers hundreds of
+        indices.
+        """
+        self.tmp_potential_freq_domain[:, freq_idx] = scale_factor * potentials[:, 0]
         if fields is not None:
-            self.tmp_Ex_freq_domain[:, freq_idx] = fields[:, 0]
-            self.tmp_Ey_freq_domain[:, freq_idx] = fields[:, 1]
-            self.tmp_Ez_freq_domain[:, freq_idx] = fields[:, 2]
+            self.tmp_Ex_freq_domain[:, freq_idx] = scale_factor * fields[:, 0]
+            self.tmp_Ey_freq_domain[:, freq_idx] = scale_factor * fields[:, 1]
+            self.tmp_Ez_freq_domain[:, freq_idx] = scale_factor * fields[:, 2]
 
     def close_output_file(self):
         """Close out-of-core file."""
@@ -309,9 +317,7 @@ class PointModel(ABC):
         encap_cf = mesh.ngsolvemesh.RegionCF(
             ngsolve.VOL, {"EncapsulationLayer_*": 1.0}, default=0
         )
-        ngmesh = mesh.ngsolvemesh
-        x, y, z = self.lattice.T
-        return np.isclose(encap_cf(ngmesh(x, y, z)), 1.0)
+        return np.isclose(encap_cf(mesh.locate_points(self.lattice)), 1.0)
 
     def get_points_in_csf(self, mesh: Mesh, conductivity_cf) -> np.ndarray:
         """Return mask for points in CSF.
@@ -328,10 +334,14 @@ class PointModel(ABC):
         TODO Type hint
         """
         material_distribution = conductivity_cf.material_distribution(mesh)
-        ngmesh = mesh.ngsolvemesh
-        x, y, z = self.lattice.T
+        # always false (no CSF detected)
+        csf_index = -1
+        # only do real check when CSF is defined
+        if "CSF" in conductivity_cf.materials:
+            csf_index = conductivity_cf.materials["CSF"]
+
         return np.isclose(
-            material_distribution(ngmesh(x, y, z)), conductivity_cf.materials["CSF"]
+            material_distribution(mesh.locate_points(self.lattice)), csf_index
         )
 
     @property
@@ -513,14 +523,18 @@ class PointModel(ABC):
 
         self.save_as_nifti(
             field_mags_full,
-            os.path.join(self.output_path, f"E_field_solution_{self.name}.nii"),
+            os.path.join(self.output_path, f"E_field_solution_{self.name}.nii.gz"),
         )
-        self.save_as_nifti(
-            field_mags_full,
-            os.path.join(self.output_path, f"VTA_solution_{self.name}.nii"),
-            binarize=True,
-            activation_threshold=activation_threshold,
-        )
+        # The binarized VTA only makes sense with a threshold. In StimSets
+        # mode the per-contact unit solution has no meaningful VTA (it is
+        # formed after superposition), so the threshold may be unset.
+        if activation_threshold is not None:
+            self.save_as_nifti(
+                field_mags_full,
+                os.path.join(self.output_path, f"VTA_solution_{self.name}.nii.gz"),
+                binarize=True,
+                activation_threshold=activation_threshold,
+            )
 
     def create_time_result(
         self,
@@ -655,22 +669,38 @@ class PointModel(ABC):
         )
 
     def write_netgen_meshsize_file(self, meshsize: float, filename: str) -> None:
-        """Use coordinates of point model to impose local mesh size.
+        """Write a Netgen mesh-size file from the point model coordinates.
+
+        This generates a file that can be passed to Netgen via the
+        ``MeshSizeFilename`` parameter in ``MeshingHypothesis`` to refine
+        the mesh around pathway or lattice points.  This is particularly
+        useful in convergence studies where the mesh needs to be fine
+        near neuron trajectories.
+
+        Parameters
+        ----------
+        meshsize : float
+            Target element size (in mm) at each point.  A common choice
+            is the minimum MRI voxel size.
+        filename : str
+            Output file path (e.g. ``"meshsizes.txt"``).
 
         Notes
         -----
-        Local mesh size for points is set.
-        The file has the format (according to Netgen documentation):
-          nr_points
-          x1, y1, z1, meshsize
-          x2, y2, z2, meshsize
-          ...
-          xn, yn, zn, meshsize
+        The file follows the Netgen mesh-size format:
 
-          nr_edges
-          x11, y11, z11, x12, y12, z12, meshsize
-          ...
-          xn1, yn1, zn1, xn2, yn2, zn2, meshsize
+        .. code-block:: text
+
+            nr_points
+
+            x1 y1 z1 meshsize
+            x2 y2 z2 meshsize
+            ...
+
+            0
+
+        The trailing ``0`` indicates that no edge-based size constraints
+        are written.
         """
         points = self.coordinates
         with open(filename, "w") as fp:

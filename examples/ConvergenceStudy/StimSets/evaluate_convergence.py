@@ -20,10 +20,13 @@ pathways = [
 result_directories = [
     "Results_PAM_best",
     "Results_PAM_default",
+    "Results_PAM_default_meshsize",
     "Results_PAM_fine",
     "Results_PAM_fine_edge_refinement",
     "Results_PAM_material_refinement",
     "Results_PAM_edge_single_material_refinement",
+    "Results_PAM_hp_refinement",
+    "Results_PAM_hp_material_refinement",
 ]
 
 # get best result

@@ -5,14 +5,13 @@ import argparse
 import json
 import os
 
-from ossdbs.utils.settings import Settings
-
-from .default_settings import (
+from leaddbsinterface.default_settings import (
     initialize_default_settings,
     load_default_for_lead,
     update_default_dict,
 )
-from .lead_settings import LeadSettings
+from leaddbsinterface.lead_settings import LeadSettings
+from ossdbs.utils.settings import Settings
 
 
 def main():

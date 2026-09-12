@@ -5,6 +5,7 @@
 import argparse
 import json
 import logging
+import multiprocessing
 import os
 import pprint
 import time
@@ -24,6 +25,7 @@ from ossdbs.api import (
     run_stim_sets,
     run_volume_conductor_model,
     set_contact_and_encapsulation_layer_properties,
+    validate_solver_settings,
 )
 from ossdbs.fem import ConductivityCF
 from ossdbs.model_geometry import ModelGeometry
@@ -31,6 +33,42 @@ from ossdbs.utils.settings import Settings
 from ossdbs.utils.type_check import TypeChecker
 
 _logger = logging.getLogger(__name__)
+
+
+def _configure_stimsets_mesh(settings: dict) -> bool:
+    """Prepare Mesh settings for StimSets; return whether to reuse a mesh."""
+    reuse_precomputed_mesh = settings["Mesh"]["LoadMesh"]
+    if not reuse_precomputed_mesh:
+        settings["Mesh"]["SavePath"] = os.path.join(settings["OutputPath"], "tmp_mesh")
+        settings["Mesh"]["LoadPath"] = os.path.join(
+            settings["OutputPath"], "tmp_mesh.vol.gz"
+        )
+    settings["Mesh"]["SaveMesh"] = False
+    # because of floating
+    settings["Solver"]["Preconditioner"] = "local"
+    settings["Solver"]["PreconditionerKwargs"] = {}
+    return reuse_precomputed_mesh
+
+
+def _run_stim_sets_with_mesh(
+    volume_conductor,
+    settings,
+    geometry,
+    conductivity,
+    solver,
+    frequency_domain_signal,
+    reuse_precomputed_mesh: bool,
+):
+    """Run StimSets, generating and saving the shared mesh if needed."""
+    if not reuse_precomputed_mesh:
+        # Apply h-refinement (material bisection) and save the h-refined
+        # mesh; HP refinement is applied per-contact after loading it.
+        volume_conductor.apply_h_refinements(
+            settings["Mesh"]["MaterialRefinementSteps"]
+        )
+        volume_conductor.mesh.save(settings["Mesh"]["SavePath"])
+        settings["Mesh"]["LoadMesh"] = True
+    run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_signal)
 
 
 def main_run(input_settings: dict):
@@ -104,6 +142,9 @@ def main_run(input_settings: dict):
     timings["ContactProperties"] = time_1 - time_0
     time_0 = time_1
 
+    # Validate solver settings for FloatingImpedance + EQS mode
+    validate_solver_settings(settings, geometry)
+
     dielectric_properties = prepare_dielectric_properties(settings)
 
     time_1 = time.time()
@@ -138,20 +179,19 @@ def main_run(input_settings: dict):
                     "as a floating-point number. "
                     "Set e.g. to 20 for 20 times pulse + counterpulse width."
                 )
+            if truncation_ratio < 1.0:
+                raise ValueError(
+                    "The truncation ratio is a multiple of the "
+                    "active signal part."
+                    "Values smaller than 1.0 are not permitted."
+                )
             time_domain_signal = generate_signal(settings)
             truncation_time = truncation_ratio * time_domain_signal.get_active_time()
 
     # save Mesh for StimSets
+    reuse_precomputed_mesh = False
     if settings["StimSets"]["Active"]:
-        settings["Mesh"]["SaveMesh"] = True
-        settings["Mesh"]["SavePath"] = os.path.join(settings["OutputPath"], "tmp_mesh")
-        settings["Mesh"]["LoadPath"] = os.path.join(
-            settings["OutputPath"], "tmp_mesh.vol.gz"
-        )
-        settings["Mesh"]["LoadMesh"] = False
-        # because of floating
-        settings["Solver"]["Preconditioner"] = "local"
-        settings["Solver"]["PreconditionerKwargs"] = {}
+        reuse_precomputed_mesh = _configure_stimsets_mesh(settings)
     # run in parallel
     with ngsolve.TaskManager():
         solver = prepare_solver(settings)
@@ -160,6 +200,9 @@ def main_run(input_settings: dict):
         )
         frequency_domain_signal = prepare_stimulation_signal(settings)
         if not settings["StimSets"]["Active"]:
+            volume_conductor.prepare_mesh_refinements(
+                settings["Mesh"]["MaterialRefinementSteps"]
+            )
             vcm_timings = run_volume_conductor_model(
                 settings,
                 volume_conductor,
@@ -168,11 +211,14 @@ def main_run(input_settings: dict):
             )
             _logger.info(f"Volume conductor timings:\n{pprint.pformat(vcm_timings)}")
         else:
-            # mesh was saved already
-            settings["Mesh"]["SaveMesh"] = False
-            settings["Mesh"]["LoadMesh"] = True
-            run_stim_sets(
-                settings, geometry, conductivity, solver, frequency_domain_signal
+            _run_stim_sets_with_mesh(
+                volume_conductor,
+                settings,
+                geometry,
+                conductivity,
+                solver,
+                frequency_domain_signal,
+                reuse_precomputed_mesh,
             )
 
     time_1 = time.time()
@@ -198,6 +244,12 @@ def main_run(input_settings: dict):
         """
 
     _logger.info(f"Timings:\n {pprint.pformat(timings)}")
+
+    # persist the phase timings next to the VCM report so they can be analysed
+    # after the run (e.g. by examples/ConvergenceStudy/Benchmark) instead of
+    # only appearing in the log
+    with open(os.path.join(settings["OutputPath"], "run_report.json"), "w") as fp:
+        json.dump({"Timings": timings}, fp, indent=2)
 
     # write success file
     open(
@@ -239,9 +291,17 @@ def main() -> None:
     input_settings["StimulationFolder"] = os.path.dirname(
         os.path.abspath(args.input_dictionary)
     )
-
-    main_run(input_settings)
+    try:
+        main_run(input_settings)
+    finally:
+        for handler in logging.getLogger("ossdbs").handlers:
+            try:
+                handler.flush()
+            except Exception:
+                pass
+        logging.shutdown()
 
 
 if __name__ == "__main__":
+    multiprocessing.freeze_support()
     main()

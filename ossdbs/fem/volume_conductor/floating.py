@@ -29,6 +29,15 @@ class VolumeConductorFloating(VolumeConductor):
         super().__init__(
             geometry, conductivity, solver, order, meshing_parameters, output_path
         )
+        # This formulation does not support surface impedance on any contact.
+        for contact in self.contacts:
+            if contact.surface_impedance_model is not None:
+                raise ValueError(
+                    f"Contact {contact.name} has a surface impedance model, "
+                    "but the Floating formulation does not support surface "
+                    "impedance. Use FloatingImpedance (set surface impedance "
+                    "on the floating contacts) or NonFloating instead."
+                )
         _logger.debug("Create space")
         self.update_space()
 
@@ -96,12 +105,26 @@ class VolumeConductorFloating(VolumeConductor):
         contacts.extend(contacts_floating)
         f = ngsolve.LinearForm(space=self._space)
         for contact in contacts:
-            # account for mm as length unit
             length = ngsolve.Integrate(
-                ngsolve.CoefficientFunction(1e-3) * ngsolve.ds(contact.name),
+                ngsolve.CoefficientFunction(1.0) * ngsolve.ds(contact.name),
                 self.mesh.ngsolvemesh,
             )
             f += contact.current / length * v * ngsolve.ds(contact.name)
+            _logger.debug(
+                "Boundary %s length = %s, current = %s",
+                contact.name,
+                length,
+                contact.current,
+            )
+
+        _logger.debug(
+            "Active contacts: %s",
+            [(c.name, c.current, c.voltage) for c in self.contacts.active],
+        )
+        _logger.debug(
+            "Floating contacts: %s",
+            [(c.name, c.current, c.voltage) for c in self.contacts.floating],
+        )
         return f
 
     def _update_floating_voltages(self) -> None:

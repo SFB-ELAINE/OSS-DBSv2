@@ -4,8 +4,15 @@ Adding an Electrode
 Introduction
 ------------
 
-This guide walks you through the process of adding a new electrode to OSS-DBS. 
+This guide walks you through the process of adding a new electrode to OSS-DBS.
 Follow these steps to ensure seamless integration of your custom electrode.
+
+.. note::
+
+   If you only need to change the *dimensions* of an existing electrode (tip
+   length, contact spacing, etc.) without adding a new model, see the
+   :ref:`Custom electrode parameters <electrodes>` section — no code changes
+   are needed.
 
 Prepare the Geometry
 --------------------
@@ -47,9 +54,12 @@ Prepare the Geometry
 
 Following these steps ensures that the new electrode is fully integrated into the OSS-DBS framework and is available for use.
 
-Tips for Testing
------------------
+Tips for Development
+--------------------
 
+- Add ``from __future__ import annotations`` at the top of your model file if
+  you use union type annotations (e.g. ``-> netgen.occ.Solid | None``). This
+  prevents runtime evaluation errors when the docs are built without NGSolve.
 - Use the provided templates and methods to verify the geometry and parameters of your electrode.
 - Ensure that the parameter names, data types, and default values are consistent with the conventions used for existing electrodes.
 - Implement unit tests to validate the new electrode's behavior and ensure compatibility with the rest of the software.

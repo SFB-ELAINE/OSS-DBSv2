@@ -23,6 +23,25 @@ from .utilities import (
 _logger = logging.getLogger(__name__)
 
 
+def _decode_matlab_string(array) -> str:
+    """Decode MATLAB character array to Python string.
+
+    MATLAB stores strings as arrays of ASCII codes. This function
+    converts such arrays to Python strings.
+
+    Parameters
+    ----------
+    array : numpy.ndarray
+        Array from HDF5 file containing ASCII character codes
+
+    Returns
+    -------
+    str
+        Decoded Python string
+    """
+    return "".join(chr(int(c[0])) for c in array)
+
+
 class AxonMorphology(ABC):
     """Axon morphology class."""
 
@@ -344,7 +363,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
                         loc_pos = loc_pos + (self.para2_length + self.inter_length) / 2
                     if inx_loc in [4, 5, 6, 7, 8]:
                         loc_pos = loc_pos + self.inter_length / 1
-                loc_coords[inx_loc - 1] = loc_pos
+                    loc_coords[inx_loc - 1] = loc_pos
             else:
                 # node -- -- internodal -- -- -- -- internodal -- -- node
                 for inx_loc in np.arange(1, self.n_comp):
@@ -361,7 +380,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
                         loc_pos = loc_pos + 5 * self.inter_length
                     else:
                         raise RuntimeError("Wrong number of compartments")
-                loc_coords[inx_loc - 1] = loc_pos
+                    loc_coords[inx_loc - 1] = loc_pos
 
         elif self.fiber_diam < 5.7:
             if not self.downsampled:
@@ -374,7 +393,7 @@ class AxonMorphologyMRG2002(AxonMorphology):
                         loc_pos = loc_pos + (self.para2_length + self.inter_length) / 2
                     if inx_loc == 4 or inx_loc == 5:
                         loc_pos = loc_pos + self.inter_length  # switch to mm from µm
-                loc_coords[inx_loc - 1] = loc_pos
+                    loc_coords[inx_loc - 1] = loc_pos
             else:
                 # mode -- -- -- internodal -- -- -- node
                 loc_coords[0] = (
@@ -572,7 +591,9 @@ class AxonModels:
     def axon_model(self, value):
         valid_models = ["MRG2002", "MRG2002_DS", "McNeal1976"]
         if value not in valid_models:
-            ValueError(f"The NEURON model is not valid, use one of {valid_models}.")
+            raise ValueError(
+                f"The NEURON model is not valid, use one of {valid_models}."
+            )
         self._axon_model = value
 
     @property
@@ -612,22 +633,18 @@ class AxonModels:
 
         # try to read from .mat
         if "neuronModel" in file_inp["settings"]:
-            array_ascii = file_inp["settings"]["neuronModel"][:]
-            list_ascii = []
-            for i in range(array_ascii.shape[0]):
-                list_ascii.append(array_ascii[i][0])
-            self.axon_model = "".join(chr(i) for i in list_ascii)
+            self.axon_model = _decode_matlab_string(
+                file_inp["settings"]["neuronModel"][:]
+            )
             _logger.debug(f"Use {self.axon_model}")
         else:
             _logger.debug("Use McNeal1976 model by default")
             self.axon_model = "McNeal1976"
 
         # connectome name within Lead-DBS (e.g. 'Multi-Tract: PetersenLUIC')
-        array_ascii = file_inp["settings"]["connectome"][:]
-        list_ascii = []
-        for i in range(array_ascii.shape[0]):
-            list_ascii.append(array_ascii[i][0])
-        self.connectome_name = "".join(chr(i) for i in list_ascii)
+        self.connectome_name = _decode_matlab_string(
+            file_inp["settings"]["connectome"][:]
+        )
 
         # 'Multi-tract' connectomes contain multiple pathways
         # (projections) in separate .mat files
@@ -646,10 +663,7 @@ class AxonModels:
                 ext_string = file_inp[
                     file_inp["settings"]["connectomeTractNames"][0][i]
                 ]
-                list_ascii = []
-                for j in range(ext_string.shape[0]):
-                    list_ascii.append(ext_string[j][0])
-                projection_name = "".join(chr(i) for i in list_ascii)
+                projection_name = _decode_matlab_string(ext_string)
                 self.projection_names.append(projection_name)
         else:
             self.projection_names = ["default"]
@@ -687,14 +701,18 @@ class AxonModels:
             for j in range(total_protocols):
                 protocols_array[j, :] = list(stim_protocols[j])
                 for i in range(total_contacts):
-                    if not math.isnan(protocols_array[j, i]):
+                    if not math.isnan(protocols_array[j, i]) and not np.isclose(
+                        protocols_array[j, i], 0.0
+                    ):
                         ampl_vector[i] = 1.0
         else:
             ampl_vector = list(file_inp["settings"]["Phi_vector"][:, hemis_idx])
 
         self.centering_coordinates = []
         for i in range(len(ampl_vector)):
-            if not (math.isnan(ampl_vector[i])):
+            if not (math.isnan(ampl_vector[i])) and (
+                not np.isclose(ampl_vector[i], 0.0)
+            ):
                 a_ref = file_inp["settings"]["contactLocation"][hemis_idx][0]
                 b = file_inp[a_ref]
                 self.centering_coordinates.append(b[:, i])
@@ -911,10 +929,9 @@ class AxonModels:
         For Lead-DBS visualization, use <projection_name>_axons.mat
 
         """
-        # TODO fallback for non hdf5
         try:
             file = h5py.File(pathway_file, mode="r")
-        except ValueError:
+        except OSError:
             _logger.warning("Fell back to MATLAB file")
             file = scipy.io.loadmat(pathway_file)
 
@@ -954,11 +971,11 @@ class AxonModels:
                     )
 
         # covert fiber table to nibabel streamlines
-        streamlines = convert_fibers_to_streamlines(fiber_array)
+        streamlines, inx_orig = convert_fibers_to_streamlines(fiber_array)
 
         # resample streamlines to nodes of Ranvier
-        streamlines_resampled, _ = resample_fibers_to_Ranviers(
-            streamlines, axon_morphology.node_step, axon_morphology.n_Ranvier
+        streamlines_resampled, _, inx_orig_resampled = resample_fibers_to_Ranviers(
+            streamlines, axon_morphology.node_step, axon_morphology.n_Ranvier, inx_orig
         )
 
         # truncate streamlines to match selected axon length
@@ -1022,7 +1039,12 @@ class AxonModels:
                 inx_axn + 1
             )  # because in Matlab they start from 1
 
-            g.create_dataset("axon" + str(inx_axn), data=axon_array[:, :, inx_axn])
+            dst = g.create_dataset(
+                "axon" + str(inx_axn), data=axon_array[:, :, inx_axn]
+            )
+
+            # store "the original" index of the axon
+            dst.attrs["inx"] = inx_orig_resampled[inx_axn]
 
             glob_ind = glob_ind + axon_morphology.n_segments
 

@@ -41,8 +41,10 @@ class TimeDomainSignal(ABC):
 
     Notes
     -----
-    TODO document and clarify how to use amplitude
-    The spectrum is also received from here.
+    Amplitudes are relative: the primary pulse has amplitude 1.0 and the
+    counter pulse amplitude is given as a fraction (e.g. 0.5 means half
+    the primary amplitude). The actual voltage or current scaling is
+    applied externally by the volume conductor model.
 
     """
 
@@ -107,7 +109,9 @@ class TimeDomainSignal(ABC):
         """
         return adjust_cutoff_frequency(2.0 * cutoff_frequency, self.frequency)
 
-    def get_fft_spectrum(self, cutoff_frequency: float) -> np.ndarray:
+    def get_fft_spectrum(
+        self, cutoff_frequency: float
+    ) -> tuple[np.ndarray, np.ndarray, int]:
         """FFT spectrum of time-domain signal.
 
         Parameters
@@ -124,7 +128,7 @@ class TimeDomainSignal(ABC):
         time_domain_signal = self.get_time_domain_signal(dt, timesteps)
         return (
             rfftfreq(len(time_domain_signal), d=dt),
-            rfft(time_domain_signal),
+            np.asarray(rfft(time_domain_signal)),
             len(time_domain_signal),
         )
 
