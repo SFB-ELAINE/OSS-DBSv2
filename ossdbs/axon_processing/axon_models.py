@@ -76,7 +76,7 @@ class AxonMorphology(ABC):
     def axon_length(self, value):
         self._axon_length = value
         expected_n_Ranvier = int(value / self.node_step)
-        if not self.n_Ranvier == expected_n_Ranvier:
+        if self.n_Ranvier != expected_n_Ranvier:
             # Updating number of Ranviers to match axon length
             self.n_Ranvier = expected_n_Ranvier
 

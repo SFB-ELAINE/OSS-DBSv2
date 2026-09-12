@@ -488,7 +488,7 @@ class Solver(ABC):
         precond_par: Preconditioner = DEFAULT_PRECONDITIONER,
         maxsteps: int = 10000,
         relative_tolerance: float = 1e-12,
-        absolute_tolerance: None | float = None,
+        absolute_tolerance: float | None = None,
     ) -> None:
         """Initialize the solver.
 
@@ -528,7 +528,6 @@ class Solver(ABC):
             Solution vector
 
         """
-        pass
 
 
 class CGSolver(Solver):

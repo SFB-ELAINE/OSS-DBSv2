@@ -51,27 +51,21 @@ class TestPreconditioner:
         ],
     )
     def test_preconditioner(self, preconditioner_class):
-        try:
-            solver = preconditioner_class()
-            assert solver is not None
-        except Exception:
-            pytest.fail("Cannot be instantiated.")
+        solver = preconditioner_class()
+        assert solver is not None
 
 
 class TestSolver:
     @pytest.mark.parametrize("solver_class", [CGSolver, GMRESSolver, DirectSolver])
     def test_solver(self, solver_class):
-        try:
-            solver = solver_class(
-                precond_par=BDDCPreconditioner(),
-                maxsteps=10000,
-                relative_tolerance=1e-12,
-                absolute_tolerance=1e-14,
-            )
-            assert solver is not None
-            assert solver._absolute_tolerance == 1e-14
-        except Exception:
-            pytest.fail("Cannot be instantiated.")
+        solver = solver_class(
+            precond_par=BDDCPreconditioner(),
+            maxsteps=10000,
+            relative_tolerance=1e-12,
+            absolute_tolerance=1e-14,
+        )
+        assert solver is not None
+        assert solver._absolute_tolerance == 1e-14
 
     def test_absolute_tolerance_from_settings(self):
         settings = Settings({"Solver": {"AbsoluteTolerance": 1e-8}}).complete_settings()
@@ -321,13 +315,10 @@ def _build_volume_conductor_with_solver(
 
 class TestMesh:
     def test_mesh(self, geometry_fixture, settings_fixture):
-        try:
-            geometry = geometry_fixture[2].geometry
+        geometry = geometry_fixture[2].geometry
 
-            mesh = Mesh(geometry, settings_fixture["FEMOrder"])
-            assert mesh is not None
-        except Exception:
-            pytest.fail("Cannot be instantiated.")
+        mesh = Mesh(geometry, settings_fixture["FEMOrder"])
+        assert mesh is not None
 
 
 class TestLocatePointsCache:
@@ -492,144 +483,134 @@ class TestLocatePointsCache:
 
 class TestConductivity:
     def test_conductivityCF(self, settings_fixture, mri_fixture, geometry_fixture):
-        try:
-            mri_image, _ = mri_fixture
-            brain_region, _, geometry = geometry_fixture
-            dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
-            materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
+        mri_image, _ = mri_fixture
+        brain_region, _, geometry = geometry_fixture
+        dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
+        materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
 
-            conductivity = ossdbs.ConductivityCF(
-                mri_image,
-                brain_region,
-                dielectric_model,
-                materials,
-                geometry.encapsulation_layers,
-                complex_data=settings_fixture["EQSMode"],
-            )
-            assert conductivity is not None
-        except Exception:
-            pytest.fail("Cannot be instantiated.")
+        conductivity = ossdbs.ConductivityCF(
+            mri_image,
+            brain_region,
+            dielectric_model,
+            materials,
+            geometry.encapsulation_layers,
+            complex_data=settings_fixture["EQSMode"],
+        )
+        assert conductivity is not None
 
 
 class TestDTIMasking:
     def test_DTImasking(self, settings_fixture, mri_fixture, geometry_fixture):
-        try:
-            mri_image, dti_image = mri_fixture
-            brain_region, _, geometry = geometry_fixture
-            dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
-            materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
+        mri_image, dti_image = mri_fixture
+        brain_region, _, geometry = geometry_fixture
+        dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
+        materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
 
-            # Create ConductivityCF instances
-            conductivity_unmasked = ossdbs.ConductivityCF(
-                mri_image,
-                brain_region,
-                dielectric_model,
-                materials,
-                geometry.encapsulation_layers,
-                complex_data=settings_fixture["EQSMode"],
-                dti_image=dti_image,
-                wm_masking=False,  # No masking
-            )
+        # Create ConductivityCF instances
+        conductivity_unmasked = ossdbs.ConductivityCF(
+            mri_image,
+            brain_region,
+            dielectric_model,
+            materials,
+            geometry.encapsulation_layers,
+            complex_data=settings_fixture["EQSMode"],
+            dti_image=dti_image,
+            wm_masking=False,  # No masking
+        )
 
-            conductivity_masked = ossdbs.ConductivityCF(
-                mri_image,
-                brain_region,
-                dielectric_model,
-                materials,
-                geometry.encapsulation_layers,
-                complex_data=settings_fixture["EQSMode"],
-                dti_image=dti_image,
-                wm_masking=True,  # With masking
-            )
+        conductivity_masked = ossdbs.ConductivityCF(
+            mri_image,
+            brain_region,
+            dielectric_model,
+            materials,
+            geometry.encapsulation_layers,
+            complex_data=settings_fixture["EQSMode"],
+            dti_image=dti_image,
+            wm_masking=True,  # With masking
+        )
 
-            # Generate mesh and get underlying NGSolve mesh
-            mesh = ossdbs.generate_mesh(settings_fixture)
-            ngmesh = mesh.ngsolvemesh
+        # Generate mesh and get underlying NGSolve mesh
+        mesh = ossdbs.generate_mesh(settings_fixture)
+        ngmesh = mesh.ngsolvemesh
 
-            # Build tensor-valued conductivity fields
-            sigma_unmasked_cf = conductivity_unmasked(mesh=mesh, frequency=10000.0)
-            sigma_masked_cf = conductivity_masked(mesh=mesh, frequency=10000.0)
+        # Build tensor-valued conductivity fields
+        sigma_unmasked_cf = conductivity_unmasked(mesh=mesh, frequency=10000.0)
+        sigma_masked_cf = conductivity_masked(mesh=mesh, frequency=10000.0)
 
-            # Helper to evaluate sigma at a physical point and return a 3x3 tensor
-            def eval_sigma(cf, point):
-                mp = ngmesh(*point)  # unpack (x, y, z) -> ngmesh(x, y, z)
-                vals = cf(mp)  # 9 components (flattened 3x3)
-                return np.array(vals, dtype=float).reshape((3, 3))
+        # Helper to evaluate sigma at a physical point and return a 3x3 tensor
+        def eval_sigma(cf, point):
+            mp = ngmesh(*point)  # unpack (x, y, z) -> ngmesh(x, y, z)
+            vals = cf(mp)  # 9 components (flattened 3x3)
+            return np.array(vals, dtype=float).reshape((3, 3))
 
-            # Tissue-specific test points in JD MRI frame
-            test_points = {
-                "GM": (1.9, -34.6, 4.4),
-                "WM": (0.8, -33.7, -0.6),
-            }
+        # Tissue-specific test points in JD MRI frame
+        test_points = {
+            "GM": (1.9, -34.6, 4.4),
+            "WM": (0.8, -33.7, -0.6),
+        }
 
-            # Evaluate tensors
-            sigma_gm_unmasked = eval_sigma(sigma_unmasked_cf, test_points["GM"])
-            sigma_gm_masked = eval_sigma(sigma_masked_cf, test_points["GM"])
+        # Evaluate tensors
+        sigma_gm_unmasked = eval_sigma(sigma_unmasked_cf, test_points["GM"])
+        sigma_gm_masked = eval_sigma(sigma_masked_cf, test_points["GM"])
 
-            sigma_wm_unmasked = eval_sigma(sigma_unmasked_cf, test_points["WM"])
-            sigma_wm_masked = eval_sigma(sigma_masked_cf, test_points["WM"])
+        sigma_wm_unmasked = eval_sigma(sigma_unmasked_cf, test_points["WM"])
+        sigma_wm_masked = eval_sigma(sigma_masked_cf, test_points["WM"])
 
-            # WM: masking should not change conductivity (only CSF/GM)
-            assert np.allclose(
-                sigma_wm_unmasked,
-                sigma_wm_masked,
-            ), (
-                "Conductivity tensors in white matter should be identical with and without masking."
-            )
+        # WM: masking should not change conductivity (only CSF/GM)
+        assert np.allclose(
+            sigma_wm_unmasked,
+            sigma_wm_masked,
+        ), (
+            "Conductivity tensors in white matter should be identical with and without masking."
+        )
 
-            # GM: masking should modify anisotropic GM tensors (become isotropic)
-            assert not np.allclose(
-                sigma_gm_unmasked,
-                sigma_gm_masked,
-            ), (
-                "Conductivity tensors in anisotropic gray matter should differ with masking applied."
-            )
-
-        except Exception as e:
-            pytest.fail(f"Test failed with exception: {e}")
+        # GM: masking should modify anisotropic GM tensors (become isotropic)
+        assert not np.allclose(
+            sigma_gm_unmasked,
+            sigma_gm_masked,
+        ), (
+            "Conductivity tensors in anisotropic gray matter should differ with masking applied."
+        )
 
 
 class TestVolumeConductorModel:
     def test_volume_conductor_model(
         self, settings_fixture, mri_fixture, geometry_fixture
     ):
-        try:
-            mri_image, _ = mri_fixture
-            brain_region, _, geometry = geometry_fixture
-            dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
-            materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
-            solver = ossdbs.prepare_solver(settings_fixture)
+        mri_image, _ = mri_fixture
+        brain_region, _, geometry = geometry_fixture
+        dielectric_model = ossdbs.prepare_dielectric_properties(settings_fixture)
+        materials = settings_fixture["MaterialDistribution"]["MRIMapping"]
+        solver = ossdbs.prepare_solver(settings_fixture)
 
-            conductivity = ossdbs.ConductivityCF(
-                mri_image,
-                brain_region,
-                dielectric_model,
-                materials,
-                geometry.encapsulation_layers,
-                complex_data=settings_fixture["EQSMode"],
-            )
+        conductivity = ossdbs.ConductivityCF(
+            mri_image,
+            brain_region,
+            dielectric_model,
+            materials,
+            geometry.encapsulation_layers,
+            complex_data=settings_fixture["EQSMode"],
+        )
 
-            floating_mode = geometry.get_floating_mode()
-            volume_conductor_classes = {
-                "Floating": VolumeConductorFloating,
-                "FloatingImpedance": VolumeConductorFloatingImpedance,
-                "NonFloating": VolumeConductorNonFloating,
-            }
+        floating_mode = geometry.get_floating_mode()
+        volume_conductor_classes = {
+            "Floating": VolumeConductorFloating,
+            "FloatingImpedance": VolumeConductorFloatingImpedance,
+            "NonFloating": VolumeConductorNonFloating,
+        }
 
-            # If floating_mode is None, call VolumeConductorNonFloating.
-            VolumeConductorClass = volume_conductor_classes.get(
-                floating_mode, VolumeConductorNonFloating
-            )
-            volume_conductor = VolumeConductorClass(
-                geometry,
-                conductivity,
-                solver,
-                settings_fixture["FEMOrder"],
-                settings_fixture["Mesh"],
-            )
-            assert volume_conductor is not None
-        except Exception:
-            pytest.fail("Cannot be instantiated.")
+        # If floating_mode is None, call VolumeConductorNonFloating.
+        VolumeConductorClass = volume_conductor_classes.get(
+            floating_mode, VolumeConductorNonFloating
+        )
+        volume_conductor = VolumeConductorClass(
+            geometry,
+            conductivity,
+            solver,
+            settings_fixture["FEMOrder"],
+            settings_fixture["Mesh"],
+        )
+        assert volume_conductor is not None
 
 
 class TestCustomizedLocalPreconditioner:
@@ -877,6 +858,7 @@ class TestRefineAfterRefineHPIsBroken:
             capture_output=True,
             text=True,
             timeout=300,
+            check=False,
         )
 
         true_vol = self._true_volume()

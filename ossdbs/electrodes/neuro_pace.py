@@ -5,8 +5,8 @@
 from dataclasses import dataclass
 
 import netgen
-import netgen.occ as occ
 import numpy as np
+from netgen import occ
 
 from .electrode_model_template import ElectrodeModel
 from .utilities import get_highest_edge, get_lowest_edge

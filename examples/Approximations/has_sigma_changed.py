@@ -48,7 +48,7 @@ conductivitiesCC4needed = {}
 conductivitiesCC4notneeded = {}
 
 
-for material_test in material_modelCC4.keys():
+for material_test in material_modelCC4:
     conductivitiesCC3[material_test] = np.full(
         shape=frequencies.shape, fill_value=np.nan, dtype=complex
     )
@@ -91,7 +91,7 @@ for idx, frequency in enumerate(frequencies):
     else:
         changed_cc4 = True
 
-    for material_test in material_modelCC4.keys():
+    for material_test, model_cc4 in material_modelCC4.items():
         if changed_cc3:
             conductivitiesCC3needed[material_test][idx] = material_modelCC3[
                 material_test
@@ -102,20 +102,20 @@ for idx, frequency in enumerate(frequencies):
             ].complex_conductivity(2.0 * np.pi * frequency)
 
         if changed_cc4:
-            conductivitiesCC4needed[material_test][idx] = material_modelCC4[
-                material_test
-            ].complex_conductivity(2.0 * np.pi * frequency)
+            conductivitiesCC4needed[material_test][idx] = (
+                model_cc4.complex_conductivity(2.0 * np.pi * frequency)
+            )
         else:
-            conductivitiesCC4notneeded[material_test][idx] = material_modelCC4[
-                material_test
-            ].complex_conductivity(2.0 * np.pi * frequency)
+            conductivitiesCC4notneeded[material_test][idx] = (
+                model_cc4.complex_conductivity(2.0 * np.pi * frequency)
+            )
 
         conductivitiesCC3[material_test][idx] = material_modelCC3[
             material_test
         ].complex_conductivity(2.0 * np.pi * frequency)
-        conductivitiesCC4[material_test][idx] = material_modelCC4[
-            material_test
-        ].complex_conductivity(2.0 * np.pi * frequency)
+        conductivitiesCC4[material_test][idx] = model_cc4.complex_conductivity(
+            2.0 * np.pi * frequency
+        )
 
 
 omega = 2.0 * np.pi * frequencies
@@ -124,7 +124,7 @@ ax2 = ax1.twinx()
 ax1.set_yscale("log")
 ax2.set_yscale("log")
 plt.xscale("log")
-for material in material_modelCC4.keys():
+for material in material_modelCC4:
     if material == "CSF":
         continue
     # Plotting conductivity
@@ -162,7 +162,7 @@ ax2 = ax1.twinx()
 ax1.set_yscale("log")
 ax2.set_yscale("log")
 plt.xscale("log")
-for material in material_modelCC4.keys():
+for material in material_modelCC4:
     if material == "CSF":
         continue
     # Plotting conductivity
@@ -198,7 +198,7 @@ else:
     plt.close()
 
 print("Compare real and imaginary part CC3")
-for material in material_modelCC4.keys():
+for material in material_modelCC4:
     if material == "CSF":
         continue
     # Plotting conductivity
@@ -235,7 +235,7 @@ else:
 
 
 print("Compare real and imaginary part CC4")
-for material in material_modelCC4.keys():
+for material in material_modelCC4:
     if material == "CSF":
         continue
     # Plotting conductivity

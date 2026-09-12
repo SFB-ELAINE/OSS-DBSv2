@@ -171,5 +171,6 @@ for tissue, pt in test_points.items():
         print("Masked:")
         print(np.round(sigma_tensor_masked, 8))
 
-    except Exception as e:
+    # Demonstration script: report the point that failed and carry on.
+    except Exception as e:  # noqa: BLE001
         print("Error evaluating", tissue, "at", pt, ":", e)

@@ -5,8 +5,8 @@
 from dataclasses import asdict, dataclass
 
 import netgen
-import netgen.occ as occ
 import numpy as np
+from netgen import occ
 
 from .electrode_model_template import ElectrodeModel
 from .utilities import get_highest_edge, get_lowest_edge
@@ -73,7 +73,7 @@ class DixiSEEGModel(ElectrodeModel):
                 raise ValueError("Parameter values cannot be less than zero")
         # check that number of contacts has been set correctly
         if not isinstance(self.n_contacts, int):
-            raise ValueError(
+            raise TypeError(
                 "The number of contacts has to be supplied as an integer value."
             )
 

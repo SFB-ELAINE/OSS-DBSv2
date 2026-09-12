@@ -153,9 +153,9 @@ def _build_lead_parts() -> pv.MultiBlock | None:
     with (
         contextlib.redirect_stdout(io.StringIO()),
         contextlib.redirect_stderr(io.StringIO()),
+        TaskManager(),
     ):
-        with TaskManager():
-            ngmesh = occgeo.GenerateMesh(maxh=0.3)
+        ngmesh = occgeo.GenerateMesh(maxh=0.3)
 
     m = Mesh(ngmesh)
     bnds = m.GetBoundaries()  # tuple of names, 0-indexed; element .index is 1-based
@@ -213,7 +213,7 @@ def _add_lead(
     if lead_parts is None:
         return
 
-    for name in lead_parts.keys():
+    for name in lead_parts:
         block = lead_parts[name]
         if not name.startswith("Contact"):
             color = BODY_COLOR

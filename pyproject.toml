@@ -120,6 +120,14 @@ lint.extend-ignore = [
 [tool.ruff.lint.per-file-ignores]
 "tests/*.py" = ["D", "S", "E501"]
 "setup.py" = ["D"]
+# N999 wants lower_snake_case module names, but these are named after the
+# things they implement: manufacturer part numbers (BF12R_SP05X_0BH,
+# B33005, DL344-10), the MRG2002 axon model and the NIfTI-1 format.
+# Lower-casing them would break the correspondence to the designations
+# used in the datasheets and in the class names.
+"tests/electrode_tests/*.py" = ["D", "S", "E501", "N999"]
+"tests/test_Nifti1Image.py" = ["D", "S", "E501", "N999"]
+"ossdbs/axon_processing/axon_default_MRG2002.py" = ["N999"]
 
 [tool.coverage.report]
 exclude_lines = [

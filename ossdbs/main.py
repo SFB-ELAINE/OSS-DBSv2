@@ -297,7 +297,10 @@ def main() -> None:
         for handler in logging.getLogger("ossdbs").handlers:
             try:
                 handler.flush()
-            except Exception:
+            # Runs in a finally: a failure to flush must not replace whatever
+            # exception is already on its way out, and the logger itself is
+            # what is broken, so there is nowhere to report it.
+            except Exception:  # noqa: BLE001, S110
                 pass
         logging.shutdown()
 

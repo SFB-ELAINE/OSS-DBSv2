@@ -9,8 +9,8 @@ from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass
 
 import netgen
-import netgen.occ as occ
 import numpy as np
+from netgen import occ
 from ngsolve import BND, Mesh, VTKOutput
 
 _logger = logging.getLogger(__name__)
