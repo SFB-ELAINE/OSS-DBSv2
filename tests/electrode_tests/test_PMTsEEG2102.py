@@ -39,7 +39,7 @@ class TestPMTsEEG2102_08(TestElectrode):
 
     def test_custom_exists(self, electrode_name):
         customname = electrode_name + "Custom"
-        assert customname in ELECTRODE_MODELS.keys()
+        assert customname in ELECTRODE_MODELS
 
 
 class TestPMTsEEG2102_10(TestPMTsEEG2102_08):

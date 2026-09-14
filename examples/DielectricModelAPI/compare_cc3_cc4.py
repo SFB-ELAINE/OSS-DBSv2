@@ -23,7 +23,7 @@ conductivitiesCC4 = {}
 
 frequencies = np.logspace(1, 7)
 
-for material in material_modelCC4.keys():
+for material, model_cc4 in material_modelCC4.items():
     conductivitiesCC3[material] = np.full(
         shape=frequencies.shape, fill_value=np.nan, dtype=complex
     )
@@ -35,9 +35,9 @@ for material in material_modelCC4.keys():
         conductivitiesCC3[material][idx] = material_modelCC3[
             material
         ].complex_conductivity(2.0 * np.pi * frequency)
-        conductivitiesCC4[material][idx] = material_modelCC4[
-            material
-        ].complex_conductivity(2.0 * np.pi * frequency)
+        conductivitiesCC4[material][idx] = model_cc4.complex_conductivity(
+            2.0 * np.pi * frequency
+        )
 
 omega = 2.0 * np.pi * frequencies
 fig, ax1 = plt.subplots()
@@ -48,7 +48,7 @@ ax1.set_yscale("log")
 ax2.set_yscale("log")
 plt.xscale("log")
 
-for material in material_modelCC4.keys():
+for material in material_modelCC4:
     if material == "CSF":
         continue
     # Plotting conductivity
@@ -88,7 +88,7 @@ plt.savefig("CC3_vs_CC4.pdf")
 plt.close()
 
 counter = 0
-for material in material_modelCC4.keys():
+for material in material_modelCC4:
     if material == "CSF":
         continue
     # Plotting conductivity

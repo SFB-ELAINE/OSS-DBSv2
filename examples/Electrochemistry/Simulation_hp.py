@@ -1,6 +1,6 @@
-import netgen.occ as occ
 import numpy as np
 import pandas as pd
+from netgen import occ
 from ngsolve import (
     BND,
     H1,
@@ -42,9 +42,8 @@ brain_geo = occ.Sphere(c=(0, 0, 0), r=50)
 vercise = ossdbs.electrodes.defaults.BostonScientificVercise()
 finalgeo = brain_geo - vercise.geometry
 for e in finalgeo.edges:
-    if e.name is not None:
-        if contact_high in e.name or contact_low in e.name:
-            e.hpref = 1
+    if e.name is not None and (contact_high in e.name or contact_low in e.name):
+        e.hpref = 1
 
 occgeo = occ.OCCGeometry(finalgeo)
 with TaskManager():

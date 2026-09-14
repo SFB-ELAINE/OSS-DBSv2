@@ -97,18 +97,17 @@ def update_default_dict(default_settings: dict, custom_settings: dict) -> None:
     updated_settings: dict
 
     """
-    for key in custom_settings.keys():
+    for key, value in custom_settings.items():
         is_dict = False
 
-        if key in default_settings.keys():
-            if isinstance(default_settings[key], dict):
-                # empty dicts yield False
-                is_dict = bool(default_settings[key])
+        if key in default_settings and isinstance(default_settings[key], dict):
+            # empty dicts yield False
+            is_dict = bool(default_settings[key])
 
         if is_dict:
-            update_default_dict(default_settings[key], custom_settings[key])
+            update_default_dict(default_settings[key], value)
         else:
-            default_settings[key] = custom_settings[key]
+            default_settings[key] = value
 
     updated_settings = default_settings
     return updated_settings

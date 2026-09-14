@@ -74,8 +74,9 @@ g.map(
     edgecolor="w",
 )
 
-ax_count = 0
-for ax, label, scale in zip(g.axes.flat, labels, scales, strict=False):
+for ax_count, (ax, label, scale) in enumerate(
+    zip(g.axes.flat, labels, scales, strict=False)
+):
     # Make the grid horizontal instead of vertical
     ax.xaxis.grid(False)
     ax.yaxis.grid(True)
@@ -85,7 +86,6 @@ for ax, label, scale in zip(g.axes.flat, labels, scales, strict=False):
     ax.set(ylabel="Strategy")
     if ax_count > 1:
         ax.set(xlim=(-0.5, None))
-    ax_count += 1
 sns.despine(left=True, bottom=False)
 plt.savefig("nf_convergence_overview_errors.pdf")
 plt.savefig("nf_convergence_overview_errors.svg")

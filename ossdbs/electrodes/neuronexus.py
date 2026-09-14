@@ -4,8 +4,8 @@
 from dataclasses import dataclass
 
 import netgen
-import netgen.occ as occ
 import numpy as np
+from netgen import occ
 
 from .electrode_model_template import ElectrodeModel
 

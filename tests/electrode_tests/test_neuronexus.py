@@ -36,7 +36,7 @@ class TestNeuroNexusA1x16_5mm_50_177(TestElectrode):
 
     def test_custom_exists(self, electrode_name):
         customname = electrode_name + "Custom"
-        assert customname in ELECTRODE_MODELS.keys()
+        assert customname in ELECTRODE_MODELS
 
     def test_contact_area(self, electrode):
         """Check the contact area."""

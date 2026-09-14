@@ -74,7 +74,7 @@ class Pathway(PointModel):
         with h5py.File(self._path, "r") as file:
             populations = [
                 self.Population(group, self._create_axons(file, group))
-                for group in file.keys()
+                for group in file
             ]
 
         self._populations = populations
@@ -108,7 +108,7 @@ class Pathway(PointModel):
             Returns list of all axons within one group.
         """
         axons = []
-        for sub_group in file[group].keys():
+        for sub_group in file[group]:
             dataset = file[group][sub_group]
             if "inx" in dataset.attrs:
                 orig_inx = dataset.attrs["inx"]
@@ -313,7 +313,6 @@ class Pathway(PointModel):
                             break
                     idx_axon += axon_length
         _logger.info("Marked axons inside CSF and encapsulation layer")
-        return
 
     def create_index(self, lattice: np.ndarray) -> np.ndarray:
         """Create index for each point to the matching axon.
@@ -556,4 +555,3 @@ class Pathway(PointModel):
                 os.path.join(self.output_path, f"E_field_{self.name}.csv"),
                 index=False,
             )
-        return

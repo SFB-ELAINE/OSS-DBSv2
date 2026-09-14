@@ -118,7 +118,7 @@ def build_lead_parts():
 
 def add_lead(plotter, lead):
     """Overlay the lead: light-grey body, dark-grey contacts."""
-    for name in lead.keys():
+    for name in lead:
         color = CONTACT_COLOR if name.startswith("Contact") else BODY_COLOR
         plotter.add_mesh(
             lead[name],

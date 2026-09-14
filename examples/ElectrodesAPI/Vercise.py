@@ -5,7 +5,7 @@ It is meshed and the contacts
 are colored to highlight their location.
 """
 
-import netgen.occ as occ
+from netgen import occ
 from ngsolve import Draw, Mesh, TaskManager
 
 import ossdbs

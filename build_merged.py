@@ -370,7 +370,8 @@ def _build_entry(name, spec_content):
     cmd.append(str(spec_path))
 
     _log_info(f"Command: {' '.join(cmd)}")
-    result = subprocess.run(cmd)
+    # returncode is inspected right below
+    result = subprocess.run(cmd, check=False)
 
     if result.returncode != 0:
         _log_err(f"Build FAILED for '{name}' (exit code {result.returncode})")
@@ -418,7 +419,8 @@ def _copy_tree_items(src_dir, bundle, errors, entry_name=None):
                 shutil.copytree(item, dest)
             else:
                 shutil.copy2(item, dest)
-        except Exception as e:
+        # Every copy is attempted; the failures are reported together.
+        except Exception as e:  # noqa: BLE001
             errors.append(f"Copy failed: {item} -> {dest}: {e}")
 
 

@@ -33,7 +33,7 @@ class TestBostonScientificVerciseDirected(TestElectrode):
 
     def test_custom_exists(self, electrode_name):
         customname = electrode_name + "Custom"
-        assert customname in ELECTRODE_MODELS.keys()
+        assert customname in ELECTRODE_MODELS
 
     def test_spin_direction_0(self, electrode_name):
         """Test first spin direction."""
@@ -41,21 +41,19 @@ class TestBostonScientificVerciseDirected(TestElectrode):
         ref_geo, model_geo = get_reference_and_model_geo(electrode_name, idx)
         reference_centers = {}
         for face in ref_geo.faces:
-            if "E1C" in face.name:
-                if face.name not in ["E1C1", "E1C8"]:
-                    reference_centers[face.name] = np.array(
-                        [face.center.x, face.center.y, face.center.z]
-                    )
+            if "E1C" in face.name and face.name not in ["E1C1", "E1C8"]:
+                reference_centers[face.name] = np.array(
+                    [face.center.x, face.center.y, face.center.z]
+                )
         for face in model_geo.geometry.shape.faces:
-            if "E1C" in face.name:
-                if face.name not in ["E1C1", "E1C8"]:
-                    assert np.all(
-                        np.isclose(
-                            reference_centers[face.name],
-                            np.array([face.center.x, face.center.y, face.center.z]),
-                            rtol=1e-4,
-                        )
+            if "E1C" in face.name and face.name not in ["E1C1", "E1C8"]:
+                assert np.all(
+                    np.isclose(
+                        reference_centers[face.name],
+                        np.array([face.center.x, face.center.y, face.center.z]),
+                        rtol=1e-4,
                     )
+                )
 
     def test_spin_direction_1(self, electrode_name):
         """Test first spin direction."""
@@ -63,21 +61,19 @@ class TestBostonScientificVerciseDirected(TestElectrode):
         ref_geo, model_geo = get_reference_and_model_geo(electrode_name, idx)
         reference_centers = {}
         for face in ref_geo.faces:
-            if "E1C" in face.name:
-                if face.name not in ["E1C1", "E1C8"]:
-                    reference_centers[face.name] = np.array(
-                        [face.center.x, face.center.y, face.center.z]
-                    )
+            if "E1C" in face.name and face.name not in ["E1C1", "E1C8"]:
+                reference_centers[face.name] = np.array(
+                    [face.center.x, face.center.y, face.center.z]
+                )
         for face in model_geo.geometry.shape.faces:
-            if "E1C" in face.name:
-                if face.name not in ["E1C1", "E1C8"]:
-                    assert np.all(
-                        np.isclose(
-                            reference_centers[face.name],
-                            np.array([face.center.x, face.center.y, face.center.z]),
-                            rtol=1e-4,
-                        )
+            if "E1C" in face.name and face.name not in ["E1C1", "E1C8"]:
+                assert np.all(
+                    np.isclose(
+                        reference_centers[face.name],
+                        np.array([face.center.x, face.center.y, face.center.z]),
+                        rtol=1e-4,
                     )
+                )
 
     def test_spin_direction_2(self, electrode_name):
         """Test first spin direction."""
@@ -85,21 +81,19 @@ class TestBostonScientificVerciseDirected(TestElectrode):
         ref_geo, model_geo = get_reference_and_model_geo(electrode_name, idx)
         reference_centers = {}
         for face in ref_geo.faces:
-            if "E1C" in face.name:
-                if face.name not in ["E1C1", "E1C8"]:
-                    reference_centers[face.name] = np.array(
-                        [face.center.x, face.center.y, face.center.z]
-                    )
+            if "E1C" in face.name and face.name not in ["E1C1", "E1C8"]:
+                reference_centers[face.name] = np.array(
+                    [face.center.x, face.center.y, face.center.z]
+                )
         for face in model_geo.geometry.shape.faces:
-            if "E1C" in face.name:
-                if face.name not in ["E1C1", "E1C8"]:
-                    assert np.all(
-                        np.isclose(
-                            reference_centers[face.name],
-                            np.array([face.center.x, face.center.y, face.center.z]),
-                            rtol=1e-4,
-                        )
+            if "E1C" in face.name and face.name not in ["E1C1", "E1C8"]:
+                assert np.all(
+                    np.isclose(
+                        reference_centers[face.name],
+                        np.array([face.center.x, face.center.y, face.center.z]),
+                        rtol=1e-4,
                     )
+                )
 
     def test_spin_direction_3(self, electrode_name):
         """Test first spin direction."""
@@ -107,18 +101,16 @@ class TestBostonScientificVerciseDirected(TestElectrode):
         ref_geo, model_geo = get_reference_and_model_geo(electrode_name, idx)
         reference_centers = {}
         for face in ref_geo.faces:
-            if "E1C" in face.name:
-                if face.name not in ["E1C1", "E1C8"]:
-                    reference_centers[face.name] = np.array(
-                        [face.center.x, face.center.y, face.center.z]
-                    )
+            if "E1C" in face.name and face.name not in ["E1C1", "E1C8"]:
+                reference_centers[face.name] = np.array(
+                    [face.center.x, face.center.y, face.center.z]
+                )
         for face in model_geo.geometry.shape.faces:
-            if "E1C" in face.name:
-                if face.name not in ["E1C1", "E1C8"]:
-                    assert np.all(
-                        np.isclose(
-                            reference_centers[face.name],
-                            np.array([face.center.x, face.center.y, face.center.z]),
-                            rtol=1e-4,
-                        )
+            if "E1C" in face.name and face.name not in ["E1C1", "E1C8"]:
+                assert np.all(
+                    np.isclose(
+                        reference_centers[face.name],
+                        np.array([face.center.x, face.center.y, face.center.z]),
+                        rtol=1e-4,
                     )
+                )

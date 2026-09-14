@@ -169,11 +169,11 @@ def plot_dielectric_panel(ax, material_models, frequencies, threshold, title):
     ax.legend(loc="upper center", fontsize=7)
     ax.set_title(title, loc="left", fontweight="bold")
     axes = [ax, ax2]
-    for ax in axes:
-        ax.set_facecolor("black")
-        ax.xaxis.label.set_color("white")
-        ax.yaxis.label.set_color("white")
-        ax.title.set_color("white")
+    for axis in axes:
+        axis.set_facecolor("black")
+        axis.xaxis.label.set_color("white")
+        axis.yaxis.label.set_color("white")
+        axis.title.set_color("white")
         ax.tick_params(axis="both", colors="white")
         for spine in ax.spines.values():
             spine.set_color("white")

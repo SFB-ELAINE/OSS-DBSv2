@@ -125,12 +125,12 @@ import numpy as np
 import impedancefitter as ifit
 
 # Load results from impedance.csv files
-Z_total  = ...  # from Results_LempkaImpedance/impedance.csv
+Z_total = ...  # from Results_LempkaImpedance/impedance.csv
 Z_tissue = ...  # from Results_NoInterface_Lempka/impedance.csv
 
 # Compute CPE impedance from impedancefitter
 ecm = ifit.get_equivalent_circuit_model("CPE_dl")
-Z_CPE = complex(ecm.eval(omega=2*np.pi*100, dl_k=1.5e6, dl_alpha=0.8))
+Z_CPE = complex(ecm.eval(omega=2 * np.pi * 100, dl_k=1.5e6, dl_alpha=0.8))
 
 # Check: Z_total ~ Z_tissue + Z_CPE (within ~1%)
 Z_reconstructed = Z_tissue + Z_CPE

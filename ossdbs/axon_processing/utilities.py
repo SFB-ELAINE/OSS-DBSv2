@@ -422,7 +422,7 @@ def place_axons_on_streamlines(
         # choose where to start seeding the axon
         if index < int(n_Ranvier / 2):
             # axon---fiber---fiber---fiber---fiber---#
-            for i in range(0, int(n_Ranvier)):
+            for i in range(int(n_Ranvier)):
                 single_streamline_ROI_centered[loc_index, :] = A[i]
                 loc_index += 1
         elif index + int(n_Ranvier / 2) + 1 > A.shape[0]:
