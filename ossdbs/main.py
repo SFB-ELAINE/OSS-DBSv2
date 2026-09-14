@@ -58,6 +58,7 @@ def _run_stim_sets_with_mesh(
     solver,
     frequency_domain_signal,
     reuse_precomputed_mesh: bool,
+    truncation_time=None,
 ):
     """Run StimSets, generating and saving the shared mesh if needed."""
     if not reuse_precomputed_mesh:
@@ -68,7 +69,14 @@ def _run_stim_sets_with_mesh(
         )
         volume_conductor.mesh.save(settings["Mesh"]["SavePath"])
         settings["Mesh"]["LoadMesh"] = True
-    run_stim_sets(settings, geometry, conductivity, solver, frequency_domain_signal)
+    run_stim_sets(
+        settings,
+        geometry,
+        conductivity,
+        solver,
+        frequency_domain_signal,
+        truncation_time=truncation_time,
+    )
 
 
 def main_run(input_settings: dict):
@@ -219,6 +227,7 @@ def main_run(input_settings: dict):
                 solver,
                 frequency_domain_signal,
                 reuse_precomputed_mesh,
+                truncation_time=truncation_time,
             )
 
     time_1 = time.time()
