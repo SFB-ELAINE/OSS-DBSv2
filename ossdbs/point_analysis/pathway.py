@@ -42,6 +42,11 @@ class Pathway(PointModel):
         points: np.ndarray
         status: int  # 0 - normal, -1 - outside domain/encap, -2 - csf
         orig_inx: int  # "original" indices of streamlines
+        # False once filter_for_geometry has dropped this axon's points.
+        # Distinct from status: the encapsulation layer also marks an axon
+        # with -1 but keeps its points, so status alone cannot tell whether
+        # the axon still owns rows in the result arrays.
+        in_lattice: bool = True
 
     @dataclass
     class Population:
@@ -203,6 +208,13 @@ class Pathway(PointModel):
                         "Electric field vector z[Vm^(-1)]", data=electric_field_vector_z
                     )
                 start = end
+            elif axon.in_lattice:
+                # Marked -1 by filter_csf_encap, which removes nothing: the axon
+                # is not exported but its rows are still in the result arrays and
+                # must be consumed, or every axon exported after it is shifted
+                # onto an earlier axon's potential. Only filter_for_geometry
+                # clears in_lattice, and that is the case where skipping is right.
+                start += len(axon.points)
             idx = idx + 1
 
         return start, idx, status_list
@@ -250,6 +262,9 @@ class Pathway(PointModel):
                         break
                 if axon_outside:
                     axon.status = -1
+                    # this axon's points are left out of filtered_points below,
+                    # so it owns no rows in any result array
+                    axon.in_lattice = False
                 else:
                     # Fill all_points for this axon
                     all_points[point_idx : point_idx + axon_length, 0] = x.data[
