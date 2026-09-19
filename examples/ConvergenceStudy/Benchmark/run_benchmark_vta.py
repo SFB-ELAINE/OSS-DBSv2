@@ -187,11 +187,15 @@ def phase_timings(output_path):
     }
 
 
-def remove_file_handler(logger):
-    """Remove file handler so repeated runs do not stack log handlers."""
-    for handler in list(logger.handlers):
-        if isinstance(handler, logging.FileHandler):
-            logger.removeHandler(handler)
+def close_file_handler(handler):
+    """Close and detach the log file handler so it does not stay open.
+
+    Required on Windows: an unclosed FileHandler keeps the log file open,
+    which makes the next repeat's ``shutil.rmtree(output_path)`` fail with
+    a PermissionError.
+    """
+    handler.close()
+    logging.getLogger().removeHandler(handler)
 
 
 def single_run(loglevel, variant):
@@ -201,14 +205,13 @@ def single_run(loglevel, variant):
         shutil.rmtree(output_path)
 
     ossdbs.set_logger(level=loglevel)
-    logger = logging.getLogger("ossdbs")
     cfg = build_config(variant)
 
     start = time.perf_counter()
-    main_run(cfg)
+    file_handler = main_run(cfg)
     fem_total = time.perf_counter() - start
 
-    remove_file_handler(logger)
+    close_file_handler(file_handler)
 
     record = {
         "fem_total": round(fem_total, 3),

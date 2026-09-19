@@ -28,7 +28,7 @@ effect of the workload rather than of the refinement:
 | Evaluation points | 75935 pathway points | 864000 lattice points |
 | Time domain | reconstructed | skipped (single frequency) |
 | NEURON stage | yes | no |
-| Runs on Windows | no (NEURON) | yes |
+| Runs on Windows | yes, with NEURON installed manually | yes |
 | Results directory | `results/` | `results_vta/`, `results_vta_ngsolve/` |
 
 Both are small enough to run on a laptop — a benchmark is only useful if it
@@ -65,6 +65,7 @@ the output pipeline.
 | `field_export` | field output |
 | `pam_total` | the NEURON pathway activation stage (absent for VTA) |
 | `vta_volume_mm3` | VTA only: not a timing, but confirms two machines solved the same problem |
+| `pathway_activation` | PAM only: not a timing, `{pathway_name: percent_activated}` from `Pathway_status_*.json`, confirming two machines activated the same axons rather than merely spending the same time |
 
 `meshing_and_refinement_derived` is obtained by subtracting the volume
 conductor's own timings from the `VolumeConductor` phase, because mesh
@@ -82,11 +83,14 @@ meshing. Read the row as "mesh generation plus untimed setup", and take the
 
 ## Requirements
 
-The PAM benchmark needs Linux or macOS: it times FEM **and** PAM, and PAM
-needs NEURON, which is unavailable on Windows — `run_benchmark.py` refuses to
-run there rather than silently reporting a partial number. The VTA benchmark
-has no NEURON stage and runs anywhere, which makes it the one to use when
-comparing across operating systems.
+The PAM benchmark times FEM **and** PAM, so it needs NEURON. On Linux and
+macOS, `pip install ossdbs` (or `pip install -e .`) pulls NEURON in
+automatically. NEURON has no PyPI wheel for Windows, so there it must be
+installed manually — see [`docs/windows_neuron_setup.rst`](../../../docs/windows_neuron_setup.rst).
+`run_benchmark.py` checks whether `neuron` is actually importable and refuses
+to run otherwise, rather than silently reporting a partial number. The VTA
+benchmark has no NEURON stage and runs anywhere with no extra setup, which
+makes it the one to use when comparing across operating systems.
 
 No other input is needed. The MRI input `../PAM_3/segmask.nii.gz` is tracked
 in the repository despite the `*.nii.gz` ignore rule, so the benchmark runs
@@ -145,10 +149,14 @@ mixed in.
 
 ## Interpreting the numbers
 
-Compare `dofs` and `elements` first — and `vta_volume_mm3` for VTA. If they
-differ between machines, the runs solved different problems and the timings
-are not comparable; this usually means a different Netgen version meshed the
-geometry differently.
+Compare `dofs` and `elements` first — and `vta_volume_mm3` for VTA,
+`pathway_activation` for PAM. If they differ between machines, the runs
+solved different problems and the timings are not comparable; this usually
+means a different Netgen version meshed the geometry differently. Note that
+`pathway_activation` is not itself a correctness proof (no reference baseline
+or tolerance is checked here — that lives in
+`input_test_cases/test_simulations.py`), only a same-machine-class sanity
+signal analogous to `vta_volume_mm3`.
 
 Note what dominates. In the PAM workload `point_model_copy` is the largest
 phase, several times the linear solve, so the figures mostly reflect point

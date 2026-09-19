@@ -9,8 +9,9 @@ Case: PAM_3 / BostonVerciseDirected, single monopolar current-controlled
 protocol. Small enough to run on a laptop, which is the point -- the
 benchmark is only useful if it is run on more than one machine.
 
-Both stages are timed and both are required, so the benchmark needs NEURON
-and therefore runs on Linux and macOS only.
+Both stages are timed and both are required, so the benchmark needs NEURON.
+NEURON has no pip wheel for Windows, so there it must be installed manually
+(see docs/windows_neuron_setup.rst) before this script will run.
 
 Usage:
     python run_benchmark.py                 # one run, writes results/<...>.json
@@ -20,10 +21,10 @@ Usage:
 """
 
 import argparse
+import glob
 import json
 import logging
 import os
-import platform
 import shutil
 import socket
 import time
@@ -33,6 +34,7 @@ from datetime import datetime, timezone
 import machine_info
 
 import ossdbs
+from ossdbs.axon_processing.neuron_model import NEURON_DIR
 from ossdbs.main import main_run
 
 # Inputs live in the sibling PAM_3/ directory.
@@ -143,31 +145,74 @@ def phase_timings():
     }
 
 
-def remove_file_handler(logger):
-    """Remove file handler so repeated runs do not stack log handlers."""
-    for handler in list(logger.handlers):
-        if isinstance(handler, logging.FileHandler):
-            logger.removeHandler(handler)
+def pathway_activation():
+    """Read per-pathway PAM results written by the just-finished PAM stage.
+
+    Not a timing: like ``vta_volume_mm3`` in the VTA benchmark, this confirms
+    two machines activated the same axons rather than merely spending the
+    same time. ``percent_activated`` is written per pathway to
+    ``Pathway_status_<name>.json`` by ``store_axon_statuses``.
+    """
+    activation = {}
+    pattern = os.path.join(OUTPUT_PATH, "Pathway_status_*.json")
+    for path in sorted(glob.glob(pattern)):
+        with open(path) as fp:
+            status = json.load(fp)
+        activation[status["pathway_name"]] = status["percent_activated"]
+    return activation
+
+
+def close_file_handler(handler):
+    """Close and detach the log file handler so it does not stay open.
+
+    Required on Windows: an unclosed FileHandler keeps the log file open,
+    which makes the next repeat's ``shutil.rmtree(OUTPUT_PATH)`` fail with
+    a PermissionError.
+    """
+    handler.close()
+    logging.getLogger().removeHandler(handler)
+
+
+def clear_output_path(output_path):
+    """Remove the previous run's output, keeping the NEURON mechanism dir.
+
+    ``run_PAM`` compiles the NEURON mechanisms to ``<output_path>/neuron_model``
+    and loads the resulting DLL into this process via ``neuron.load_mechanisms``.
+    NEURON has no unload API, and Windows keeps a loaded module's file locked
+    for the life of the process, so on a second repeat ``shutil.rmtree``
+    fails trying to delete ``neuron_model/nrnmech.dll``. The benchmark uses
+    the same pinned config for every repeat, so the compiled mechanism is
+    identical across runs and safe to leave in place; only the rest of the
+    output needs a clean slate.
+    """
+    if not os.path.isdir(output_path):
+        return
+    for entry in os.listdir(output_path):
+        if entry == NEURON_DIR:
+            continue
+        full_path = os.path.join(output_path, entry)
+        if os.path.isdir(full_path):
+            shutil.rmtree(full_path)
+        else:
+            os.remove(full_path)
 
 
 def single_run(loglevel):
     """Run FEM + PAM once and return the timing record."""
-    if os.path.isdir(OUTPUT_PATH):
-        shutil.rmtree(OUTPUT_PATH)
+    clear_output_path(OUTPUT_PATH)
 
     ossdbs.set_logger(level=loglevel)
-    logger = logging.getLogger("ossdbs")
     cfg = build_config()
 
     fem_start = time.perf_counter()
-    main_run(cfg)
+    file_handler = main_run(cfg)
     fem_total = time.perf_counter() - fem_start
 
     pam_start = time.perf_counter()
     ossdbs.api.run_PAM(cfg)
     pam_total = time.perf_counter() - pam_start
 
-    remove_file_handler(logger)
+    close_file_handler(file_handler)
 
     record = {
         "fem_total": round(fem_total, 3),
@@ -175,6 +220,7 @@ def single_run(loglevel):
         "wall_total": round(fem_total + pam_total, 3),
     }
     record.update(phase_timings())
+    record["pathway_activation"] = pathway_activation()
     return record
 
 
@@ -211,11 +257,6 @@ def main():
         print(json.dumps(context, indent=2))
         return
 
-    if platform.system() == "Windows":
-        parser.error(
-            "The benchmark times FEM and PAM together and PAM needs NEURON, "
-            "which is not available on Windows."
-        )
     if context["packages"]["neuron"] is None:
         parser.error("NEURON is not importable; install it to run the PAM stage.")
 
@@ -250,8 +291,13 @@ def main():
     with open(out_file, "w") as fp:
         json.dump(result, fp, indent=2)
 
+    activation = best["pathway_activation"].values()
+    mean_activation = sum(activation) / len(activation) if activation else None
+
     print(f"\nWrote {out_file}")
     print(f"  DOFs {best['dofs']}, elements {best['elements']}")
+    if mean_activation is not None:
+        print(f"  mean activation {mean_activation:.2f}%")
     print(f"  FEM  {best['fem_total']:8.1f} s")
     print(f"  PAM  {best['pam_total']:8.1f} s")
     print(f"  total{best['wall_total']:8.1f} s")
