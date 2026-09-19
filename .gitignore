@@ -4,6 +4,7 @@ __pycache__/
 *.egg-info/
 .env/
 venv/
+.venv/
 .tox/
 
 # Auto-generated version file
@@ -37,6 +38,8 @@ meshsizes.txt
 # Ignore specific file types
 *.vol.gz
 *.vtu
+*.vtm
+*.vtp
 *.nii.gz
 *.nii
 *.stp

@@ -1,4 +1,6 @@
-# OSS-DBS is tested for Python >= 3.8
+# OSS-DBS is tested for Python >= 3.10 (see requires-python in pyproject.toml).
+# Dependencies are installed with uv (https://docs.astral.sh/uv/); the
+# ghcr.io/astral-sh/uv images ship uv together with the requested Python.
 
 stages:
     - "test"
@@ -7,84 +9,64 @@ stages:
 
 .test:
   script:
-    - pip install virtualenv
-    - virtualenv venv
-    - source venv/bin/activate
-    - pip install ".[test]"
+    - uv pip install --system ".[test]"
     - pytest
 
 .run:
   script:
-   - pip install virtualenv
-   - virtualenv venv
-   - source venv/bin/activate
-   - pip install "."
+   - uv pip install --system "."
    - cd input_files
    - ossdbs 'inputTest.json'
    - ossdbs 'input_cc.json'
-
-test-3.8:
-   extends: ".test"
-   stage: "test"
-   variables:
-           PYTHONVERSION: "py38"
-   image: "python:3.8"
-
-run-3.8:
-   extends: ".run"
-   stage: "run"
-   image: "python:3.8"
-
-test-3.9:
-   extends: ".test"
-   stage: "test"
-   variables:
-           PYTHONVERSION: "py39"
-   image: "python:3.9"
-
-run-3.9:
-   extends: ".run"
-   stage: "run"
-   image: "python:3.9"
 
 test-3.10:
    extends: ".test"
    stage: "test"
    variables:
            PYTHONVERSION: "py310"
-   image: "python:3.10"
+   image: "ghcr.io/astral-sh/uv:python3.10-bookworm-slim"
 
 run-3.10:
    extends: ".run"
    stage: "run"
-   image: "python:3.10"
+   image: "ghcr.io/astral-sh/uv:python3.10-bookworm-slim"
+
+test-3.11:
+   extends: ".test"
+   stage: "test"
+   variables:
+           PYTHONVERSION: "py311"
+   image: "ghcr.io/astral-sh/uv:python3.11-bookworm-slim"
+
+run-3.11:
+   extends: ".run"
+   stage: "run"
+   image: "ghcr.io/astral-sh/uv:python3.11-bookworm-slim"
+
+test-3.12:
+   extends: ".test"
+   stage: "test"
+   variables:
+           PYTHONVERSION: "py312"
+   image: "ghcr.io/astral-sh/uv:python3.12-bookworm-slim"
+
+run-3.12:
+   extends: ".run"
+   stage: "run"
+   image: "ghcr.io/astral-sh/uv:python3.12-bookworm-slim"
 
 pages:
   stage: "pages"
-  # needed with jupyter notebooks
-  # image: "ubuntu:22.04"
-  image: "python:3.10"
+  image: "ghcr.io/astral-sh/uv:python3.10-bookworm-slim"
   script:
-    # needed for jupyter notebooks
-    # - apt update
-    # - apt install -y python3 python3-pip
-    # - apt install -y pandoc
-    - pip install virtualenv
-    - virtualenv venv
-    - source venv/bin/activate
-    - pip install .
+    - uv pip install --system "."
     - cd docs
-    - pip install -r requirements.txt
+    - uv pip install --system -r requirements.txt
     # in future also include jupyter notebooks
-    # - jupyter --version
-    # - jupyter nbextension install --user --py widgetsnbextension
-    # - jupyter nbextension enable --user --py widgetsnbextension
-    # - jupyter nbextension install --user --py webgui_jupyter_widgets
-    # - jupyter nbextension enable --user --py webgui_jupyter_widgets
     - make html
     - mv _build/html/ ../public/
   artifacts:
     paths:
       - public
-  only: 
+  only:
       - main
