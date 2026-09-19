@@ -9,8 +9,9 @@ Case: PAM_3 / BostonVerciseDirected, single monopolar current-controlled
 protocol. Small enough to run on a laptop, which is the point -- the
 benchmark is only useful if it is run on more than one machine.
 
-Both stages are timed and both are required, so the benchmark needs NEURON
-and therefore runs on Linux and macOS only.
+Both stages are timed and both are required, so the benchmark needs NEURON.
+NEURON has no pip wheel for Windows, so there it must be installed manually
+(see docs/windows_neuron_setup.rst) before this script will run.
 
 Usage:
     python run_benchmark.py                 # one run, writes results/<...>.json
@@ -20,10 +21,10 @@ Usage:
 """
 
 import argparse
+import glob
 import json
 import logging
 import os
-import platform
 import shutil
 import socket
 import time
@@ -143,6 +144,23 @@ def phase_timings():
     }
 
 
+def pathway_activation():
+    """Read per-pathway PAM results written by the just-finished PAM stage.
+
+    Not a timing: like ``vta_volume_mm3`` in the VTA benchmark, this confirms
+    two machines activated the same axons rather than merely spending the
+    same time. ``percent_activated`` is written per pathway to
+    ``Pathway_status_<name>.json`` by ``store_axon_statuses``.
+    """
+    activation = {}
+    pattern = os.path.join(OUTPUT_PATH, "Pathway_status_*.json")
+    for path in sorted(glob.glob(pattern)):
+        with open(path) as fp:
+            status = json.load(fp)
+        activation[status["pathway_name"]] = status["percent_activated"]
+    return activation
+
+
 def remove_file_handler(logger):
     """Remove file handler so repeated runs do not stack log handlers."""
     for handler in list(logger.handlers):
@@ -175,6 +193,7 @@ def single_run(loglevel):
         "wall_total": round(fem_total + pam_total, 3),
     }
     record.update(phase_timings())
+    record["pathway_activation"] = pathway_activation()
     return record
 
 
@@ -211,11 +230,6 @@ def main():
         print(json.dumps(context, indent=2))
         return
 
-    if platform.system() == "Windows":
-        parser.error(
-            "The benchmark times FEM and PAM together and PAM needs NEURON, "
-            "which is not available on Windows."
-        )
     if context["packages"]["neuron"] is None:
         parser.error("NEURON is not importable; install it to run the PAM stage.")
 
@@ -250,8 +264,13 @@ def main():
     with open(out_file, "w") as fp:
         json.dump(result, fp, indent=2)
 
+    activation = best["pathway_activation"].values()
+    mean_activation = sum(activation) / len(activation) if activation else None
+
     print(f"\nWrote {out_file}")
     print(f"  DOFs {best['dofs']}, elements {best['elements']}")
+    if mean_activation is not None:
+        print(f"  mean activation {mean_activation:.2f}%")
     print(f"  FEM  {best['fem_total']:8.1f} s")
     print(f"  PAM  {best['pam_total']:8.1f} s")
     print(f"  total{best['wall_total']:8.1f} s")

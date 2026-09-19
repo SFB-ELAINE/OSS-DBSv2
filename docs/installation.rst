@@ -13,9 +13,10 @@ For most users, simply run the following command:
 
     $ pip install ossdbs
 
-On Windows, the NEURON simulator must be installed separately **before** installing OSS-DBSv2.
-Installation instructions for NEURON are available at
-`the NEURON installation guide <https://nrn.readthedocs.io/en/latest/install/install.html>`_.
+On Windows, the NEURON simulator must be installed separately **before** installing OSS-DBSv2,
+since NEURON has no PyPI wheel for Windows. See :doc:`windows_neuron_setup` for
+step-by-step instructions, including how to make NEURON importable from a
+virtual environment and how to set ``NEURONHOME``.
 
 Developer Installation
 ----------------------

@@ -19,7 +19,7 @@ These files were copied from the convergence-study PAM example.
 
 For Windows-specific NEURON setup, see:
 
-- `docs/windows_neuron_setup.md`
+- `docs/windows_neuron_setup.rst`
 
 ## Step 1: Run OSS-DBS on the pathway example
 
