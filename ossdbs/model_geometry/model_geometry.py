@@ -37,6 +37,10 @@ class ModelGeometry:
         self._electrodes = electrodes
         self._contacts = []
         self._encapsulation_layers = []
+        # Names of contacts allowed to be absent from the final geometry
+        # (electrode.require_all_contacts == False), populated by
+        # check_brain_geo() during _construct_shape().
+        self._contacts_missing_from_geometry = set()
 
         self._shape = self._construct_shape(self._brain, self._electrodes)
         self._geometry = None  # built lazily after mesh sizes are set
@@ -126,20 +130,73 @@ class ModelGeometry:
                     area_set = True
                     contact.area = area
             if not area_set:
+                if contact.name in self._contacts_missing_from_geometry:
+                    _logger.warning(
+                        f"Area for {contact.name} not set because the contact "
+                        "is not present in the final geometry."
+                    )
+                    continue
                 raise RuntimeError(f"Area for {contact.name} not set")
 
     def check_brain_geo(
         self, brain_geo: netgen.occ.Solid, electrode: ElectrodeModel
     ) -> bool:
-        """Check if brain geo has all contacts."""
+        """Check if brain geo has all contacts.
+
+        If ``electrode.require_all_contacts`` is ``False`` (opt-in, e.g. for
+        sEEG electrodes with contacts outside the brain), a missing contact
+        only logs a warning, *unless* it is marked ``Active`` or ``Floating``
+        (see ``electrode.required_contact_indices``): such a contact drives a
+        boundary condition in the FEM assembly, so silently dropping it would
+        produce wrong results rather than a clear error, and it is therefore
+        still treated as fatal. The geometry is also rejected if none of the
+        electrode's contacts made it into the final geometry.
+        """
         face_names = [face.name for face in brain_geo.faces]
-        correct_geo = True
+        missing_indices = []
         for contact_index in range(1, electrode.n_contacts + 1):
             name = self.get_contact_name(electrode.index, contact_index)
             if name not in face_names:
-                correct_geo = False
+                missing_indices.append(contact_index)
+
+        if not missing_indices:
+            return True
+
+        if electrode.require_all_contacts:
+            for idx in missing_indices:
+                name = self.get_contact_name(electrode.index, idx)
                 _logger.error(f"Face {name} is not in final geometry.")
-        return correct_geo
+            return False
+
+        required_missing = [
+            idx for idx in missing_indices if idx in electrode.required_contact_indices
+        ]
+        if required_missing:
+            for idx in required_missing:
+                name = self.get_contact_name(electrode.index, idx)
+                _logger.error(
+                    f"Face {name} is Active or Floating but not in final geometry."
+                )
+            return False
+
+        if len(missing_indices) == electrode.n_contacts:
+            _logger.error(
+                f"None of electrode {electrode.index}'s contacts are in the "
+                "final geometry."
+            )
+            return False
+
+        missing_names = [
+            self.get_contact_name(electrode.index, idx) for idx in missing_indices
+        ]
+        for name in missing_names:
+            _logger.warning(
+                f"Face {name} is not in final geometry. Continuing because "
+                f"'RequireAllContactsInBrain' is disabled for electrode "
+                f"{electrode.index}."
+            )
+        self._contacts_missing_from_geometry.update(missing_names)
+        return True
 
     @property
     def electrodes(self) -> list[ElectrodeModel]:

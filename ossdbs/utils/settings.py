@@ -27,6 +27,7 @@ class Settings:
         "TipPosition": {"x[mm]": 0.0, "y[mm]": 0.0, "z[mm]": 0.0},
         "Contacts": [],
         "EncapsulationLayer": {},
+        "RequireAllContactsInBrain": True,
     }
 
     CONTACT_SETTING: ClassVar[dict] = {

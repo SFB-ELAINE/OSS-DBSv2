@@ -126,6 +126,7 @@ class TypeChecker:
             "z[mm]": (int, float),
         },
         "Contacts": list,
+        "RequireAllContactsInBrain": bool,
     }
 
     CONTACT_SETTING: ClassVar[dict] = {

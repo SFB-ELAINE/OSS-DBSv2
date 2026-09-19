@@ -64,6 +64,8 @@ class ElectrodeModel(ABC):
         self._encapsulation_geometry = None
         self._encapsulation_thickness = 0.0
         self._index = 0
+        self._require_all_contacts = True
+        self._required_contact_indices = set()
 
     def parameter_check(self):
         """Check electrode parameters."""
@@ -104,6 +106,47 @@ class ElectrodeModel(ABC):
                 thickness
             )
         self._encapsulation_thickness = thickness
+
+    @property
+    def require_all_contacts(self) -> bool:
+        """Whether every contact must end up in the final brain geometry.
+
+        If ``False``, only a warning is logged for individual contacts that
+        are missing from the brain geometry (e.g. sEEG contacts sitting
+        outside the brain), and the geometry is only rejected if none of the
+        electrode's contacts are present, or if a contact marked ``Active``
+        or ``Floating`` (see :attr:`required_contact_indices`) is missing.
+        """
+        return self._require_all_contacts
+
+    @require_all_contacts.setter
+    def require_all_contacts(self, value: bool) -> None:
+        self._require_all_contacts = value
+
+    @property
+    def required_contact_indices(self) -> set:
+        """1-based contact indices that must be present in the brain geometry.
+
+        Only consulted when :attr:`require_all_contacts` is ``False``.
+        Populated by :meth:`set_required_contacts` from the ``Active`` and
+        ``Floating`` flags in the settings dict, since those contacts drive
+        boundary conditions in the FEM assembly and cannot be silently
+        dropped without producing wrong results.
+        """
+        return self._required_contact_indices
+
+    def set_required_contacts(self, electrode_parameters: dict) -> None:
+        """Record which contacts must survive geometry construction.
+
+        Called with the raw settings dict because the ``Active``/``Floating``
+        flags have not yet been applied to this electrode's ``Contact``
+        objects at the point ``check_brain_geo`` runs.
+        """
+        self._required_contact_indices = {
+            contact_info["Contact_ID"]
+            for contact_info in electrode_parameters.get("Contacts", [])
+            if contact_info["Active"] or contact_info["Floating"]
+        }
 
     def encapsulation_geometry(self, thickness: float) -> netgen.occ.Solid | None:
         """Generate geometry of encapsulation layer around electrode.
