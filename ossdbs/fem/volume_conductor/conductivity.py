@@ -297,10 +297,19 @@ class ConductivityCF:
             trafocf=self._trafo_cf,
         )
         material_dict = {"Brain": material_voxelcf}
+        # An encapsulation material may not appear in the MRI
+        # Here, each encapsulation layer gets its own distinct label
+        # if this is the case to not get a KeyError / ValueError.
+        next_fallback_idx = max(self.materials.values(), default=-1)
+        fallback_indices = {}
         for encapsulation_layer in self._encapsulation_layers:
-            material_dict[encapsulation_layer.name] = self.materials[
-                encapsulation_layer.material
-            ]
+            material = encapsulation_layer.material
+            if material not in self.materials and material not in fallback_indices:
+                next_fallback_idx += 1
+                fallback_indices[material] = next_fallback_idx
+            material_dict[encapsulation_layer.name] = self.materials.get(
+                material, fallback_indices.get(material)
+            )
         return mesh.material_coefficients(material_dict)
 
     def create_dti_voxel_cf(self, dti_data, dti_voxel_bounding_box, dti_image):
