@@ -34,6 +34,7 @@ from datetime import datetime, timezone
 import machine_info
 
 import ossdbs
+from ossdbs.axon_processing.neuron_model import NEURON_DIR
 from ossdbs.main import main_run
 
 # Inputs live in the sibling PAM_3/ directory.
@@ -161,31 +162,57 @@ def pathway_activation():
     return activation
 
 
-def remove_file_handler(logger):
-    """Remove file handler so repeated runs do not stack log handlers."""
-    for handler in list(logger.handlers):
-        if isinstance(handler, logging.FileHandler):
-            logger.removeHandler(handler)
+def close_file_handler(handler):
+    """Close and detach the log file handler so it does not stay open.
+
+    Required on Windows: an unclosed FileHandler keeps the log file open,
+    which makes the next repeat's ``shutil.rmtree(OUTPUT_PATH)`` fail with
+    a PermissionError.
+    """
+    handler.close()
+    logging.getLogger().removeHandler(handler)
+
+
+def clear_output_path(output_path):
+    """Remove the previous run's output, keeping the NEURON mechanism dir.
+
+    ``run_PAM`` compiles the NEURON mechanisms to ``<output_path>/neuron_model``
+    and loads the resulting DLL into this process via ``neuron.load_mechanisms``.
+    NEURON has no unload API, and Windows keeps a loaded module's file locked
+    for the life of the process, so on a second repeat ``shutil.rmtree``
+    fails trying to delete ``neuron_model/nrnmech.dll``. The benchmark uses
+    the same pinned config for every repeat, so the compiled mechanism is
+    identical across runs and safe to leave in place; only the rest of the
+    output needs a clean slate.
+    """
+    if not os.path.isdir(output_path):
+        return
+    for entry in os.listdir(output_path):
+        if entry == NEURON_DIR:
+            continue
+        full_path = os.path.join(output_path, entry)
+        if os.path.isdir(full_path):
+            shutil.rmtree(full_path)
+        else:
+            os.remove(full_path)
 
 
 def single_run(loglevel):
     """Run FEM + PAM once and return the timing record."""
-    if os.path.isdir(OUTPUT_PATH):
-        shutil.rmtree(OUTPUT_PATH)
+    clear_output_path(OUTPUT_PATH)
 
     ossdbs.set_logger(level=loglevel)
-    logger = logging.getLogger("ossdbs")
     cfg = build_config()
 
     fem_start = time.perf_counter()
-    main_run(cfg)
+    file_handler = main_run(cfg)
     fem_total = time.perf_counter() - fem_start
 
     pam_start = time.perf_counter()
     ossdbs.api.run_PAM(cfg)
     pam_total = time.perf_counter() - pam_start
 
-    remove_file_handler(logger)
+    close_file_handler(file_handler)
 
     record = {
         "fem_total": round(fem_total, 3),
