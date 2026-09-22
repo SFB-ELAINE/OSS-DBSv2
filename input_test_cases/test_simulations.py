@@ -65,6 +65,18 @@ TEST_CASES = [
         "marks": [],
         "checks": ["impedance"],
     },
+    {
+        # Two electrodes + HP refinement: regression test for a reported bug
+        # where combining multiple electrodes with HP refinement was said
+        # to break. Bipolar cross-lead stimulation (one active contact per
+        # electrode) so scalar impedance stays checkable (needs exactly 2
+        # active contacts total).
+        "id": "two_electrodes_hp_refinement",
+        "input_dir": "input_case1",
+        "input_json": "input_case1/input_two_electrodes_hp.json",
+        "marks": [],
+        "checks": ["impedance"],
+    },
     # Case 2: Custom parameters
     {
         "id": "custom_electrode",
