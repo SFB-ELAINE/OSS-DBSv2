@@ -68,14 +68,15 @@ TEST_CASES = [
     {
         # Two electrodes + HP refinement: regression test for a reported bug
         # where combining multiple electrodes with HP refinement was said
-        # to break. Bipolar cross-lead stimulation (one active contact per
-        # electrode) so scalar impedance stays checkable (needs exactly 2
-        # active contacts total).
+        # to break. 4 active contacts (2 per electrode) at 0/1/2/3 V, which
+        # is more than the scalar ComputeImpedance path supports (exactly 2
+        # active contacts). Use the decoupled multicontact ImpedanceAnalysis
+        # block instead, checked via "impedance_matrix".
         "id": "two_electrodes_hp_refinement",
         "input_dir": "input_case1",
         "input_json": "input_case1/input_two_electrodes_hp.json",
         "marks": [],
-        "checks": ["impedance"],
+        "checks": ["impedance_matrix"],
     },
     # Case 2: Custom parameters
     {
@@ -327,6 +328,38 @@ def _compare_csv(
         )
 
 
+def _compare_impedance_matrix(
+    output_csv: str, desired_csv: str, atol: float = 1e-6, rtol: float = IMPEDANCE_RTOL
+):
+    """Compare admittance/impedance matrix CSVs (schema: freq,row,col,real,imag).
+
+    Unlike ``_compare_csv``, these files carry non-numeric ``row``/``col``
+    contact-name columns, so rows are matched by (freq, row, col) instead of
+    relying on identical row order/count.
+    """
+    actual = pd.read_csv(output_csv)
+    desired = pd.read_csv(desired_csv)
+    merged = actual.merge(
+        desired, on=["freq", "row", "col"], suffixes=("_actual", "_desired")
+    )
+    if len(merged) != len(desired) or len(actual) != len(desired):
+        pytest.fail(
+            "Impedance matrix (freq, row, col) keys differ between output and "
+            f"desired:\n  output:  {output_csv} ({len(actual)} rows)\n"
+            f"  desired: {desired_csv} ({len(desired)} rows)"
+        )
+    for column in ("real", "imag"):
+        actual_values = merged[f"{column}_actual"].to_numpy(dtype=float)
+        desired_values = merged[f"{column}_desired"].to_numpy(dtype=float)
+        if not np.allclose(actual_values, desired_values, rtol=rtol, atol=atol):
+            abs_err = float(np.max(np.abs(actual_values - desired_values)))
+            pytest.fail(
+                f"Impedance matrix '{column}' mismatch: max abs error={abs_err:.6g}\n"
+                f"  output:  {output_csv}\n"
+                f"  desired: {desired_csv}"
+            )
+
+
 def _read_nifti_vta_points(filename: str) -> set:
     """Read NIfTI and return set of VTA voxel coordinates."""
     image = nib.load(filename)
@@ -503,7 +536,7 @@ def test_simulation(test_case):
                 atol=FLOATING_POTENTIAL_ATOL,
             )
         elif check == "impedance_matrix":
-            _compare_csv(
+            _compare_impedance_matrix(
                 os.path.join(output_dir, "impedance_matrix.csv"),
                 os.path.join(desired_dir, "impedance_matrix.csv"),
             )

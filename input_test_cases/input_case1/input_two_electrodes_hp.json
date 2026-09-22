@@ -31,6 +31,13 @@
           "Contact_ID": 1,
           "Active": true,
           "Current[A]": 0.0,
+          "Voltage[V]": 0.0,
+          "Floating": false
+        },
+        {
+          "Contact_ID": 2,
+          "Active": true,
+          "Current[A]": 0.0,
           "Voltage[V]": 1.0,
           "Floating": false
         }
@@ -54,7 +61,14 @@
           "Contact_ID": 1,
           "Active": true,
           "Current[A]": 0.0,
-          "Voltage[V]": 0.0,
+          "Voltage[V]": 2.0,
+          "Floating": false
+        },
+        {
+          "Contact_ID": 2,
+          "Active": true,
+          "Current[A]": 0.0,
+          "Voltage[V]": 3.0,
           "Floating": false
         }
       ]
@@ -128,7 +142,12 @@
   "EQSMode": false,
   "FEMOrder": 2,
   "OutputPath": "Results_two_electrodes_hp",
-  "ComputeImpedance": true,
+  "ComputeImpedance": false,
+  "ImpedanceAnalysis": {
+    "Enabled": true,
+    "Frequencies": null,
+    "IncludeFloating": true
+  },
   "ExportVTK": false,
   "ExportElectrode": false
 }
