@@ -63,6 +63,7 @@ Tips for Development
 - Use the provided templates and methods to verify the geometry and parameters of your electrode.
 - Ensure that the parameter names, data types, and default values are consistent with the conventions used for existing electrodes.
 - Implement unit tests to validate the new electrode's behavior and ensure compatibility with the rest of the software.
+- If your geometry uses ``occ.Sphere`` (e.g. for a rounded tip), rotate it about its own center before combining it with anything else, e.g. ``tip.Rotate(occ.Axis(p=center, d=(0, 1, 0)), 90)``. A bare ``Sphere`` has no direction parameter, so its BREP seam sits at a fixed orientation regardless of electrode direction, which can break Netgen's mesher for some directions; the rotation is a geometric no-op, so it's always safe to add.
 
 Final Verification
 -------------------

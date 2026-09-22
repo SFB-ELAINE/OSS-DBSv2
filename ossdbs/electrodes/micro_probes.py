@@ -115,6 +115,10 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
             np.array(self._direction) * self._parameters.contact_radius
         )
         encap_tip = occ.Sphere(c=encap_tip_center, r=encap_tip_radius)
+        # Rotate the seam away from a fixed spot that can break Netgen's
+        # mesher (see MedtronicModel.__body); safe before the half-space
+        # cut since it doesn't change the sphere's own point set.
+        encap_tip = encap_tip.Rotate(occ.Axis(p=encap_tip_center, d=(0, 1, 0)), 90)
 
         # define half space at tip_center to construct a hemsiphere as the contact tip
         half_space = netgen.occ.HalfSpace(p=encap_tip_center, n=self._direction)
@@ -252,6 +256,11 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         contact_radius = self._parameters.contact_radius
         tip_center = tuple(np.array(direction) * self._parameters.contact_radius)
         tip = occ.Sphere(c=tip_center, r=contact_radius)
+        # Rotate the seam away from a fixed spot that can break Netgen's
+        # mesher (see MedtronicModel.__body); safe before any of the
+        # half-space cuts below since it doesn't change the sphere's own
+        # point set.
+        tip = tip.Rotate(occ.Axis(p=tip_center, d=(0, 1, 0)), 90)
         # If exposed wire exists,
         # we include the wire and tip as part of the contact object
         if self.wire_exists:
@@ -416,6 +425,9 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         point_1 = tuple(np.array(direction) * distance_1)
         radius_1 = self._parameters.core_electrode_diameter * 0.5 + thickness
         part_0 = occ.Sphere(c=point_1, r=radius_1)
+        # Rotate the seam away from a fixed, direction-independent spot
+        # that can break Netgen's mesher (see MedtronicModel.__body).
+        part_0 = part_0.Rotate(occ.Axis(p=point_1, d=(0, 1, 0)), 90)
         height_1 = self._parameters.core_electrode_length - distance_1
         part_1 = occ.Cylinder(p=point_1, d=direction, r=radius_1, h=height_1)
 
@@ -523,7 +535,13 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         # define half space at tip_center
         # to construct a hemsiphere as part of the contact tip
         half_space = netgen.occ.HalfSpace(p=center, n=direction)
-        contact_tip = occ.Sphere(c=center, r=radius_1) * half_space
+        # Rotate the seam away from a fixed spot that can break Netgen's
+        # mesher (see MedtronicModel.__body); safe before the half-space
+        # cut since it doesn't change the sphere's own point set.
+        contact_tip_sphere = occ.Sphere(c=center, r=radius_1).Rotate(
+            occ.Axis(p=center, d=(0, 1, 0)), 90
+        )
+        contact_tip = contact_tip_sphere * half_space
         height = self._parameters.core_electrode_length - radius_1
         contact = occ.Cylinder(p=center, d=direction, r=radius_1, h=height)
         contact_1 = contact_tip + contact

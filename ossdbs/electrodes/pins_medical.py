@@ -71,6 +71,9 @@ class PINSMedicalModel(ElectrodeModel):
         radius = self._parameters.lead_diameter * 0.5 + thickness
         height = self._parameters.total_length - self._parameters.tip_length
         tip = occ.Sphere(c=center, r=radius)
+        # Rotate the seam away from a fixed, direction-independent spot
+        # that can break Netgen's mesher (see MedtronicModel.__body).
+        tip = tip.Rotate(occ.Axis(p=center, d=(0, 1, 0)), 90)
         lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         encapsulation = tip + lead
         encapsulation.bc("EncapsulationLayerSurface")
@@ -87,6 +90,7 @@ class PINSMedicalModel(ElectrodeModel):
         radius = self._parameters.lead_diameter * 0.5
         center = tuple(np.array(self._direction) * radius)
         tip = occ.Sphere(c=center, r=radius)
+        tip = tip.Rotate(occ.Axis(p=center, d=(0, 1, 0)), 90)
         height = self._parameters.total_length - self._parameters.tip_length
         lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         body = tip + lead

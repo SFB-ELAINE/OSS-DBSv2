@@ -69,6 +69,9 @@ class MicroElectrodeModel(ElectrodeModel):
         radius = self._parameters.tip_length + thickness
         height = self._parameters.total_length - self._parameters.tip_length * 0.5
         tip = occ.Sphere(c=center, r=radius)
+        # Rotate the seam away from a fixed, direction-independent spot
+        # that can break Netgen's mesher (see MedtronicModel.__body).
+        tip = tip.Rotate(occ.Axis(p=center, d=(0, 1, 0)), 90)
         lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         encapsulation = tip + lead
         encapsulation.bc("EncapsulationLayerSurface")
