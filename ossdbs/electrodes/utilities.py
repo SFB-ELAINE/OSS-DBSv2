@@ -30,6 +30,31 @@ def get_highest_edge(contact: occ.Face) -> occ.Edge:
     return max_edge
 
 
+def rotate_sphere_seam(sphere, center: tuple, direction: tuple):
+    """Move a sphere's BREP pole off the electrode axis.
+
+    ``occ.Sphere`` takes no direction, so its two pole vertices always sit at
+    global z relative to the centre. When the electrode points along z, those
+    poles land on the lead axis, and the resulting degenerate topology can
+    make Netgen's surface mesher fail or crash. Rotating about an axis
+    perpendicular to both z and ``direction``, by the z-to-direction angle
+    plus 90 degrees, leaves the poles perpendicular to ``direction`` for any
+    direction. A sphere is symmetric about its centre, so the shape itself is
+    unchanged -- only the seam moves.
+
+    Call this on the freshly constructed sphere, before combining it with
+    anything else.
+    """
+    direction = np.asarray(direction, dtype=float)
+    direction = direction / np.linalg.norm(direction)
+    cross = np.cross((0, 0, 1), direction)
+    norm = np.linalg.norm(cross)
+    # direction is (anti)parallel to z: any axis perpendicular to z will do
+    axis = (1.0, 0.0, 0.0) if np.isclose(norm, 0.0) else tuple(cross / norm)
+    angle = np.degrees(np.arccos(np.clip(direction[2], -1.0, 1.0))) + 90.0
+    return sphere.Rotate(occ.Axis(p=occ.Pnt(*center), d=occ.Dir(*axis)), angle)
+
+
 def get_signed_angle(
     v_in: np.ndarray, v_out: np.ndarray, rotation_axis: np.ndarray
 ) -> None | float:

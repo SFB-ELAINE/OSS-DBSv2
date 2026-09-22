@@ -12,7 +12,12 @@ import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
-from .utilities import get_electrode_spin_angle, get_highest_edge, get_lowest_edge
+from .utilities import (
+    get_electrode_spin_angle,
+    get_highest_edge,
+    get_lowest_edge,
+    rotate_sphere_seam,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -93,9 +98,7 @@ class BostonScientificCartesiaXModel(ElectrodeModel):
         center = tuple(np.array(self._direction) * self._parameters.lead_diameter * 0.5)
         height = self._parameters.total_length - self._parameters.tip_length
         tip = netgen.occ.Sphere(c=center, r=radius)
-        # Rotate the seam away from a fixed, direction-independent spot
-        # that can break Netgen's mesher (see MedtronicModel.__body).
-        tip = tip.Rotate(occ.Axis(p=center, d=(0, 1, 0)), 90)
+        tip = rotate_sphere_seam(tip, center, self._direction)
         lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         encapsulation = tip + lead
         encapsulation.bc("EncapsulationLayerSurface")
@@ -115,7 +118,7 @@ class BostonScientificCartesiaXModel(ElectrodeModel):
         center = tuple(np.array(self._direction) * radius)
         height = self._parameters.total_length - self._parameters.tip_length
         tip = netgen.occ.Sphere(c=center, r=radius)
-        tip = tip.Rotate(occ.Axis(p=center, d=(0, 1, 0)), 90)
+        tip = rotate_sphere_seam(tip, center, self._direction)
         lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         body = tip + lead
         body.bc(self._boundaries["Body"])
