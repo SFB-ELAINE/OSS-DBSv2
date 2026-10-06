@@ -50,7 +50,6 @@ class DielectricModel(ABC):
         complex
             Complex permittivity.
         """
-        pass
 
     def conductivity(self, omega: float) -> float:
         """Calculate the conductivity by the angular frequency omega.
@@ -92,4 +91,3 @@ class DielectricModel(ABC):
     @abstractmethod
     def static_conductivity(self) -> float:
         """Return conductivity at zero Hz (static limit)."""
-        pass

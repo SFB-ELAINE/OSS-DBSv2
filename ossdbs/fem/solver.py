@@ -528,7 +528,6 @@ class Solver(ABC):
             Solution vector
 
         """
-        pass
 
 
 class CGSolver(Solver):
