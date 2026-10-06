@@ -145,7 +145,7 @@ class TypeChecker:
 
     @classmethod
     def __check(cls, target: dict, settings: dict) -> dict:
-        for key in [key for key in target.keys() if key in settings.keys()]:
+        for key in [key for key in target if key in settings]:
             if isinstance(target[key], dict):
                 try:
                     cls.__check(target[key], settings[key])

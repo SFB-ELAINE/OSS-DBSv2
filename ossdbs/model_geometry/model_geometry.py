@@ -230,8 +230,6 @@ class ModelGeometry:
                     f"Tried to update contact with invalid setting {setting}"
                 )
 
-        return
-
     def update_encapsulation_layer(self, idx: int, settings: dict) -> None:
         """Overwrite encapsulation layer properties."""
         encapsulation_layer = self._encapsulation_layers[idx]
@@ -251,8 +249,6 @@ class ModelGeometry:
                 raise ValueError(
                     f"Tried to update encapsulation layer with setting {setting}"
                 )
-
-        return
 
     @property
     def encapsulation_layers(self) -> list:

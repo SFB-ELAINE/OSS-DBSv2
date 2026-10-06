@@ -16,7 +16,6 @@ class Preconditioner(ABC):
     @abstractmethod
     def to_dictionary(self) -> dict:
         """Prepare dictionary to be passed to NGSolve."""
-        pass
 
 
 class BDDCPreconditioner(Preconditioner):

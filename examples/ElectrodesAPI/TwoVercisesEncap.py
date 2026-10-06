@@ -6,7 +6,7 @@ The encapsulation layers have
 different thicknesses.
 """
 
-import netgen.occ as occ
+from netgen import occ
 from ngsolve import Draw, Mesh, TaskManager
 
 import ossdbs

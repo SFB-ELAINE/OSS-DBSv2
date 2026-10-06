@@ -8,8 +8,8 @@ import logging
 from dataclasses import dataclass
 
 import netgen
-import netgen.occ as occ
 import numpy as np
+from netgen import occ
 
 from .electrode_model_template import ElectrodeModel
 from .utilities import get_electrode_spin_angle, get_highest_edge, get_lowest_edge
@@ -112,7 +112,7 @@ class BostonScientificVerciseDirectedModel(ElectrodeModel):
 
         vectors = []
         distance = self._parameters.tip_length + self._parameters.contact_spacing
-        for _ in range(0, 3):
+        for _ in range(3):
             vectors.append(tuple(np.array(direction) * distance))
             distance += (
                 self._parameters.contact_length + self._parameters.contact_spacing
