@@ -10,24 +10,70 @@ from scipy.spatial.transform import Rotation
 _logger = logging.getLogger(__name__)
 
 
-def get_lowest_edge(contact: occ.Face) -> occ.Edge:
-    """Get lowest edge (i.e., int z-direction)."""
-    min_edge_val = float("inf")
-    for edge in contact.edges:
-        if edge.center.z < min_edge_val:
-            min_edge_val = edge.center.z
-            min_edge = edge
-    return min_edge
+def _edge_height(edge: occ.Edge, direction: tuple) -> float:
+    """Position of the edge centre along ``direction``."""
+    center = edge.center
+    return float(np.dot((center.x, center.y, center.z), direction))
 
 
-def get_highest_edge(contact: occ.Face) -> occ.Edge:
-    """Get highest edge (i.e., in z-direction)."""
-    max_edge_val = float("-inf")
-    for edge in contact.edges:
-        if edge.center.z > max_edge_val:
-            max_edge_val = edge.center.z
-            max_edge = edge
-    return max_edge
+def get_lowest_edge(contact: occ.Face, direction: tuple = (0, 0, 1)) -> occ.Edge:
+    """Get lowest edge along ``direction`` (default: z-direction).
+
+    Pass the lead direction for shapes built along a tilted axis; comparing
+    global z there picks a cylinder seam line instead of the rim circle.
+    """
+    return min(contact.edges, key=lambda edge: _edge_height(edge, direction))
+
+
+def get_highest_edge(contact: occ.Face, direction: tuple = (0, 0, 1)) -> occ.Edge:
+    """Get highest edge along ``direction`` (default: z-direction).
+
+    Pass the lead direction for shapes built along a tilted axis; comparing
+    global z there picks a cylinder seam line instead of the rim circle.
+    """
+    return max(contact.edges, key=lambda edge: _edge_height(edge, direction))
+
+
+def get_rotation_axis(direction: tuple) -> tuple:
+    """Axis to rotate the upright z axis onto ``direction``.
+
+    Returns the unit vector of ``z x direction``. When ``direction`` is
+    (anti)parallel to z the cross product vanishes; any axis perpendicular to
+    z is then valid (the rotation angle is 0 or 180 degrees), so the x axis is
+    returned instead of dividing by zero.
+    """
+    cross = np.cross((0, 0, 1), np.asarray(direction, dtype=float))
+    norm = np.linalg.norm(cross)
+    if np.isclose(norm, 0.0):
+        return (1.0, 0.0, 0.0)
+    return tuple(cross / norm)
+
+
+def rotate_sphere_seam(sphere, center: tuple, direction: tuple):
+    """Move a sphere's BREP pole off the electrode axis.
+
+    ``occ.Sphere`` takes no direction, so its two pole vertices always sit at
+    global z relative to the centre. When the electrode points along z, those
+    poles land on the lead axis, and the resulting degenerate topology can
+    make Netgen's surface mesher fail or crash. Rotating about an axis
+    perpendicular to both z and ``direction``, by the z-to-direction angle
+    plus 45 degrees, leaves the poles at 45 degrees to ``direction`` for any
+    direction. A sphere is symmetric about its centre, so the shape itself is
+    unchanged -- only the seam moves.
+
+    The offset must not be 90 degrees: that puts the poles on the great circle
+    where the tip sphere is tangent to the lead cylinder, and OCC booleans on
+    that configuration fail for some directions (e.g. the fused tip + lead
+    silently loses the cylinder).
+
+    Call this on the freshly constructed sphere, before combining it with
+    anything else.
+    """
+    direction = np.asarray(direction, dtype=float)
+    direction = direction / np.linalg.norm(direction)
+    axis = get_rotation_axis(direction)
+    angle = np.degrees(np.arccos(np.clip(direction[2], -1.0, 1.0))) + 45.0
+    return sphere.Rotate(occ.Axis(p=occ.Pnt(*center), d=occ.Dir(*axis)), angle)
 
 
 def get_signed_angle(

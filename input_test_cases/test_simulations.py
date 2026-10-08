@@ -37,6 +37,9 @@ BASE = Path(__file__).parent
 
 # Tolerances
 IMPEDANCE_RTOL = 1e-2
+# Cases that load a checked-in mesh have no Netgen meshing variance across
+# platforms; only solver-level noise (CG RelativeTolerance 1e-8) remains.
+PRECOMPUTED_MESH_IMPEDANCE_RTOL = 1e-4
 VTA_DICE_ATOL = 1e-2
 VTA_VOLUME_RTOL = 1e-2
 FLOATING_POTENTIAL_ATOL = 1e-2
@@ -170,6 +173,7 @@ TEST_CASES = [
         "input_json": "input_case9/input_pathway.json",
         "marks": ["slow", "requires_neuron", "pam"],
         "checks": ["stimsets_impedance", "stimsets_pathway_activation"],
+        "impedance_rtol": PRECOMPUTED_MESH_IMPEDANCE_RTOL,
     },
     # Case 10: Floating with surface impedance
     {
@@ -418,6 +422,7 @@ def test_simulation(test_case):
     input_dir = test_case["input_dir"]
     input_json = test_case["input_json"]
     checks = test_case["checks"]
+    impedance_rtol = test_case.get("impedance_rtol", IMPEDANCE_RTOL)
 
     _logger.info("Running: %s", test_case["id"])
 
@@ -471,6 +476,7 @@ def test_simulation(test_case):
                 _compare_csv(
                     os.path.join(input_dir_abs, sd, "impedance.csv"),
                     os.path.join(desired_base, sd, "impedance.csv"),
+                    rtol=impedance_rtol,
                 )
         elif check == "vta_nifti":
             # Try .nii.gz first, then .nii

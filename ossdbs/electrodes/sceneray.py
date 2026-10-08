@@ -10,7 +10,12 @@ import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
-from .utilities import get_highest_edge, get_lowest_edge
+from .utilities import (
+    get_highest_edge,
+    get_lowest_edge,
+    get_rotation_axis,
+    rotate_sphere_seam,
+)
 
 
 @dataclass
@@ -76,6 +81,7 @@ class SceneRay1242Model(ElectrodeModel):
         radius = self._parameters.lead_diameter * 0.5 + thickness
         height = self._parameters.total_length - self._parameters.tip_length
         tip = occ.Sphere(c=center, r=radius)
+        tip = rotate_sphere_seam(tip, center, self._direction)
         lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         encapsulation = tip + lead
         encapsulation.bc("EncapsulationLayerSurface")
@@ -92,6 +98,7 @@ class SceneRay1242Model(ElectrodeModel):
         radius = self._parameters.lead_diameter * 0.5
         center = tuple(np.array(self._direction) * radius)
         tip = occ.Sphere(c=center, r=radius)
+        tip = rotate_sphere_seam(tip, center, self._direction)
         height = self._parameters.total_length - self._parameters.tip_length
         lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         body = tip + lead
@@ -133,9 +140,6 @@ class SceneRay1242Model(ElectrodeModel):
             return netgen.occ.Fuse(contacts)
         # rotate electrode to match orientation
         # e.g. from z-axis to y-axis
-        rotation = tuple(
-            np.cross(direction, self._direction)
-            / np.linalg.norm(np.cross(direction, self._direction))
-        )
+        rotation = get_rotation_axis(self._direction)
         angle = np.degrees(np.arccos(self._direction[2]))
         return netgen.occ.Fuse(contacts).Rotate(occ.Axis(p=origin, d=rotation), angle)

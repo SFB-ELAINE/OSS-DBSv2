@@ -12,7 +12,13 @@ import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
-from .utilities import get_electrode_spin_angle, get_highest_edge, get_lowest_edge
+from .utilities import (
+    get_electrode_spin_angle,
+    get_highest_edge,
+    get_lowest_edge,
+    get_rotation_axis,
+    rotate_sphere_seam,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -93,6 +99,7 @@ class BostonScientificCartesiaXModel(ElectrodeModel):
         center = tuple(np.array(self._direction) * self._parameters.lead_diameter * 0.5)
         height = self._parameters.total_length - self._parameters.tip_length
         tip = netgen.occ.Sphere(c=center, r=radius)
+        tip = rotate_sphere_seam(tip, center, self._direction)
         lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         encapsulation = tip + lead
         encapsulation.bc("EncapsulationLayerSurface")
@@ -112,6 +119,7 @@ class BostonScientificCartesiaXModel(ElectrodeModel):
         center = tuple(np.array(self._direction) * radius)
         height = self._parameters.total_length - self._parameters.tip_length
         tip = netgen.occ.Sphere(c=center, r=radius)
+        tip = rotate_sphere_seam(tip, center, self._direction)
         lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         body = tip + lead
         body.bc(self._boundaries["Body"])
@@ -174,10 +182,7 @@ class BostonScientificCartesiaXModel(ElectrodeModel):
         else:
             # rotate electrode to match orientation
             # e.g. from z-axis to y-axis
-            rotation = tuple(
-                np.cross(direction, self._direction)
-                / np.linalg.norm(np.cross(direction, self._direction))
-            )
+            rotation = get_rotation_axis(self._direction)
             angle = np.degrees(np.arccos(self._direction[2]))
             rotated_geo = netgen.occ.Fuse(contacts).Rotate(
                 occ.Axis(p=origin, d=rotation), angle
@@ -299,10 +304,7 @@ class BostonScientificCartesiaHXModel(BostonScientificCartesiaXModel):
         else:
             # rotate electrode to match orientation
             # e.g. from z-axis to y-axis
-            rotation = tuple(
-                np.cross(direction, self._direction)
-                / np.linalg.norm(np.cross(direction, self._direction))
-            )
+            rotation = get_rotation_axis(self._direction)
             angle = np.degrees(np.arccos(self._direction[2]))
             rotated_geo = netgen.occ.Fuse(contacts).Rotate(
                 occ.Axis(p=origin, d=rotation), angle

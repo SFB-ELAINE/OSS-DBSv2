@@ -8,7 +8,12 @@ import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
-from .utilities import get_highest_edge, get_lowest_edge
+from .utilities import (
+    get_highest_edge,
+    get_lowest_edge,
+    get_rotation_axis,
+    rotate_sphere_seam,
+)
 
 
 @dataclass
@@ -69,6 +74,7 @@ class MicroElectrodeModel(ElectrodeModel):
         radius = self._parameters.tip_length + thickness
         height = self._parameters.total_length - self._parameters.tip_length * 0.5
         tip = occ.Sphere(c=center, r=radius)
+        tip = rotate_sphere_seam(tip, center, self._direction)
         lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
         encapsulation = tip + lead
         encapsulation.bc("EncapsulationLayerSurface")
@@ -107,9 +113,6 @@ class MicroElectrodeModel(ElectrodeModel):
             return contact
         # rotate electrode to match orientation
         # e.g. from z-axis to y-axis
-        rotation = tuple(
-            np.cross(direction, self._direction)
-            / np.linalg.norm(np.cross(direction, self._direction))
-        )
+        rotation = get_rotation_axis(self._direction)
         angle = np.degrees(np.arccos(self._direction[2]))
         return contact.Rotate(occ.Axis(p=origin, d=rotation), angle)
