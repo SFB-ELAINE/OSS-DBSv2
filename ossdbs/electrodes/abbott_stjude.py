@@ -15,6 +15,7 @@ from .utilities import (
     get_electrode_spin_angle,
     get_highest_edge,
     get_lowest_edge,
+    get_rotation_axis,
     rotate_sphere_seam,
 )
 
@@ -135,10 +136,7 @@ class AbbottStJudeActiveTipModel(ElectrodeModel):
             return netgen.occ.Fuse(contacts)
         # rotate electrode to match orientation
         # e.g. from z-axis to y-axis
-        rotation = tuple(
-            np.cross(direction, self._direction)
-            / np.linalg.norm(np.cross(direction, self._direction))
-        )
+        rotation = get_rotation_axis(self._direction)
         angle = np.degrees(np.arccos(self._direction[2]))
         return netgen.occ.Fuse(contacts).Rotate(occ.Axis(p=origin, d=rotation), angle)
 
@@ -274,10 +272,7 @@ class AbbottStJudeDirectedModel(ElectrodeModel):
         if np.allclose(self._direction, direction):
             return netgen.occ.Fuse(contacts)
         else:
-            rotation = tuple(
-                np.cross(direction, self._direction)
-                / np.linalg.norm(np.cross(direction, self._direction))
-            )
+            rotation = get_rotation_axis(self._direction)
             angle = np.degrees(np.arccos(self._direction[2]))
             rotated_geo = netgen.occ.Fuse(contacts).Rotate(
                 occ.Axis(p=origin, d=rotation), angle

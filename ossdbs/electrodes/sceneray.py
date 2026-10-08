@@ -10,7 +10,12 @@ import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
-from .utilities import get_highest_edge, get_lowest_edge, rotate_sphere_seam
+from .utilities import (
+    get_highest_edge,
+    get_lowest_edge,
+    get_rotation_axis,
+    rotate_sphere_seam,
+)
 
 
 @dataclass
@@ -135,9 +140,6 @@ class SceneRay1242Model(ElectrodeModel):
             return netgen.occ.Fuse(contacts)
         # rotate electrode to match orientation
         # e.g. from z-axis to y-axis
-        rotation = tuple(
-            np.cross(direction, self._direction)
-            / np.linalg.norm(np.cross(direction, self._direction))
-        )
+        rotation = get_rotation_axis(self._direction)
         angle = np.degrees(np.arccos(self._direction[2]))
         return netgen.occ.Fuse(contacts).Rotate(occ.Axis(p=origin, d=rotation), angle)

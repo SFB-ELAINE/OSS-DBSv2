@@ -9,7 +9,12 @@ import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
-from .utilities import get_highest_edge, get_lowest_edge, rotate_sphere_seam
+from .utilities import (
+    get_highest_edge,
+    get_lowest_edge,
+    get_rotation_axis,
+    rotate_sphere_seam,
+)
 
 
 @dataclass
@@ -304,10 +309,7 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
             return contact
 
         # Rotate electrode to match orientation if required
-        rotation = tuple(
-            np.cross(direction, self._direction)
-            / np.linalg.norm(np.cross(direction, self._direction))
-        )
+        rotation = get_rotation_axis(self._direction)
         angle = np.degrees(np.arccos(self._direction[2]))
         return contact.Rotate(occ.Axis(p=origin, d=rotation), angle)
 
@@ -425,7 +427,7 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         # Find max Z value for for edge between core electrode and core tubing
         # TODO check if this is a good idea to find this edge
         # TODO maybe define new object instead of passing added shapes
-        max_CoreE = get_highest_edge(part_1 + part_0)
+        max_CoreE = get_highest_edge(part_1 + part_0, direction)
         # TODO why is naming the edge important?
         # max_CoreE.name = "fillet"
 
@@ -438,8 +440,8 @@ class MicroProbesSNEX100Model(ElectrodeModel):
 
         # Find min Z value for outer electrode rim
         # and max Z value for edge between outer tubing and outer electrode
-        min_CoreTubeE = get_lowest_edge(part_2)
-        max_CoreTubeE = get_highest_edge(part_2)
+        min_CoreTubeE = get_lowest_edge(part_2, direction)
+        max_CoreTubeE = get_highest_edge(part_2, direction)
         # min_CoreTubeE.name = "fillet_edge"
         # max_CoreTubeE.name = "fillet_edge"
 
@@ -450,8 +452,8 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         height_3 = self._parameters.outer_electrode_length
         part_3 = occ.Cylinder(p=point_3, d=direction, r=radius_3, h=height_3)
 
-        min_OuterE = get_lowest_edge(part_3)
-        max_OuterE = get_highest_edge(part_3)
+        min_OuterE = get_lowest_edge(part_3, direction)
+        max_OuterE = get_highest_edge(part_3, direction)
 
         # min_OuterE.name = "fillet_edge"
         # max_OuterE.name = "fillet_edge"
@@ -464,7 +466,7 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         part_4 = occ.Cylinder(p=point_4, d=direction, r=radius_4, h=height_4)
 
         # Find min Z value for for edge between outer tubing rim
-        min_OuterTubeE = get_lowest_edge(part_4)
+        min_OuterTubeE = get_lowest_edge(part_4, direction)
         # min_OuterTubeE.name = "fillet_edge"
 
         encapsulation = part_0 + part_1 + part_2 + part_3 + part_4
@@ -501,7 +503,7 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         height_1 = self._parameters.core_tubing_length
         body_pt1 = occ.Cylinder(p=point_1, d=direction, r=radius_1, h=height_1)
         # Defining the edge between the core tubing and the outer electrode (contact_2)
-        max_edge_z = get_highest_edge(body_pt1)
+        max_edge_z = get_highest_edge(body_pt1, direction)
         max_edge_z.name = self._boundaries["Contact_2"]
 
         # Defining the outer tubing
@@ -557,10 +559,7 @@ class MicroProbesSNEX100Model(ElectrodeModel):
             return netgen.occ.Fuse([contact_1, contact_2])
         # rotate electrode to match orientation
         # e.g. from z-axis to y-axis
-        rotation = tuple(
-            np.cross(direction, self._direction)
-            / np.linalg.norm(np.cross(direction, self._direction))
-        )
+        rotation = get_rotation_axis(self._direction)
         angle = np.degrees(np.arccos(self._direction[2]))
         return netgen.occ.Fuse([contact_1, contact_2]).Rotate(
             occ.Axis(p=origin, d=rotation), angle
