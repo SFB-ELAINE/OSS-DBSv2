@@ -34,8 +34,22 @@ Prepare the Geometry
    - `_construct_geometry`  
    - `_body`  
    - `_contacts`  
-   - `get_center_first_contact`  
-   - `get_distance_l1_l4`  
+   - `get_center_first_contact`
+   - `get_distance_l1_l4`
+
+   Build every shape in the **local electrode frame**: the lead axis points
+   along +z and the tip sits at the origin. Do not use ``self._direction`` or
+   ``self._position`` and do not rotate or move the result; the base class
+   places the electrode and its encapsulation with one rigid transform
+   (``ElectrodeModel._place``). `_construct_encapsulation_geometry` returns
+   the full encapsulation solid; the base class subtracts the electrode.
+   Directed electrodes set ``_directed = True`` to be spun about the lead axis
+   by the user rotation and the Lead-DBS marker convention.
+
+   .. note:: Building primitives directly along the lead direction lets
+      OpenCascade place each cylinder's seam independently. Coaxial seams
+      that end up nearly, but not exactly, coincident produce sliver faces
+      that Netgen cannot mesh, for some lead directions only.
 
 4. **Add Default Parameters:**  
    Import the model into the `ossdbs/electrodes/defaults.py` file. At the beginning of this file:

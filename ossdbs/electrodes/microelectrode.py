@@ -5,7 +5,6 @@ from dataclasses import dataclass
 
 import netgen
 import netgen.occ as occ
-import numpy as np
 
 from .electrode_model_template import ElectrodeModel
 from .utilities import get_highest_edge, get_lowest_edge
@@ -65,26 +64,26 @@ class MicroElectrodeModel(ElectrodeModel):
         -------
         netgen.libngpy._NgOCC.TopoDS_Shape
         """
-        center = tuple(np.array(self._direction) * self._parameters.tip_length * 0.5)
+        center = (0, 0, self._parameters.tip_length * 0.5)
         radius = self._parameters.tip_length + thickness
         height = self._parameters.total_length - self._parameters.tip_length * 0.5
         tip = occ.Sphere(c=center, r=radius)
-        lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
+        lead = occ.Cylinder(p=center, d=(0, 0, 1), r=radius, h=height)
         encapsulation = tip + lead
         encapsulation.bc("EncapsulationLayerSurface")
         encapsulation.mat("EncapsulationLayer")
-        return encapsulation.Move(v=self._position) - self.geometry
+        return encapsulation
 
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         contact = self._contacts()
         electrode = netgen.occ.Glue([self.__body(), contact])
-        return electrode.Move(v=self._position)
+        return electrode
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius_lead = self._parameters.lead_diameter * 0.5
-        center = tuple(np.array(self._direction) * self._parameters.tip_length)
+        center = (0, 0, self._parameters.tip_length)
         height_lead = self._parameters.total_length - self._parameters.tip_length
-        lead = occ.Cylinder(p=center, d=self._direction, r=radius_lead, h=height_lead)
+        lead = occ.Cylinder(p=center, d=(0, 0, 1), r=radius_lead, h=height_lead)
         lead.bc(self._boundaries["Body"])
         return lead
 
@@ -103,13 +102,4 @@ class MicroElectrodeModel(ElectrodeModel):
         for face in contact.faces:
             face.name = "Contact_1"
 
-        if np.allclose(self._direction, direction):
-            return contact
-        # rotate electrode to match orientation
-        # e.g. from z-axis to y-axis
-        rotation = tuple(
-            np.cross(direction, self._direction)
-            / np.linalg.norm(np.cross(direction, self._direction))
-        )
-        angle = np.degrees(np.arccos(self._direction[2]))
-        return contact.Rotate(occ.Axis(p=origin, d=rotation), angle)
+        return contact
