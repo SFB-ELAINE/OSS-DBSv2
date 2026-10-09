@@ -71,7 +71,7 @@ ax_a.stem(pos_freqs, pos_coeffs, markerfmt=" ", basefmt="C0-", linefmt="C0-")
 ax_a.set_xlabel("Frequency / Hz")
 ax_a.set_ylabel("FFT coefficient amplitude")
 ax_a.set_xscale("log")
-ax_a.set_title("A", loc="left", fontweight="bold")
+ax_a.set_title("A", loc="left", fontweight="bold", color="white")
 
 # ============================================================
 # Shared dielectric setup for panels B and C
@@ -167,7 +167,7 @@ def plot_dielectric_panel(ax, material_models, frequencies, threshold, title):
     ax.set_ylabel(r"Real conductivity / S\,m$^{-1}$")
     ax2.set_ylabel("Rel. permittivity")
     ax.legend(loc="upper center", fontsize=7)
-    ax.set_title(title, loc="left", fontweight="bold")
+    ax.set_title(title, loc="left", fontweight="bold", color="white")
     axes = [ax, ax2]
     for ax in axes:
         ax.set_facecolor("black")
@@ -218,7 +218,7 @@ for mat in material_modelCC3:
 ax_c.set_xlabel("Frequency / Hz")
 ax_c.set_ylabel("Ratio between real and imaginary part")
 ax_c.legend(loc="upper right", fontsize=7)
-ax_c.set_title("C", loc="left", fontweight="bold")
+ax_c.set_title("C", loc="left", fontweight="bold", color="white")
 
 # ============================================================
 # Panel D — Time-domain signal at different cutoff frequencies
@@ -256,7 +256,7 @@ ax_d.set_xlabel(r"Time / $\mu$s")
 ax_d.set_ylabel("Amplitude")
 ax_d.set_xlim(left=0, right=5.0 * pulse_width * 1e6)
 ax_d.legend(loc="upper right")
-ax_d.set_title("D", loc="left", fontweight="bold")
+ax_d.set_title("D", loc="left", fontweight="bold", color="white")
 
 apply_dark_style(fig, [ax_a, ax_b, ax_c, ax_d])
 
