@@ -111,13 +111,11 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         netgen.libngpy._NgOCC.TopoDS_Shape
         """
         encap_tip_radius = self._parameters.contact_radius + thickness
-        encap_tip_center = tuple(
-            np.array(self._direction) * self._parameters.contact_radius
-        )
+        encap_tip_center = (0, 0, self._parameters.contact_radius)
         encap_tip = occ.Sphere(c=encap_tip_center, r=encap_tip_radius)
 
         # define half space at tip_center to construct a hemsiphere as the contact tip
-        half_space = netgen.occ.HalfSpace(p=encap_tip_center, n=self._direction)
+        half_space = netgen.occ.HalfSpace(p=encap_tip_center, n=(0, 0, 1))
         encap_tip = encap_tip * half_space
 
         encap_lead_ht = self._parameters.total_length - (
@@ -125,7 +123,7 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         )
         encap_lead = occ.Cylinder(
             p=encap_tip_center,
-            d=self._direction,
+            d=(0, 0, 1),
             r=encap_tip_radius,
             h=encap_lead_ht,
         )
@@ -146,12 +144,12 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
             self._parameters.exposed_wire + self._parameters.contact_radius
         )
         encap_lead_start_pt = tuple(
-            np.array(self._direction)
+            np.array((0, 0, 1))
             * (self._parameters.exposed_wire + self._parameters.contact_radius)
         )
         encap_lead = occ.Cylinder(
             p=encap_lead_start_pt,
-            d=self._direction,
+            d=(0, 0, 1),
             r=encap_lead_radius,
             h=encap_lead_ht,
         )
@@ -170,7 +168,7 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
             encap_wire_ht = self._parameters.exposed_wire
             encap_wire = occ.Cylinder(
                 p=encap_wire_start_pt,
-                d=self._direction,
+                d=(0, 0, 1),
                 r=encap_wire_radius,
                 h=encap_wire_ht,
             )
@@ -220,16 +218,16 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         encapsulation = encap_tip + encap_lead
         encapsulation.bc("EncapsulationLayerSurface")
         encapsulation.mat("EncapsulationLayer")
-        return encapsulation.Move(v=self._position) - self.geometry
+        return encapsulation
 
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         contacts = self._contacts()
         electrode = netgen.occ.Glue([self.__body() - contacts, contacts])
-        return electrode.Move(v=self._position)
+        return electrode
 
     # Body is defined here to only include the lead
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        direction = self._direction
+        direction = (0, 0, 1)
         lead_radius = self._parameters.lead_radius
         lead_height = (
             self._parameters.total_length
@@ -247,7 +245,6 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         return body
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        origin = (0, 0, 0)
         direction = (0, 0, 1)
         contact_radius = self._parameters.contact_radius
         tip_center = tuple(np.array(direction) * self._parameters.contact_radius)
@@ -298,16 +295,7 @@ class MicroProbesRodentElectrodeModel(ElectrodeModel):
         for edge in contact.edges:
             edge.name = "Contact_1"
 
-        if np.allclose(self._direction, direction):
-            return contact
-
-        # Rotate electrode to match orientation if required
-        rotation = tuple(
-            np.cross(direction, self._direction)
-            / np.linalg.norm(np.cross(direction, self._direction))
-        )
-        angle = np.degrees(np.arccos(self._direction[2]))
-        return contact.Rotate(occ.Axis(p=origin, d=rotation), angle)
+        return contact
 
 
 @dataclass
@@ -411,7 +399,7 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         netgen.libngpy._NgOCC.TopoDS_Shape
         """
         # Constructong core electrode
-        direction = self._direction
+        direction = (0, 0, 1)
         distance_1 = self._parameters.core_electrode_diameter * 0.5
         point_1 = tuple(np.array(direction) * distance_1)
         radius_1 = self._parameters.core_electrode_diameter * 0.5 + thickness
@@ -482,18 +470,18 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         encapsulation.bc("EncapsulationLayerSurface")
         encapsulation.mat("EncapsulationLayer")
 
-        return encapsulation.Move(v=self._position) - self.geometry
+        return encapsulation
 
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         electrode = occ.Glue([self.__body(), self._contacts()])
-        return electrode.Move(v=self._position)
+        return electrode
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         # Defining the core tubing
         # using the start point of the cylinder as the tip center
-        direction = self._direction
+        direction = (0, 0, 1)
         distance_1 = self._parameters.core_electrode_length
-        point_1 = tuple(np.array(self._direction) * distance_1)
+        point_1 = tuple(np.array(direction) * distance_1)
         radius_1 = self._parameters.core_tubing_diameter * 0.5
         height_1 = self._parameters.core_tubing_length
         body_pt1 = occ.Cylinder(p=point_1, d=direction, r=radius_1, h=height_1)
@@ -516,7 +504,6 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         return body
 
     def _contacts(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        origin = (0, 0, 0)
         direction = (0, 0, 1)
         radius_1 = self._parameters.core_electrode_diameter * 0.5
         center = tuple(np.array(direction) * radius_1)
@@ -548,15 +535,4 @@ class MicroProbesSNEX100Model(ElectrodeModel):
         max_edge_z = get_highest_edge(contact_2)
         max_edge_z.name = self._boundaries["Contact_2"]
 
-        if np.allclose(self._direction, direction):
-            return netgen.occ.Fuse([contact_1, contact_2])
-        # rotate electrode to match orientation
-        # e.g. from z-axis to y-axis
-        rotation = tuple(
-            np.cross(direction, self._direction)
-            / np.linalg.norm(np.cross(direction, self._direction))
-        )
-        angle = np.degrees(np.arccos(self._direction[2]))
-        return netgen.occ.Fuse([contact_1, contact_2]).Rotate(
-            occ.Axis(p=origin, d=rotation), angle
-        )
+        return netgen.occ.Fuse([contact_1, contact_2])

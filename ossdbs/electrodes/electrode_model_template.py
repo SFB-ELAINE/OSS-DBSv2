@@ -13,6 +13,8 @@ import netgen.occ as occ
 import numpy as np
 from ngsolve import BND, Mesh, VTKOutput
 
+from .utilities import get_electrode_spin_angle, get_rotation_axis
+
 _logger = logging.getLogger(__name__)
 
 
@@ -39,6 +41,8 @@ class ElectrodeModel(ABC):
     """
 
     _n_contacts: int
+    # Directed electrodes are spun about the lead axis, see _place().
+    _directed: bool = False
 
     def __init__(
         self,
@@ -59,7 +63,7 @@ class ElectrodeModel(ABC):
         self._parameters = parameters
         self.parameter_check()
 
-        self._geometry = self._construct_geometry()
+        self._geometry = self._place(self._construct_geometry())
         self.check_initial_geometry()
         self._encapsulation_geometry = None
         self._encapsulation_thickness = 0.0
@@ -100,9 +104,7 @@ class ElectrodeModel(ABC):
     @encapsulation_thickness.setter
     def encapsulation_thickness(self, thickness: float) -> None:
         if np.greater(thickness, 1e-3):
-            self._encapsulation_geometry = self._construct_encapsulation_geometry(
-                thickness
-            )
+            self._encapsulation_geometry = self._build_encapsulation(thickness)
         self._encapsulation_thickness = thickness
 
     def encapsulation_geometry(self, thickness: float) -> netgen.occ.Solid | None:
@@ -122,18 +124,61 @@ class ElectrodeModel(ABC):
                 "The specified thickness is too small. Choose a larger, positive value."
             )
         if not np.isclose(thickness, self._encapsulation_thickness):
-            return self._construct_encapsulation_geometry(thickness)
+            return self._build_encapsulation(thickness)
         return self._encapsulation_geometry
+
+    def _build_encapsulation(self, thickness: float) -> netgen.occ.Solid:
+        """Place the local encapsulation solid and cut out the electrode.
+
+        The placed electrode itself is subtracted, so that the inner faces
+        of the encapsulation layer are shared with the electrode faces and
+        renaming the electrode boundaries carries over.
+        """
+        encapsulation = self._construct_encapsulation_geometry(thickness)
+        return self._place(encapsulation) - self.geometry
+
+    def _place(
+        self, shape: netgen.libngpy._NgOCC.TopoDS_Shape
+    ) -> netgen.libngpy._NgOCC.TopoDS_Shape:
+        """Move a shape from the local electrode frame to its world pose.
+
+        Electrode geometries are built in a local frame, with the lead axis
+        along +z and the tip at the origin, and all of them go through this
+        one rigid transform. Coaxial cylinders and spheres thus keep coincident
+        BREP seams for every lead direction. Building primitives directly
+        along ``direction`` instead lets OCC choose each seam on its own; seams
+        that end up nearly but not exactly coincident leave sliver faces and
+        micrometre edges that Netgen fails to mesh.
+
+        Directed electrodes are first spun about the lead axis by the user
+        rotation plus the Lead-DBS marker correction.
+        """
+        origin = (0, 0, 0)
+        tilt_axis = get_rotation_axis(self._direction)
+        tilt = np.degrees(np.arccos(np.clip(self._direction[2], -1.0, 1.0)))
+        if self._directed:
+            spin = self._rotation
+            if not np.allclose(self._direction, (0, 0, 1)):
+                spin += get_electrode_spin_angle(tilt_axis, tilt, self._direction)
+            if not np.isclose(spin, 0.0):
+                shape = shape.Rotate(occ.Axis(p=origin, d=(0, 0, 1)), spin)
+        if not np.isclose(tilt, 0.0):
+            shape = shape.Rotate(occ.Axis(p=origin, d=tilt_axis), tilt)
+        return shape.Move(v=self._position)
 
     @abstractmethod
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        pass
+        """Build the electrode in the local frame (lead along +z, tip at 0)."""
 
     @abstractmethod
     def _construct_encapsulation_geometry(
         self, thickness: float
     ) -> netgen.libngpy._NgOCC.TopoDS_Shape:
-        pass
+        """Build the full encapsulation solid in the local frame.
+
+        Do not subtract the electrode; ``_build_encapsulation`` does that
+        after placement.
+        """
 
     def set_contact_names(self, boundaries: dict) -> None:
         """Set the names of electrode contacts.
