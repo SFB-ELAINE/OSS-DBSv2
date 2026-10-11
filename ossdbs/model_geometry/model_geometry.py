@@ -38,6 +38,10 @@ class ModelGeometry:
         self._contacts = []
         self._encapsulation_layers = []
 
+        # keep the poles and seam of a spherical brain away from the leads
+        self._brain.set_lead_axes(
+            [(electrode._position, electrode._direction) for electrode in electrodes]
+        )
         self._shape = self._construct_shape(self._brain, self._electrodes)
         self._geometry = None  # built lazily after mesh sizes are set
         self.update_contact_areas()

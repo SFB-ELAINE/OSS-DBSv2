@@ -6,6 +6,7 @@ import logging
 import netgen.occ
 import numpy as np
 import numpy.linalg as npl
+from scipy.spatial.transform import Rotation
 
 from .bounding_box import BoundingBox
 
@@ -25,11 +26,20 @@ class BrainGeometry:
         Matrix for affine transformation
     rotate_initial_geo: bool
         for spheres and ellipsoids, the initial geometry might have an edge
-        on the surface that causes problems when merging with the electrode
+        on the surface that causes problems when merging with the electrode.
+        Without lead axes the sphere is turned 180 degrees about z, otherwise
+        its poles are turned 90 degrees about the seam direction.
 
     Notes
     -----
     The geometry will be initialized once.
+
+    OpenCascade spheres have two poles (degenerate edges) and a seam
+    meridian. Where a lead leaves the brain close to one of them, the
+    boolean operations leave micrometre edges and sliver faces that Netgen
+    fails to mesh. Once the lead axes are known (see `set_lead_axes`), the
+    sphere is rotated so that its poles lie perpendicular to the exit points
+    and its seam on the opposite side.
     A custom shape can be loaded from a STEP or BREP file using
     `import_geometry`.
 
@@ -59,6 +69,8 @@ class BrainGeometry:
         self._geometry = None
         self._shape = shape
         self._rotate_initial_geo = rotate_initial_geo
+        self._lead_axes = []
+        self._custom_geometry = False
         if trafo_matrix is None:
             self._trafo_matrix = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         else:
@@ -76,6 +88,22 @@ class BrainGeometry:
         """Return box-shaped region covered by brain."""
         start, end = self.geometry.bounding_box
         return BoundingBox(start, end)
+
+    def set_lead_axes(self, lead_axes: list[tuple]) -> None:
+        """Orient a sphere or ellipsoid brain away from the leads.
+
+        Parameters
+        ----------
+        lead_axes: list[tuple]
+            (tip position, direction) of each lead in world coordinates.
+        """
+        if self._custom_geometry or self._shape not in ("Sphere", "Ellipsoid"):
+            return
+        self._lead_axes = [
+            (np.asarray(position, float), np.asarray(direction, float))
+            for position, direction in lead_axes
+        ]
+        self._geometry = None
 
     def get_surface_areas(self) -> dict:
         """Get areas of surfaces in geometry."""
@@ -130,15 +158,18 @@ class BrainGeometry:
             )
 
     def _create_ellipsoid(self) -> netgen.occ.Solid:
-        x, y, z = np.subtract(self._bbox.end, self._bbox.start) / 2
+        half = np.subtract(self._bbox.end, self._bbox.start) / 2
+        x, y, z = half
         transformator = netgen.occ.gp_GTrsf(mat=[x, 0, 0, 0, y, 0, 0, 0, z])
         center = netgen.occ.Pnt(1, 1, 1)
         sphere = netgen.occ.Sphere(c=center, r=1)
-        if self._rotate_initial_geo:
-            _logger.debug("Rotate initial geometry")
-            # we rotate 180 degrees around z, that should usually fix the issue
-            sphere = sphere.Rotate(netgen.occ.Axis(center, (0, 0, 1)), 180)
-
+        sphere = self._orient_sphere(
+            sphere,
+            center,
+            to_world=self._trafo_matrix @ np.diag(half),
+            world_center=self._trafo_matrix @ np.add(self._bbox.start, half)
+            + self._translation,
+        )
         ellipsoid = transformator(sphere).Move(self._bbox.start)
         return self._affine_trafo(ellipsoid)
 
@@ -147,11 +178,77 @@ class BrainGeometry:
         center = np.add(self._bbox.start, (x, y, z))
         radius = np.min([x, y, z])
         sphere = netgen.occ.Sphere(c=netgen.occ.Pnt(center), r=radius)
+        sphere = self._orient_sphere(
+            sphere,
+            netgen.occ.Pnt(center),
+            to_world=radius * self._trafo_matrix,
+            world_center=self._trafo_matrix @ center + self._translation,
+        )
+        return self._affine_trafo(sphere)
+
+    def _orient_sphere(
+        self,
+        sphere: netgen.occ.Solid,
+        center: netgen.occ.Pnt,
+        to_world: np.ndarray,
+        world_center: np.ndarray,
+    ) -> netgen.occ.Solid:
+        """Rotate the sphere about its centre, see `_sphere_rotation`.
+
+        A unit vector u on the sphere maps to the world point
+        ``to_world @ u + world_center``.
+        """
+        if not self._lead_axes:
+            if self._rotate_initial_geo:
+                _logger.debug("Rotate initial geometry")
+                # we rotate 180 degrees around z, that should usually fix the issue
+                sphere = sphere.Rotate(netgen.occ.Axis(center, (0, 0, 1)), 180)
+            return sphere
+        rotvec = self._sphere_rotation(to_world, world_center).as_rotvec()
+        angle = npl.norm(rotvec)
+        if np.isclose(angle, 0.0):
+            return sphere
+        axis = netgen.occ.Axis(center, tuple(rotvec / angle))
+        return sphere.Rotate(axis, np.degrees(angle))
+
+    def _sphere_rotation(
+        self, to_world: np.ndarray, world_center: np.ndarray
+    ) -> Rotation:
+        """Rotation that moves the sphere poles and seam away from the leads.
+
+        The exit points of the leads are mapped back to the unit sphere.
+        The poles (local z) go perpendicular to them (least squares for
+        several leads) and the seam meridian (local +x half plane) to the
+        opposite side.
+        """
+        to_unit = npl.inv(to_world)
+        exit_points = []
+        for position, direction in self._lead_axes:
+            tip = to_unit @ (position - world_center)
+            axis = to_unit @ direction
+            axis /= npl.norm(axis)
+            # tip + t * axis on the unit sphere, t > 0
+            b = tip @ axis
+            c = tip @ tip - 1
+            if c >= 0:
+                _logger.warning("Lead tip outside of the brain geometry")
+                continue
+            exit_points.append(tip + (np.sqrt(b * b - c) - b) * axis)
+        if not exit_points:
+            return Rotation.identity()
+
+        pole = npl.svd(np.array(exit_points))[2][-1]
+        seam = -np.sum(exit_points, axis=0)
+        seam -= (seam @ pole) * pole
+        if np.isclose(npl.norm(seam), 0.0):
+            seam = np.cross(pole, np.eye(3)[np.argmin(np.abs(pole))])
+        seam /= npl.norm(seam)
+        frame = np.column_stack([seam, np.cross(pole, seam), pole])
         if self._rotate_initial_geo:
             _logger.debug("Rotate initial geometry")
-            # we rotate 180 degrees around z, that should usually fix the issue
-            sphere = sphere.Rotate(netgen.occ.Axis(center, (0, 0, 1)), 180)
-        return self._affine_trafo(sphere)
+            # turn the poles 90 degrees about the seam direction
+            frame = frame @ Rotation.from_euler("x", 90, degrees=True).as_matrix()
+        return Rotation.from_matrix(frame)
 
     def _create_box(self) -> netgen.occ.Solid:
         if self._rotate_initial_geo:
@@ -172,6 +269,7 @@ class BrainGeometry:
         """
         _logger.debug(f"Import brain geometry from file: {path_to_geo_file}")
         occgeo = netgen.occ.OCCGeometry(path_to_geo_file)
+        self._custom_geometry = True
         self._geometry = occgeo.shape
         self._geometry.bc("BrainSurface")
         self._geometry.mat("Brain")
@@ -194,6 +292,7 @@ class BrainGeometry:
         This function is the only possibility to use custom-defined
         names for surface parts of the brain!
         """
+        self._custom_geometry = True
         self._geometry = geo
         bbox = self._geometry.bounding_box
         self._bbox = BoundingBox(bbox[0], bbox[1])
