@@ -109,6 +109,10 @@ def generate_electrodes(settings: dict):
             electrode.encapsulation_thickness = electrode_parameters[
                 "EncapsulationLayer"
             ]["Thickness[mm]"]
+        electrode.require_all_contacts = electrode_parameters.get(
+            "RequireAllContactsInBrain", True
+        )
+        electrode.set_required_contacts(electrode_parameters)
         electrodes.append(electrode)
 
     if settings.get("ExportElectrode", False):
