@@ -30,6 +30,21 @@ def get_highest_edge(contact: occ.Face) -> occ.Edge:
     return max_edge
 
 
+def get_rotation_axis(direction: tuple) -> tuple:
+    """Axis to rotate the upright z axis onto ``direction``.
+
+    Returns the unit vector of ``z x direction``. When ``direction`` is
+    (anti)parallel to z the cross product vanishes; any axis perpendicular to
+    z is then valid (the rotation angle is 0 or 180 degrees), so the x axis is
+    returned instead of dividing by zero.
+    """
+    cross = np.cross((0, 0, 1), np.asarray(direction, dtype=float))
+    norm = np.linalg.norm(cross)
+    if np.isclose(norm, 0.0):
+        return (1.0, 0.0, 0.0)
+    return tuple(cross / norm)
+
+
 def get_signed_angle(
     v_in: np.ndarray, v_out: np.ndarray, rotation_axis: np.ndarray
 ) -> None | float:
