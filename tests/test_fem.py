@@ -237,13 +237,17 @@ class TestSolver:
 
 
 @pytest.fixture
-def settings_fixture():
+def settings_fixture(request):
     json_path = os.path.join(
         os.getcwd(), "input_test_cases/input_case1/input_homogeneous.json"
     )
     with open(json_path) as file:
         settings = json.load(file)
     settings = Settings(settings).complete_settings()
+    # Allow tests to select encapsulation thickness in mm via indirect parameters.
+    if hasattr(request, "param"):
+        settings = deepcopy(settings)
+        settings["Electrodes"][0]["EncapsulationLayer"]["Thickness[mm]"] = request.param
     return settings
 
 
