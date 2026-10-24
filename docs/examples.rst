@@ -43,6 +43,13 @@ corresponding documentation pages for background.
   :ref:`stimulation-modes`.
 - ``examples/OptimizeSettings`` — exploratory optimisation of stimulation
   parameters. See :doc:`python_api`.
+- ``examples/ConvergenceStudy/Benchmark`` — per-machine runtime benchmark of
+  the mesh-refinement strategy identified by the convergence study, so
+  runtimes can be compared across machines and operating systems. Runs
+  anywhere for the VTA workload; the PAM workload additionally needs NEURON,
+  which on Windows must be installed manually (see
+  :doc:`windows_neuron_setup`). See the directory's own ``README.md`` for
+  usage and how to contribute a result.
 
 .. toctree::
    :maxdepth: 1
