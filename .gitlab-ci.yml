@@ -1,4 +1,4 @@
-# OSS-DBS is tested for Python >= 3.10 (see requires-python in pyproject.toml).
+# OSS-DBS is tested for Python >= 3.11 (see requires-python in pyproject.toml).
 # Dependencies are installed with uv (https://docs.astral.sh/uv/); the
 # ghcr.io/astral-sh/uv images ship uv together with the requested Python.
 
@@ -18,18 +18,6 @@ stages:
    - cd input_files
    - ossdbs 'inputTest.json'
    - ossdbs 'input_cc.json'
-
-test-3.10:
-   extends: ".test"
-   stage: "test"
-   variables:
-           PYTHONVERSION: "py310"
-   image: "ghcr.io/astral-sh/uv:python3.10-bookworm-slim"
-
-run-3.10:
-   extends: ".run"
-   stage: "run"
-   image: "ghcr.io/astral-sh/uv:python3.10-bookworm-slim"
 
 test-3.11:
    extends: ".test"
@@ -57,7 +45,7 @@ run-3.12:
 
 pages:
   stage: "pages"
-  image: "ghcr.io/astral-sh/uv:python3.10-bookworm-slim"
+  image: "ghcr.io/astral-sh/uv:python3.11-bookworm-slim"
   script:
     - uv pip install --system "."
     - cd docs
