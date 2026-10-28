@@ -63,6 +63,15 @@ all = ["ossdbs[test,dev,doc,impedance]"]
 bundle = ["pyinstaller"]
 
 [tool.uv]
+# Security floors for transitive dependencies (Dependabot alerts). filelock 4.x
+# and Pillow 13 require Python >= 3.11, so on 3.10 uv keeps the last release
+# that still supports it.
+constraint-dependencies = [
+    "filelock>=4.2.2; python_full_version >= '3.11'",
+    "pillow>=13.0.0; python_full_version >= '3.11'",
+    "setuptools>=84.1.1",
+]
+
 # Force the resolver to find a solution that also works on Intel macOS
 # (x86_64). Without this, uv may lock a dependency version that ships no
 # x86_64-macOS wheel or sdist (e.g. openturns 1.27.post1), which then fails to
