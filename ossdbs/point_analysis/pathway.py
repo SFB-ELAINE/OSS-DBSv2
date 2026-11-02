@@ -313,7 +313,6 @@ class Pathway(PointModel):
                             break
                     idx_axon += axon_length
         _logger.info("Marked axons inside CSF and encapsulation layer")
-        return
 
     def create_index(self, lattice: np.ndarray) -> np.ndarray:
         """Create index for each point to the matching axon.
@@ -556,4 +555,3 @@ class Pathway(PointModel):
                 os.path.join(self.output_path, f"E_field_{self.name}.csv"),
                 index=False,
             )
-        return
