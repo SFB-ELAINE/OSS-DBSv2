@@ -3,8 +3,8 @@
 
 import logging
 
-import netgen.occ as occ
 import numpy as np
+from netgen import occ
 from scipy.spatial.transform import Rotation
 
 _logger = logging.getLogger(__name__)

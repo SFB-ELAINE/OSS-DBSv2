@@ -8,7 +8,7 @@ The different geometries are saved
 to STEP files.
 """
 
-import netgen.occ as occ
+from netgen import occ
 from ngsolve import Draw, Mesh, TaskManager
 
 import ossdbs

@@ -269,7 +269,6 @@ class NeuronSimulator(ABC):
     @abstractmethod
     def modify_hoc_file(self, nRanvier, stepsPerMs, axon_morphology):
         """Update parameters in the hoc file."""
-        pass
 
     @property
     def neuron_executable(self) -> str:
@@ -279,7 +278,6 @@ class NeuronSimulator(ABC):
     @abstractmethod
     def paste_to_hoc(self, parameters_dict: dict):
         """Paste Python parameters into HOC file."""
-        pass
 
     def compile_neuron_files(self):
         """Compile a NEURON file."""
@@ -303,7 +301,6 @@ class NeuronSimulator(ABC):
                 " with loaded mechanism. "
                 "Run a new Python instance to circumvent this error."
             )
-            pass
 
     def load_solution(self, time_domain_h5_file: str):
         """Load solution from h5 file.
