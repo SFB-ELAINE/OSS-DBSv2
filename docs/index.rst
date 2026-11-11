@@ -83,6 +83,7 @@ For more details about the first version of OSS-DBS, see [Butenko2019]_.
    tutorial
    examples
    python_api
+   windows_neuron_setup
 
 .. toctree::
    :maxdepth: 1
