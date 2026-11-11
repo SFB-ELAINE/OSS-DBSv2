@@ -639,30 +639,6 @@ wheels = [
 ]
 
 [[package]]
-name = "intel-cmplr-lib-ur"
-version = "2025.3.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "umf" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/82/ca/9e27494641de36448c4783a1ff67f55b546733beb39fb8abe72960b756a4/intel_cmplr_lib_ur-2025.3.3-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:a18ceadd336ad2f82f47977214ddc94568c5a33e262ee3b9d1b3631b7897b669", size = 30765500, upload-time = "2026-03-24T15:11:44.973Z" },
-    { url = "https://files.pythonhosted.org/packages/3f/0f/f195caa3add546c47414ed62ba508bdbb6486d56a8f7371449cd554d041a/intel_cmplr_lib_ur-2025.3.3-py2.py3-none-win_amd64.whl", hash = "sha256:6f019c5563aaa231d7f618b400cfb4a8a5eac18bbb5084b1ebb1361696b6c7dd", size = 1253494, upload-time = "2026-03-24T15:11:09.948Z" },
-]
-
-[[package]]
-name = "intel-openmp"
-version = "2025.3.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "intel-cmplr-lib-ur" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3f/12/5e07caf359d5bedd67b40e84e2faec6b5a3ad5da27ce151860fe6b270935/intel_openmp-2025.3.3-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:0b20a49b041afc8c1ec9b5746f006c2aa1d2475a9fe6d29ed551dba7cb84d9ab", size = 74335293, upload-time = "2026-03-24T15:11:36.732Z" },
-    { url = "https://files.pythonhosted.org/packages/55/79/ec688efdcd29fd5ab299fd8a76f2bfdcb1466d308a6482b3f0b51dfb34e2/intel_openmp-2025.3.3-py2.py3-none-win_amd64.whl", hash = "sha256:20a0f9306a9eb7f56065e7e912ae359d64bfeebc37513464f92840fa3c0d0c4b", size = 32085026, upload-time = "2026-03-24T15:11:02.086Z" },
-]
-
-[[package]]
 name = "jinja2"
 version = "3.1.6"
 source = { registry = "https://pypi.org/simple" }
@@ -761,7 +737,7 @@ name = "macholib"
 version = "1.16.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "altgraph" },
+    { name = "altgraph", marker = "sys_platform == 'darwin'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/10/2f/97589876ea967487978071c9042518d28b958d87b17dceb7cdc1d881f963/macholib-1.16.4.tar.gz", hash = "sha256:f408c93ab2e995cd2c46e34fe328b130404be143469e41bc366c807448979362", size = 59427, upload-time = "2025-11-22T08:28:38.373Z" }
 wheels = [
@@ -886,17 +862,12 @@ wheels = [
 ]
 
 [[package]]
-name = "mkl"
-version = "2025.3.1"
+name = "mpmath"
+version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "intel-openmp" },
-    { name = "onemkl-license" },
-    { name = "tbb" },
-]
+sdist = { url = "https://files.pythonhosted.org/packages/e0/47/dd32fa426cc72114383ac549964eecb20ecfd886d1e5ccf5340b55b02f57/mpmath-1.3.0.tar.gz", hash = "sha256:7a28eb2a9774d00c7bc92411c19a89209d5da7c4c9a9e227be8330a23a25b91f", size = 508106, upload-time = "2023-03-07T16:47:11.061Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/b3/ee/76755ca0ec9626835e0d024c369b968f24eadce2106a7884404720670623/mkl-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:db31e59fa368dd4fa45b494351f4b7e0e6204b08d7db27836118c4e1370eb011", size = 195022933, upload-time = "2026-01-22T05:35:09.804Z" },
-    { url = "https://files.pythonhosted.org/packages/99/c2/97c8df6e8c0663903ab7b0fe4d9529e6a75ffeeeef7b1727bc14996d389b/mkl-2025.3.1-py2.py3-none-win_amd64.whl", hash = "sha256:74084f58784c4cde1dc3284bdf3a19df30fbfe11416567e4ba6419d3bd9ce33e", size = 155530417, upload-time = "2026-01-22T05:31:57.796Z" },
+    { url = "https://files.pythonhosted.org/packages/43/e3/7d92a15f894aa0c9c4b49b8ee9ac9850d6e63b03c9c32c0367a13ae62209/mpmath-1.3.0-py3-none-any.whl", hash = "sha256:a0b2b9fe80bbcd81a6647ff13108738cfb482d481d826cc0e02f5b35e5c88d2c", size = 536198, upload-time = "2023-03-07T16:47:09.197Z" },
 ]
 
 [[package]]
@@ -933,25 +904,29 @@ wheels = [
 
 [[package]]
 name = "neuron"
-version = "8.2.7"
+version = "9.0.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "find-libpython" },
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
-    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
-    { name = "packaging" },
-    { name = "setuptools" },
+    { name = "find-libpython", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.12' and sys_platform == 'darwin') or (python_full_version < '3.12' and sys_platform == 'linux')" },
+    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.12' and sys_platform == 'darwin') or (python_full_version >= '3.12' and sys_platform == 'linux')" },
+    { name = "packaging", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "setuptools", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
+    { name = "sympy", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/c1/b6c2c3444dbfd5395ef8c491d3e59e3c09205f9d7c008a1776edb8816785/neuron-8.2.7-cp311-cp311-macosx_10_15_x86_64.whl", hash = "sha256:468abd4f8f8344fceb77823609307e7e0e071f6995decd86b711a8affe37b4f5", size = 14039727, upload-time = "2025-05-22T23:48:54.335Z" },
-    { url = "https://files.pythonhosted.org/packages/f9/fa/0f0b2301ea50f14cbb558b2601c47f5476c8d27ab8aa063eadb135d4e9a3/neuron-8.2.7-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:f8e31a558ad6ca08e3addaa64343e426ec992a2d9bfc61d901e7df22ab1f1f1c", size = 13246177, upload-time = "2025-05-22T17:42:56.87Z" },
-    { url = "https://files.pythonhosted.org/packages/3e/de/e56e0beca201b0c5fab32f1f4a999d3aba0550fc0e066034a4cc49ca9504/neuron-8.2.7-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:72df43061b9c2cf5541bb4003c2c37fc39b8b106008e54abdca7cf1d989ea1f8", size = 14643483, upload-time = "2025-05-22T23:48:59.473Z" },
-    { url = "https://files.pythonhosted.org/packages/ab/45/26a87553e7a1dde05fb9aebe98715498b6273fd0ed08f5a82ad550ee5379/neuron-8.2.7-cp312-cp312-macosx_10_15_x86_64.whl", hash = "sha256:d2044fde04ea2c07884cd4d047e19bd3686abe4cf2fb1b4b6aebab5890763727", size = 14027049, upload-time = "2025-05-22T23:49:04.288Z" },
-    { url = "https://files.pythonhosted.org/packages/fe/d0/a22eceadcb655aa03a8a37f6e109e0880a7d00978713f0f5ded8042cfb5f/neuron-8.2.7-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:6834f6d0981634fed4fee002873f139f738d20b606ff74bbd475c1ce7fe414db", size = 13232523, upload-time = "2025-05-22T17:43:11.118Z" },
-    { url = "https://files.pythonhosted.org/packages/3e/69/5a8d498fd3096726768ab875b0e9a633cfdb68f976a6d520b6158b07ed7c/neuron-8.2.7-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:df6374137d6218e817645d37c06c8d0cd4a3afc910de70ffd63b7a4a2f57d633", size = 14926180, upload-time = "2025-05-22T23:49:08.907Z" },
-    { url = "https://files.pythonhosted.org/packages/a5/d6/27b85c9f11ba46b3cdd8b102ccfa1089c19153e97a8e02b552cb8512b662/neuron-8.2.7-cp313-cp313-macosx_10_15_x86_64.whl", hash = "sha256:28c45074485159218a5741e5b256d2107612de9510546f3f67e9f51e035f9a61", size = 14023563, upload-time = "2025-05-22T23:49:13.312Z" },
-    { url = "https://files.pythonhosted.org/packages/bd/38/c7f40797a813d2a8e1d8e16e4beee3de7879e140bee3d12ef05cc2ece885/neuron-8.2.7-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:346e688acb5fbbc6651cf31ad2c56bb4fb90ece057bfbdfd29a29751c27de98c", size = 13228475, upload-time = "2025-05-22T17:43:24.924Z" },
-    { url = "https://files.pythonhosted.org/packages/48/6c/f0191f7c7f757a0943669cd3793c215ca58133b8c5c722d7670553cd614f/neuron-8.2.7-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:daa7e1b63bf7154b62928dcb141494e311a5607c3394c6aed3b0f94a52d8ad93", size = 14894860, upload-time = "2025-05-22T23:49:17.741Z" },
+    { url = "https://files.pythonhosted.org/packages/8c/74/72cccf69a90706409878beccdaf28d0b18c042e82b5ae32e24c2c701cbd8/neuron-9.0.2-cp311-cp311-macosx_10_15_x86_64.whl", hash = "sha256:fc84202ce32f1574db40e433a759653535331a810a84f0a8092e3a352fb6ed42", size = 21905579, upload-time = "2026-08-10T17:17:49.44Z" },
+    { url = "https://files.pythonhosted.org/packages/a5/6f/407f4e4cf11a717f6613b71e1c1f2a7e2c3320cc84b6a0aa07342c4116b9/neuron-9.0.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:6e44660d55d396c266df8747194eb3a42842040c02238c1429846506f03c287d", size = 21396564, upload-time = "2026-08-10T17:17:52.296Z" },
+    { url = "https://files.pythonhosted.org/packages/d0/c4/474a52a7c2467387c0b60d22f71f4ce34c96b67eceed0d75c92b85797176/neuron-9.0.2-cp311-cp311-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:b36bd6966b2e5779eec9a46c407bf0745181ae4b0778a432eb97ec33ae8ec23f", size = 17284818, upload-time = "2026-08-10T17:17:55.111Z" },
+    { url = "https://files.pythonhosted.org/packages/5d/39/e8be2623d3ce52bab3846473bb4aba0b6af2969706d0180a97f8a0fe1e91/neuron-9.0.2-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:18cfc9df0224d17c6fb042c0c51afc61498a0a8f6d95d4475e4158076d13299e", size = 17968737, upload-time = "2026-08-10T17:17:58.103Z" },
+    { url = "https://files.pythonhosted.org/packages/3d/78/d2f5159ed14e85ec0765a71ad863eaf16a1c1fd6bf0ea17a49d2a85bfd93/neuron-9.0.2-cp312-cp312-macosx_10_15_x86_64.whl", hash = "sha256:c374ad71a03cfeddb9a8e049c70ff79d1021d83ad028a268ffce653e11b8275d", size = 21927594, upload-time = "2026-08-10T17:18:01.313Z" },
+    { url = "https://files.pythonhosted.org/packages/76/ae/71bdb6607da7f17ef4932349c6758c9c91faff87825227ebb94b5a84bc24/neuron-9.0.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:428e7787f1eebd594105337b4852688e0fba70c47832a3768c0c669134964c16", size = 21409125, upload-time = "2026-08-10T17:18:04.423Z" },
+    { url = "https://files.pythonhosted.org/packages/67/cd/f341059ca6097d17e1887bc70b8202419ee50da19456dff4597e6614b21a/neuron-9.0.2-cp312-cp312-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:c9132866e435f39177a8b02cecd479d54996f7ca0f68488b8a31ab0ef1bf5ad8", size = 17296379, upload-time = "2026-08-10T17:18:07.259Z" },
+    { url = "https://files.pythonhosted.org/packages/3a/62/af8bf44e050a471f7e23f4df6e8d7ce225c680bc31a1cd3740fb444b720c/neuron-9.0.2-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:e696cfcf4a807ba00602f5bca3873a2f09ea8adee148d54afe221ed5ad0163d8", size = 17991206, upload-time = "2026-08-10T17:18:10.16Z" },
+    { url = "https://files.pythonhosted.org/packages/6b/ae/910fe24f5a5c48f5eda35d187b29a7a200eec854591f2140699038b6567f/neuron-9.0.2-cp313-cp313-macosx_10_15_x86_64.whl", hash = "sha256:3fb29d46c5f045afbdd8ad6b54c3d21180f4720265b4b2058b03c4bd4717f703", size = 21974552, upload-time = "2026-08-10T17:18:13.926Z" },
+    { url = "https://files.pythonhosted.org/packages/aa/d0/9929fe92698ea20d6d23def91a2bc0d9f25d90b7d548721978118ab2daee/neuron-9.0.2-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:1c9692beaa120f39a22bc3a3c5c6ba70261e4df9ce74e0be2b5b44859edf2c6c", size = 21434641, upload-time = "2026-08-10T17:18:17.091Z" },
+    { url = "https://files.pythonhosted.org/packages/a3/a9/345289b45d70e49a9d034cfe6f93e669962c94467d6ad192ad63ae065a00/neuron-9.0.2-cp313-cp313-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:fd6a85e4cad12378a0ffc8a71af32b38aa532b4eb9257cbad1028e24186900f5", size = 17298899, upload-time = "2026-08-10T17:18:20.224Z" },
+    { url = "https://files.pythonhosted.org/packages/4b/ed/69583989cf947dff8382e35c954224b629d9377356f081f768370e8498cd/neuron-9.0.2-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:4ecd6d76042ab3ff506cd06d559e62b00edc305324189c155d69c03daa7cbf75", size = 17999269, upload-time = "2026-08-10T17:18:23.257Z" },
 ]
 
 [[package]]
@@ -1125,15 +1100,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/97/73/8ade73f6749177003f7ce3304f524774adda96e6aaab30ea79fd8fda7934/odfpy-1.4.1.tar.gz", hash = "sha256:db766a6e59c5103212f3cc92ec8dd50a0f3a02790233ed0b52148b70d3c438ec", size = 717045, upload-time = "2020-01-18T16:55:48.852Z" }
 
 [[package]]
-name = "onemkl-license"
-version = "2025.3.1"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/3e/1d/7acbedb07bf4c71cc499527c25a3ef60bf83ed41b8918e986ed7a4573bd4/onemkl_license-2025.3.1-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:b6263a01bf29c04ea683eab1712eb6b74c2b8b722722f46fd90784ed8778c093", size = 58934, upload-time = "2026-01-22T05:36:11.789Z" },
-    { url = "https://files.pythonhosted.org/packages/1b/7f/732bd62f4ce4ddcbf97003efa856fcafc99c29e6b05deb0c1bb9cb85bdc4/onemkl_license-2025.3.1-py2.py3-none-win_amd64.whl", hash = "sha256:9fa45b274f05a61797f9ec3166b136124250ec7c9c91dedb87f3a926bfed9a54", size = 58959, upload-time = "2026-01-22T05:32:16.865Z" },
-]
-
-[[package]]
 name = "openpyxl"
 version = "3.1.5"
 source = { registry = "https://pypi.org/simple" }
@@ -1154,8 +1120,8 @@ resolution-markers = [
     "python_full_version < '3.12' and platform_machine == 'x86_64' and sys_platform == 'darwin'",
 ]
 dependencies = [
-    { name = "dill" },
-    { name = "psutil" },
+    { name = "dill", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
+    { name = "psutil", marker = "platform_machine == 'x86_64' and sys_platform == 'darwin'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/4a/2a/1fea66b927ac197b33254ff611aad99d83ffeb03232097ee6e204f3b80e8/openturns-1.25-cp39-abi3-macosx_13_0_x86_64.whl", hash = "sha256:da8a97a2a42ff08f0836bc2b5b67e477b037f6f4619aefadd8cd83cce23d7c35", size = 64790636, upload-time = "2025-06-12T18:32:15.594Z" },
@@ -1178,8 +1144,8 @@ resolution-markers = [
     "python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "dill" },
-    { name = "psutil" },
+    { name = "dill", marker = "platform_machine != 'x86_64' or sys_platform != 'darwin'" },
+    { name = "psutil", marker = "platform_machine != 'x86_64' or sys_platform != 'darwin'" },
 ]
 wheels = [
     { url = "https://files.pythonhosted.org/packages/18/cc/659945cbc51ccfebf4b341dbd441190d192ff0bd895fa9768df389e4c6f4/openturns-1.27.post1-cp39-abi3-macosx_14_0_arm64.whl", hash = "sha256:e547db66d27550a93f01bbf863a97b85fde7c31e7daa99e555f3bb40c259c57e", size = 46865937, upload-time = "2026-06-19T07:39:15.578Z" },
@@ -1204,7 +1170,6 @@ dependencies = [
     { name = "dipy" },
     { name = "h5py" },
     { name = "matplotlib" },
-    { name = "mkl", marker = "sys_platform != 'darwin'" },
     { name = "neuron", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
     { name = "ngsolve" },
     { name = "nibabel" },
@@ -1254,9 +1219,8 @@ requires-dist = [
     { name = "h5py", specifier = "==3.14.0" },
     { name = "impedancefitter", marker = "extra == 'impedance'", specifier = ">=2.0.11" },
     { name = "matplotlib" },
-    { name = "mkl", marker = "sys_platform != 'darwin'", specifier = "<2026" },
-    { name = "neuron", marker = "sys_platform == 'darwin'", specifier = "==8.2.7" },
-    { name = "neuron", marker = "sys_platform == 'linux'", specifier = "==8.2.7" },
+    { name = "neuron", marker = "sys_platform == 'darwin'", specifier = "==9.0.2" },
+    { name = "neuron", marker = "sys_platform == 'linux'", specifier = "==9.0.2" },
     { name = "ngsolve", specifier = "==6.2.2601" },
     { name = "nibabel", specifier = "==5.2.1" },
     { name = "ossdbs", extras = ["dev", "doc", "impedance", "test"], marker = "extra == 'all'" },
@@ -1759,7 +1723,7 @@ resolution-markers = [
     "python_full_version < '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" } },
+    { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7a/97/5a3609c4f8d58b039179648e62dd220f89864f56f7357f5d4f45c29eb2cc/scipy-1.17.1.tar.gz", hash = "sha256:95d8e012d8cb8816c226aef832200b1d45109ed4464303e997c5b13122b297c0", size = 30573822, upload-time = "2026-02-23T00:26:24.851Z" }
 wheels = [
@@ -1818,7 +1782,7 @@ resolution-markers = [
     "python_full_version >= '3.12' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'linux' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" } },
+    { name = "numpy", version = "2.5.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.12'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/7e/74/66de6258867beb2ef08f35f9f2ac017a52cacd5081714d239ff1a442d458/scipy-1.18.1.tar.gz", hash = "sha256:52c4b7422442aba924d03ad4019852b08a92e64ea187b933135687bfe2747307", size = 30781235, upload-time = "2026-08-21T23:28:50.599Z" }
 wheels = [
@@ -1988,24 +1952,15 @@ wheels = [
 ]
 
 [[package]]
-name = "tbb"
-version = "2022.3.1"
+name = "sympy"
+version = "1.14.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "tcmlib" },
+    { name = "mpmath", marker = "sys_platform == 'darwin' or sys_platform == 'linux'" },
 ]
+sdist = { url = "https://files.pythonhosted.org/packages/83/d3/803453b36afefb7c2bb238361cd4ae6125a569b4db67cd9e79846ba2d68c/sympy-1.14.0.tar.gz", hash = "sha256:d3d3fe8df1e5a0b42f0e7bdf50541697dbe7d23746e894990c030e2b05e72517", size = 7793921, upload-time = "2025-04-27T18:05:01.611Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/08/59/8d381a2cfe8d36c4f4ff9f94769ff2809bfc16014d888360b0e24c7e5c6b/tbb-2022.3.1-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:534c089eca6bcf148408684c156229d5f09c01d323b685b15739f41985b529d7", size = 4178630, upload-time = "2026-01-22T05:30:20.589Z" },
-    { url = "https://files.pythonhosted.org/packages/68/ef/d01ec56a854949efc727c8cac8941325a2020f345a786e64ca6ad3a05611/tbb-2022.3.1-py3-none-win_amd64.whl", hash = "sha256:8187e4c50a77c75c51ca9395febddd3a67d88dcb4cc537947d68d244925710f7", size = 422729, upload-time = "2026-01-22T05:30:51.916Z" },
-]
-
-[[package]]
-name = "tcmlib"
-version = "1.5.0"
-source = { registry = "https://pypi.org/simple" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/60/24/aa409bb20703acc70cf4d3bc620a55c789639c2995b2667fb44ae7236ec9/tcmlib-1.5.0-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:9d7c01cff35aae9bf5390b620680ebdf10a7d211c22d6488a27a029502e7d0aa", size = 2812669, upload-time = "2026-04-24T14:14:18.557Z" },
-    { url = "https://files.pythonhosted.org/packages/67/6d/9095c93326d0f8a5469ab22480d02795f24c08f1e7f383c73316ff106347/tcmlib-1.5.0-py2.py3-none-win_amd64.whl", hash = "sha256:f7b62787214083d490b39d7650f1e477eeacc875e7f86799feb9aa1fd34460d4", size = 366719, upload-time = "2026-04-24T14:09:45.977Z" },
+    { url = "https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl", hash = "sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5", size = 6299353, upload-time = "2025-04-27T18:04:59.103Z" },
 ]
 
 [[package]]
@@ -2094,18 +2049,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/92/ff/5a28bdfd8c3ebec42564ac7d0e54ca3db65044a9314a97f9564fa7a1e926/tzdata-2026.3.tar.gz", hash = "sha256:4a1518b8993086a7982523e071643f3c0e5f213e75b21318e78bcabfff9d1415", size = 198674, upload-time = "2026-07-10T08:50:37.887Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e5/6d/b53b99a9f2766d095985947a5782f1702cabb129a34f7a802d7197af832f/tzdata-2026.3-py2.py3-none-any.whl", hash = "sha256:dc096730c87af6cab1b171c9d532be840741ff5d459015e7f6947bd7d7e54931", size = 348168, upload-time = "2026-07-10T08:50:36.46Z" },
-]
-
-[[package]]
-name = "umf"
-version = "1.0.3"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "tcmlib" },
-]
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/4c/b9/fe8c54eab5a3fdfdff1839d9299d90bfce5c467186b5c9ff9fd95d55ad64/umf-1.0.3-py2.py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:c89c0974daed30a1cac77fb7ce5ff9140d178e286bb2dd91b751486d5d0a65b0", size = 359879, upload-time = "2026-01-22T05:32:44.433Z" },
-    { url = "https://files.pythonhosted.org/packages/97/49/23b714e4ca9655f04d5b958ca8b4ef8361e10743581a637f141755b9f4fb/umf-1.0.3-py2.py3-none-win_amd64.whl", hash = "sha256:2182a623433329bd53863ac3b15a4af253d0eda62c603dc7c4e2bdce78658270", size = 249098, upload-time = "2026-01-22T05:33:19.278Z" },
 ]
 
 [[package]]
