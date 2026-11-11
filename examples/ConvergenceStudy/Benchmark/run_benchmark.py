@@ -28,7 +28,7 @@ import shutil
 import socket
 import time
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import machine_info
 
@@ -230,7 +230,7 @@ def main():
     result = {
         "benchmark_version": BENCHMARK_VERSION,
         "label": label,
-        "timestamp_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "timestamp_utc": datetime.now(UTC).isoformat(timespec="seconds"),
         "strategy": {
             "meshing_hypothesis": MESHING_HYPOTHESIS,
             "hp_refinement": HP_REFINEMENT,

@@ -2,7 +2,7 @@ Installation
 ============
 
 OSS-DBS can now be easily installed using pip.
-The software runs with Python versions 3.10, 3.11, 3.12, and 3.13.
+The software runs with Python versions 3.11, 3.12, and 3.13.
 
 Basic Installation
 ------------------

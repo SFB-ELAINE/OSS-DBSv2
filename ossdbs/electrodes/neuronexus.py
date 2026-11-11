@@ -185,4 +185,4 @@ class NeuroNexusElectrodeModel(ElectrodeModel):
         ):
             raise ValueError("NeuroNexus electrodes was not correctly built.")
 
-        return electrode.Move(v=self._position)
+        return electrode

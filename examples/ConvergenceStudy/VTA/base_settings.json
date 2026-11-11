@@ -35,7 +35,7 @@
     }
   ],
   "MaterialDistribution": {
-    "MRIPath": "segmask.nii.gz",
+    "MRIPath": "../PAM_3/segmask.nii.gz",
     "MRIMapping": {
       "Gray matter": 1,
       "White matter": 2,

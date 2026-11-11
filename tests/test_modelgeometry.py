@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import pytest
 
@@ -229,6 +231,128 @@ class TestModelGeometry:
         )
 
         return np.testing.assert_equal(actual, desired)
+
+    class _FakeFace:
+        def __init__(self, name):
+            self.name = name
+
+    class _FakeBrainGeo:
+        def __init__(self, face_names):
+            self.faces = [TestModelGeometry._FakeFace(name) for name in face_names]
+
+    class _FakeElectrode:
+        def __init__(
+            self,
+            index,
+            n_contacts,
+            require_all_contacts=True,
+            required_contact_indices=frozenset(),
+        ):
+            self.index = index
+            self.n_contacts = n_contacts
+            self.require_all_contacts = require_all_contacts
+            self.required_contact_indices = required_contact_indices
+
+    @pytest.fixture
+    def bare_geometry(self):
+        """A ModelGeometry instance without running __init__.
+
+        check_brain_geo() only uses get_contact_name() (pure), the
+        electrode/brain_geo arguments, and
+        self._contacts_missing_from_geometry, so no real geometry is needed.
+        """
+        geometry = object.__new__(ossdbs.ModelGeometry)
+        geometry._contacts_missing_from_geometry = set()
+        return geometry
+
+    def test_check_brain_geo_all_contacts_present(self, bare_geometry):
+        """All contacts found: passes regardless of require_all_contacts."""
+        electrode = self._FakeElectrode(index=1, n_contacts=2)
+        brain_geo = self._FakeBrainGeo(["E1C1", "E1C2"])
+        assert bare_geometry.check_brain_geo(brain_geo, electrode) is True
+        assert bare_geometry._contacts_missing_from_geometry == set()
+
+    def test_check_brain_geo_missing_contact_strict_fails(self, bare_geometry):
+        """Default (require_all_contacts=True): any missing contact fails."""
+        electrode = self._FakeElectrode(
+            index=1, n_contacts=2, require_all_contacts=True
+        )
+        brain_geo = self._FakeBrainGeo(["E1C1"])
+        assert bare_geometry.check_brain_geo(brain_geo, electrode) is False
+
+    def test_check_brain_geo_missing_contact_relaxed_warns(self, bare_geometry, caplog):
+        """require_all_contacts=False: a missing contact only warns."""
+        electrode = self._FakeElectrode(
+            index=1, n_contacts=2, require_all_contacts=False
+        )
+        brain_geo = self._FakeBrainGeo(["E1C1"])
+        with caplog.at_level(logging.WARNING):
+            assert bare_geometry.check_brain_geo(brain_geo, electrode) is True
+        assert "E1C2" in caplog.text
+        assert bare_geometry._contacts_missing_from_geometry == {"E1C2"}
+
+    def test_check_brain_geo_all_missing_relaxed_still_fails(self, bare_geometry):
+        """require_all_contacts=False: zero contacts present still fails."""
+        electrode = self._FakeElectrode(
+            index=1, n_contacts=2, require_all_contacts=False
+        )
+        brain_geo = self._FakeBrainGeo([])
+        assert bare_geometry.check_brain_geo(brain_geo, electrode) is False
+
+    def test_check_brain_geo_missing_required_contact_still_fails(self, bare_geometry):
+        """require_all_contacts=False: a missing Active/Floating contact
+        still fails, since silently dropping it would produce wrong FEM
+        results rather than a clear error.
+        """
+        electrode = self._FakeElectrode(
+            index=1,
+            n_contacts=2,
+            require_all_contacts=False,
+            required_contact_indices={2},
+        )
+        brain_geo = self._FakeBrainGeo(["E1C1"])
+        assert bare_geometry.check_brain_geo(brain_geo, electrode) is False
+
+    def test_check_brain_geo_missing_non_required_contact_warns(
+        self, bare_geometry, caplog
+    ):
+        """require_all_contacts=False: a missing contact that is neither
+        Active nor Floating only warns, even when other contacts on the
+        same electrode are required.
+        """
+        electrode = self._FakeElectrode(
+            index=1,
+            n_contacts=2,
+            require_all_contacts=False,
+            required_contact_indices={1},
+        )
+        brain_geo = self._FakeBrainGeo(["E1C1"])
+        with caplog.at_level(logging.WARNING):
+            assert bare_geometry.check_brain_geo(brain_geo, electrode) is True
+        assert "E1C2" in caplog.text
+
+    def test_update_contact_areas_missing_contact_strict_raises(self, bare_geometry):
+        """A contact absent from the shape and not marked as allowed-missing
+        still raises, matching the pre-existing strict behaviour.
+        """
+        bare_geometry._shape = self._FakeBrainGeo(["E1C1"])
+        bare_geometry._contacts = [ossdbs.model_geometry.Contact(name="E1C2")]
+        with pytest.raises(RuntimeError, match="Area for E1C2 not set"):
+            bare_geometry.update_contact_areas()
+
+    def test_update_contact_areas_missing_contact_relaxed_warns(
+        self, bare_geometry, caplog
+    ):
+        """A contact recorded by check_brain_geo as allowed-missing only
+        warns instead of raising.
+        """
+        bare_geometry._shape = self._FakeBrainGeo(["E1C1"])
+        bare_geometry._contacts = [ossdbs.model_geometry.Contact(name="E1C2")]
+        bare_geometry._contacts_missing_from_geometry = {"E1C2"}
+        with caplog.at_level(logging.WARNING):
+            bare_geometry.update_contact_areas()
+        assert "E1C2" in caplog.text
+        assert bare_geometry._contacts[0].area is None
 
     def test_set_volume_mesh_sizes(self, modelGeometry):
         """Test set_volume_mesh_sizes()."""

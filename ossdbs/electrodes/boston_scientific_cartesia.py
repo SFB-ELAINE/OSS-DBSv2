@@ -12,7 +12,7 @@ import netgen.occ as occ
 import numpy as np
 
 from .electrode_model_template import ElectrodeModel
-from .utilities import get_electrode_spin_angle, get_highest_edge, get_lowest_edge
+from .utilities import get_highest_edge, get_lowest_edge
 
 _logger = logging.getLogger(__name__)
 
@@ -59,6 +59,7 @@ class BostonScientificCartesiaXModel(ElectrodeModel):
     """
 
     _n_contacts = 16
+    _directed = True
 
     def __init__(
         self,
@@ -90,29 +91,27 @@ class BostonScientificCartesiaXModel(ElectrodeModel):
         netgen.libngpy._NgOCC.TopoDS_Shape
         """
         radius = self._parameters.lead_diameter * 0.5 + thickness
-        center = tuple(np.array(self._direction) * self._parameters.lead_diameter * 0.5)
+        center = (0, 0, self._parameters.lead_diameter * 0.5)
         height = self._parameters.total_length - self._parameters.tip_length
         tip = netgen.occ.Sphere(c=center, r=radius)
-        lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
+        lead = occ.Cylinder(p=center, d=(0, 0, 1), r=radius, h=height)
         encapsulation = tip + lead
         encapsulation.bc("EncapsulationLayerSurface")
         encapsulation.mat("EncapsulationLayer")
-        return encapsulation.Move(v=self._position) - self.geometry
+        return encapsulation
 
     def _construct_geometry(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         contacts = self._contacts()
         # TODO check
         electrode = occ.Glue([self.__body() - contacts, contacts])
-        axis = occ.Axis(p=(0, 0, 0), d=self._direction)
-        rotated_electrode = electrode.Rotate(axis=axis, ang=self._rotation)
-        return rotated_electrode.Move(v=self._position)
+        return electrode
 
     def __body(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         radius = self._parameters.lead_diameter * 0.5
-        center = tuple(np.array(self._direction) * radius)
+        center = (0, 0, radius)
         height = self._parameters.total_length - self._parameters.tip_length
         tip = netgen.occ.Sphere(c=center, r=radius)
-        lead = occ.Cylinder(p=center, d=self._direction, r=radius, h=height)
+        lead = occ.Cylinder(p=center, d=(0, 0, 1), r=radius, h=height)
         body = tip + lead
         body.bc(self._boundaries["Body"])
         return body
@@ -169,25 +168,7 @@ class BostonScientificCartesiaXModel(ElectrodeModel):
                 for edge in contact.edges:
                     if edge.name == "Rename":
                         edge.name = name
-        if np.allclose(self._direction, direction):
-            return netgen.occ.Fuse(contacts)
-        else:
-            # rotate electrode to match orientation
-            # e.g. from z-axis to y-axis
-            rotation = tuple(
-                np.cross(direction, self._direction)
-                / np.linalg.norm(np.cross(direction, self._direction))
-            )
-            angle = np.degrees(np.arccos(self._direction[2]))
-            rotated_geo = netgen.occ.Fuse(contacts).Rotate(
-                occ.Axis(p=origin, d=rotation), angle
-            )
-            rotation_angle = get_electrode_spin_angle(rotation, angle, self._direction)
-            if np.isclose(rotation_angle, 0):
-                return rotated_geo
-            return rotated_geo.Rotate(
-                occ.Axis(p=(0, 0, 0), d=self._direction), rotation_angle
-            )
+        return netgen.occ.Fuse(contacts)
 
     def _contact_directed(self) -> netgen.libngpy._NgOCC.TopoDS_Shape:
         origin = (0, 0, 0)
@@ -294,22 +275,4 @@ class BostonScientificCartesiaHXModel(BostonScientificCartesiaXModel):
                     if edge.name == "Rename":
                         edge.name = name
 
-        if np.allclose(self._direction, direction):
-            return netgen.occ.Fuse(contacts)
-        else:
-            # rotate electrode to match orientation
-            # e.g. from z-axis to y-axis
-            rotation = tuple(
-                np.cross(direction, self._direction)
-                / np.linalg.norm(np.cross(direction, self._direction))
-            )
-            angle = np.degrees(np.arccos(self._direction[2]))
-            rotated_geo = netgen.occ.Fuse(contacts).Rotate(
-                occ.Axis(p=origin, d=rotation), angle
-            )
-            rotation_angle = get_electrode_spin_angle(rotation, angle, self._direction)
-            if np.isclose(rotation_angle, 0):
-                return rotated_geo
-            return rotated_geo.Rotate(
-                occ.Axis(p=(0, 0, 0), d=self._direction), rotation_angle
-            )
+        return netgen.occ.Fuse(contacts)
