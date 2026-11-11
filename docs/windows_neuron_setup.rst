@@ -35,17 +35,27 @@ machine (the installer's default is ``C:\nrn``).
 installs/venvs on the machine, because a machine-wide ``PYTHONPATH``
 impacts all virtual environments.
 Instead, add it only to the venv that needs it via a ``.pth`` file,
-and keep ``NEURONHOME`` set persistently as a User
-environment variable (``sysdm.cpl`` → Advanced → Environment Variables, or
-``[Environment]::SetEnvironmentVariable('NEURONHOME', 'C:\path\to\nrn', 'User')``):
+and keep ``NEURONHOME`` set and
+NEURON's ``bin`` directory on ``PATH`` persistently as a User
+environment variable (``sysdm.cpl`` → Advanced → Environment Variables,
+or in PowerShell):
+
+.. code-block:: powershell
+
+    [Environment]::SetEnvironmentVariable('NEURONHOME', 'C:\path\to\nrn', 'User')
+    $userPath = [Environment]::GetEnvironmentVariable('PATH', 'User')
+    [Environment]::SetEnvironmentVariable('PATH', "C:\path\to\nrn\bin;$userPath", 'User')
+
+then set
 
 .. code-block:: powershell
 
     "C:\path\to\nrn\lib\python" | Out-File -Encoding ascii .venv\Lib\site-packages\neuron.pth
 
-``C:\path\to\nrn\bin`` on ``PATH`` is only needed if you want to run ``nrniv``,
-``mknrndll``, or ``nrnivmodl`` directly from a shell — the Python import
-itself does not require it once ``NEURONHOME`` is set.
+``C:\path\to\nrn\bin`` must be on ``PATH``: OSS-DBS calls ``mknrndll``
+to compile the NEURON model files for pathway activation modelling (PAM).
+The ``import neuron`` check below works without it, so it will not catch
+a missing ``PATH`` entry.
 
 Verify that NEURON works
 --------------------------
