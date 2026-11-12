@@ -88,9 +88,7 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
       - name: Install from lockfile (incl. impedance)
-        # Pin Python: openturns (needed by the impedance extra) has no
-        # Python 3.14 wheels, so uv must not pick 3.14 here.
-        run: uv sync --locked --python 3.13 --extra test --extra impedance
+        run: uv sync --locked --extra test --extra impedance
       - name: Smoke-import and run unit tests
         run: |
           uv run --no-sync python -c "import ossdbs, openturns; print('openturns', openturns.__version__)"
