@@ -43,6 +43,14 @@ def load_records(results_dir):
     return sorted(records, key=lambda r: r.get("timestamp_utc", ""), reverse=True)
 
 
+def _mean_percent_activated(best):
+    """Average PAM activation across pathways, or None outside the PAM workload."""
+    activation = best.get("pathway_activation")
+    if not activation:
+        return None
+    return sum(activation.values()) / len(activation)
+
+
 def flatten(record):
     """Flatten one record into a single table row."""
     machine = record["machine"]
@@ -68,6 +76,7 @@ def flatten(record):
         "pam_total": best.get("pam_total"),
         "wall_total": best["wall_total"],
         "vta_volume_mm3": best.get("vta_volume_mm3"),
+        "mean_percent_activated": _mean_percent_activated(best),
     }
     row.update({phase: best.get(phase) for phase in PHASES})
     return row

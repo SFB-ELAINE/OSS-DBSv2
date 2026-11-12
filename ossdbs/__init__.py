@@ -42,7 +42,20 @@ _logger.addHandler(logging.NullHandler())
 
 
 def log_to_file(output_file: str, level=logging.INFO):
-    """Write logging output also to file."""
+    """Write logging output also to file.
+
+    Attached to the root logger (not just the ``ossdbs`` logger) so that
+    messages from other libraries in the process, e.g. ngsolve, end up in
+    the file too.
+
+    Returns
+    -------
+    logging.FileHandler
+        The handler that was added, so the caller can close and remove it
+        (``handler.close(); logging.getLogger().removeHandler(handler)``)
+        once done with it, instead of having to search the logger tree by
+        handler type.
+    """
     # overwrite the previous log
     root_logger = logging.getLogger()
 
@@ -51,6 +64,7 @@ def log_to_file(output_file: str, level=logging.INFO):
     fh.setFormatter(logging.Formatter(logging.BASIC_FORMAT))
 
     root_logger.addHandler(fh)
+    return fh
 
 
 def set_logger(level=logging.INFO):
