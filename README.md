@@ -11,7 +11,7 @@ Bug reports are highly welcome, though!
 Installation
 ------------
 
-OSS-DBS is tested with Python 3.10, 3.11, 3.12, and 3.13.
+OSS-DBS is tested with Python 3.11, 3.12, and 3.13.
 
 **Windows users: NEURON has no PyPI wheel for Windows, so it is not installed
 automatically. Install it separately before installing OSS-DBS — see

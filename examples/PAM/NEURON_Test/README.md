@@ -1,6 +1,10 @@
 NEURON install requires PATH modulation!
 
-If you have a virtualenv in your home directory, use for example:
+With the virtual environment activated, add NEURON's `bin` directory
+(it contains `nrnivmodl` and `nrniv`) to your `PATH`:
 ```
-export PATH=~/venv/lib/python3.10/site-packages/neuron/.data/bin/:$PATH
+export PATH="$(python -c 'import neuron, os; print(os.path.join(os.path.dirname(neuron.__file__), ".data", "bin"))')":$PATH
 ```
+This works for any Python version. For example, for a virtualenv in your
+home directory with Python 3.11 it expands to
+`~/venv/lib/python3.11/site-packages/neuron/.data/bin`.
