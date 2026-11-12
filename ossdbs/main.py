@@ -88,6 +88,14 @@ def main_run(input_settings: dict):
         Input dictionary
     run_path: str
         Path where to run OSS-DBS
+
+    Returns
+    -------
+    logging.FileHandler
+        The handler writing to ``<OutputPath>/ossdbs.log``. Callers that run
+        ``main_run`` more than once in the same process (e.g. a benchmark
+        loop) should close and remove it once done, so the log file is not
+        left open: ``handler.close(); logging.getLogger().removeHandler(handler)``.
     """
     timings = {}
     time_0 = time.time()
@@ -100,7 +108,7 @@ def main_run(input_settings: dict):
     # create output path
     if not os.path.isdir(settings["OutputPath"]):
         os.mkdir(settings["OutputPath"])
-    log_to_file(
+    file_handler = log_to_file(
         output_file=os.path.join(settings["OutputPath"], "ossdbs.log"),
         level=_logger.getEffectiveLevel(),
     )
@@ -274,6 +282,8 @@ def main_run(input_settings: dict):
     )
     _logger.info("Process Completed")
 
+    return file_handler
+
 
 def main() -> None:
     """Main function to run OSS-DBS in CLI mode."""
@@ -303,7 +313,7 @@ def main() -> None:
     try:
         main_run(input_settings)
     finally:
-        for handler in logging.getLogger("ossdbs").handlers:
+        for handler in logging.getLogger().handlers:
             try:
                 handler.flush()
             except Exception:
