@@ -77,8 +77,9 @@ jobs:
 
   locked-install-intel-mac:
     # Guard against the lockfile regressing on Intel macOS (x86_64), where some
-    # dependencies (e.g. openturns) ship no x86_64-macOS wheel for the newest
-    # version. Installs the full impedance stack straight from the lockfile.
+    # dependencies may ship no x86_64-macOS wheel for their newest version
+    # (as openturns did from 1.26 on). Installs the full impedance stack
+    # straight from the lockfile.
     name: Locked install (Intel macOS)
     runs-on: macos-15-intel
     steps:
@@ -91,7 +92,7 @@ jobs:
         run: uv sync --locked --extra test --extra impedance
       - name: Smoke-import and run unit tests
         run: |
-          uv run --no-sync python -c "import ossdbs, openturns; print('openturns', openturns.__version__)"
+          uv run --no-sync python -c "import ossdbs, impedancefitter; from importlib.metadata import version; print('impedancefitter', version('impedancefitter'))"
           uv run --no-sync pytest --color=yes
 
   deploy:
