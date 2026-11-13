@@ -7,14 +7,14 @@ name = "ossdbs"
 dynamic = ["version"]
 description = "OSS-DBS v2: faster and modular open-source code for deep brain stimulation"
 readme = "README.md"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.11,<3.15"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"] 
 authors = [{ name = "Julius Zimmermann", email = "julius.zimmermann@uni-rostock.de" },
            { name = "Jan Philipp Payonk", email = "jan.payonk@uni-rostock.de" },
            { name = "Tom Reincke", email = "tom.reincke@uni-rostock.de"},
            { name = "Johannes Reding", email = "johannes.reding@uni-rostock.de"},
-     	   { name = "Konstantin Butenko", email = "kbutenko@bwh.harvard.edu"},
+     	   { name = "Konstantin Butenko", email = "konstantinmgtu@gmail.com"},
      	   { name = "Shruthi Chakravarthy", email = "shruthi.chakravarthy@uni-rostock.de"}
 ]
 classifiers = [
@@ -23,10 +23,11 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent"
 ]
 
-dependencies = ["h5py==3.14.0",
+dependencies = ["h5py==3.15.1",
                 "ngsolve==6.2.2601",
                 "nibabel==5.2.1",
                 "pandas",
@@ -34,16 +35,17 @@ dependencies = ["h5py==3.14.0",
 		"matplotlib",
 		# always install NEURON under Linux and Mac
 		# windows has no automated installer
-		"neuron==8.2.7; platform_system=='Linux'", 
-		"neuron==8.2.7; platform_system=='Darwin'", 
+		"neuron==9.0.2; platform_system=='Linux'", 
+		"neuron==9.0.2; platform_system=='Darwin'", 
 		"dipy>=1.8.0",
+		# ngsolve wheels link against libmkl_rt but do not declare mkl
 		"mkl<2026; platform_system!='Darwin'",
                 ]
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov", "pytest-mock", "pyyaml"]
 
-impedance = ["impedancefitter>=2.0.11"]
+impedance = ["impedancefitter>=2.0.13"]
 
 dev = [
     "ruff",
@@ -71,7 +73,7 @@ constraint-dependencies = [
 
 # Force the resolver to find a solution that also works on Intel macOS
 # (x86_64). Without this, uv may lock a dependency version that ships no
-# x86_64-macOS wheel or sdist (e.g. openturns 1.27.post1), which then fails to
+# x86_64-macOS wheel or sdist (as happened with openturns 1.27.post1), which then fails to
 # install there. Declaring the environment makes `uv lock` pick a compatible
 # version for that platform while keeping newer versions elsewhere.
 required-environments = [
