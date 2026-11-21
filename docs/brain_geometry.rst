@@ -81,6 +81,16 @@ the model. The resulting regions are named ``EncapsulationLayer_N`` (volume)
 and ``EncapsulationLayerSurface_N`` (outer surface), where *N* is the
 electrode index.
 
+.. note::
+
+   Point analysis detects numbered encapsulation regions such as
+   ``EncapsulationLayer_1``. Earlier versions used an incorrect region pattern
+   that left these points unmarked. With a nonzero layer thickness, correcting
+   this detection can change PAM activation results: axons touching the layer
+   receive status ``-1`` and are excluded from activation calculations.
+   Revalidate affected results when upgrading. Status codes, layer geometry,
+   and material properties are unchanged by this detection fix.
+
 Practical considerations
 ------------------------
 

@@ -77,6 +77,37 @@ class TestPointAnalysis:
         except Exception:
             pytest.fail("Cannot be instantiated.")
 
+    @pytest.mark.parametrize(
+        "settings_fixture, expected",
+        [(0.0, [False, False]), (0.2, [True, False])],
+        indirect=["settings_fixture"],
+        ids=["no-encapsulation", "with-encapsulation"],
+    )
+    def test_points_in_encapsulation_layer(
+        self, settings_fixture, geometry_fixture, mesh_fixture, expected
+    ):
+        electrode_settings = settings_fixture["Electrodes"][0]
+        tip = np.array(
+            [
+                electrode_settings["TipPosition"][axis]
+                for axis in ("x[mm]", "y[mm]", "z[mm]")
+            ]
+        )
+        radius = geometry_fixture[1][0].parameters.lead_diameter / 2
+        # The fixture electrode points along +z. Sample 0.1 and 0.3 mm
+        # outside its cylindrical surface, away from the tip and interfaces.
+        model = Lattice(
+            shape=(2, 1, 1),
+            center=tip + np.array([radius + 0.2, 0.0, 5.0]),
+            distance=0.2,
+            direction=(0, 0, 1),
+        )
+        model._lattice = model.filter_for_geometry(model.points_in_mesh(mesh_fixture))
+
+        inside_encap = model.get_points_in_encapsulation_layer(mesh_fixture)
+
+        np.testing.assert_array_equal(inside_encap.ravel(), expected)
+
     def test_pathway_signal_assignment(
         self, pathway_fixture, mesh_fixture, conductivity_fixture
     ):
