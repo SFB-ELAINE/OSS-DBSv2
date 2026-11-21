@@ -12,9 +12,9 @@ Outcome:
 
 """
 
-import netgen.occ as occ
 import nibabel
 import numpy as np
+from netgen import occ
 from ngsolve import (
     H1,
     CoefficientFunction,

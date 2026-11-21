@@ -97,10 +97,10 @@ def update_default_dict(default_settings: dict, custom_settings: dict) -> None:
     updated_settings: dict
 
     """
-    for key in custom_settings.keys():
+    for key in custom_settings:
         is_dict = False
 
-        if key in default_settings.keys():
+        if key in default_settings:
             if isinstance(default_settings[key], dict):
                 # empty dicts yield False
                 is_dict = bool(default_settings[key])

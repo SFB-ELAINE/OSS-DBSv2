@@ -1,7 +1,7 @@
 import impedancefitter as ifit
-import netgen.occ as occ
 import numpy as np
 import pandas as pd
+from netgen import occ
 from ngsolve import (
     BND,
     H1,

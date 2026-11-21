@@ -13,8 +13,8 @@ Outcome:
 
 """
 
-import netgen.occ as occ
 import numpy as np
+from netgen import occ
 from ngsolve import H1, Draw, GridFunction, Mesh, VoxelCoefficient, sqrt
 
 occgeo = occ.OCCGeometry(occ.Box((-1, -1, -1), (1, 1, 1)))

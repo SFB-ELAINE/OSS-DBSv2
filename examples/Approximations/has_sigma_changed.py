@@ -48,7 +48,7 @@ conductivitiesCC4needed = {}
 conductivitiesCC4notneeded = {}
 
 
-for material_test in material_modelCC4.keys():
+for material_test in material_modelCC4:
     conductivitiesCC3[material_test] = np.full(
         shape=frequencies.shape, fill_value=np.nan, dtype=complex
     )
@@ -91,7 +91,7 @@ for idx, frequency in enumerate(frequencies):
     else:
         changed_cc4 = True
 
-    for material_test in material_modelCC4.keys():
+    for material_test in material_modelCC4:
         if changed_cc3:
             conductivitiesCC3needed[material_test][idx] = material_modelCC3[
                 material_test
@@ -124,7 +124,7 @@ ax2 = ax1.twinx()
 ax1.set_yscale("log")
 ax2.set_yscale("log")
 plt.xscale("log")
-for material in material_modelCC4.keys():
+for material in material_modelCC4:
     if material == "CSF":
         continue
     # Plotting conductivity
@@ -162,7 +162,7 @@ ax2 = ax1.twinx()
 ax1.set_yscale("log")
 ax2.set_yscale("log")
 plt.xscale("log")
-for material in material_modelCC4.keys():
+for material in material_modelCC4:
     if material == "CSF":
         continue
     # Plotting conductivity
@@ -198,7 +198,7 @@ else:
     plt.close()
 
 print("Compare real and imaginary part CC3")
-for material in material_modelCC4.keys():
+for material in material_modelCC4:
     if material == "CSF":
         continue
     # Plotting conductivity
@@ -235,7 +235,7 @@ else:
 
 
 print("Compare real and imaginary part CC4")
-for material in material_modelCC4.keys():
+for material in material_modelCC4:
     if material == "CSF":
         continue
     # Plotting conductivity

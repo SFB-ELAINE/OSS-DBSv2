@@ -143,7 +143,6 @@ class TimeDomainSignal(ABC):
     @abstractmethod
     def get_time_domain_signal(self, dt: float, timesteps: int) -> np.ndarray:
         """Time-domain signal for given timestep."""
-        pass
 
     def plot_time_domain_signal(self, cutoff_frequency, output_path, show=False):
         """Plot signal and export to PDF."""
