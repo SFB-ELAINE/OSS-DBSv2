@@ -5,6 +5,7 @@ Tests that require NEURON are skipped if NEURON is not installed or
 if the NEURON compiler (nrnivmodl/mknrndll) is not available.
 """
 
+import glob
 import importlib.util
 import multiprocessing as mp
 import os
@@ -242,6 +243,46 @@ class TestNeuronSimulatorInit:
         assert simulator._v_init == -80.0
         assert simulator.connectome_name == "test_connectome"
         assert os.path.isdir(simulator._neuron_workdir)
+
+    @requires_neuron
+    @pytest.mark.skipif(
+        not sys.platform.startswith("linux"), reason="Check only runs on Linux"
+    )
+    def test_failed_compilation_ignores_stale_library(self, tmp_path, mocker):
+        """A failed compilation raises instead of loading an old library."""
+        from ossdbs.axon_processing.neuron_model import MRG2002
+
+        pathways_dict = {
+            "Axon_Model_Type": "MRG2002",
+            "connectome_name": "test_connectome",
+            "axon_diams": [5.7],
+            "n_Ranvier": [21],
+            "N_seeded_neurons": [10],
+            "N_orig_neurons": [10],
+        }
+        output_path = str(tmp_path / "output")
+        os.makedirs(output_path)
+        # first run creates the library
+        simulator = MRG2002(pathways_dict, output_path)
+        stale_dir = os.path.dirname(
+            next(
+                iter(
+                    glob.glob(
+                        os.path.join(simulator._neuron_workdir, "*", "libnrnmech.so")
+                    )
+                )
+            )
+        )
+
+        mocker.patch(
+            "ossdbs.axon_processing.neuron_model.subprocess.run",
+            return_value=subprocess.CompletedProcess(args="nrnivmodl", returncode=1),
+        )
+        with pytest.raises(
+            RuntimeError, match="Compiling the NEURON mechanisms failed"
+        ):
+            simulator.compile_neuron_files()
+        assert not os.path.exists(stale_dir)
 
     @requires_neuron
     def test_mcneal1976_init(self, tmp_path):

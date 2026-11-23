@@ -1,4 +1,5 @@
 import fileinput
+import glob
 import logging
 import multiprocessing as mp
 import os
@@ -66,7 +67,6 @@ def _check_mechanism_library(neuron_workdir: str) -> None:
     if not sys.platform.startswith("linux"):
         return
     import ctypes
-    import glob
 
     libraries = glob.glob(os.path.join(neuron_workdir, "*", "libnrnmech.so"))
     if not libraries:
@@ -331,8 +331,15 @@ class NeuronSimulator(ABC):
     def compile_neuron_files(self):
         """Compile a NEURON file."""
         _logger.info("Compile NEURON executable")
+        if sys.platform.startswith("linux"):
+            # Remove libraries of previous runs. Otherwise, a failed
+            # compilation goes unnoticed and a stale library is loaded.
+            for library in glob.glob(
+                os.path.join(self._neuron_workdir, "*", "libnrnmech.so")
+            ):
+                shutil.rmtree(os.path.dirname(library))
         # On Windows, .BAT files need shell=True to run via subprocess
-        subprocess.run(
+        result = subprocess.run(
             self.neuron_executable,
             # do not change! causes OSError
             stdout=subprocess.DEVNULL,
@@ -340,6 +347,13 @@ class NeuronSimulator(ABC):
             cwd=os.path.abspath(self._neuron_workdir),
             shell=(sys.platform == "win32"),
         )
+        if sys.platform.startswith("linux") and result.returncode != 0:
+            raise RuntimeError(
+                f"Compiling the NEURON mechanisms failed ({self.neuron_executable} "
+                f"returned {result.returncode}). Run {self.neuron_executable} "
+                f"manually in {os.path.abspath(self._neuron_workdir)} "
+                "to see the error."
+            )
         _check_mechanism_library(self._neuron_workdir)
         _logger.info("Load mechanisms into environment")
         # TODO should be written in a safer way
