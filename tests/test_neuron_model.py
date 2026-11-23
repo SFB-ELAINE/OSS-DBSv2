@@ -21,6 +21,7 @@ pytest.importorskip("neuron")
 
 from ossdbs.axon_processing.neuron_model import (
     NEURON_PROCESS_TIMEOUT,
+    _check_mechanism_library,
     _mp_context,
 )
 
@@ -67,6 +68,38 @@ requires_neuron = pytest.mark.skipif(
     reason=f"NEURON not fully available (module={NEURON_MODULE_AVAILABLE}, "
     f"compiler={NEURON_COMPILER_AVAILABLE})",
 )
+
+
+@pytest.mark.skipif(
+    not sys.platform.startswith("linux"), reason="Check only runs on Linux"
+)
+class TestCheckMechanismLibrary:
+    """Tests for the check of the compiled mechanism library."""
+
+    def test_missing_library_raises(self, tmp_path):
+        """A failed compilation leaves no library behind."""
+        with pytest.raises(RuntimeError, match=r"no libnrnmech\.so"):
+            _check_mechanism_library(str(tmp_path))
+
+    def test_unloadable_library_raises(self, tmp_path):
+        """A library that cannot be loaded raises with the loader error."""
+        (tmp_path / "x86_64").mkdir()
+        (tmp_path / "x86_64" / "libnrnmech.so").write_text("not a library")
+        with pytest.raises(RuntimeError, match="cannot be loaded"):
+            _check_mechanism_library(str(tmp_path))
+
+    def test_glibcxx_mismatch_explains_fix(self, tmp_path, mocker):
+        """A libstdc++ mismatch points to the conda fix."""
+        (tmp_path / "x86_64").mkdir()
+        (tmp_path / "x86_64" / "libnrnmech.so").write_text("")
+        mocker.patch(
+            "ctypes.CDLL",
+            side_effect=OSError(
+                "/usr/lib/libstdc++.so.6: version `GLIBCXX_3.4.32' not found"
+            ),
+        )
+        with pytest.raises(RuntimeError, match="libstdcxx>=13"):
+            _check_mechanism_library(str(tmp_path))
 
 
 class TestMultiprocessingConfiguration:

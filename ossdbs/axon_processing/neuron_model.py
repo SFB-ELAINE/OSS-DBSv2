@@ -49,6 +49,53 @@ MRG2002_DOWNSAMPLED_SEGMENTS_SMALL = 2
 _mechanisms_loaded = False
 
 
+def _check_mechanism_library(neuron_workdir: str) -> None:
+    """Check that the compiled NEURON mechanism library can be loaded.
+
+    Since NEURON 9, MOD files are translated to C++ and compiled with the
+    system compiler. A library built with GCC >= 13 requires a libstdc++
+    that provides ``GLIBCXX_3.4.32``. If the Python process uses an older
+    libstdc++ (typically the one shipped in a conda environment), loading
+    fails. ``neuron.load_mechanisms`` only prints the loader error and
+    still reports success, so the simulation would later fail with an
+    unrelated error message. Load the library with ctypes first to surface
+    the real error.
+
+    Only done on Linux, where this mismatch occurs.
+    """
+    if not sys.platform.startswith("linux"):
+        return
+    import ctypes
+    import glob
+
+    libraries = glob.glob(os.path.join(neuron_workdir, "*", "libnrnmech.so"))
+    if not libraries:
+        raise RuntimeError(
+            f"Compiling the NEURON mechanisms in {neuron_workdir} failed: "
+            "no libnrnmech.so was created. Check that a C++ compiler is "
+            f"installed and run nrnivmodl manually in {neuron_workdir} "
+            "to see the error."
+        )
+    for library in libraries:
+        try:
+            ctypes.CDLL(library)
+        except OSError as error:
+            message = (
+                f"The compiled NEURON mechanisms ({library}) cannot be loaded: {error}"
+            )
+            if "GLIBCXX" in str(error):
+                message += (
+                    "\nThe mechanisms were compiled with a newer GCC than the "
+                    "libstdc++ used by this Python environment. "
+                    "In a conda environment, update its C++ runtime with "
+                    "'conda install -c conda-forge \"libstdcxx>=13\"'. "
+                    "Otherwise, make sure the libstdc++ of the compiler that "
+                    "nrnivmodl uses is found at runtime (e.g., via "
+                    "LD_LIBRARY_PATH)."
+                )
+            raise RuntimeError(message) from error
+
+
 def _run_neuron_simulation(
     neuron_index: int,
     v_ext: np.ndarray,
@@ -293,6 +340,7 @@ class NeuronSimulator(ABC):
             cwd=os.path.abspath(self._neuron_workdir),
             shell=(sys.platform == "win32"),
         )
+        _check_mechanism_library(self._neuron_workdir)
         _logger.info("Load mechanisms into environment")
         # TODO should be written in a safer way
         try:
